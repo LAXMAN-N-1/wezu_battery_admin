@@ -1,153 +1,111 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../auth/provider/auth_provider.dart';
-import '../../locations/view/location_view.dart';
-
-final navigationProvider = StateProvider<int>((ref) => 0);
+import '../../../../core/widgets/metric_card.dart';
+import '../widgets/dashboard_chart.dart';
 
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedIndex = ref.watch(navigationProvider);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Row(
+    return SingleChildScrollView( // Added scroll for smaller screens
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sidebar
-          Container(
-            width: 280,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              border: Border(right: BorderSide(color: Colors.white.withOpacity(0.1))),
+          Text(
+            'Dashboard Overview',
+            style: GoogleFonts.outfit(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
-            child: Column(
+          ),
+          const SizedBox(height: 24),
+          
+          // Responsive Metric Grid
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              int crossAxisCount = width > 1200 ? 4 : (width > 800 ? 2 : 1);
+              double childAspectRatio = width > 1200 ? 1.5 : (width > 800 ? 2.5 : 2.0);
+
+              return GridView.count(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true, // Important inside SingleChildScrollView
+                physics: const NeverScrollableScrollPhysics(), // Disable grid scroll
+                childAspectRatio: childAspectRatio,
+                children: const [
+                  MetricCard(
+                    title: 'Total Rentals',
+                    value: '1,284',
+                    trend: '+12%',
+                    icon: Icons.electric_scooter,
+                    color: Colors.blue,
+                  ),
+                  MetricCard(
+                    title: 'Total Revenue',
+                    value: '₹4.2L',
+                    trend: '+8.5%',
+                    icon: Icons.currency_rupee,
+                    color: Colors.green,
+                  ),
+                  MetricCard(
+                    title: 'Active Users',
+                    value: '856',
+                    trend: '+24%',
+                    icon: Icons.people,
+                    color: Colors.orange,
+                  ),
+                  MetricCard(
+                    title: 'Fleet Utilization',
+                    value: '78%',
+                    trend: '-2%',
+                    icon: Icons.battery_charging_full,
+                    color: Colors.purple,
+                  ),
+                ],
+              );
+            },
+          ),
+          
+          const SizedBox(height: 24),
+
+          // Main Chart Section
+          SizedBox(
+            height: 400,
+            child: Row(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Text(
-                    'PowerFill',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                Expanded(
+                  flex: 2,
+                  child: const DashboardChart(),
+                ),
+                const SizedBox(width: 24),
+                // Placeholder for Donut Chart / Activity List
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Battery Health\n(Coming Soon)',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white38),
+                      ),
                     ),
                   ),
                 ),
-                _buildNavItem(ref, 0, Icons.dashboard_outlined, 'Overview'),
-                _buildNavItem(ref, 1, Icons.public_outlined, 'Locations'),
-                _buildNavItem(ref, 2, Icons.admin_panel_settings_outlined, 'Roles'),
-                _buildNavItem(ref, 3, Icons.ev_station_outlined, 'Stations'),
-                _buildNavItem(ref, 4, Icons.battery_charging_full_outlined, 'Batteries'),
-                const Spacer(),
-                _buildNavItem(
-                  ref, -1,
-                  Icons.logout_outlined, 
-                  'Sign Out', 
-                  onTap: () => ref.read(authProvider.notifier).logout(),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-          // Main Content Area
-          Expanded(
-            child: Column(
-              children: [
-                // Header (Optional, could be part of screens)
-                if (selectedIndex == 0) _buildHeader('Dashboard Overview'),
-                
-                // Content
-                Expanded(
-                  child: _buildContent(selectedIndex),
-                ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(String title) {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
-      ),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
-          const Icon(Icons.notifications_none, color: Colors.white70),
-          const SizedBox(width: 24),
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: Colors.blue.shade600,
-            child: const Icon(Icons.person, color: Colors.white, size: 20),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent(int index) {
-    switch (index) {
-      case 0:
-        return const Center(
-          child: Text(
-            'Welcome to PowerFill Admin Portal',
-            style: TextStyle(color: Colors.white38),
-          ),
-        );
-      case 1:
-        return const LocationView();
-      default:
-        return Center(
-          child: Text(
-            'Module Coming Soon',
-            style: TextStyle(color: Colors.white38),
-          ),
-        );
-    }
-  }
-
-  Widget _buildNavItem(WidgetRef ref, int index, IconData icon, String label, {VoidCallback? onTap}) {
-    final selectedIndex = ref.watch(navigationProvider);
-    final isActive = selectedIndex == index;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        onTap: onTap ?? () => ref.read(navigationProvider.notifier).state = index,
-        dense: true,
-        leading: Icon(
-          icon,
-          color: isActive ? Colors.blue.shade400 : Colors.white38,
-          size: 20,
-        ),
-        title: Text(
-          label,
-          style: GoogleFonts.inter(
-            color: isActive ? Colors.white : Colors.white70,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            fontSize: 14,
-          ),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        tileColor: isActive ? Colors.blue.withOpacity(0.1) : Colors.transparent,
       ),
     );
   }
