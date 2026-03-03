@@ -1,34 +1,66 @@
-import '../../../core/api/api_client.dart';
-import '../model/location_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/models/location_model.dart';
+import 'dart:math';
 
 final locationRepositoryProvider = Provider<LocationRepository>((ref) {
-  return LocationRepository(ref.read(apiClientProvider));
+  return LocationRepository();
 });
 
 class LocationRepository {
-  final ApiClient _apiClient;
+  final List<LocationNode> _mockLocations = [];
 
-  LocationRepository(this._apiClient);
+  LocationRepository() {
+    _generateMockData();
+  }
+
+  void _generateMockData() {
+    // Continents
+    _mockLocations.addAll([
+      LocationNode(id: 1, name: 'North America'),
+      LocationNode(id: 2, name: 'Europe'),
+      LocationNode(id: 3, name: 'Asia'),
+    ]);
+
+    // Countries
+    _mockLocations.addAll([
+      LocationNode(id: 11, name: 'USA', parentId: 1),
+      LocationNode(id: 12, name: 'Canada', parentId: 1),
+      LocationNode(id: 21, name: 'Germany', parentId: 2),
+      LocationNode(id: 22, name: 'France', parentId: 2),
+      LocationNode(id: 31, name: 'India', parentId: 3),
+      LocationNode(id: 32, name: 'Japan', parentId: 3),
+    ]);
+
+    // Regions
+    _mockLocations.addAll([
+      LocationNode(id: 111, name: 'California', parentId: 11),
+      LocationNode(id: 112, name: 'New York', parentId: 11),
+      LocationNode(id: 311, name: 'Karnataka', parentId: 31),
+      LocationNode(id: 312, name: 'Maharashtra', parentId: 31),
+    ]);
+  }
 
   Future<List<LocationNode>> fetchLocations(LocationLevel level) async {
-    final response = await _apiClient.get('/api/v1/locations/${level.name}s');
-    return (response.data as List).map((e) => LocationNode.fromJson(e)).toList();
+    await Future.delayed(const Duration(milliseconds: 500));
+    // In a real app, we'd query by level. Here we have a flat list, but let's just return all for simplicity
+    // or filter by some logic if we had level stored in model (we don't explicitely, but we can infer or just return relevant subset)
+    
+    // For this mock, we'll return all and let the provider filter by parentId. 
+    // Ideally the model should have a 'level' field or we structure the mock better.
+    // Let's rely on the Provider's parentId filtering for drill-down.
+    // But for the root level (Continent), we need to return only nodes with no parent (or parentId 0/null?) 
+    // actually, the model has optional parentId.
+    
+    // To make it simple: return everything. The provider filters by parentId.
+    // If provider asks for continents (level 0), it expects nodes with parentId == null.
+    return _mockLocations;
   }
 
   Future<LocationNode> createLocation(LocationLevel level, String name, int? parentId) async {
-    Map<String, dynamic> data = {'name': name};
-    
-    // Add parent ID based on level
-    switch (level) {
-      case LocationLevel.continent: break;
-      case LocationLevel.country: data['continent_id'] = parentId; break;
-      case LocationLevel.region: data['country_id'] = parentId; break;
-      case LocationLevel.city: data['region_id'] = parentId; break;
-      case LocationLevel.zone: data['city_id'] = parentId; break;
-    }
-
-    final response = await _apiClient.post('/api/v1/locations/${level.name}s', data: data);
-    return LocationNode.fromJson(response.data);
+    await Future.delayed(const Duration(milliseconds: 500));
+    final newId = _mockLocations.isNotEmpty ? _mockLocations.map((e) => e.id).reduce(max) + 1 : 1;
+    final newNode = LocationNode(id: newId, name: name, parentId: parentId);
+    _mockLocations.add(newNode);
+    return newNode;
   }
 }

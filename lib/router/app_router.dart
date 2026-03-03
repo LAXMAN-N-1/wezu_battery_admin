@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../features/auth/provider/auth_provider.dart';
+import '../core/providers/auth_provider.dart';
 import '../features/auth/view/login_view.dart';
 import '../features/dashboard/view/dashboard_view.dart';
+import '../features/profile/view/profile_view.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -31,6 +31,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginView(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileView(),
       ),
     ],
   );

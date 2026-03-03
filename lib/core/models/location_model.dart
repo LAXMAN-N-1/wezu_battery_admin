@@ -2,20 +2,34 @@ class LocationNode {
   final int id;
   final String name;
   final int? parentId;
+  final List<LocationNode> children;
+  final LocationLevel type;
 
   LocationNode({
     required this.id,
     required this.name,
     this.parentId,
+    this.children = const [],
+    this.type = LocationLevel.area,
   });
 
   factory LocationNode.fromJson(Map<String, dynamic> json) {
     return LocationNode(
       id: json['id'],
       name: json['name'],
-      parentId: json['continent_id'] ?? json['country_id'] ?? json['region_id'] ?? json['city_id'],
+      parentId: json['parent_id'],
+      children: (json['children'] as List<dynamic>?)
+              ?.map((e) => LocationNode.fromJson(e))
+              .toList() ??
+          [],
+      type: LocationLevel.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => LocationLevel.area,
+      ),
     );
   }
+
+  LocationLevel? get next => type.next;
 }
 
 enum LocationLevel {
@@ -23,20 +37,9 @@ enum LocationLevel {
   country,
   region,
   city,
-  zone;
-
-  String get label {
-    switch (this) {
-      case LocationLevel.continent: return 'Continents';
-      case LocationLevel.country: return 'Countries';
-      case LocationLevel.region: return 'Regions';
-      case LocationLevel.city: return 'Cities';
-      case LocationLevel.zone: return 'Zones';
-    }
-  }
-
+  area;
   LocationLevel? get next {
-    final index = LocationLevel.values.indexOf(this);
+    final index = this.index;
     if (index < LocationLevel.values.length - 1) {
       return LocationLevel.values[index + 1];
     }

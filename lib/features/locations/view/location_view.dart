@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../provider/location_provider.dart';
-import '../model/location_model.dart';
+import '../../../core/widgets/responsive.dart';
+import '../../../core/providers/location_provider.dart';
+import '../../../core/models/location_model.dart';
 
 class LocationView extends ConsumerWidget {
   const LocationView({super.key});
@@ -11,13 +12,20 @@ class LocationView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(locationProvider);
 
+    final isMobile = Responsive.isMobile(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header
+        // Header
         Padding(
           padding: const EdgeInsets.all(40),
-          child: Row(
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 20,
+            runSpacing: 16,
             children: [
               Text(
                 'Location Management',
@@ -27,7 +35,6 @@ class LocationView extends ConsumerWidget {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
               ElevatedButton.icon(
                 onPressed: () => _showAddDialog(context, ref),
                 icon: const Icon(Icons.add, size: 18),
@@ -46,7 +53,10 @@ class LocationView extends ConsumerWidget {
         // Breadcrumbs
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: _buildBreadcrumbs(ref, state),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: _buildBreadcrumbs(ref, state),
+          ),
         ),
 
         const SizedBox(height: 24),
@@ -115,14 +125,14 @@ class LocationView extends ConsumerWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.location_on_outlined, color: Colors.blue.shade400, size: 20),
@@ -146,29 +156,45 @@ class LocationView extends ConsumerWidget {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: Text('Add New ${ref.read(locationProvider).currentLevel.name}', style: const TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Enter name',
-            hintStyle: TextStyle(color: Colors.white24),
+      builder: (context) {
+        final currentLevel = ref.read(locationProvider).currentLevel;
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: Text('Add New ${currentLevel.next?.name ?? 'Location'}', style: const TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Enter name',
+              hintStyle: TextStyle(color: Colors.white24),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              ref.read(locationProvider.notifier).addLocation(controller.text);
-              Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), 
+              child: const Text('Cancel')
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  final newNode = LocationNode(
+                    id: DateTime.now().millisecondsSinceEpoch, // Mock ID
+                    name: controller.text,
+                    type: currentLevel.next ?? LocationLevel.area,
+                    parentId: currentLevel.id,
+                  );
+                  ref.read(locationProvider.notifier).addLocation(newNode);
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
