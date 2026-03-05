@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/api/api_client.dart';
+import '../../../core/api/api_client.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
@@ -54,23 +54,43 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
+
     try {
-      final response = await _apiClient.post('/api/v1/auth/admin/login', data: {
-        'username': email, // FastAPI OAuth2 expects username
-        'password': password,
-      });
+      final response = await _apiClient.post(
+        '/auth/login',
+        data: {'username': email, 'password': password},
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        ),
+      );
 
       if (response.statusCode == 200) {
-        final token = response.data['access_token'];
+        final data = response.data;
+        final token = data['access_token'];
+
         await _apiClient.storage.write(key: 'admin_token', value: token);
-        state = state.copyWith(isLoading: false, isAuthenticated: true);
+        _apiClient.dio.options.headers['Authorization'] = 'Bearer $token';
+
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: true,
+          user: data['user'],
+        );
       } else {
-        state = state.copyWith(isLoading: false, error: 'Login failed');
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Login failed. Please check your credentials.',
+        );
       }
     } on DioException catch (e) {
       state = state.copyWith(
-        isLoading: false, 
-        error: e.response?.data['detail'] ?? 'An error occurred',
+        isLoading: false,
+        error: e.response?.data?['detail'] ?? 'Network error occurred.',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'An unexpected error occurred.',
       );
     }
   }

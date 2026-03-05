@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
@@ -13,9 +13,10 @@ class ApiClient {
   ApiClient() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8000', // Update for staging/prod
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        baseUrl:
+            'http://localhost:8000/api/v1', // Use localhost for web/emulator
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -43,25 +44,30 @@ class ApiClient {
     );
 
     // Add logging in debug mode
-    dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-    ));
+    dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    return await dio.get(path, queryParameters: queryParameters);
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await dio.get(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
-  Future<Response> post(String path, {dynamic data}) async {
-    return await dio.post(path, data: data);
+  Future<Response> post(String path, {dynamic data, Options? options}) async {
+    return await dio.post(path, data: data, options: options);
   }
 
-  Future<Response> put(String path, {dynamic data}) async {
-    return await dio.put(path, data: data);
+  Future<Response> put(String path, {dynamic data, Options? options}) async {
+    return await dio.put(path, data: data, options: options);
   }
 
-  Future<Response> delete(String path) async {
-    return await dio.delete(path);
+  Future<Response> delete(String path, {dynamic data, Options? options}) async {
+    return await dio.delete(path, data: data, options: options);
   }
 }

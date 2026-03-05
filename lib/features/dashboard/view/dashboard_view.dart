@@ -9,7 +9,8 @@ class DashboardView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return SingleChildScrollView( // Added scroll for smaller screens
+    return SingleChildScrollView(
+      // Added scroll for smaller screens
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,20 +24,23 @@ class DashboardView extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Responsive Metric Grid
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
               int crossAxisCount = width > 1200 ? 4 : (width > 800 ? 2 : 1);
-              double childAspectRatio = width > 1200 ? 1.5 : (width > 800 ? 2.5 : 2.0);
+              double childAspectRatio = width > 1200
+                  ? 1.5
+                  : (width > 800 ? 2.5 : 2.0);
 
               return GridView.count(
                 crossAxisCount: crossAxisCount,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 shrinkWrap: true, // Important inside SingleChildScrollView
-                physics: const NeverScrollableScrollPhysics(), // Disable grid scroll
+                physics:
+                    const NeverScrollableScrollPhysics(), // Disable grid scroll
                 childAspectRatio: childAspectRatio,
                 children: const [
                   MetricCard(
@@ -71,7 +75,7 @@ class DashboardView extends ConsumerWidget {
               );
             },
           ),
-          
+
           const SizedBox(height: 24),
 
           // Main Chart Section
@@ -79,10 +83,7 @@ class DashboardView extends ConsumerWidget {
             height: 400,
             child: Row(
               children: [
-                Expanded(
-                  flex: 2,
-                  child: const DashboardChart(),
-                ),
+                Expanded(flex: 2, child: const DashboardChart()),
                 const SizedBox(width: 24),
                 // Placeholder for Donut Chart / Activity List
                 Expanded(
@@ -91,7 +92,9 @@ class DashboardView extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E293B),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
                     ),
                     child: Center(
                       child: Text(

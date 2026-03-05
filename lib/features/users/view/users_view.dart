@@ -39,7 +39,8 @@ class _UsersViewState extends State<UsersView> {
 
   List<User> get _filteredUsers {
     return _users.where((user) {
-      final matchesSearch = user.fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch =
+          user.fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           user.email.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           user.phoneNumber.contains(_searchQuery);
       final matchesRole = _filterRole == null || user.role == _filterRole;
@@ -47,7 +48,8 @@ class _UsersViewState extends State<UsersView> {
     }).toList();
   }
 
-  int get _pendingKycCount => _users.where((u) => u.kycStatus == 'pending').length;
+  int get _pendingKycCount =>
+      _users.where((u) => u.kycStatus == 'pending').length;
 
   @override
   Widget build(BuildContext context) {
@@ -115,16 +117,34 @@ class _UsersViewState extends State<UsersView> {
                   ),
                   child: DropdownButton<String>(
                     value: _filterRole,
-                    hint: const Text('All Roles', style: TextStyle(color: Colors.white70)),
+                    hint: const Text(
+                      'All Roles',
+                      style: TextStyle(color: Colors.white70),
+                    ),
                     dropdownColor: const Color(0xFF1E293B),
                     icon: const Icon(Icons.filter_list, color: Colors.white70),
                     style: GoogleFonts.inter(color: Colors.white),
                     items: [
-                      const DropdownMenuItem(value: null, child: Text('All Roles')),
-                      const DropdownMenuItem(value: 'customer', child: Text('Customer')),
-                      const DropdownMenuItem(value: 'driver', child: Text('Driver')),
-                      const DropdownMenuItem(value: 'dealer', child: Text('Dealer')),
-                      const DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('All Roles'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'customer',
+                        child: Text('Customer'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'driver',
+                        child: Text('Driver'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'dealer',
+                        child: Text('Dealer'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'admin',
+                        child: Text('Admin'),
+                      ),
                     ],
                     onChanged: (value) => setState(() => _filterRole = value),
                   ),
@@ -137,11 +157,13 @@ class _UsersViewState extends State<UsersView> {
           // Data Table
           Card(
             color: Colors.white.withValues(alpha: 0.05),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: _isLoading
                 ? const SizedBox(
-                    height: 200, 
-                    child: Center(child: CircularProgressIndicator())
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
                   )
                 : SizedBox(
                     width: double.infinity,
@@ -151,16 +173,48 @@ class _UsersViewState extends State<UsersView> {
                         iconTheme: const IconThemeData(color: Colors.white70),
                       ),
                       child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
+                        headingRowColor: WidgetStateProperty.all(
+                          Colors.white.withValues(alpha: 0.05),
+                        ),
                         dataRowMinHeight: 60,
                         dataRowMaxHeight: 60,
                         columns: const [
-                          DataColumn(label: Text('User', style: TextStyle(color: Colors.white70))),
-                          DataColumn(label: Text('Role', style: TextStyle(color: Colors.white70))),
-                          DataColumn(label: Text('Status', style: TextStyle(color: Colors.white70))),
-                          DataColumn(label: Text('KYC', style: TextStyle(color: Colors.white70))),
-                          DataColumn(label: Text('Joined', style: TextStyle(color: Colors.white70))),
-                          DataColumn(label: Text('Actions', style: TextStyle(color: Colors.white70))),
+                          DataColumn(
+                            label: Text(
+                              'User',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Role',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Status',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'KYC',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Joined',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Actions',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
                         ],
                         rows: _filteredUsers.map((user) {
                           return DataRow(
@@ -170,19 +224,38 @@ class _UsersViewState extends State<UsersView> {
                                   children: [
                                     CircleAvatar(
                                       radius: 18,
-                                      backgroundColor: Colors.blue.withValues(alpha: 0.2),
+                                      backgroundColor: Colors.blue.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       child: Text(
                                         user.fullName[0].toUpperCase(),
-                                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                                        Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                        Text(
+                                          user.fullName,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          user.email,
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -191,10 +264,12 @@ class _UsersViewState extends State<UsersView> {
                               DataCell(_buildRoleBadge(user.role)),
                               DataCell(_buildStatusBadge(user.isActive)),
                               DataCell(_buildKycBadge(user.kycStatus)),
-                              DataCell(Text(
-                                DateFormat('MMM d, y').format(user.joinedAt),
-                                style: const TextStyle(color: Colors.white70),
-                              )),
+                              DataCell(
+                                Text(
+                                  DateFormat('MMM d, y').format(user.joinedAt),
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                              ),
                               DataCell(
                                 IconButton(
                                   icon: const Icon(Icons.more_vert, size: 20),
@@ -213,7 +288,12 @@ class _UsersViewState extends State<UsersView> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -245,10 +325,7 @@ class _UsersViewState extends State<UsersView> {
               ),
               Text(
                 title,
-                style: GoogleFonts.inter(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+                style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
               ),
             ],
           ),
@@ -260,10 +337,17 @@ class _UsersViewState extends State<UsersView> {
   Widget _buildRoleBadge(String role) {
     Color color;
     switch (role) {
-      case 'admin': color = Colors.purple; break;
-      case 'dealer': color = Colors.orange; break;
-      case 'driver': color = Colors.blue; break;
-      default: color = Colors.green;
+      case 'admin':
+        color = Colors.purple;
+        break;
+      case 'dealer':
+        color = Colors.orange;
+        break;
+      case 'driver':
+        color = Colors.blue;
+        break;
+      default:
+        color = Colors.green;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -274,7 +358,11 @@ class _UsersViewState extends State<UsersView> {
       ),
       child: Text(
         role.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -290,8 +378,8 @@ class _UsersViewState extends State<UsersView> {
         isActive ? 'Active' : 'Inactive',
         style: TextStyle(
           color: isActive ? Colors.green : Colors.red,
-          fontSize: 11, 
-          fontWeight: FontWeight.w500
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -301,20 +389,20 @@ class _UsersViewState extends State<UsersView> {
     Color color;
     IconData icon;
     switch (status) {
-      case 'verified': 
-        color = Colors.green; 
-        icon = Icons.check_circle; 
+      case 'verified':
+        color = Colors.green;
+        icon = Icons.check_circle;
         break;
-      case 'pending': 
-        color = Colors.orange; 
-        icon = Icons.pending; 
+      case 'pending':
+        color = Colors.orange;
+        icon = Icons.pending;
         break;
-      case 'rejected': 
-        color = Colors.red; 
-        icon = Icons.cancel; 
+      case 'rejected':
+        color = Colors.red;
+        icon = Icons.cancel;
         break;
-      default: 
-        color = Colors.grey; 
+      default:
+        color = Colors.grey;
         icon = Icons.help;
     }
 

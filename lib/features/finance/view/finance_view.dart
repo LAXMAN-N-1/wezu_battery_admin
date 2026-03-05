@@ -79,14 +79,21 @@ class _FinanceViewState extends State<FinanceView> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '+$_monthlyGrowth%',
-                          style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -131,20 +138,28 @@ class _FinanceViewState extends State<FinanceView> {
                       ),
                       titlesData: FlTitlesData(
                         show: true,
-                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 30,
                             interval: 1,
                             getTitlesWidget: (value, meta) {
-                              if (value.toInt() >= 0 && value.toInt() < _chartData.length) {
+                              if (value.toInt() >= 0 &&
+                                  value.toInt() < _chartData.length) {
                                 return SideTitleWidget(
                                   meta: meta,
                                   child: Text(
                                     _chartData[value.toInt()]['month'],
-                                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                    style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 );
                               }
@@ -159,7 +174,10 @@ class _FinanceViewState extends State<FinanceView> {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '₹${(value / 1000).toInt()}k',
-                                style: const TextStyle(color: Colors.white54, fontSize: 10),
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 10,
+                                ),
                               );
                             },
                           ),
@@ -173,7 +191,10 @@ class _FinanceViewState extends State<FinanceView> {
                       lineBarsData: [
                         LineChartBarData(
                           spots: _chartData.asMap().entries.map((entry) {
-                            return FlSpot(entry.key.toDouble(), entry.value['value']);
+                            return FlSpot(
+                              entry.key.toDouble(),
+                              entry.value['value'],
+                            );
                           }).toList(),
                           isCurved: true,
                           color: Colors.blue,
@@ -218,22 +239,31 @@ class _FinanceViewState extends State<FinanceView> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: _transactions.length,
-        separatorBuilder: (context, index) => Divider(color: Colors.white.withValues(alpha: 0.1)),
+        separatorBuilder: (context, index) =>
+            Divider(color: Colors.white.withValues(alpha: 0.1)),
         itemBuilder: (context, index) {
           final txn = _transactions[index];
           return ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 8,
+            ),
             leading: CircleAvatar(
               backgroundColor: Colors.white.withValues(alpha: 0.05),
               child: Icon(
-                txn.status == 'success' ? Icons.arrow_outward : Icons.warning_amber_rounded,
+                txn.status == 'success'
+                    ? Icons.arrow_outward
+                    : Icons.warning_amber_rounded,
                 color: txn.status == 'success' ? Colors.green : Colors.red,
                 size: 20,
               ),
             ),
             title: Text(
               txn.type.toUpperCase().replaceAll('_', ' '),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             subtitle: Text(
               '${txn.userName} • ${DateFormat('MMM d, h:mm a').format(txn.timestamp)}',

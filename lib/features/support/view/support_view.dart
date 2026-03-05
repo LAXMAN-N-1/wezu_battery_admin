@@ -60,14 +60,19 @@ class _SupportViewState extends State<SupportView> {
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () {}, 
+                onPressed: () {},
                 icon: const Icon(Icons.add),
                 label: const Text('New Ticket'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -77,11 +82,23 @@ class _SupportViewState extends State<SupportView> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildKanbanColumn('To Do', Colors.orange, _getTicketsByStatus('todo')),
+                _buildKanbanColumn(
+                  'To Do',
+                  Colors.orange,
+                  _getTicketsByStatus('todo'),
+                ),
                 const SizedBox(width: 24),
-                _buildKanbanColumn('In Progress', Colors.blue, _getTicketsByStatus('in_progress')),
+                _buildKanbanColumn(
+                  'In Progress',
+                  Colors.blue,
+                  _getTicketsByStatus('in_progress'),
+                ),
                 const SizedBox(width: 24),
-                _buildKanbanColumn('Done', Colors.green, _getTicketsByStatus('done')),
+                _buildKanbanColumn(
+                  'Done',
+                  Colors.green,
+                  _getTicketsByStatus('done'),
+                ),
               ],
             ),
           ),
@@ -90,7 +107,11 @@ class _SupportViewState extends State<SupportView> {
     );
   }
 
-  Widget _buildKanbanColumn(String title, Color color, List<SupportTicket> tickets) {
+  Widget _buildKanbanColumn(
+    String title,
+    Color color,
+    List<SupportTicket> tickets,
+  ) {
     return Expanded(
       child: Container(
         decoration: BoxDecoration(
@@ -103,10 +124,7 @@ class _SupportViewState extends State<SupportView> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 6,
-                  backgroundColor: color,
-                ),
+                CircleAvatar(radius: 6, backgroundColor: color),
                 const SizedBox(width: 8),
                 Text(
                   title,
@@ -118,7 +136,10 @@ class _SupportViewState extends State<SupportView> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -134,8 +155,10 @@ class _SupportViewState extends State<SupportView> {
             Expanded(
               child: ListView.separated(
                 itemCount: tickets.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => _buildTicketCard(tickets[index]),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) =>
+                    _buildTicketCard(tickets[index]),
               ),
             ),
           ],
@@ -158,9 +181,14 @@ class _SupportViewState extends State<SupportView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: _getPriorityColor(ticket.prioritry).withValues(alpha: 0.2),
+                    color: _getPriorityColor(
+                      ticket.prioritry,
+                    ).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -217,9 +245,12 @@ class _SupportViewState extends State<SupportView> {
 
   Color _getPriorityColor(String priority) {
     switch (priority) {
-      case 'high': return Colors.red;
-      case 'medium': return Colors.orange;
-      default: return Colors.green;
+      case 'high':
+        return Colors.red;
+      case 'medium':
+        return Colors.orange;
+      default:
+        return Colors.green;
     }
   }
 }

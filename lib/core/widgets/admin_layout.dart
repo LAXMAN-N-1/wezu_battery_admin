@@ -9,21 +9,44 @@ class AdminLayout extends ConsumerWidget {
   final Widget child;
   final String title;
 
-  const AdminLayout({
-    super.key,
-    required this.child,
-    required this.title,
-  });
+  const AdminLayout({super.key, required this.child, required this.title});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSidebarOpen = ref.watch(sidebarOpenProvider);
+    final isMobile = MediaQuery.of(context).size.width < 1024;
+
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        drawer: Drawer(
+          backgroundColor: const Color(0xFF1E293B),
+          child: _buildSidebar(context, ref, isMobile: true),
+        ),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF1E293B),
+          title: Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+          elevation: 0,
+        ),
+        body: child,
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       body: Row(
         children: [
           // Sidebar
-          _buildSidebar(context, ref),
-          
+          if (isSidebarOpen) _buildSidebar(context, ref, isMobile: false),
+
           // Main Content Area
           Expanded(
             child: Column(
@@ -38,12 +61,20 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context, WidgetRef ref) {
+  Widget _buildSidebar(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool isMobile,
+  }) {
     return Container(
-      width: 280,
+      width: isMobile ? double.infinity : 280,
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
-        border: Border(right: BorderSide(color: Colors.white.withOpacity(0.1))),
+        border: isMobile
+            ? null
+            : Border(
+                right: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              ),
       ),
       child: Column(
         children: [
@@ -71,47 +102,115 @@ class AdminLayout extends ConsumerWidget {
               ],
             ),
           ),
-          _buildNavItem(ref, 0, Icons.dashboard_outlined, 'Dashboard', '/dashboard'),
-          _buildNavItem(ref, 1, Icons.inventory_2_outlined, 'Fleet & Inventory', '/inventory/batteries'),
-          _buildNavItem(ref, 2, Icons.ev_station_outlined, 'Stations', '/stations'),
-          _buildNavItem(ref, 3, Icons.people_outline, 'Users', '/users'),
-          _buildNavItem(ref, 4, Icons.attach_money_outlined, 'Finance', '/finance'),
-          _buildNavItem(ref, 5, Icons.support_agent_outlined, 'Support', '/support'),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.blue.withOpacity(0.2)),
-              ),
-              child: Column(
-                children: [
-                  const Text("Need Help?", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text("Check the docs", style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 36),
-                    ),
-                    child: const Text("Documentation"),
-                  ),
-                ],
-              ),
-            ),
+          _buildNavItem(
+            ref,
+            0,
+            Icons.dashboard_outlined,
+            'Dashboard',
+            '/dashboard',
+            isMobile: isMobile,
           ),
           _buildNavItem(
-            ref, -1,
-            Icons.logout_outlined, 
-            'Sign Out', 
+            ref,
+            1,
+            Icons.inventory_2_outlined,
+            'Fleet & Inventory',
+            '/inventory/batteries',
+            isMobile: isMobile,
+          ),
+          _buildNavItem(
+            ref,
+            2,
+            Icons.ev_station_outlined,
+            'Stations',
+            '/stations',
+            isMobile: isMobile,
+          ),
+          _buildNavItem(
+            ref,
+            3,
+            Icons.monitor_heart_outlined,
+            '📡 Monitor',
+            '/stations/monitor',
+            isMobile: isMobile,
+          ),
+          _buildNavItem(
+            ref,
+            4,
+            Icons.people_outline,
+            'Users',
+            '/users',
+            isMobile: isMobile,
+          ),
+          _buildNavItem(
+            ref,
+            5,
+            Icons.attach_money_outlined,
+            'Finance',
+            '/finance',
+            isMobile: isMobile,
+          ),
+          _buildNavItem(
+            ref,
+            6,
+            Icons.support_agent_outlined,
+            'Support',
+            '/support',
+            isMobile: isMobile,
+          ),
+          const Spacer(),
+          if (!isMobile)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      "Need Help?",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Check the docs",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade600,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 36),
+                      ),
+                      child: const Text("Documentation"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          _buildNavItem(
+            ref,
+            -1,
+            Icons.logout_outlined,
+            'Sign Out',
             '/login',
-            onTap: () => ref.read(authProvider.notifier).logout(),
+            isMobile: isMobile,
+            onTap: () {
+              if (isMobile) Navigator.pop(context);
+              ref.read(authProvider.notifier).logout();
+            },
           ),
           const SizedBox(height: 20),
         ],
@@ -119,17 +218,30 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildNavItem(WidgetRef ref, int index, IconData icon, String label, String route, {VoidCallback? onTap}) {
+  Widget _buildNavItem(
+    WidgetRef ref,
+    int index,
+    IconData icon,
+    String label,
+    String route, {
+    required bool isMobile,
+    VoidCallback? onTap,
+  }) {
     final selectedIndex = ref.watch(navigationProvider);
     final isActive = selectedIndex == index;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
-        onTap: onTap ?? () {
-          ref.read(navigationProvider.notifier).state = index;
-          GoRouter.of(ref.context).go(route);
-        },
+        onTap:
+            onTap ??
+            () {
+              ref.read(navigationProvider.notifier).state = index;
+              if (isMobile) {
+                Navigator.pop(ref.context);
+              }
+              GoRouter.of(ref.context).go(route);
+            },
         dense: true,
         leading: Icon(
           icon,
@@ -145,7 +257,9 @@ class AdminLayout extends ConsumerWidget {
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        tileColor: isActive ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+        tileColor: isActive
+            ? Colors.blue.withValues(alpha: 0.1)
+            : Colors.transparent,
       ),
     );
   }
@@ -153,13 +267,22 @@ class AdminLayout extends ConsumerWidget {
   Widget _buildHeader(WidgetRef ref, String title) {
     return Container(
       height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+        ),
       ),
       child: Row(
         children: [
+          IconButton(
+            onPressed: () => ref.read(sidebarOpenProvider.notifier).state = !ref
+                .read(sidebarOpenProvider.notifier)
+                .state,
+            icon: const Icon(Icons.menu, color: Colors.white70),
+          ),
+          const SizedBox(width: 12),
           Text(
             title,
             style: GoogleFonts.inter(
@@ -182,21 +305,37 @@ class AdminLayout extends ConsumerWidget {
           Container(
             height: 32,
             width: 1,
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
           ),
           const SizedBox(width: 24),
           CircleAvatar(
             radius: 18,
             backgroundColor: Colors.blue.shade600,
-            child: const Text("A", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "A",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Admin User", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-              Text("Super Admin", style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+              Text(
+                "Admin User",
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              Text(
+                "Super Admin",
+                style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+              ),
             ],
           ),
         ],
