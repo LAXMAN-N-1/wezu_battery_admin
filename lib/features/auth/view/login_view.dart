@@ -27,10 +27,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B), // Slate 800
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 40,
                 offset: const Offset(0, 20),
               ),
@@ -53,10 +53,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
               Text(
                 'Sign in to manage your ecosystem',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
               ),
               const SizedBox(height: 48),
               _buildTextField(
@@ -80,14 +77,19 @@ class _LoginViewState extends ConsumerState<LoginView> {
                   child: Text(
                     authState.error!,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ElevatedButton(
                 onPressed: authState.isLoading
                     ? null
                     : () {
-                        ref.read(authProvider.notifier).login(
+                        ref
+                            .read(authProvider.notifier)
+                            .login(
                               _emailController.text,
                               _passwordController.text,
                             );
@@ -112,9 +114,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                       )
                     : Text(
                         'Continue',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                       ),
               ),
             ],
@@ -164,7 +164,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+              borderSide: const BorderSide(
+                color: Color(0xFF3B82F6),
+                width: 1.5,
+              ),
             ),
           ),
         ),
