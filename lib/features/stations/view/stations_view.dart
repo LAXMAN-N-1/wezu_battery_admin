@@ -27,7 +27,13 @@ class _StationsViewState extends ConsumerState<StationsView> {
   Station? _selectedStation;
 
   void _onStationSelected(Station station) {
-    setState(() => _selectedStation = station);
+    setState(() {
+      if (_selectedStation?.id == station.id) {
+        _selectedStation = null;
+      } else {
+        _selectedStation = station;
+      }
+    });
     // TODO: Re-enable camera animation when Google Maps API key is configured
     // final GoogleMapController controller = await _controller.future;
     // controller.animateCamera(...);
@@ -104,10 +110,16 @@ class _StationsViewState extends ConsumerState<StationsView> {
     final isMobile = MediaQuery.of(context).size.width < 1024;
 
     if (isMobile) {
+      if (_selectedStation == null) {
+        return _buildListPanel(stationsAsync);
+      }
       return Column(
         children: [
-          // Map Panel on top for mobile
-          SizedBox(height: 250, child: _buildMapPanel(stationsAsync)),
+          // Map Panel on top for mobile - now flexible to avoid overflow
+          Flexible(
+            flex: 2,
+            child: _buildMapPanel(stationsAsync),
+          ),
           // List Panel at bottom
           Expanded(child: _buildListPanel(stationsAsync)),
         ],
@@ -345,175 +357,181 @@ class _StationsViewState extends ConsumerState<StationsView> {
     return Container(
       color: const Color(0xFF0F172A),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.map_outlined,
-              size: 64,
-              color: Colors.white.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Map View',
-              style: GoogleFonts.outfit(
-                color: Colors.white38,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.map_outlined,
+                size: 64,
+                color: Colors.white.withValues(alpha: 0.2),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Configure a Google Maps API key\nto enable the interactive map.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: Colors.white24, fontSize: 13),
-            ),
-            if (_selectedStation != null) ...[
-              const SizedBox(height: 20),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08),
-                  ),
+              const SizedBox(height: 16),
+              Text(
+                'Map View',
+                style: GoogleFonts.outfit(
+                  color: Colors.white38,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.ev_station,
-                            color: Colors.blue,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _selectedStation!.name,
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                _selectedStation!.address,
-                                style: GoogleFonts.inter(
-                                  color: Colors.white38,
-                                  fontSize: 11,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Configure a Google Maps API key\nto enable the interactive map.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(color: Colors.white24, fontSize: 13),
+              ),
+              if (_selectedStation != null) ...[
+                const SizedBox(height: 20),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
                     ),
-                    const SizedBox(height: 12),
-                    // Stats row
-                    Row(
-                      children: [
-                        infoChip(
-                          '${_selectedStation!.totalSlots} Slots',
-                          Colors.blue,
-                        ),
-                        const SizedBox(width: 6),
-                        infoChip(
-                          '${_selectedStation!.availableBatteries} Bats',
-                          Colors.green,
-                        ),
-                        const SizedBox(width: 6),
-                        infoChip(
-                          _selectedStation!.status.toUpperCase(),
-                          _selectedStation!.status == 'active'
-                              ? Colors.green
-                              : Colors.orange,
-                        ),
-                      ],
-                    ),
-                    if (_selectedStation!.contactPhone?.isNotEmpty == true) ...[
-                      const SizedBox(height: 8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
                         children: [
-                          const Icon(
-                            Icons.phone,
-                            size: 12,
-                            color: Colors.white38,
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.ev_station,
+                              color: Colors.blue,
+                              size: 18,
+                            ),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _selectedStation!.contactPhone!,
-                            style: GoogleFonts.inter(
-                              color: Colors.white54,
-                              fontSize: 12,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedStation!.name,
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  _selectedStation!.address,
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white38,
+                                    fontSize: 11,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Stats row
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          infoChip(
+                            '${_selectedStation!.totalSlots} Slots',
+                            Colors.blue,
+                          ),
+                          infoChip(
+                            '${_selectedStation!.availableBatteries} Bats',
+                            Colors.green,
+                          ),
+                          infoChip(
+                            _selectedStation!.status.toUpperCase(),
+                            _selectedStation!.status == 'active'
+                                ? Colors.green
+                                : Colors.orange,
+                          ),
+                        ],
+                      ),
+                      if (_selectedStation!.contactPhone?.isNotEmpty == true) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.phone,
+                              size: 12,
+                              color: Colors.white38,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _selectedStation!.contactPhone!,
+                          style: GoogleFonts.inter(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      // Action buttons - Use Wrap for mobile robustness
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _onEdit(_selectedStation!),
+                              icon: const Icon(Icons.edit, size: 14),
+                              label: const Text('Edit'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white70,
+                                side: const BorderSide(color: Colors.white12),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 120,
+                            child: ElevatedButton.icon(
+                              onPressed: () => showStationSpecsSheet(
+                                context,
+                                _selectedStation!,
+                              ),
+                              icon: const Icon(
+                                Icons.electrical_services,
+                                size: 14,
+                              ),
+                              label: const Text('⚡ Specs'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ],
-                    const SizedBox(height: 14),
-                    // Action buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _onEdit(_selectedStation!),
-                            icon: const Icon(Icons.edit, size: 14),
-                            label: const Text('Edit'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white70,
-                              side: const BorderSide(color: Colors.white12),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => showStationSpecsSheet(
-                              context,
-                              _selectedStation!,
-                            ),
-                            icon: const Icon(
-                              Icons.electrical_services,
-                              size: 14,
-                            ),
-                            label: const Text('⚡ Specs'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

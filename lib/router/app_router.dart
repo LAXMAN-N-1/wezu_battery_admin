@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/view/login_view.dart';
+import '../features/auth/provider/auth_provider.dart';
 import '../features/dashboard/view/dashboard_view.dart';
 import '../features/inventory/view/batteries_view.dart';
 import '../features/stations/view/stations_view.dart';
@@ -13,10 +14,31 @@ import '../features/support/view/support_view.dart';
 import '../core/widgets/admin_layout.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+
   return GoRouter(
     initialLocation: '/dashboard',
     debugLogDiagnostics: true,
-    // Auth guard bypassed for UI testing - goes straight to dashboard
+    redirect: (context, state) {
+      final isLoggingIn = state.matchedLocation == '/login';
+
+      // Still loading authentication state
+      if (authState.isLoading) {
+         // Stay on login page or redirect to login while loading to prevent flashing the dashboard
+         return isLoggingIn ? null : '/login';
+      }
+
+      // Not authenticated
+      if (!authState.isAuthenticated) {
+        return isLoggingIn ? null : '/login';
+      }
+
+      // Authenticated but trying to access login page
+      if (isLoggingIn) {
+        return '/dashboard';
+      }
+      return null;
+    },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginView()),
       ShellRoute(

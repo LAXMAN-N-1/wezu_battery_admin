@@ -38,15 +38,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final ApiClient _apiClient;
 
   AuthNotifier(this._apiClient) : super(AuthState()) {
+    _apiClient.onUnauthorized = logout;
     _checkStatus();
   }
 
   Future<void> _checkStatus() async {
     state = state.copyWith(isLoading: true);
+
     final token = await _apiClient.storage.read(key: 'admin_token');
     if (token != null) {
-      // Potentially fetch user profile here to verify token
-      state = state.copyWith(isLoading: false, isAuthenticated: true);
+      try {
+        // Verify token by fetching current user profile
+        final response = await _apiClient.get('customer/users/me');
+        if (response.statusCode == 200) {
+          state = state.copyWith(
+            isLoading: false,
+            isAuthenticated: true,
+            user: response.data,
+          );
+        } else {
+          await logout();
+        }
+      } catch (e) {
+        // If 401 or network error, assume not authenticated for safety
+        await logout();
+      }
     } else {
       state = state.copyWith(isLoading: false, isAuthenticated: false);
     }
@@ -57,7 +73,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       final response = await _apiClient.post(
-        '/auth/login',
+        'customer/auth/login',
         data: {'username': email, 'password': password},
         options: Options(
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -83,9 +99,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } on DioException catch (e) {
+      String errorMessage = 'Network error occurred.';
+      if (e.response?.data is Map) {
+        errorMessage = e.response?.data['detail'] ?? 'Network error occurred.';
+      }
       state = state.copyWith(
         isLoading: false,
-        error: e.response?.data?['detail'] ?? 'Network error occurred.',
+        error: errorMessage,
       );
     } catch (e) {
       state = state.copyWith(
@@ -97,6 +117,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await _apiClient.storage.delete(key: 'admin_token');
-    state = state.copyWith(isAuthenticated: false);
+    _apiClient.dio.options.headers.remove('Authorization');
+    state = state.copyWith(
+      isAuthenticated: false,
+      user: null,
+      error: null,
+      isLoading: false,
+    );
   }
 }

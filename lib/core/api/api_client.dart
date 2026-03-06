@@ -9,14 +9,15 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 class ApiClient {
   late Dio dio;
   final storage = const FlutterSecureStorage();
+  void Function()? onUnauthorized;
 
   ApiClient() {
     dio = Dio(
       BaseOptions(
         baseUrl:
-            'http://localhost:8000/api/v1', // Use localhost for web/emulator
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
+            'http://192.168.100.19:8001/api/v1/', // Use host machine IP for Android physical device testing
+        connectTimeout: const Duration(seconds: 10), // Reduced timeout to prevent long visual hangs
+        receiveTimeout: const Duration(seconds: 10),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -35,8 +36,10 @@ class ApiClient {
         },
         onError: (DioException e, handler) {
           if (e.response?.statusCode == 401) {
-            // Handle unauthorized - logout user or refresh token
-            // logout logic could go here
+            // Handle unauthorized - logout user
+            if (onUnauthorized != null) {
+              onUnauthorized!();
+            }
           }
           return handler.next(e);
         },
