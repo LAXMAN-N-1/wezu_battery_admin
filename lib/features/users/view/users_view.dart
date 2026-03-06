@@ -177,13 +177,15 @@ class _UsersViewState extends State<UsersView> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                                        Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                                      ],
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
+                                          Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 12), overflow: TextOverflow.ellipsis),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),

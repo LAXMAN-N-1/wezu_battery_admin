@@ -6,10 +6,11 @@ final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
 class ApiClient {
   late final Dio _dio;
+  Dio get dio => _dio;
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   ApiClient() {
-    const baseUrl = 'https://api.digitaltechs.in';
+    const baseUrl = 'http://localhost:8000';
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 30),

@@ -55,10 +55,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await _apiClient.post('/api/v1/auth/admin/login', data: {
-        'username': email, // FastAPI OAuth2 expects username
+      // Use FormData to match FastAPI OAuth2PasswordRequestForm requirements
+      final formData = FormData.fromMap({
+        'username': email,
         'password': password,
       });
+
+      final response = await _apiClient.post('/api/v1/auth/admin/login', data: formData);
 
       if (response.statusCode == 200) {
         final token = response.data['access_token'];
