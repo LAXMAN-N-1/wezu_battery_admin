@@ -15,7 +15,7 @@ class StationRankingList extends ConsumerWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +67,7 @@ class _RankingItem extends StatelessWidget {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: ranking.rank == 1 ? Colors.amber.withOpacity(0.2) : Colors.white.withOpacity(0.05),
+              color: ranking.rank == 1 ? Colors.amber.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
             child: Center(

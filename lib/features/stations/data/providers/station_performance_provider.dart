@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/station_performance.dart';
 import 'stations_provider.dart';
 
@@ -7,7 +8,7 @@ part 'station_performance_provider.g.dart';
 
 @riverpod
 Future<StationPerformance> stationPerformance(
-  StationPerformanceRef ref, {
+  Ref ref, {
   required int stationId,
   DateTime? start,
   DateTime? end,
@@ -18,7 +19,7 @@ Future<StationPerformance> stationPerformance(
 
 @riverpod
 Future<List<StationRanking>> stationRankings(
-  StationRankingsRef ref, {
+  Ref ref, {
   String metric = 'revenue',
   int limit = 10,
 }) async {

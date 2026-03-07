@@ -115,9 +115,9 @@ class StationPerformanceView extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -205,7 +205,7 @@ class _DateRangePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final df = DateFormat('MMM dd, yyyy');
     return ActionChip(
-      backgroundColor: Colors.white.withOpacity(0.05),
+      backgroundColor: Colors.white.withValues(alpha: 0.05),
       label: Text(
         '${df.format(start)} - ${df.format(end)}',
         style: const TextStyle(color: Colors.white70),
@@ -239,7 +239,7 @@ class _ChartCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +297,7 @@ class _TrendsChart extends StatelessWidget {
             color: Colors.blue,
             barWidth: 3,
             dotData: FlDotData(show: false),
-            belowBarData: BarAreaData(show: true, color: Colors.blue.withOpacity(0.1)),
+            belowBarData: BarAreaData(show: true, color: Colors.blue.withValues(alpha: 0.1)),
           ),
           LineChartBarData(
             spots: trends.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.revenue.toDouble() / 10)).toList(),
@@ -305,7 +305,7 @@ class _TrendsChart extends StatelessWidget {
             color: Colors.green,
             barWidth: 3,
             dotData: FlDotData(show: false),
-            belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1)),
+            belowBarData: BarAreaData(show: true, color: Colors.green.withValues(alpha: 0.1)),
           ),
         ],
       ),
@@ -381,7 +381,7 @@ class _BenchmarkingTable extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [

@@ -837,12 +837,12 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                 icon: const Icon(Icons.analytics_outlined, size: 18),
                 label: const Text('View Performance Analytics'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.withOpacity(0.1),
+                  backgroundColor: Colors.blue.withValues(alpha: 0.1),
                   foregroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.blue.withOpacity(0.3)),
+                    side: BorderSide(color: Colors.blue.withValues(alpha: 0.2)),
                   ),
                 ),
               ),

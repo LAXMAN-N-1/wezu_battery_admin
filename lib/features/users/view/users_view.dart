@@ -224,9 +224,7 @@ class _UsersViewState extends State<UsersView> {
                                   children: [
                                     CircleAvatar(
                                       radius: 18,
-                                      backgroundColor: Colors.blue.withValues(
-                                        alpha: 0.2,
-                                      ),
+                                      backgroundColor: Colors.blue.withValues(alpha: 0.2),
                                       child: Text(
                                         user.fullName[0].toUpperCase(),
                                         style: const TextStyle(
@@ -236,27 +234,29 @@ class _UsersViewState extends State<UsersView> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          user.fullName,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            user.fullName,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        Text(
-                                          user.email,
-                                          style: const TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12,
+                                          Text(
+                                            user.email,
+                                            style: const TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -271,9 +271,19 @@ class _UsersViewState extends State<UsersView> {
                                 ),
                               ),
                               DataCell(
-                                IconButton(
-                                  icon: const Icon(Icons.more_vert, size: 20),
-                                  onPressed: () {},
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 18),
+                                      color: Colors.blue,
+                                      onPressed: () {},
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 18),
+                                      color: Colors.redAccent,
+                                      onPressed: () {},
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -336,7 +346,7 @@ class _UsersViewState extends State<UsersView> {
 
   Widget _buildRoleBadge(String role) {
     Color color;
-    switch (role) {
+    switch (role.toLowerCase()) {
       case 'admin':
         color = Colors.purple;
         break;
@@ -374,13 +384,26 @@ class _UsersViewState extends State<UsersView> {
         color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        isActive ? 'Active' : 'Inactive',
-        style: TextStyle(
-          color: isActive ? Colors.green : Colors.red,
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8, height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isActive ? Colors.green : Colors.grey,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isActive ? 'Active' : 'Inactive',
+            style: TextStyle(
+              color: isActive ? Colors.green : Colors.red,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -420,8 +443,10 @@ class _UsersViewState extends State<UsersView> {
   }
 }
 
+
 extension StringExtension on String {
   String capitalize() {
+    if (isEmpty) return this;
     return "${this[0].toUpperCase()}${substring(1)}";
   }
 }
