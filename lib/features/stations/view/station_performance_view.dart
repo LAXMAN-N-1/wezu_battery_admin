@@ -33,17 +33,22 @@ class StationPerformanceView extends ConsumerWidget {
         title: Text(
           '$stationName Performance',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          _DateRangePicker(
-            start: dateRange.start,
-            end: dateRange.end,
-            onChanged: (start, end) {
-              ref.read(performanceDateRangeProvider.notifier).updateRange(start, end);
-            },
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            alignment: Alignment.centerLeft,
+            child: _DateRangePicker(
+              start: dateRange.start,
+              end: dateRange.end,
+              onChanged: (start, end) {
+                ref.read(performanceDateRangeProvider.notifier).updateRange(start, end);
+              },
+            ),
           ),
-          const SizedBox(width: 16),
-        ],
+        ),
       ),
       body: performanceAsync.when(
         data: (perf) => _buildContent(perf),
@@ -216,6 +221,31 @@ class _DateRangePicker extends StatelessWidget {
           initialDateRange: DateTimeRange(start: start, end: end),
           firstDate: DateTime(2024),
           lastDate: DateTime.now(),
+          initialEntryMode: DatePickerEntryMode.calendar,
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: const ColorScheme.dark(
+                  primary: Colors.blue,
+                  onPrimary: Colors.white,
+                  surface: Color(0xFF1E293B),
+                  onSurface: Colors.white,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(foregroundColor: Colors.blue),
+                ),
+              ),
+              child: Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400, maxHeight: 560),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: child,
+                  ),
+                ),
+              ),
+            );
+          },
         );
         if (picked != null) {
           onChanged(picked.start, picked.end);
