@@ -14,7 +14,9 @@ class AdminLayout extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isSidebarOpen = ref.watch(sidebarOpenProvider);
-    final isMobile = MediaQuery.of(context).size.width < 1024;
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 600;
+    final isTablet = width >= 600 && width < 1024;
 
     if (isMobile) {
       return Scaffold(
@@ -44,18 +46,65 @@ class AdminLayout extends ConsumerWidget {
       backgroundColor: const Color(0xFF0F172A),
       body: Row(
         children: [
-          // Sidebar
-          if (isSidebarOpen) _buildSidebar(context, ref, isMobile: false),
+          // Sidebar or Navigation Rail
+          if (isSidebarOpen) 
+            isTablet 
+              ? _buildRail(context, ref)
+              : _buildSidebar(context, ref, isMobile: false),
 
           // Main Content Area
           Expanded(
             child: Column(
               children: [
-                _buildHeader(ref, title),
+                _buildHeader(ref, title, showMenuButton: !isTablet),
                 Expanded(child: child),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRail(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(navigationProvider);
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        border: Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+      ),
+      child: NavigationRail(
+        backgroundColor: Colors.transparent,
+        selectedIndex: selectedIndex == -1 ? null : selectedIndex,
+        onDestinationSelected: (index) {
+          ref.read(navigationProvider.notifier).state = index;
+          final routes = [
+            '/dashboard',
+            '/inventory/batteries',
+            '/stations',
+            '/stations/monitor',
+            '/users',
+            '/finance',
+            '/support',
+          ];
+          if (index < routes.length) {
+            GoRouter.of(context).go(routes[index]);
+          }
+        },
+        labelType: NavigationRailLabelType.none,
+        leading: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Icon(Icons.bolt, color: Colors.blue.shade600, size: 28),
+        ),
+        destinations: const [
+          NavigationRailDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: Text('Dashboard')),
+          NavigationRailDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2), label: Text('Fleet')),
+          NavigationRailDestination(icon: Icon(Icons.ev_station_outlined), selectedIcon: Icon(Icons.ev_station), label: Text('Stations')),
+          NavigationRailDestination(icon: Icon(Icons.monitor_heart_outlined), selectedIcon: Icon(Icons.monitor_heart), label: Text('Monitor')),
+          NavigationRailDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: Text('Users')),
+          NavigationRailDestination(icon: Icon(Icons.attach_money_outlined), selectedIcon: Icon(Icons.attach_money), label: Text('Finance')),
+          NavigationRailDestination(icon: Icon(Icons.support_agent_outlined), selectedIcon: Icon(Icons.support_agent), label: Text('Support')),
         ],
       ),
     );
@@ -264,7 +313,7 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(WidgetRef ref, String title) {
+  Widget _buildHeader(WidgetRef ref, String title, {bool showMenuButton = true}) {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -276,13 +325,14 @@ class AdminLayout extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => ref.read(sidebarOpenProvider.notifier).state = !ref
-                .read(sidebarOpenProvider.notifier)
-                .state,
-            icon: const Icon(Icons.menu, color: Colors.white70),
-          ),
-          const SizedBox(width: 12),
+          if (showMenuButton)
+            IconButton(
+              onPressed: () => ref.read(sidebarOpenProvider.notifier).state = !ref
+                  .read(sidebarOpenProvider.notifier)
+                  .state,
+              icon: const Icon(Icons.menu, color: Colors.white70),
+            ),
+          if (showMenuButton) const SizedBox(width: 12),
           Text(
             title,
             style: GoogleFonts.inter(
