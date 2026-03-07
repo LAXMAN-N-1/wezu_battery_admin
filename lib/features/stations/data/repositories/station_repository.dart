@@ -1,7 +1,9 @@
 import '../../../../core/api/api_client.dart';
 import '../models/station.dart';
 import '../models/station_specs.dart';
+import '../models/station_performance.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 
 class StationRepository {
   final ApiClient _apiClient;
@@ -87,5 +89,47 @@ class StationRepository {
     if (response.statusCode != 200) {
       throw Exception('Failed to save specs: ${response.data}');
     }
+  }
+
+  // ---- Performance & Analytics ----
+
+  Future<StationPerformance> getStationPerformance(
+    int stationId, {
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    final startStr =
+        DateFormat('yyyy-MM-ddTHH:mm:ss').format(start ?? DateTime.now().subtract(const Duration(days: 30)));
+    final endStr = DateFormat('yyyy-MM-ddTHH:mm:ss').format(end ?? DateTime.now());
+
+    final response = await _apiClient.get(
+      'admin/analytics/stations/$stationId/performance',
+      queryParameters: {'start_date': startStr, 'end_date': endStr},
+      options: await _getOptions(),
+    );
+
+    if (response.statusCode == 200) {
+      return StationPerformance.fromJson(response.data as Map<String, dynamic>);
+    }
+    throw Exception('Failed to fetch performance metrics: ${response.data}');
+  }
+
+  Future<List<StationRanking>> getStationRankings({
+    String metric = 'revenue',
+    int limit = 10,
+  }) async {
+    final response = await _apiClient.get(
+      'admin/analytics/stations/ranking',
+      queryParameters: {'metric': metric, 'limit': limit},
+      options: await _getOptions(),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> list = response.data;
+      return list
+          .map((e) => StationRanking.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    throw Exception('Failed to fetch station rankings: ${response.data}');
   }
 }

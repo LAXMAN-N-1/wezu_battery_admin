@@ -6,7 +6,7 @@ part of 'stations_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$stationRepositoryHash() => r'cccb30dd044677a82a425782e1c99b670709c20b';
+String _$stationRepositoryHash() => r'3c3a7a70cd95bcb77feec52f711b9954ad566bbe';
 
 /// See also [stationRepository].
 @ProviderFor(stationRepository)
@@ -24,7 +24,7 @@ final stationRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef StationRepositoryRef = AutoDisposeProviderRef<StationRepository>;
-String _$stationsHash() => r'81d92e14aca0e34875572c09f996aba5a7e8fc4d';
+String _$stationsHash() => r'c63cdc933dafd18e19bb9f7a0bd5cbaad54e7d32';
 
 /// See also [Stations].
 @ProviderFor(Stations)

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/widgets/metric_card.dart';
 import '../widgets/dashboard_chart.dart';
+import '../widgets/station_ranking_list.dart';
 
 class DashboardView extends ConsumerWidget {
   const DashboardView({super.key});
@@ -31,8 +32,8 @@ class DashboardView extends ConsumerWidget {
               final width = constraints.maxWidth;
               int crossAxisCount = width > 1200 ? 4 : (width > 800 ? 2 : 1);
               double childAspectRatio = width > 1200
-                  ? 1.5
-                  : (width > 800 ? 2.5 : 2.0);
+                  ? 1.2
+                  : (width > 800 ? 1.8 : 2.0);
 
               return GridView.count(
                 crossAxisCount: crossAxisCount,
@@ -79,34 +80,32 @@ class DashboardView extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Main Chart Section
-          SizedBox(
-            height: 400,
-            child: Row(
-              children: [
-                Expanded(flex: 2, child: const DashboardChart()),
-                const SizedBox(width: 24),
-                // Placeholder for Donut Chart / Activity List
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth > 900) {
+                return SizedBox(
+                  height: 400,
+                  child: Row(
+                    children: [
+                      Expanded(flex: 2, child: const DashboardChart()),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        flex: 1,
+                        child: const StationRankingList(),
                       ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'Battery Health\n(Coming Soon)',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white38),
-                      ),
-                    ),
+                    ],
                   ),
-                ),
-              ],
-            ),
+                );
+              } else {
+                return Column(
+                  children: [
+                    const SizedBox(height: 300, child: DashboardChart()),
+                    const SizedBox(height: 24),
+                    const StationRankingList(),
+                  ],
+                );
+              }
+            },
           ),
         ],
       ),

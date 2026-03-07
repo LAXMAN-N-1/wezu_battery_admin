@@ -22,7 +22,7 @@ class MetricCard extends StatelessWidget {
     final isPositive = trend.startsWith('+');
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
@@ -40,7 +40,7 @@ class MetricCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color, size: 24),
+                child: Icon(icon, color: color, size: 20),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -54,26 +54,34 @@ class MetricCard extends StatelessWidget {
                   trend,
                   style: TextStyle(
                     color: isPositive ? Colors.green : Colors.red,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          const SizedBox(height: 8),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+            style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

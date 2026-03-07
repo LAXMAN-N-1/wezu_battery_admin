@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -12,10 +14,20 @@ class ApiClient {
   void Function()? onUnauthorized;
 
   ApiClient() {
+    String baseUrl = 'http://localhost:8000/api/v1/';
+    
+    if (!kIsWeb) {
+      if (Platform.isAndroid) {
+        baseUrl = 'http://10.0.2.2:8000/api/v1/';
+      } else if (Platform.isIOS) {
+        // iOS Simulator uses localhost/127.0.0.1, but physical devices need the host IP
+        baseUrl = 'http://localhost:8000/api/v1/'; 
+      }
+    }
+
     dio = Dio(
       BaseOptions(
-        baseUrl:
-            'http://192.168.100.19:8001/api/v1/', // Use host machine IP for Android physical device testing
+        baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10), // Reduced timeout to prevent long visual hangs
         receiveTimeout: const Duration(seconds: 10),
         headers: {

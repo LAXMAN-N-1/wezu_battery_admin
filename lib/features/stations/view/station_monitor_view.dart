@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../data/models/station_status.dart';
 import '../data/providers/station_status_provider.dart';
 import '../data/providers/stations_provider.dart';
+import 'station_performance_view.dart';
 
 // -------------------------------------------------------
 // Filter type
@@ -813,6 +814,36 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            // View Performance Action
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => StationPerformanceView(
+                        stationId: widget.event.stationId,
+                        stationName: widget.event.stationName,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.analytics_outlined, size: 18),
+                label: const Text('View Performance Analytics'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.withOpacity(0.1),
+                  foregroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.blue.withOpacity(0.3)),
+                  ),
                 ),
               ),
             ),
