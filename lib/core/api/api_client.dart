@@ -14,14 +14,14 @@ class ApiClient {
   void Function()? onUnauthorized;
 
   ApiClient() {
-    String baseUrl = 'http://localhost:8000/api/v1/';
+    String baseUrl = 'http://127.0.0.1:8000/api/v1/';
     
     if (!kIsWeb) {
       if (Platform.isAndroid) {
         baseUrl = 'http://10.0.2.2:8000/api/v1/';
       } else if (Platform.isIOS) {
         // iOS Simulator uses localhost/127.0.0.1, but physical devices need the host IP
-        baseUrl = 'http://localhost:8000/api/v1/'; 
+        baseUrl = 'http://127.0.0.1:8000/api/v1/';
       }
     }
 

@@ -78,7 +78,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
 
       final response = await _apiClient.post(
-        '/api/v1/auth/admin/login',
+        'customer/auth/login',
         data: formData,
       );
 
@@ -120,12 +120,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _apiClient.storage.delete(key: 'admin_token');
     _apiClient.dio.options.headers.remove('Authorization');
-    // Invalidate the apiClientProvider to ensure a fresh instance without old headers
-    // This requires access to ref, which is not directly available in StateNotifier.
-    // A common pattern is to pass ref or a callback to invalidate.
-    // For now, we'll just remove the header and clear state.
-    // If `ref.invalidate(apiClientProvider)` is truly needed, the AuthNotifier
-    // would need to be refactored to receive `ref` or a specific invalidation callback.
     state = state.copyWith(
       isAuthenticated: false,
       user: null,

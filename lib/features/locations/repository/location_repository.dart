@@ -12,7 +12,7 @@ class LocationRepository {
   LocationRepository(this._apiClient);
 
   Future<List<LocationNode>> fetchLocations(LocationLevel level) async {
-    final response = await _apiClient.get('/api/v1/locations/${level.name}s');
+    final response = await _apiClient.get('locations/${level.name}s');
     return (response.data as List).map((e) => LocationNode.fromJson(e)).toList();
   }
 
@@ -28,7 +28,7 @@ class LocationRepository {
       case LocationLevel.zone: data['city_id'] = parentId; break;
     }
 
-    final response = await _apiClient.post('/api/v1/locations/${level.name}s', data: data);
+    final response = await _apiClient.post('locations/${level.name}s', data: data);
     return LocationNode.fromJson(response.data);
   }
 }

@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart' hide Banner;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../data/models/banner.dart';
 import '../data/repositories/banner_repository.dart';
 
-class BannerListView extends StatefulWidget {
+class BannerListView extends ConsumerStatefulWidget {
   const BannerListView({super.key});
 
   @override
-  State<BannerListView> createState() => _BannerListViewState();
+  ConsumerState<BannerListView> createState() => _BannerListViewState();
 }
 
-class _BannerListViewState extends State<BannerListView> {
-  final BannerRepository _repository = BannerRepository();
+class _BannerListViewState extends ConsumerState<BannerListView> {
+  late final BannerRepository _repository;
   List<Banner> _banners = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(bannerRepositoryProvider);
     _loadData();
   }
 

@@ -9,7 +9,7 @@ import '../models/station.dart';
 class StationStatusService {
   static const _historyKey = 'station_status_history_v1';
   static const _maxHistory = 50;
-  static const _baseUrl = 'http://localhost:8000/api/v1';
+  static const _baseUrl = 'http://127.0.0.1:8000/api/v1';
 
   final _rng = Random();
   final _storage = const FlutterSecureStorage();

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:google_maps_flutter/google_maps_flutter.dart'; // TODO: Re-enable with valid API key
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import 'dart:async'; // Needed for Completer when maps is re-enabled
+import 'package:go_router/go_router.dart';
 import '../data/models/station.dart';
 import '../data/providers/stations_provider.dart';
 import 'station_form_view.dart';
@@ -495,6 +494,25 @@ class _StationsViewState extends ConsumerState<StationsView> {
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.white70,
                                 side: const BorderSide(color: Colors.white12),
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 120,
+                            child: ElevatedButton.icon(
+                              onPressed: () => context.go('/stations/performance/${_selectedStation!.id}/${Uri.encodeComponent(_selectedStation!.name)}'),
+                              icon: const Icon(
+                                Icons.bar_chart,
+                                size: 14,
+                              ),
+                              label: const Text('Performance'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple.withValues(alpha: 0.8),
+                                foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),

@@ -13,6 +13,7 @@ import '../features/cms/view/media_library_view.dart';
 import '../features/inventory/view/batteries_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/stations/view/station_monitor_view.dart';
+import '../features/stations/view/station_performance_view.dart';
 import '../features/users/view/users_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/support/view/support_view.dart';
@@ -148,15 +149,25 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ),
               GoRoute(
+                path: 'performance/:id/:name',
+                pageBuilder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  final name = state.pathParameters['name']!;
+                  return NoTransitionPage(
+                    child: StationPerformanceView(stationId: id, stationName: name),
+                  );
+                },
+              ),
+              GoRoute(
                 path: 'performance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Station Performance', icon: Icons.trending_up_outlined, description: 'Revenue per station, utilization rates, customer ratings, and rental counts.'),
+                  child: StationMonitorView(), // Fallback to monitor or an overview if needed
                 ),
               ),
               GoRoute(
                 path: 'maintenance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Maintenance Schedules', icon: Icons.build_outlined, description: 'Maintenance calendar, recurring schedules, overdue alerts, and checklists.'),
+                  child: StationMonitorView(),
                 ),
               ),
             ],

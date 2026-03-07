@@ -266,52 +266,213 @@ class _TrendsChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (trends.isEmpty) return const Center(child: Text('No trend data', style: TextStyle(color: Colors.white38)));
+    if (trends.isEmpty) {
+      return const Center(
+        child: Text('No trend data', style: TextStyle(color: Colors.white38)),
+      );
+    }
 
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(show: true, drawVerticalLine: false),
-        titlesData: FlTitlesData(
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              getTitlesWidget: (value, meta) {
-                if (value.toInt() >= trends.length) return const SizedBox.shrink();
-                final date = DateTime.parse(trends[value.toInt()].date);
-                return Text(
-                  DateFormat('MM/dd').format(date),
-                  style: const TextStyle(color: Colors.white38, fontSize: 10),
-                );
-              },
+    // Find max values for normalization
+    final double maxRentals = trends.isEmpty ? 10 : trends.map((e) => e.rentals.toDouble()).reduce((a, b) => a > b ? a : b) * 1.2;
+    final double maxRevenue = trends.isEmpty ? 100 : trends.map((e) => e.revenue.toDouble()).reduce((a, b) => a > b ? a : b) * 1.2;
+
+    return Column(
+      children: [
+        // Legend
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _LegendItem(label: 'Rentals', color: Colors.blue),
+              const SizedBox(width: 24),
+              _LegendItem(label: 'Revenue', color: const Color(0xFF10B981)),
+            ],
+          ),
+        ),
+        
+        Expanded(
+          child: LineChart(
+            LineChartData(
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (_) => const Color(0xFF1E293B),
+                  getTooltipItems: (touchedSpots) {
+                    return touchedSpots.map((spot) {
+                      final isRevenue = spot.barIndex == 1;
+                      final actualValue = isRevenue 
+                        ? trends[spot.spotIndex].revenue 
+                        : trends[spot.spotIndex].rentals;
+                      
+                      return LineTooltipItem(
+                        isRevenue 
+                          ? 'Revenue: ₹${actualValue.toStringAsFixed(0)}'
+                          : 'Rentals: ${actualValue.toInt().toString()}',
+                        GoogleFonts.inter(
+                          color: spot.bar.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  strokeWidth: 1,
+                ),
+              ),
+              titlesData: FlTitlesData(
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 40,
+                    getTitlesWidget: (value, meta) {
+                      // Map standardized 0-100 scale back to revenue
+                      final rev = (value / 100) * maxRevenue;
+                      if (value % 25 != 0) return const SizedBox.shrink();
+                      return Text(
+                        '₹${(rev/1000).toStringAsFixed(1)}k',
+                        style: const TextStyle(color: Colors.white38, fontSize: 9),
+                      );
+                    },
+                  ),
+                ),
+                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: (value, meta) {
+                      // Map standardized 0-100 scale back to rentals
+                      final rent = (value / 100) * maxRentals;
+                      if (value % 25 != 0) return const SizedBox.shrink();
+                      return Text(
+                        rent.toInt().toString(),
+                        style: const TextStyle(color: Colors.white38, fontSize: 10),
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: (value, meta) {
+                      if (value.toInt() >= trends.length || value.toInt() < 0) return const SizedBox.shrink();
+                      final date = DateTime.parse(trends[value.toInt()].date);
+                      // Only show every other label if many points
+                      if (trends.length > 7 && value.toInt() % 2 != 0) return const SizedBox.shrink();
+                      return Text(
+                        DateFormat('MM/dd').format(date),
+                        style: const TextStyle(color: Colors.white38, fontSize: 10),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              minY: 0,
+              maxY: 100,
+              lineBarsData: [
+                // Rentals Line (normalized to 0-100)
+                LineChartBarData(
+                  spots: trends.asMap().entries.map((e) {
+                    final normalized = (e.value.rentals / maxRentals) * 100;
+                    return FlSpot(e.key.toDouble(), normalized);
+                  }).toList(),
+                  isCurved: true,
+                  color: Colors.blue,
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                      radius: 3,
+                      color: Colors.blue,
+                      strokeWidth: 1,
+                      strokeColor: Colors.white,
+                    ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blue.withValues(alpha: 0.2),
+                        Colors.blue.withValues(alpha: 0.0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+                // Revenue Line (normalized to 0-100)
+                LineChartBarData(
+                  spots: trends.asMap().entries.map((e) {
+                    final normalized = (e.value.revenue / maxRevenue) * 100;
+                    return FlSpot(e.key.toDouble(), normalized);
+                  }).toList(),
+                  isCurved: true,
+                  color: const Color(0xFF10B981),
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                      radius: 3,
+                      color: const Color(0xFF10B981),
+                      strokeWidth: 1,
+                      strokeColor: Colors.white,
+                    ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF10B981).withValues(alpha: 0.2),
+                        const Color(0xFF10B981).withValues(alpha: 0.0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        borderData: FlBorderData(show: false),
-        lineBarsData: [
-          LineChartBarData(
-            spots: trends.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.rentals.toDouble())).toList(),
-            isCurved: true,
-            color: Colors.blue,
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-            belowBarData: BarAreaData(show: true, color: Colors.blue.withValues(alpha: 0.1)),
-          ),
-          LineChartBarData(
-            spots: trends.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.revenue.toDouble() / 10)).toList(),
-            isCurved: true,
-            color: Colors.green,
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-            belowBarData: BarAreaData(show: true, color: Colors.green.withValues(alpha: 0.1)),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
+
+class _LegendItem extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _LegendItem({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
+}
+
 
 class _PeakHoursChart extends StatelessWidget {
   final List peakHours;
@@ -319,26 +480,89 @@ class _PeakHoursChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (peakHours.isEmpty) return const Center(child: Text('No data', style: TextStyle(color: Colors.white38)));
+    if (peakHours.isEmpty) {
+      return const Center(child: Text('No peak hour data', style: TextStyle(color: Colors.white38)));
+    }
+
+    // Find the peak hour to highlight it
+    final maxCount = peakHours.isNotEmpty 
+        ? peakHours.map((p) => p.rentalCount).reduce((a, b) => a > b ? a : b) 
+        : 0;
 
     return BarChart(
       BarChartData(
-        barGroups: peakHours.map((p) => BarChartGroupData(
-          x: p.hour,
-          barRods: [BarChartRodData(toY: p.rentalCount.toDouble(), color: Colors.blueAccent, width: 12)],
-        )).toList(),
+        barTouchData: BarTouchData(
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => const Color(0xFF1E293B),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                '${group.x}h: ${rod.toY.toInt()} rentals',
+                GoogleFonts.inter(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              );
+            },
+          ),
+        ),
+        barGroups: peakHours.map((p) {
+          final isPeak = p.rentalCount == maxCount && maxCount > 0;
+          return BarChartGroupData(
+            x: p.hour,
+            barRods: [
+              BarChartRodData(
+                toY: p.rentalCount.toDouble(),
+                color: isPeak ? Colors.amber : Colors.blueAccent.withValues(alpha: 0.8),
+                width: 14,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                backDrawRodData: BackgroundBarChartRodData(
+                  show: true,
+                  toY: maxCount.toDouble(),
+                  color: Colors.white.withValues(alpha: 0.05),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
         titlesData: FlTitlesData(
           rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 20,
+              getTitlesWidget: (value, meta) => Text(
+                value.toInt().toString(),
+                style: const TextStyle(color: Colors.white38, fontSize: 10),
+              ),
+            ),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              getTitlesWidget: (value, meta) => Text('${value.toInt()}h', style: const TextStyle(color: Colors.white38, fontSize: 10)),
+              getTitlesWidget: (value, meta) {
+                if (value.toInt() % 4 != 0) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${value.toInt()}h',
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                  ),
+                );
+              },
             ),
           ),
         ),
         borderData: FlBorderData(show: false),
-        gridData: FlGridData(show: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.white.withValues(alpha: 0.05),
+            strokeWidth: 1,
+          ),
+        ),
       ),
     );
   }
