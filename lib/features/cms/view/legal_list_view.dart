@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/legal_document.dart';
 import '../data/repositories/legal_repository.dart';
 
@@ -47,32 +48,22 @@ class _LegalListViewState extends State<LegalListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Legal & Compliance',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          PageHeader(
+            title: 'Legal & Compliance',
+            subtitle: 'Manage terms, privacy policies, and compliance documents.',
+            actionButton: ElevatedButton.icon(
+              onPressed: () {
+                // TODO: Navigate to create view
+              },
+              icon: const Icon(Icons.gavel_outlined, size: 20, color: Colors.white),
+              label: const Text('New Document', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Navigate to create view
-                },
-                icon: const Icon(Icons.gavel_outlined),
-                label: const Text('New Document'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
 
           _isLoading
@@ -90,23 +81,19 @@ class _LegalListViewState extends State<LegalListView> {
                       ),
                       itemCount: _documents.length,
                       itemBuilder: (context, index) {
-                        return _buildDocCard(_documents[index]);
+                        return _buildDocCard(_documents[index]).animate().fadeIn(duration: 400.ms, delay: (100 + index * 100).ms).slideY(begin: 0.05);
                       },
                     ),
         ],
       ),
     );
   }
-
   Widget _buildDocCard(LegalDocument doc) {
-    return Card(
-      color: Colors.white.withValues(alpha: 0.05),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return AdvancedCard(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 Container(
@@ -137,7 +124,7 @@ class _LegalListViewState extends State<LegalListView> {
                     ],
                   ),
                 ),
-                _buildStatusDot(doc.isActive),
+                StatusBadge(status: doc.isActive ? 'Active' : 'Inactive'),
               ],
             ),
             const Spacer(),
@@ -173,25 +160,6 @@ class _LegalListViewState extends State<LegalListView> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusDot(bool isActive) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: isActive ? Colors.green : Colors.red,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.3),
-            blurRadius: 4,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
     );
   }
 
@@ -215,4 +183,5 @@ class _LegalListViewState extends State<LegalListView> {
       ),
     );
   }
+
 }

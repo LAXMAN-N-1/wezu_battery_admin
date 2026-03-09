@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import 'dart:async';
 import '../data/models/station.dart';
 import '../data/repositories/station_repository.dart';
@@ -173,40 +175,46 @@ class _StationsViewState extends State<StationsView> {
           child: Container(
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
-              border: Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+              border: Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Text(
-                    'Station Network',
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Station Network',
+                        style: GoogleFonts.outfit(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ).animate().fadeIn().slideX(begin: -0.1),
+                      const SizedBox(height: 16),
+                      TextField(
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Search locations...',
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          prefixIcon: const Icon(Icons.search, color: Colors.white38),
+                          filled: true,
+                          fillColor: Colors.black.withValues(alpha: 0.2),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                          ),
+                        ),
+                      ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1),
+                    ],
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: TextField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Search locations...',
-                      hintStyle: const TextStyle(color: Colors.white38),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white38),
-                      filled: true,
-                      fillColor: Colors.black.withValues(alpha: 0.2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -218,55 +226,65 @@ class _StationsViewState extends State<StationsView> {
                             final station = _stations[index];
                             final isSelected = _selectedStation?.id == station.id;
                             
-                            return Card(
-                              color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: isSelected 
-                                  ? BorderSide(color: Colors.blue.withValues(alpha: 0.5))
-                                  : BorderSide.none,
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? const Color(0xFF3B82F6).withValues(alpha: 0.1) : Colors.transparent,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected 
+                                    ? const Color(0xFF3B82F6).withValues(alpha: 0.5)
+                                    : Colors.white.withValues(alpha: 0.04),
+                                ),
                               ),
                               child: ListTile(
                                 onTap: () => _onStationSelected(station),
-                                title: Text(
-                                  station.name,
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
+                                contentPadding: const EdgeInsets.all(16),
+                                title: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        station.name,
+                                        style: GoogleFonts.inter(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                    StatusBadge(status: station.status),
+                                  ],
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
                                     Text(
                                       station.address,
-                                      style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                                      style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 12),
                                     Row(
                                       children: [
                                         _buildBadge(
                                           '${station.availableBatteries} Bats',
-                                          Colors.green,
+                                          const Color(0xFF22C55E),
                                           Icons.battery_charging_full,
                                         ),
                                         const SizedBox(width: 8),
                                         _buildBadge(
                                           '${station.emptySlots} Slots', 
-                                          Colors.orange,
-                                          Icons.check_box_outline_blank,
+                                          const Color(0xFF3B82F6),
+                                          Icons.space_dashboard_outlined,
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                                trailing: _buildStatusDot(station.status),
                               ),
-                            );
+                            ).animate().fadeIn(duration: 300.ms, delay: (index * 50).ms).slideX(begin: -0.05);
                           },
                         ),
                 ),
@@ -326,26 +344,6 @@ class _StationsViewState extends State<StationsView> {
             text,
             style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusDot(String status) {
-    Color color;
-    switch (status) {
-      case 'active': color = Colors.green; break;
-      case 'maintenance': color = Colors.orange; break;
-      default: color = Colors.red;
-    }
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4, spreadRadius: 1),
         ],
       ),
     );

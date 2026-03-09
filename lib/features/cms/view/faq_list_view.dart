@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/faq.dart';
 import '../data/repositories/faq_repository.dart';
 
@@ -52,32 +54,20 @@ class _FaqListViewState extends State<FaqListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'FAQ Management',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          PageHeader(
+            title: 'FAQ Management',
+            subtitle: 'Add and categorize frequently asked questions.',
+            actionButton: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.add_comment_outlined, size: 20, color: Colors.white),
+              label: const Text('Add New FAQ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Navigate to create view
-                },
-                icon: const Icon(Icons.add_comment_outlined),
-                label: const Text('Add New FAQ'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
 
           // Filters
@@ -95,10 +85,14 @@ class _FaqListViewState extends State<FaqListView> {
                     hintStyle: const TextStyle(color: Colors.white38),
                     prefixIcon: const Icon(Icons.search, color: Colors.white38),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.05),
+                    fillColor: Colors.black.withValues(alpha: 0.2),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                     ),
                   ),
                 ),
@@ -114,7 +108,7 @@ class _FaqListViewState extends State<FaqListView> {
                 }),
               ),
             ],
-          ),
+          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
           const SizedBox(height: 24),
 
           _isLoading
@@ -127,7 +121,7 @@ class _FaqListViewState extends State<FaqListView> {
                       itemCount: _faqs.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        return _buildFaqTile(_faqs[index]);
+                        return _buildFaqTile(_faqs[index]).animate().fadeIn(duration: 400.ms, delay: (200 + index * 50).ms).slideY(begin: 0.05);
                       },
                     ),
         ],
@@ -242,8 +236,7 @@ class _FaqListViewState extends State<FaqListView> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         category.toUpperCase(),

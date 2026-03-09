@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/media_asset.dart';
 import '../data/repositories/media_repository.dart';
 
@@ -48,32 +50,22 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Media Library',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          PageHeader(
+            title: 'Media Library',
+            subtitle: 'Upload and manage images and PDF files for the CMS.',
+            actionButton: ElevatedButton.icon(
+              onPressed: () {
+                // TODO: Trigger file picker
+              },
+              icon: const Icon(Icons.upload_file_outlined, size: 20, color: Colors.white),
+              label: const Text('Upload Assets', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Trigger file picker
-                },
-                icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Upload Assets'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
 
           // Filters
@@ -87,7 +79,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
               const SizedBox(width: 12),
               _buildCategoryChip('kyc', 'KYC Documents'),
             ],
-          ),
+          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
           const SizedBox(height: 32),
 
           _isLoading
@@ -105,14 +97,13 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                       ),
                       itemCount: _assets.length,
                       itemBuilder: (context, index) {
-                        return _buildAssetTile(_assets[index]);
+                        return _buildAssetTile(_assets[index]).animate().fadeIn(duration: 400.ms, delay: (100 + index * 50).ms).scale(begin: const Offset(0.9, 0.9));
                       },
                     ),
         ],
       ),
     );
   }
-
   Widget _buildCategoryChip(String? category, String label) {
     bool isSelected = _filterCategory == category;
     return ChoiceChip(
@@ -250,4 +241,5 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
       ),
     );
   }
+
 }
