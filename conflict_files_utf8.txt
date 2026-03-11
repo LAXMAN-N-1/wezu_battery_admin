@@ -1,0 +1,2 @@
+﻿D:\wezu_admin_frontend\lib\features\finance\view\finance_view.dart
+D:\wezu_admin_frontend\lib\features\inventory\data\models\battery.dart

@@ -43,28 +43,16 @@ class Battery {
     return Battery(
       id: json['id'] as String,
       serialNumber: json['serial_number'] as String,
-<<<<<<< HEAD
-      modelNumber: json['model'] ?? (json['spec'] is Map ? json['spec']['model_number'] : 'Unknown'),
-      status: json['status'] ?? 'unknown',
-      healthPercentage: (json['health_percentage'] as num?)?.toDouble() ?? 100.0,
-      locationName: json['location_type'] != null 
-          ? "${json['location_type']} #${json['location_id']}" 
-          : json['location_name'] ?? 'Warehouse',
-=======
       batteryType: json['battery_type'],
       status: json['status'] ?? 'unknown',
       healthPercentage: (json['health_percentage'] as num?)?.toDouble() ?? 100.0,
       locationType: json['location_type'] ?? 'warehouse',
       locationName: json['location_name'] ?? json['station']?['name'] ?? 'Warehouse',
->>>>>>> origin/main
       cycleCount: json['cycle_count'] ?? 0,
       totalCycles: json['total_cycles'] ?? 0,
       updatedAt: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
-<<<<<<< HEAD
           : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
-=======
-          : DateTime.now(),
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
@@ -143,7 +131,6 @@ class BatteryHealthHistory {
       batteryId: json['battery_id'] as String,
       healthPercentage: (json['health_percentage'] as num).toDouble(),
       recordedAt: DateTime.parse(json['recorded_at']),
->>>>>>> origin/main
     );
   }
 }
