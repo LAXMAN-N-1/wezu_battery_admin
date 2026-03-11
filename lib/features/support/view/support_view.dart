@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/support_repository.dart';
 
-class SupportView extends StatefulWidget {
+class SupportView extends ConsumerStatefulWidget {
   const SupportView({super.key});
 
   @override
-  State<SupportView> createState() => _SupportViewState();
+  ConsumerState<SupportView> createState() => _SupportViewState();
 }
 
-class _SupportViewState extends State<SupportView> {
-  final SupportRepository _repository = SupportRepository();
+class _SupportViewState extends ConsumerState<SupportView> {
+  late final SupportRepository _repository;
   List<SupportTicket> _tickets = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(supportRepositoryProvider);
     _loadData();
   }
 

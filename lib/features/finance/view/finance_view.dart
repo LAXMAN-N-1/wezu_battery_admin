@@ -2,18 +2,19 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/transaction.dart';
 import '../data/repositories/finance_repository.dart';
 
-class FinanceView extends StatefulWidget {
+class FinanceView extends ConsumerStatefulWidget {
   const FinanceView({super.key});
 
   @override
-  State<FinanceView> createState() => _FinanceViewState();
+  ConsumerState<FinanceView> createState() => _FinanceViewState();
 }
 
-class _FinanceViewState extends State<FinanceView> {
-  final FinanceRepository _repository = FinanceRepository();
+class _FinanceViewState extends ConsumerState<FinanceView> {
+  late final FinanceRepository _repository;
   bool _isLoading = true;
   double _totalRevenue = 0;
   double _monthlyGrowth = 0;
@@ -23,6 +24,7 @@ class _FinanceViewState extends State<FinanceView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(financeRepositoryProvider);
     _loadData();
   }
 

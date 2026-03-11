@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/station.dart';
 import '../data/repositories/station_repository.dart';
 
-class StationsView extends StatefulWidget {
+class StationsView extends ConsumerStatefulWidget {
   const StationsView({super.key});
 
   @override
-  State<StationsView> createState() => _StationsViewState();
+  ConsumerState<StationsView> createState() => _StationsViewState();
 }
 
-class _StationsViewState extends State<StationsView> {
-  final StationRepository _repository = StationRepository();
+class _StationsViewState extends ConsumerState<StationsView> {
+  late final StationRepository _repository;
   final Completer<GoogleMapController> _controller = Completer();
   
   List<Station> _stations = [];
@@ -122,6 +123,7 @@ class _StationsViewState extends State<StationsView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(stationRepositoryProvider);
     _loadData();
   }
 

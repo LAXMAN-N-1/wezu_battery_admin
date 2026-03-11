@@ -27,15 +27,17 @@ class User {
       fullName: json['full_name'] ?? 'Unknown User',
       email: json['email'] ?? '',
       phoneNumber: json['phone_number'] ?? '',
-      role: json['role'] ?? 'customer',
+      role: (json['roles'] as List?)?.isNotEmpty == true 
+          ? json['roles'][0] 
+          : json['role'] ?? 'customer',
       kycStatus: json['kyc_status'] ?? 'not_submitted',
       isActive: json['is_active'] ?? true,
       joinedAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
-      lastActive: json['last_active'] != null
-          ? DateTime.parse(json['last_active'])
-          : DateTime.now(),
+      lastActive: json['last_login'] != null
+          ? DateTime.parse(json['last_login'])
+          : (json['last_active'] != null ? DateTime.parse(json['last_active']) : DateTime.now()),
     );
   }
 }

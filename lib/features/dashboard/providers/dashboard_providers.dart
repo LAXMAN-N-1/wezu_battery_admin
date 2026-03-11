@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/api/api_client.dart';
+import 'package:frontend_admin/core/api/api_client.dart';
 import '../data/analytics_repository.dart';
 import '../data/dashboard_models.dart';
 

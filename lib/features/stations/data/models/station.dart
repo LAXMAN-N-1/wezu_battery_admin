@@ -24,19 +24,22 @@ class Station {
   });
 
   factory Station.fromJson(Map<String, dynamic> json) {
+    final total = json['total_slots'] ?? 0;
+    final available = json['available_batteries'] ?? 0;
+    
     return Station(
       id: json['id'] as int,
-      name: json['name'] as String,
-      address: json['address'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      status: json['status'] as String,
-      totalSlots: json['total_slots'] as int,
-      availableBatteries: json['available_batteries'] as int,
-      emptySlots: json['empty_slots'] as int,
-      lastPing: json['last_ping'] != null
-          ? DateTime.parse(json['last_ping'])
-          : DateTime.now(),
+      name: json['name'] ?? 'Unknown Station',
+      address: json['address'] ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] ?? 'inactive',
+      totalSlots: total,
+      availableBatteries: available,
+      emptySlots: json['empty_slots'] ?? (total - available),
+      lastPing: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : (json['last_ping'] != null ? DateTime.parse(json['last_ping']) : DateTime.now()),
     );
   }
 }

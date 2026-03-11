@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/battery.dart';
 import '../data/repositories/inventory_repository.dart';
 
-class BatteriesView extends StatefulWidget {
+class BatteriesView extends ConsumerStatefulWidget {
   const BatteriesView({super.key});
 
   @override
-  State<BatteriesView> createState() => _BatteriesViewState();
+  ConsumerState<BatteriesView> createState() => _BatteriesViewState();
 }
 
-class _BatteriesViewState extends State<BatteriesView> {
-  final InventoryRepository _repository = InventoryRepository();
+class _BatteriesViewState extends ConsumerState<BatteriesView> {
+  late final InventoryRepository _repository;
   List<Battery> _batteries = [];
   bool _isLoading = true;
   int _sortColumnIndex = 0;
@@ -20,6 +21,7 @@ class _BatteriesViewState extends State<BatteriesView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(inventoryRepositoryProvider);
     _loadData();
   }
 

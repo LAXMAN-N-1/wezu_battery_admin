@@ -1,6 +1,11 @@
 import 'package:dio/dio.dart';
-import '../../../core/api/api_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend_admin/core/api/api_client.dart';
 import 'dashboard_models.dart';
+
+final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
+  return AnalyticsRepository(ref.read(apiClientProvider));
+});
 
 class AnalyticsRepository {
   final ApiClient _apiClient;

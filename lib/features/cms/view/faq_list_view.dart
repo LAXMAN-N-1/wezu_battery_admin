@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/faq.dart';
 import '../data/repositories/faq_repository.dart';
 
-class FaqListView extends StatefulWidget {
+class FaqListView extends ConsumerStatefulWidget {
   const FaqListView({super.key});
 
   @override
-  State<FaqListView> createState() => _FaqListViewState();
+  ConsumerState<FaqListView> createState() => _FaqListViewState();
 }
 
-class _FaqListViewState extends State<FaqListView> {
-  final FaqRepository _repository = FaqRepository();
+class _FaqListViewState extends ConsumerState<FaqListView> {
+  late final FaqRepository _repository;
   List<FAQ> _faqs = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -21,6 +22,7 @@ class _FaqListViewState extends State<FaqListView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(faqRepositoryProvider);
     _loadData();
   }
 

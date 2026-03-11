@@ -19,13 +19,15 @@ class Transaction {
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
     return Transaction(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      userName: json['user_name'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      type: json['type'] as String,
-      status: json['status'] as String,
-      timestamp: DateTime.parse(json['timestamp']),
+      id: json['id'].toString(),
+      userId: json['wallet_id']?.toString() ?? 'unknown',
+      userName: json['description'] ?? "Wallet #${json['wallet_id']}",
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      type: json['category'] ?? json['type'] ?? 'other',
+      status: json['status'] ?? 'success',
+      timestamp: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
     );
   }
 }

@@ -23,14 +23,16 @@ class Battery {
     return Battery(
       id: json['id'] as int,
       serialNumber: json['serial_number'] as String,
-      modelNumber: json['model_number'] ?? 'Unknown',
+      modelNumber: json['model'] ?? (json['spec'] is Map ? json['spec']['model_number'] : 'Unknown'),
       status: json['status'] ?? 'unknown',
       healthPercentage: (json['health_percentage'] as num?)?.toDouble() ?? 100.0,
-      locationName: json['location_name'] ?? 'Warehouse',
+      locationName: json['location_type'] != null 
+          ? "${json['location_type']} #${json['location_id']}" 
+          : json['location_name'] ?? 'Warehouse',
       cycleCount: json['cycle_count'] ?? 0,
       lastUpdated: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
-          : DateTime.now(),
+          : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
     );
   }
 }

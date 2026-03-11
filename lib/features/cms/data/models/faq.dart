@@ -23,15 +23,19 @@ class FAQ {
 
   factory FAQ.fromJson(Map<String, dynamic> json) {
     return FAQ(
-      id: json['id'],
-      question: json['question'],
-      answer: json['answer'],
+      id: json['id'] as int,
+      question: json['question'] ?? 'No Question',
+      answer: json['answer'] ?? 'No Answer',
       category: json['category'] ?? 'general',
       isActive: json['is_active'] ?? true,
       helpfulCount: json['helpful_count'] ?? 0,
       notHelpfulCount: json['not_helpful_count'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
     );
   }
 

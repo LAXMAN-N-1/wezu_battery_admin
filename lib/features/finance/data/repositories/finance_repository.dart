@@ -1,62 +1,36 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/api/api_client.dart';
 import '../models/transaction.dart';
 
+final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
+  return FinanceRepository(ref.read(apiClientProvider));
+});
+
 class FinanceRepository {
+  final ApiClient _apiClient;
+
+  FinanceRepository(this._apiClient);
+
   Future<Map<String, dynamic>> getFinanceDashboardData() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    final response = await _apiClient.get('/api/v1/admin/finance/transactions');
+    
+    List<Transaction> transactions = [];
+    if (response.data is List) {
+      transactions = (response.data as List).map((e) => Transaction.fromJson(e)).toList();
+    }
 
-    // Mock Monthly Revenue Data (Last 6 Months)
-    final revenueData = [
-      {'month': 'Jan', 'value': 45000.0},
-      {'month': 'Feb', 'value': 52000.0},
-      {'month': 'Mar', 'value': 49000.0},
-      {'month': 'Apr', 'value': 61000.0},
-      {'month': 'May', 'value': 58000.0},
-      {'month': 'Jun', 'value': 75000.0},
-    ];
-
-    final transactions = [
-      Transaction(
-        id: 'TXN_1001',
-        userId: 'USER_882',
-        userName: 'Murari Vama',
-        amount: 250.0,
-        type: 'rental',
-        status: 'success',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      ),
-      Transaction(
-        id: 'TXN_1002',
-        userId: 'USER_104',
-        userName: 'Rahul Sharma',
-        amount: 5000.0,
-        type: 'subscription',
-        status: 'success',
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      Transaction(
-        id: 'TXN_1003',
-        userId: 'USER_332',
-        userName: 'Priya Singh',
-        amount: 150.0,
-        type: 'refund',
-        status: 'pending',
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      ),
-       Transaction(
-        id: 'TXN_1004',
-        userId: 'USER_445',
-        userName: 'Amit Patel',
-        amount: 350.0,
-        type: 'rental',
-        status: 'failed',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ];
+    // Since backend doesn't provide a combined dashboard endpoint yet,
+    // we'll calculate stats from the transactions we have.
+    double totalRevenue = 0;
+    for (var tx in transactions) {
+      if (tx.status == 'success') {
+        totalRevenue += tx.amount.abs();
+      }
+    }
 
     return {
-      'totalRevenue': 340000.0,
-      'monthlyGrowth': 12.5,
-      'revenueChart': revenueData,
+      'totalRevenue': totalRevenue,
+      'monthlyGrowth': 0.0,
       'recentTransactions': transactions,
     };
   }

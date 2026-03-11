@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/user.dart';
 import '../data/repositories/user_repository.dart';
 
-class UsersView extends StatefulWidget {
+class UsersView extends ConsumerStatefulWidget {
   const UsersView({super.key});
 
   @override
-  State<UsersView> createState() => _UsersViewState();
+  ConsumerState<UsersView> createState() => _UsersViewState();
 }
 
-class _UsersViewState extends State<UsersView> {
-  final UserRepository _repository = UserRepository();
+class _UsersViewState extends ConsumerState<UsersView> {
+  late final UserRepository _repository;
   List<User> _users = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -21,6 +22,7 @@ class _UsersViewState extends State<UsersView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(userRepositoryProvider);
     _loadData();
   }
 
