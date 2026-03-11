@@ -3,20 +3,28 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import '../data/repositories/inventory_repository.dart';
 
-class BatteryImportModal extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class BatteryImportModal extends ConsumerStatefulWidget {
   const BatteryImportModal({super.key});
 
   @override
-  State<BatteryImportModal> createState() => _BatteryImportModalState();
+  ConsumerState<BatteryImportModal> createState() => _BatteryImportModalState();
 }
 
-class _BatteryImportModalState extends State<BatteryImportModal> {
-  final InventoryRepository _repository = InventoryRepository();
+class _BatteryImportModalState extends ConsumerState<BatteryImportModal> {
+  late final InventoryRepository _repository;
   int _currentStep = 0;
   bool _isLoading = false;
   
   PlatformFile? _pickedFile;
   Map<String, dynamic>? _validationResults;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = ref.read(inventoryRepositoryProvider);
+  }
 
   void _nextStep() {
     setState(() {

@@ -1,0 +1,111 @@
+﻿Launching lib\main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...          
+flutter : lib/features/c
+ms/view/blog_list_view.d
+art:17:52: Error: Too 
+few positional 
+arguments: 1 required, 
+0 given.
+At line:1 char:58
++ ... tter_temp"; 
+flutter run -d chrome 
+--web-port 51327 
+--web-hostname 127 ...
++                 ~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (lib/features/cm.   
+ ..uired, 0 given.:S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+  final BlogRepository 
+_repository = 
+BlogRepository();
+                        
+                        
+   ^
+lib/features/cms/data/re
+positories/blog_reposito
+ry.dart:8:3: Context: 
+Found this candidate, 
+but the arguments don't 
+match.
+  BlogRepository(this._a
+piClient);
+  ^^^^^^^^^^^^^^
+lib/features/inventory/w
+idgets/battery_form_draw
+er.dart:19:62: Error: 
+Too few positional 
+arguments: 1 required, 
+0 given.
+  final 
+InventoryRepository 
+_repository = 
+InventoryRepository();
+                        
+                        
+             ^
+lib/features/inventory/d
+ata/repositories/invento
+ry_repository.dart:16:3:
+ Context: Found this 
+candidate, but the 
+arguments don't match.
+  InventoryRepository(th
+is._apiClient);
+  ^^^^^^^^^^^^^^^^^^^
+lib/features/inventory/w
+idgets/battery_detail_dr
+awer.dart:19:62: Error: 
+Too few positional 
+arguments: 1 required, 
+0 given.
+  final 
+InventoryRepository 
+_repository = 
+InventoryRepository();
+                        
+                        
+             ^
+lib/features/inventory/d
+ata/repositories/invento
+ry_repository.dart:16:3:
+ Context: Found this 
+candidate, but the 
+arguments don't match.
+  InventoryRepository(th
+is._apiClient);
+  ^^^^^^^^^^^^^^^^^^^
+lib/features/inventory/w
+idgets/battery_import_mo
+dal.dart:14:62: Error: 
+Too few positional 
+arguments: 1 required, 
+0 given.
+  final 
+InventoryRepository 
+_repository = 
+InventoryRepository();
+                        
+                        
+             ^
+lib/features/inventory/d
+ata/repositories/invento
+ry_repository.dart:16:3:
+ Context: Found this 
+candidate, but the 
+arguments don't match.
+  InventoryRepository(th
+is._apiClient);
+  ^^^^^^^^^^^^^^^^^^^
+Waiting for connection from debug service on Chrome...             26.7s
+Failed to compile 
+application.

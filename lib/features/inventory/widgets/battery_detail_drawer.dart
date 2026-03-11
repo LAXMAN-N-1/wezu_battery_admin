@@ -6,17 +6,19 @@ import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/battery.dart';
 import '../data/repositories/inventory_repository.dart';
 
-class BatteryDetailDrawer extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class BatteryDetailDrawer extends ConsumerStatefulWidget {
   final Battery battery;
   const BatteryDetailDrawer({super.key, required this.battery});
 
   @override
-  State<BatteryDetailDrawer> createState() => _BatteryDetailDrawerState();
+  ConsumerState<BatteryDetailDrawer> createState() => _BatteryDetailDrawerState();
 }
 
-class _BatteryDetailDrawerState extends State<BatteryDetailDrawer> with SingleTickerProviderStateMixin {
+class _BatteryDetailDrawerState extends ConsumerState<BatteryDetailDrawer> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final InventoryRepository _repository = InventoryRepository();
+  late final InventoryRepository _repository;
   List<BatteryAuditLog> _auditLogs = [];
   List<BatteryHealthHistory> _healthHistory = [];
   bool _loadingAudit = true;
@@ -27,6 +29,7 @@ class _BatteryDetailDrawerState extends State<BatteryDetailDrawer> with SingleTi
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(inventoryRepositoryProvider);
     _tabController = TabController(length: 4, vsync: this);
     _loadData();
   }

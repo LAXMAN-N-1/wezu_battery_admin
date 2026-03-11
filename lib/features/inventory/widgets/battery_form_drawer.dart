@@ -6,17 +6,19 @@ import 'package:intl/intl.dart';
 import '../data/models/battery.dart';
 import '../data/repositories/inventory_repository.dart';
 
-class BatteryFormDrawer extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class BatteryFormDrawer extends ConsumerStatefulWidget {
   final Battery? battery;
   final VoidCallback? onSaved;
   const BatteryFormDrawer({super.key, this.battery, this.onSaved});
 
   @override
-  State<BatteryFormDrawer> createState() => _BatteryFormDrawerState();
+  ConsumerState<BatteryFormDrawer> createState() => _BatteryFormDrawerState();
 }
 
-class _BatteryFormDrawerState extends State<BatteryFormDrawer> {
-  final InventoryRepository _repository = InventoryRepository();
+class _BatteryFormDrawerState extends ConsumerState<BatteryFormDrawer> {
+  late final InventoryRepository _repository;
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
   int _currentSection = 0;
@@ -39,6 +41,7 @@ class _BatteryFormDrawerState extends State<BatteryFormDrawer> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(inventoryRepositoryProvider);
     final b = widget.battery;
     _serialController = TextEditingController(text: b?.serialNumber ?? _generateSerial());
     _manufacturerController = TextEditingController(text: b?.manufacturer ?? '');
