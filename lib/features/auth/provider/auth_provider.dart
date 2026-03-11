@@ -55,13 +55,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Use FormData to match FastAPI OAuth2PasswordRequestForm requirements
-      final formData = FormData.fromMap({
-        'username': email,
-        'password': password,
-      });
-
-      final response = await _apiClient.post('/api/v1/auth/admin/login', data: formData);
+      // Use JSON map to match FastAPI AdminLoginRequest requirements
+      final response = await _apiClient.post(
+        '/api/v1/auth/admin/login', 
+        data: {
+          'username': email,
+          'password': password,
+        },
+      );
 
       if (response.statusCode == 200) {
         final token = response.data['access_token'];
@@ -71,9 +72,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = state.copyWith(isLoading: false, error: 'Login failed');
       }
     } on DioException catch (e) {
+      String errorMessage = 'An error occurred';
+      final detail = e.response?.data['detail'];
+      
+      if (detail is String) {
+        errorMessage = detail;
+      } else if (detail is List && detail.isNotEmpty) {
+        // Handle FastAPI validation error list
+        final firstError = detail[0];
+        if (firstError is Map) {
+          errorMessage = firstError['msg']?.toString() ?? 'Validation error';
+        }
+      } else if (detail is Map) {
+        errorMessage = detail['message']?.toString() ?? 'Error occurred';
+      }
+
       state = state.copyWith(
         isLoading: false, 
-        error: e.response?.data['detail'] ?? 'An error occurred',
+        error: errorMessage,
       );
     }
   }

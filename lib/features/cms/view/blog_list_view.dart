@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/blog.dart';
 import '../data/repositories/blog_repository.dart';
 
@@ -61,32 +63,22 @@ class _BlogListViewState extends State<BlogListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Blog Posts',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          PageHeader(
+            title: 'Blog Posts',
+            subtitle: 'Manage news, updates, and educational articles.',
+            actionButton: ElevatedButton.icon(
+              onPressed: () {
+                // TODO: Navigate to create view
+              },
+              icon: const Icon(Icons.add, size: 20, color: Colors.white),
+              label: const Text('Create New Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Navigate to create view
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Create New Post'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
 
           // Filters
@@ -101,10 +93,14 @@ class _BlogListViewState extends State<BlogListView> {
                     hintStyle: const TextStyle(color: Colors.white38),
                     prefixIcon: const Icon(Icons.search, color: Colors.white38),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.05),
+                    fillColor: Colors.black.withValues(alpha: 0.2),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                     ),
                   ),
                 ),
@@ -130,7 +126,7 @@ class _BlogListViewState extends State<BlogListView> {
                 }),
               ),
             ],
-          ),
+          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
           const SizedBox(height: 24),
 
           _isLoading
@@ -148,7 +144,7 @@ class _BlogListViewState extends State<BlogListView> {
                       ),
                       itemCount: _filteredBlogs.length,
                       itemBuilder: (context, index) {
-                        return _buildBlogCard(_filteredBlogs[index]);
+                        return _buildBlogCard(_filteredBlogs[index]).animate().fadeIn(duration: 500.ms, delay: (200 + index * 50).ms).slideY(begin: 0.05);
                       },
                     ),
         ],
@@ -186,10 +182,8 @@ class _BlogListViewState extends State<BlogListView> {
   }
 
   Widget _buildBlogCard(Blog blog) {
-    return Card(
-      color: Colors.white.withValues(alpha: 0.05),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
       child: InkWell(
         onTap: () {
           // TODO: Navigate to detail/edit view
@@ -215,7 +209,7 @@ class _BlogListViewState extends State<BlogListView> {
                     children: [
                       _buildBadge(blog.category, Colors.blue),
                       const SizedBox(width: 8),
-                      _buildBadge(blog.status, blog.status == 'published' ? Colors.green : Colors.orange),
+                      StatusBadge(status: blog.status),
                     ],
                   ),
                   const SizedBox(height: 12),

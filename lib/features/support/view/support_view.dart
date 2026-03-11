@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
 
 class SupportView extends ConsumerStatefulWidget {
@@ -50,40 +52,30 @@ class _SupportViewState extends ConsumerState<SupportView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Help Desk',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          PageHeader(
+            title: 'Help Desk',
+            subtitle: 'Manage support tickets and resolve customer issues.',
+            actionButton: ElevatedButton.icon(
+              onPressed: () {}, 
+              icon: const Icon(Icons.add, size: 20, color: Colors.white),
+              label: const Text('New Ticket', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              ElevatedButton.icon(
-                onPressed: () {}, 
-                icon: const Icon(Icons.add),
-                label: const Text('New Ticket'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildKanbanColumn('To Do', Colors.orange, _getTicketsByStatus('todo')),
+                _buildKanbanColumn('To Do', Colors.orange, _getTicketsByStatus('todo'), 100),
                 const SizedBox(width: 24),
-                _buildKanbanColumn('In Progress', Colors.blue, _getTicketsByStatus('in_progress')),
+                _buildKanbanColumn('In Progress', Colors.blue, _getTicketsByStatus('in_progress'), 200),
                 const SizedBox(width: 24),
-                _buildKanbanColumn('Done', Colors.green, _getTicketsByStatus('done')),
+                _buildKanbanColumn('Done', Colors.green, _getTicketsByStatus('done'), 300),
               ],
             ),
           ),
@@ -92,14 +84,9 @@ class _SupportViewState extends ConsumerState<SupportView> {
     );
   }
 
-  Widget _buildKanbanColumn(String title, Color color, List<SupportTicket> tickets) {
+  Widget _buildKanbanColumn(String title, Color color, List<SupportTicket> tickets, int delayMs) {
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        ),
+      child: AdvancedCard(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -142,15 +129,17 @@ class _SupportViewState extends ConsumerState<SupportView> {
             ),
           ],
         ),
-      ),
+      ).animate().fadeIn(duration: 400.ms, delay: delayMs.ms).slideY(begin: 0.05),
     );
   }
 
   Widget _buildTicketCard(SupportTicket ticket) {
-    return Card(
-      color: Colors.white.withValues(alpha: 0.05),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -159,21 +148,7 @@ class _SupportViewState extends ConsumerState<SupportView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getPriorityColor(ticket.prioritry).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    ticket.prioritry.toUpperCase(),
-                    style: TextStyle(
-                      color: _getPriorityColor(ticket.prioritry),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                StatusBadge(status: ticket.prioritry),
                 Text(
                   ticket.id,
                   style: const TextStyle(color: Colors.white38, fontSize: 12),
@@ -216,12 +191,5 @@ class _SupportViewState extends ConsumerState<SupportView> {
       ),
     );
   }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'high': return Colors.red;
-      case 'medium': return Colors.orange;
-      default: return Colors.green;
-    }
-  }
+  // Custom priority colors removed, StatusBadge handles colors based on name now.
 }

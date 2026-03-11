@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart' hide Banner;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/banner.dart';
 import '../data/repositories/banner_repository.dart';
 
@@ -47,32 +49,22 @@ class _BannerListViewState extends State<BannerListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'App Banners',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          PageHeader(
+            title: 'App Banners',
+            subtitle: 'Manage promotional banners and hero images.',
+            actionButton: ElevatedButton.icon(
+              onPressed: () {
+                // TODO: Navigate to create view
+              },
+              icon: const Icon(Icons.add_photo_alternate_outlined, size: 20, color: Colors.white),
+              label: const Text('Add Banner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Navigate to create view
-                },
-                icon: const Icon(Icons.add_photo_alternate_outlined),
-                label: const Text('Add Banner'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
 
           _isLoading
@@ -90,7 +82,7 @@ class _BannerListViewState extends State<BannerListView> {
                       ),
                       itemCount: _banners.length,
                       itemBuilder: (context, index) {
-                        return _buildBannerCard(_banners[index]);
+                        return _buildBannerCard(_banners[index]).animate().fadeIn(duration: 400.ms, delay: (100 + index * 100).ms).slideY(begin: 0.05);
                       },
                     ),
         ],
@@ -99,10 +91,8 @@ class _BannerListViewState extends State<BannerListView> {
   }
 
   Widget _buildBannerCard(Banner banner) {
-    return Card(
-      color: Colors.white.withValues(alpha: 0.05),
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
       child: Stack(
         children: [
           Column(
@@ -165,7 +155,7 @@ class _BannerListViewState extends State<BannerListView> {
             right: 12,
             child: Row(
               children: [
-                 _buildStatusChip(banner.isActive),
+                 StatusBadge(status: banner.isActive ? 'Active' : 'Inactive'),
               ],
             ),
           ),
@@ -198,25 +188,7 @@ class _BannerListViewState extends State<BannerListView> {
     );
   }
 
-  Widget _buildStatusChip(bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: Text(
-        isActive ? 'ACTIVE' : 'INACTIVE',
-        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
+  // Custom buildStatusChip removed, relies on StatusBadge which standardizes colors.
 
   Widget _buildEmptyState() {
     return Center(

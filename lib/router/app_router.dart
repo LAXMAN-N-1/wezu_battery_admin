@@ -10,6 +10,8 @@ import '../features/cms/view/legal_list_view.dart';
 import '../features/cms/view/banner_list_view.dart';
 import '../features/cms/view/media_library_view.dart';
 import '../features/inventory/view/batteries_view.dart';
+import '../features/inventory/view/stock_levels_view.dart';
+import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/users/view/users_view.dart';
 import '../features/finance/view/finance_view.dart';
@@ -118,23 +120,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet/stock',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(
-                title: 'Stock Levels',
-                icon: Icons.inventory_2_outlined,
-                description:
-                    'Real-time stock per station, low-stock alerts, utilization percentages.',
-              ),
+              child: const StockLevelsView(),
             ),
           ),
           GoRoute(
             path: '/fleet/health',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(
-                title: 'Battery Health',
-                icon: Icons.health_and_safety_outlined,
-                description:
-                    'Health distribution charts, degradation trends, and maintenance recommendations.',
-              ),
+              child: const BatteryHealthView(),
             ),
           ),
           GoRoute(

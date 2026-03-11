@@ -2,7 +2,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+<<<<<<< HEAD
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+=======
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/widgets/admin_ui_components.dart';
+>>>>>>> origin/main
 import '../data/models/transaction.dart';
 import '../data/repositories/finance_repository.dart';
 
@@ -56,58 +61,42 @@ class _FinanceViewState extends ConsumerState<FinanceView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header & Stats
-          Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Financial Overview',
-                    style: GoogleFonts.outfit(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+          PageHeader(
+            title: 'Financial Overview',
+            subtitle: 'Monitor revenue, growth, and recent transactions.',
+            actionButton: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Total Revenue: ₹${NumberFormat.compact().format(_totalRevenue)}',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        'Total Revenue: ₹${NumberFormat.compact().format(_totalRevenue)}',
-                        style: GoogleFonts.inter(
-                          color: Colors.white70,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '+$_monthlyGrowth%',
-                          style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
                   ),
-                ],
-              ),
-            ],
-          ),
+                  child: Text(
+                    '+$_monthlyGrowth%',
+                    style: const TextStyle(color: Colors.green, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
           const SizedBox(height: 32),
 
           // Revenue Chart
-          Container(
+          AdvancedCard(
             height: 300,
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -193,7 +182,7 @@ class _FinanceViewState extends ConsumerState<FinanceView> {
                 ),
               ],
             ),
-          ),
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideX(begin: -0.05),
           const SizedBox(height: 32),
 
           // Transactions List
@@ -204,23 +193,22 @@ class _FinanceViewState extends ConsumerState<FinanceView> {
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
-          ),
+          ).animate().fadeIn(delay: 300.ms),
           const SizedBox(height: 16),
-          _buildTransactionList(),
+          _buildTransactionList().animate().fadeIn(duration: 500.ms, delay: 400.ms).slideY(begin: 0.05),
         ],
       ),
     );
   }
 
   Widget _buildTransactionList() {
-    return Card(
-      color: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: _transactions.length,
-        separatorBuilder: (context, index) => Divider(color: Colors.white.withValues(alpha: 0.1)),
+        separatorBuilder: (context, index) => Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
         itemBuilder: (context, index) {
           final txn = _transactions[index];
           return ListTile(
