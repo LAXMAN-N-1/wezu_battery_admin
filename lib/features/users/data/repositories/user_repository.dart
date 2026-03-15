@@ -1,76 +1,116 @@
+import '../../../../core/api/api_client.dart';
 import '../models/user.dart';
 
 class UserRepository {
-  Future<List<User>> getUsers() async {
-    await Future.delayed(const Duration(milliseconds: 800)); // Simulate API
+  final ApiClient _api = ApiClient();
 
-    return [
-      User(
-        id: 1,
-        fullName: 'Murari Varma',
-        email: 'murari@wezu.com',
-        phoneNumber: '+919876543210',
-        role: 'admin',
-        kycStatus: 'verified',
-        isActive: true,
-        joinedAt: DateTime(2025, 1, 1),
-        lastActive: DateTime.now(),
-      ),
-      User(
-        id: 2,
-        fullName: 'Rahul Sharma',
-        email: 'rahul.driver@gmail.com',
-        phoneNumber: '+919876500001',
-        role: 'driver',
-        kycStatus: 'pending', // Needs attention
-        isActive: true,
-        joinedAt: DateTime(2025, 2, 10),
-        lastActive: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      User(
-        id: 3,
-        fullName: 'Green Energy Dealers',
-        email: 'contact@greendealers.in',
-        phoneNumber: '+919876500002',
-        role: 'dealer',
-        kycStatus: 'verified',
-        isActive: true,
-        joinedAt: DateTime(2025, 1, 15),
-        lastActive: DateTime.now().subtract(const Duration(minutes: 15)),
-      ),
-      User(
-        id: 4,
-        fullName: 'Priya Singh',
-        email: 'priya.s@outlook.com',
-        phoneNumber: '+919876500003',
-        role: 'customer',
-        kycStatus: 'not_submitted',
-        isActive: true,
-        joinedAt: DateTime(2025, 2, 18),
-        lastActive: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-      User(
-        id: 5,
-        fullName: 'Suresh Kumar',
-        email: 'suresh.k@gmail.com',
-        phoneNumber: '+919876500004',
-        role: 'driver',
-        kycStatus: 'rejected',
-        isActive: false,
-        joinedAt: DateTime(2025, 2, 5),
-        lastActive: DateTime.now().subtract(const Duration(days: 5)),
-      ),
-       User(
-        id: 6,
-        fullName: 'Amit Patel',
-        email: 'amit.p@gmail.com',
-        phoneNumber: '+919876500005',
-        role: 'customer',
-        kycStatus: 'verified',
-        isActive: true,
-        joinedAt: DateTime(2025, 2, 1),
-        lastActive: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-    ];
+  Future<Map<String, dynamic>> getUsers({
+    int skip = 0,
+    int limit = 100,
+    String? search,
+    String? status,
+    String? userType,
+    String? kycStatus,
+  }) async {
+    final params = <String, dynamic>{
+      'skip': skip,
+      'limit': limit,
+    };
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (status != null) params['status'] = status;
+    if (userType != null) params['user_type'] = userType;
+    if (kycStatus != null) params['kyc_status'] = kycStatus;
+
+    try {
+      final response = await _api.get('/api/v1/admin/users/', queryParameters: params);
+      final data = response.data;
+      final users = (data['users'] as List).map((u) => User.fromJson(u)).toList();
+      return {
+        'users': users,
+        'total_count': data['total_count'] ?? users.length,
+      };
+    } catch (e) {
+      // Fallback to empty list on error
+      return {'users': <User>[], 'total_count': 0};
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserStats() async {
+    try {
+      final response = await _api.get('/api/v1/admin/users/stats');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {
+        'total_users': 0,
+        'active_users': 0,
+        'suspended_users': 0,
+        'pending_verification': 0,
+        'pending_kyc': 0,
+      };
+    }
+  }
+
+  Future<Map<String, dynamic>> getSuspendedUsers({
+    int skip = 0,
+    int limit = 100,
+    String? search,
+  }) async {
+    final params = <String, dynamic>{
+      'skip': skip,
+      'limit': limit,
+    };
+    if (search != null && search.isNotEmpty) params['search'] = search;
+
+    try {
+      final response = await _api.get('/api/v1/admin/users/suspended', queryParameters: params);
+      final data = response.data;
+      final users = (data['users'] as List).map((u) => User.fromJson(u)).toList();
+      return {
+        'users': users,
+        'total_count': data['total_count'] ?? users.length,
+      };
+    } catch (e) {
+      return {'users': <User>[], 'total_count': 0};
+    }
+  }
+
+  Future<bool> suspendUser(int userId, String reason) async {
+    try {
+      await _api.put('/api/v1/admin/users/$userId/suspend', data: {'reason': reason});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> reactivateUser(int userId) async {
+    try {
+      await _api.put('/api/v1/admin/users/$userId/reactivate', data: {});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> toggleUserActive(int userId) async {
+    try {
+      await _api.put('/api/v1/admin/users/$userId/toggle-active');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> inviteUser({required String email, required String role, String? fullName}) async {
+    try {
+      await _api.post('/api/v1/admin/users/invite', data: {
+        'email': email,
+        'role': role,
+        if (fullName != null) 'full_name': fullName,
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

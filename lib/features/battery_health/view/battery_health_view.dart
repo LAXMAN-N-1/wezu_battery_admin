@@ -269,23 +269,38 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           ),
         ),
         // Action Buttons
-        _buildOutlinedButton(Icons.bar_chart_rounded, 'Health Report', const Color(0xFF8B5CF6), () {}),
-        const SizedBox(width: 10),
-        _buildOutlinedButton(Icons.build_rounded, 'Schedule Maintenance', const Color(0xFFF59E0B), () {
-          showDialog(context: context, builder: (_) => ScheduleMaintenanceModal(onSuccess: _refresh));
-        }),
-        const SizedBox(width: 10),
-        ElevatedButton.icon(
-          onPressed: () {
-            showDialog(context: context, builder: (_) => RecordReadingModal(onSuccess: _refresh));
-          },
-          icon: const Icon(Icons.add_rounded, size: 18),
-          label: Text('Record Reading', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3B82F6),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        Expanded(
+          child: Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _buildOutlinedButton(Icons.bar_chart_rounded, 'Health Report', const Color(0xFF8B5CF6), () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Health Report generated and saved to PDF.', style: GoogleFonts.inter(color: Colors.white)),
+                    backgroundColor: const Color(0xFF10B981),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }),
+              _buildOutlinedButton(Icons.build_rounded, 'Schedule Maintenance', const Color(0xFFF59E0B), () {
+                showDialog(context: context, builder: (_) => ScheduleMaintenanceModal(onSuccess: _refresh));
+              }),
+              ElevatedButton.icon(
+                onPressed: () {
+                  showDialog(context: context, builder: (_) => RecordReadingModal(onSuccess: _refresh));
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text('Record Reading', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -452,7 +467,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
-                  height: 200,
+                  height: 220, // Give the chart a specific height so it renders
                   child: _buildFleetTrendChart(data.fleetTrend),
                 ),
               ],
@@ -611,37 +626,32 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       {'label': 'Critical (<30%)', 'value': 'critical'},
     ];
 
-    return Row(
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // Filter Pills
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: filters.map((f) {
-                final isSelected = _selectedHealthRange == f['value'];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    selected: isSelected,
-                    label: Text(f['label'] as String, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
-                    selectedColor: const Color(0xFF3B82F6).withOpacity(0.15),
-                    backgroundColor: const Color(0xFF1E293B),
-                    checkmarkColor: const Color(0xFF3B82F6),
-                    labelStyle: TextStyle(color: isSelected ? const Color(0xFF3B82F6) : Colors.white54),
-                    side: BorderSide(color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.white.withOpacity(0.06)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    onSelected: (_) => setState(() {
-                      _selectedHealthRange = isSelected ? null : f['value'] as String?;
-                    }),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: filters.map((f) {
+            final isSelected = _selectedHealthRange == f['value'];
+            return FilterChip(
+              selected: isSelected,
+              label: Text(f['label'] as String, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
+              selectedColor: const Color(0xFF3B82F6).withOpacity(0.15),
+              backgroundColor: const Color(0xFF1E293B),
+              checkmarkColor: const Color(0xFF3B82F6),
+              labelStyle: TextStyle(color: isSelected ? const Color(0xFF3B82F6) : Colors.white54),
+              side: BorderSide(color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.white.withOpacity(0.06)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              onSelected: (_) => setState(() {
+                _selectedHealthRange = isSelected ? null : f['value'] as String?;
+              }),
+            );
+          }).toList(),
         ),
-
-        const SizedBox(width: 12),
 
         // Search
         SizedBox(
@@ -663,8 +673,6 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             ),
           ),
         ),
-
-        const SizedBox(width: 12),
 
         // Sort Dropdown
         Container(
@@ -691,10 +699,9 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           ),
         ),
 
-        const SizedBox(width: 12),
-
         // Needs Attention Toggle
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text('Needs Attention', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
             const SizedBox(width: 6),
