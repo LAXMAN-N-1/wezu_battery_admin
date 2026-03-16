@@ -7,7 +7,7 @@ part of 'station_performance_provider.dart';
 // **************************************************************************
 
 String _$stationPerformanceHash() =>
-    r'd0fe0c1fe2e2e984a2b8b7921ae50440f8258efc';
+    r'9814d878e5a63aa2631de96f08dfbaf4ed27edf5';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -194,7 +194,7 @@ class _StationPerformanceProviderElement
   DateTime? get end => (origin as StationPerformanceProvider).end;
 }
 
-String _$stationRankingsHash() => r'b4e75b8603e08cbe42418bdd521ccca4e40f37e2';
+String _$stationRankingsHash() => r'b1e330a13b9d2cc58db9eda888a54d08a9b6665e';
 
 /// See also [stationRankings].
 @ProviderFor(stationRankings)

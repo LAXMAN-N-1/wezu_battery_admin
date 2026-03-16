@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../data/models/station_status.dart';
 import '../data/providers/station_status_provider.dart';
 import '../data/providers/stations_provider.dart';
+import '../data/providers/station_details_provider.dart';
 import 'station_performance_view.dart';
 
 // -------------------------------------------------------
@@ -136,10 +137,13 @@ class _StationMonitorViewState extends ConsumerState<StationMonitorView>
                         },
                         onCancelMaintenance: () async {
                           final stationId = _selected!.stationId;
-                          // 1. Remove schedule from maintenanceProvider
-                          await ref
-                              .read(maintenanceProvider.notifier)
-                              .cancel(stationId);
+                          final ms = maintenance[stationId];
+                          if (ms != null) {
+                            // 1. Remove schedule from maintenanceProvider
+                            await ref
+                                .read(maintenanceProvider.notifier)
+                                .cancel(stationId, ms.id);
+                          }
                           // 2. Revert base station status to "active"
                           await ref
                               .read(stationsProvider.notifier)
@@ -333,9 +337,12 @@ class _StationMonitorViewState extends ConsumerState<StationMonitorView>
                     }
                   },
                   onCancelMaintenance: () async {
-                    await ref
-                        .read(maintenanceProvider.notifier)
-                        .cancel(ev.stationId);
+                    final ms = maintenance[ev.stationId];
+                    if (ms != null) {
+                      await ref
+                          .read(maintenanceProvider.notifier)
+                          .cancel(ev.stationId, ms.id);
+                    }
                     await ref
                         .read(stationsProvider.notifier)
                         .updateStationStatus(ev.stationId, 'active');
@@ -1045,6 +1052,157 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                 ),
               ),
             ],
+
+            const SizedBox(height: 20),
+
+            // Official Backend Alerts
+            ref.watch(stationAlertsProvider(widget.event.stationId)).when(
+              data: (backendAlerts) {
+                if (backendAlerts.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionLabel('Hardware Alerts', Icons.notification_important_outlined, Colors.redAccent),
+                    const SizedBox(height: 8),
+                    ...backendAlerts.map((a) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  a.severity.toUpperCase(),
+                                  style: const TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                DateFormat('HH:mm').format(a.createdAt),
+                                style: const TextStyle(color: Colors.white24, fontSize: 10),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            a.message,
+                            style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    )),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+
+            // Official Charging Queue
+            ref.watch(chargingQueueProvider(widget.event.stationId)).when(
+              data: (queueResponse) {
+                if (queueResponse.currentQueue.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _SectionLabel('Charging Queue', Icons.bolt, Colors.blue),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.withValues(alpha: 0.15)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '${queueResponse.currentQueue.length} Batteries',
+                                style: GoogleFonts.inter(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                              const Spacer(),
+                              Text(
+                                'Capacity: ${queueResponse.capacity}',
+                                style: GoogleFonts.inter(color: Colors.white24, fontSize: 11),
+                              ),
+                            ],
+                          ),
+                          const Divider(color: Colors.white10, height: 16),
+                          ...queueResponse.currentQueue.map((q) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '#${q.priority}',
+                                      style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Battery ${q.batteryId.substring(0, 8)}...',
+                                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(2),
+                                        child: LinearProgressIndicator(
+                                          value: q.currentSoc / 100,
+                                          minHeight: 3,
+                                          backgroundColor: Colors.white10,
+                                          valueColor: AlwaysStoppedAnimation(
+                                            q.currentSoc > 80 ? Colors.green : Colors.blue,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  '${q.currentSoc.toInt()}%',
+                                  style: GoogleFonts.jetBrainsMono(color: Colors.white54, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          )),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
 
             // History timeline
             if (history.isNotEmpty) ...[

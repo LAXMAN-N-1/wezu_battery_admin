@@ -1,3 +1,36 @@
+
+class StationCamera {
+  final int id;
+  final String name;
+  final String streamUrl;
+  final bool isActive;
+
+  const StationCamera({
+    required this.id,
+    required this.name,
+    required this.streamUrl,
+    required this.isActive,
+  });
+
+  factory StationCamera.fromJson(Map<String, dynamic> json) {
+    return StationCamera(
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'Camera',
+      streamUrl: json['stream_url'] as String? ?? '',
+      isActive: json['is_active'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'stream_url': streamUrl,
+      'is_active': isActive,
+    };
+  }
+}
+
 class Station {
   final int id;
   final String name;
@@ -13,8 +46,9 @@ class Station {
   final String? contactEmail;
   final int? capacity;
   final String? openingHours;
+  final List<StationCamera> cameras;
 
-  const Station({
+  Station({
     required this.id,
     required this.name,
     required this.address,
@@ -29,13 +63,16 @@ class Station {
     this.contactEmail,
     this.capacity,
     this.openingHours,
+    this.cameras = const [],
   });
 
   factory Station.fromJson(Map<String, dynamic> json) {
     // Map backend status to frontend status
-    String mappedStatus = json['status'] as String? ?? 'active';
-    if (mappedStatus == 'operational') mappedStatus = 'active';
-    if (mappedStatus == 'closed') mappedStatus = 'inactive';
+    String rawStatus = (json['status'] as String? ?? 'active').toLowerCase();
+    String mappedStatus = rawStatus;
+    if (rawStatus == 'operational' || rawStatus == 'online') mappedStatus = 'active';
+    if (rawStatus == 'closed' || rawStatus == 'inactive') mappedStatus = 'inactive';
+    if (rawStatus == 'error' || rawStatus == 'offline') mappedStatus = 'inactive';
 
     return Station(
       id: json['id'] as int? ?? 0,
@@ -58,15 +95,18 @@ class Station {
       // Backend uses opening_hours in GET but operating_hours in some schemas
       openingHours:
           (json['opening_hours'] ?? json['operating_hours']) as String?,
+      cameras: json['cameras'] != null
+          ? (json['cameras'] as List).map((c) => StationCamera.fromJson(c as Map<String, dynamic>)).toList()
+          : [],
     );
   }
 
   Map<String, dynamic> toJson() {
     // Map frontend status to backend status
-    String backendStatus = status;
-    if (backendStatus == 'active') backendStatus = 'operational';
-    if (backendStatus == 'inactive') backendStatus = 'closed';
-
+    // StationUpdate schema and defaults suggest lowercase 'active', 'inactive', 'maintenance'
+    String backendStatus = status.toLowerCase();
+    if (backendStatus == 'active') backendStatus = 'active'; // Default in StationResponse
+    
     return {
       'name': name,
       'address': address,
@@ -76,10 +116,7 @@ class Station {
       'total_slots': totalSlots,
       'contact_phone': contactPhone,
       'contact_email': contactEmail,
-      // For Create, backend schema uses opening_hours
       'opening_hours': openingHours,
-      // For Update, backend schema uses operating_hours (adding both for safety)
-      'operating_hours': openingHours,
     };
   }
 
@@ -98,6 +135,7 @@ class Station {
     String? contactEmail,
     int? capacity,
     String? openingHours,
+    List<StationCamera>? cameras,
   }) {
     return Station(
       id: id ?? this.id,
@@ -119,6 +157,7 @@ class Station {
       contactEmail: contactEmail ?? this.contactEmail,
       capacity: capacity ?? this.capacity,
       openingHours: openingHours ?? this.openingHours,
+      cameras: cameras ?? this.cameras,
     );
   }
 }

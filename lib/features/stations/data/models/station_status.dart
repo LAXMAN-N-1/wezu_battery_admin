@@ -65,6 +65,8 @@ class StationStatusEvent {
   final DateTime timestamp;
   final String? errorMessage;
   final List<String> troubleshootingSteps;
+  final double? uptime;
+  final double? avgLatency;
 
   const StationStatusEvent({
     required this.stationId,
@@ -74,6 +76,8 @@ class StationStatusEvent {
     required this.timestamp,
     this.errorMessage,
     this.troubleshootingSteps = const [],
+    this.uptime,
+    this.avgLatency,
   });
 
   Map<String, dynamic> toJson() => {
@@ -84,6 +88,8 @@ class StationStatusEvent {
     'timestamp': timestamp.toIso8601String(),
     'errorMessage': errorMessage,
     'troubleshootingSteps': troubleshootingSteps,
+    'uptime': uptime,
+    'avgLatency': avgLatency,
   };
 
   String toJsonString() => jsonEncode(toJson());
@@ -99,6 +105,8 @@ class StationStatusEvent {
         troubleshootingSteps: List<String>.from(
           json['troubleshootingSteps'] as List? ?? [],
         ),
+        uptime: (json['uptime'] as num?)?.toDouble(),
+        avgLatency: (json['avgLatency'] as num?)?.toDouble(),
       );
 
   static List<StationStatusEvent> listFromJsonString(String raw) {
@@ -113,6 +121,7 @@ class StationStatusEvent {
 // Maintenance schedule for a station
 // -------------------------------------------------------
 class MaintenanceSchedule {
+  final int id;
   final int stationId;
   final DateTime startTime;
   final DateTime endTime;
@@ -120,6 +129,7 @@ class MaintenanceSchedule {
   final String maintenanceType; // Routine, Repair, Upgrade, etc.
 
   const MaintenanceSchedule({
+    this.id = 0,
     required this.stationId,
     required this.startTime,
     required this.endTime,
@@ -135,6 +145,7 @@ class MaintenanceSchedule {
   bool get isUpcoming => DateTime.now().isBefore(startTime);
 
   Map<String, dynamic> toJson() => {
+    'id': id,
     'stationId': stationId,
     'startTime': startTime.toIso8601String(),
     'endTime': endTime.toIso8601String(),
@@ -144,10 +155,11 @@ class MaintenanceSchedule {
 
   factory MaintenanceSchedule.fromJson(Map<String, dynamic> json) =>
       MaintenanceSchedule(
-        stationId: json['stationId'] as int,
-        startTime: DateTime.parse(json['startTime'] as String),
-        endTime: DateTime.parse(json['endTime'] as String),
-        notes: json['notes'] as String? ?? '',
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        stationId: (json['stationId'] ?? json['entity_id'] ?? 0) as int,
+        startTime: DateTime.parse(json['startTime'] ?? json['performed_at'] ?? DateTime.now().toIso8601String()),
+        endTime: DateTime.parse(json['endTime'] ?? json['performed_at'] ?? DateTime.now().toIso8601String()),
+        notes: json['notes'] ?? json['description'] ?? '',
         maintenanceType:
             json['maintenanceType'] as String? ??
             json['maintenance_type'] as String? ??

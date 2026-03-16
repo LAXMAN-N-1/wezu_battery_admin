@@ -41,6 +41,22 @@ class StationPerformance {
           .toList(),
     );
   }
+
+  factory StationPerformance.defaults(int stationId) {
+    final now = DateTime.now();
+    return StationPerformance(
+      stationId: stationId,
+      stationName: 'Station $stationId',
+      periodStart: now.subtract(const Duration(days: 7)),
+      periodEnd: now,
+      totalRentals: 0,
+      avgDurationMinutes: 0.0,
+      totalRevenue: 0.0,
+      utilizationRate: 0.0,
+      dailyTrends: [],
+      peakHours: [],
+    );
+  }
 }
 
 class DailyTrend {

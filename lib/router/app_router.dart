@@ -14,6 +14,9 @@ import '../features/inventory/view/batteries_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/stations/view/station_monitor_view.dart';
 import '../features/stations/view/station_performance_view.dart';
+import '../features/stations/view/station_maintenance_view.dart';
+import '../features/stations/view/maintenance_compliance_view.dart';
+import '../features/stations/view/station_map_view.dart';
 import '../features/users/view/users_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/support/view/support_view.dart';
@@ -26,23 +29,34 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/dashboard',
     debugLogDiagnostics: true,
+    refreshListenable: RouterRefreshListenable(ref),
     redirect: (context, state) {
       final isLoggingIn = state.matchedLocation == '/login';
+      
+      debugPrint('Router Redirect Diagnostic:');
+      debugPrint(' - Current path: ${state.matchedLocation}');
+      debugPrint(' - isAuthenticated: ${authState.isAuthenticated}');
+      debugPrint(' - isLoading: ${authState.isLoading}');
 
       // Still loading authentication state
       if (authState.isLoading) {
+         debugPrint(' - Action: Keep on login or wait');
          return isLoggingIn ? null : '/login';
       }
 
       // Not authenticated
       if (!authState.isAuthenticated) {
+        debugPrint(' - Action: Force Login');
         return isLoggingIn ? null : '/login';
       }
 
       // Authenticated but trying to access login page
       if (isLoggingIn) {
+        debugPrint(' - Action: Redirect to Dashboard');
         return '/dashboard';
       }
+      
+      debugPrint(' - Action: Proceed');
       return null;
     },
     routes: [
@@ -145,7 +159,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'map',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Station Map', icon: Icons.map_outlined, description: 'Interactive geo-map of all stations with clusters, status indicators, and heatmaps.'),
+                  child: StationMapView(),
                 ),
               ),
               GoRoute(
@@ -167,8 +181,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'maintenance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: StationMonitorView(),
+                  child: StationMaintenanceView(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'compliance',
+                    pageBuilder: (context, state) => const NoTransitionPage(
+                      child: MaintenanceComplianceView(),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -544,6 +566,7 @@ String _getTitle(String location) {
   if (location == '/stations/map') return 'Station Map';
   if (location == '/stations/performance') return 'Station Performance';
   if (location == '/stations/maintenance') return 'Maintenance Schedules';
+  if (location == '/stations/maintenance/compliance') return 'Compliance Dashboard';
 
   // Dealers
   if (location == '/dealers') return 'All Dealers';
@@ -621,4 +644,10 @@ String _getTitle(String location) {
   if (location == '/settings/health') return 'System Health';
 
   return 'Admin Portal';
+}
+
+class RouterRefreshListenable extends ChangeNotifier {
+  RouterRefreshListenable(Ref ref) {
+    ref.listen(authProvider, (_, __) => notifyListeners());
+  }
 }

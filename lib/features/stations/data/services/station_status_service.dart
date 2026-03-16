@@ -1,42 +1,18 @@
 import 'dart:math';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart' show Color;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/station_status.dart';
 import '../models/station.dart';
+import '../../../../core/api/api_client.dart';
 
 class StationStatusService {
   static const _historyKey = 'station_status_history_v1';
   static const _maxHistory = 50;
-  static const _baseUrl = 'http://127.0.0.1:8000/api/v1';
 
   final _rng = Random();
-  final _storage = const FlutterSecureStorage();
-  late final Dio _dio;
+  final ApiClient _apiClient;
 
-  StationStatusService() {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 8),
-        receiveTimeout: const Duration(seconds: 8),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
-    );
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await _storage.read(key: 'admin_token');
-          if (token != null) options.headers['Authorization'] = 'Bearer $token';
-          handler.next(options);
-        },
-      ),
-    );
-  }
+  StationStatusService(this._apiClient);
 
   // -------------------------------------------------------
   // SINGLE SOURCE OF TRUTH: local station.status from stationsProvider.
@@ -52,21 +28,64 @@ class StationStatusService {
     List<Station> stations, {
     Map<int, MaintenanceSchedule> maintenanceSchedules = const {},
   }) async* {
-    // Emit immediately using local station data
-    yield _buildFromLocalStations(
-      stations,
-      maintenanceSchedules: maintenanceSchedules,
-    );
-
-    // Refresh every 10 seconds (reacts to station list edits)
     while (true) {
+      try {
+        // Updated to verified path for real-time station status
+        final response = await _apiClient.get('admin/main/iot/stations/status');
+        if (response.statusCode == 200) {
+          final List<dynamic> healthList = response.data;
+
+          final healthMap = {
+            for (var item in healthList) (item['id']?.toString() ?? ''): item,
+          };
+
+          final events = stations.map((s) {
+            final health = healthMap[s.id.toString()];
+            var status = _statusFromString(s.status);
+
+            if (health != null) {
+              // Map backend status to operational status
+              final backendStatus = health['status']?.toString().toLowerCase();
+              if (backendStatus == 'active' || backendStatus == 'operational') {
+                status = StationOperationalStatus.operational;
+              } else if (backendStatus == 'maintenance') {
+                status = StationOperationalStatus.maintenance;
+              } else if (backendStatus == 'error') {
+                status = StationOperationalStatus.error;
+              } else {
+                status = StationOperationalStatus.offline;
+              }
+            }
+
+            // Active maintenance schedule overrides the station's stored status
+            final ms = maintenanceSchedules[s.id];
+            if (ms != null && ms.isActive) {
+              status = StationOperationalStatus.maintenance;
+            }
+
+            return StationStatusEvent(
+              stationId: s.id,
+              stationName: s.name,
+              stationAddress: s.address,
+              status: status,
+              timestamp: DateTime.now(),
+              // These fields might need adjustment based on real health response schema
+              uptime: (health?['uptime_percentage'] as num?)?.toDouble(),
+              avgLatency: (health?['avg_response_time'] as num?)?.toDouble(),
+            );
+          }).toList();
+
+          await saveHistory(events);
+          yield events;
+        }
+      } catch (e) {
+        // Fallback to local if API fails
+        yield _buildFromLocalStations(
+          stations,
+          maintenanceSchedules: maintenanceSchedules,
+        );
+      }
       await Future.delayed(const Duration(seconds: 10));
-      final events = _buildFromLocalStations(
-        stations,
-        maintenanceSchedules: maintenanceSchedules,
-      );
-      await saveHistory(events);
-      yield events;
     }
   }
 
@@ -109,16 +128,13 @@ class StationStatusService {
   // -------------------------------------------------------
   Future<List<BackendErrorLog>> fetchErrorLogs({int limit = 30}) async {
     try {
-      final response = await _dio.get(
-        '/admin/monitoring/errors',
+      final response = await _apiClient.get(
+        'admin/main/iot/stations/logs',
         queryParameters: {'limit': limit},
       );
       if (response.statusCode == 200) {
-        final data = response.data;
-        final List<dynamic> errors = data is Map
-            ? ((data['errors'] as List?) ?? [])
-            : [];
-        return errors
+        final List<dynamic> logs = response.data;
+        return logs
             .map((e) => BackendErrorLog.fromJson(e as Map<String, dynamic>))
             .toList();
       }

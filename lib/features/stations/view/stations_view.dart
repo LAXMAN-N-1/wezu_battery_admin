@@ -3,9 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../data/models/station.dart';
+import '../data/models/station_hours.dart';
 import '../data/providers/stations_provider.dart';
 import 'station_form_view.dart';
 import 'station_specs_view.dart';
+import 'operating_hours_settings_view.dart';
+import '../widgets/active_rentals_grid.dart';
+import '../widgets/camera_player.dart';
 
 class StationsView extends ConsumerStatefulWidget {
   const StationsView({super.key});
@@ -15,14 +19,6 @@ class StationsView extends ConsumerStatefulWidget {
 }
 
 class _StationsViewState extends ConsumerState<StationsView> {
-  // TODO: Re-enable when Google Maps API key is configured
-  // final Completer<GoogleMapController> _controller = Completer();
-  // static const CameraPosition _initialPosition = CameraPosition(
-  //   target: LatLng(17.4435, 78.3772),
-  //   zoom: 12,
-  // );
-  // final String _mapStyle = '...';
-
   Station? _selectedStation;
 
   void _onStationSelected(Station station) {
@@ -33,9 +29,6 @@ class _StationsViewState extends ConsumerState<StationsView> {
         _selectedStation = station;
       }
     });
-    // TODO: Re-enable camera animation when Google Maps API key is configured
-    // final GoogleMapController controller = await _controller.future;
-    // controller.animateCamera(...);
   }
 
   void _onEdit(Station station) async {
@@ -114,10 +107,10 @@ class _StationsViewState extends ConsumerState<StationsView> {
       }
       return Column(
         children: [
-          // Map Panel on top for mobile - now flexible to avoid overflow
+          // Detail Panel on top for mobile
           Flexible(
             flex: 2,
-            child: _buildMapPanel(stationsAsync),
+            child: _buildDetailPanel(),
           ),
           // List Panel at bottom
           Expanded(child: _buildListPanel(stationsAsync)),
@@ -132,10 +125,10 @@ class _StationsViewState extends ConsumerState<StationsView> {
           flex: 1, // 33% width
           child: _buildListPanel(stationsAsync),
         ),
-        // Map Panel
+        // Detail Panel
         Expanded(
           flex: 2, // 66% width
-          child: _buildMapPanel(stationsAsync),
+          child: _buildDetailPanel(),
         ),
       ],
     );
@@ -283,7 +276,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
                                   Colors.orange,
                                   Icons.check_box_outline_blank,
                                 ),
-                                _buildStatusBadge(station.status),
+                                _buildStationStatusBadge(station),
                               ],
                             ),
                           ],
@@ -350,305 +343,315 @@ class _StationsViewState extends ConsumerState<StationsView> {
     );
   }
 
-  // TODO: Re-enable full map implementation when Google Maps API key is configured
-  // Original GoogleMap implementation is preserved below in comments.
-  Widget _buildMapPanel(AsyncValue<List<Station>> stationsAsync) {
-    return Container(
-      color: const Color(0xFF0F172A),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+  Widget _buildDetailPanel() {
+    if (_selectedStation == null) {
+      return Container(
+        color: const Color(0xFF0F172A),
+        child: Center(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.map_outlined,
-                size: 64,
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
+              Icon(Icons.ev_station, size: 64, color: Colors.white.withValues(alpha: 0.1)),
               const SizedBox(height: 16),
               Text(
-                'Map View',
+                'Select a station to view details',
                 style: GoogleFonts.outfit(
                   color: Colors.white38,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Configure a Google Maps API key\nto enable the interactive map.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(color: Colors.white24, fontSize: 13),
-              ),
-              if (_selectedStation != null) ...[
-                const SizedBox(height: 20),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.ev_station,
-                              color: Colors.blue,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _selectedStation!.name,
-                                  style: GoogleFonts.outfit(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  _selectedStation!.address,
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white38,
-                                    fontSize: 11,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      // Stats row
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          infoChip(
-                            '${_selectedStation!.totalSlots} Slots',
-                            Colors.blue,
-                          ),
-                          infoChip(
-                            '${_selectedStation!.availableBatteries} Bats',
-                            Colors.green,
-                          ),
-                          infoChip(
-                            _selectedStation!.status.toUpperCase(),
-                            _selectedStation!.status == 'active'
-                                ? Colors.green
-                                : Colors.orange,
-                          ),
-                        ],
-                      ),
-                      if (_selectedStation!.contactPhone?.isNotEmpty == true) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.phone,
-                              size: 12,
-                              color: Colors.white38,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _selectedStation!.contactPhone!,
-                          style: GoogleFonts.inter(
-                            color: Colors.white54,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 14),
-                      // Action buttons - Use Wrap for mobile robustness
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          SizedBox(
-                            width: 120,
-                            child: OutlinedButton.icon(
-                              onPressed: () => _onEdit(_selectedStation!),
-                              icon: const Icon(Icons.edit, size: 14),
-                              label: const Text('Edit'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.white70,
-                                side: const BorderSide(color: Colors.white12),
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 120,
-                            child: ElevatedButton.icon(
-                              onPressed: () => context.go('/stations/performance/${_selectedStation!.id}/${Uri.encodeComponent(_selectedStation!.name)}'),
-                              icon: const Icon(
-                                Icons.bar_chart,
-                                size: 14,
-                              ),
-                              label: const Text('Performance'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple.withValues(alpha: 0.8),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 120,
-                            child: ElevatedButton.icon(
-                              onPressed: () => showStationSpecsSheet(
-                                context,
-                                _selectedStation!,
-                              ),
-                              icon: const Icon(
-                                Icons.electrical_services,
-                                size: 14,
-                              ),
-                              label: const Text('⚡ Specs'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),
+      );
+    }
+
+    return Container(
+      color: const Color(0xFF0F172A),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            CameraPlayer(station: _selectedStation!),
+            const SizedBox(height: 24),
+            _buildStationDetailCard(_selectedStation!),
+          ],
+        ),
       ),
     );
-    // --- ORIGINAL MAP CODE (commented out) ---
-    // return Stack(
-    //   children: [
-    //     stationsAsync.when(
-    //       data: (stations) {
-    //         final markers = stations.map((station) => Marker(
-    //           markerId: MarkerId(station.id.toString()),
-    //           position: LatLng(station.latitude, station.longitude),
-    //           infoWindow: InfoWindow(
-    //             title: station.name,
-    //             snippet: '\${station.availableBatteries} Batteries Available',
-    //           ),
-    //           onTap: () => setState(() => _selectedStation = station),
-    //         )).toSet();
-    //         return GoogleMap(
-    //           mapType: MapType.normal,
-    //           style: _mapStyle,
-    //           initialCameraPosition: _initialPosition,
-    //           onMapCreated: (controller) {
-    //             if (!_controller.isCompleted) _controller.complete(controller);
-    //           },
-    //           markers: markers,
-    //           myLocationButtonEnabled: false,
-    //           zoomControlsEnabled: false,
-    //         );
-    //       },
-    //       loading: () => const Center(child: CircularProgressIndicator()),
-    //       error: (_, __) => const SizedBox(),
-    //     ),
-    //     Positioned(
-    //       bottom: 16, right: 16,
-    //       child: FloatingActionButton.small(
-    //         onPressed: () async {
-    //           if (_controller.isCompleted) {
-    //             final c = await _controller.future;
-    //             c.animateCamera(CameraUpdate.newCameraPosition(_initialPosition));
-    //           }
-    //         },
-    //         backgroundColor: const Color(0xFF1E293B),
-    //         child: const Icon(Icons.center_focus_strong, color: Colors.white),
-    //       ),
-    //     ),
-    //   ],
-    // );
   }
 
-  Widget _buildBadge(String text, Color color, IconData icon) {
+  Widget _buildStationDetailCard(Station station) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: const Color(0xFF1E293B).withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.ev_station,
+                  color: Colors.blue,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      station.name,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      station.address,
+                      style: GoogleFonts.inter(
+                        color: Colors.white38,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => setState(() => _selectedStation = null),
+                icon: const Icon(Icons.close, color: Colors.white38, size: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              infoChip('${station.totalSlots} Slots', Colors.blue),
+              infoChip('${station.availableBatteries} Bats', Colors.green),
+              _buildStationStatusBadge(station),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showRentalsSheet(context, station),
+                  icon: const Icon(Icons.list_alt, size: 14),
+                  label: const Text('Rentals', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal.withValues(alpha: 0.8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showOperationsSheet(context, station),
+                  icon: const Icon(Icons.settings_remote, size: 14),
+                  label: const Text('Ops', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.withValues(alpha: 0.8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => context.go('/stations/performance/${station.id}/${Uri.encodeComponent(station.name)}'),
+                  icon: const Icon(Icons.bar_chart, size: 14),
+                  label: const Text('Stats', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple.withValues(alpha: 0.8),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => showStationSpecsSheet(context, station),
+                  icon: const Icon(Icons.electrical_services, size: 14),
+                  label: const Text('Specs', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusBadge(String status) {
-    final Color color;
-    final IconData icon;
-    final String label;
+  void _showRentalsSheet(BuildContext context, Station station) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: ListView(
+            controller: controller,
+            padding: const EdgeInsets.all(24),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Active Rentals',
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white54),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              ActiveRentalsGrid(stationId: station.id),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-    switch (status.toLowerCase()) {
-      case 'active':
+  void _showOperationsSheet(BuildContext context, Station station) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: ListView(
+            controller: controller,
+            padding: const EdgeInsets.all(24),
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Station Operations',
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white54),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 500, // Fixed height for constraints
+                child: OperatingHoursSettingsView(station: station),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStationStatusBadge(Station station) {
+    final hours = StationHours.fromJsonString(station.openingHours);
+    final status = hours.getStatus();
+    
+    Color color;
+    IconData icon;
+    String label;
+
+    switch (status) {
+      case StationStatus.open:
         color = const Color(0xFF22C55E); // green
         icon = Icons.check_circle_outline;
-        label = 'Active';
+        label = 'Open Now';
         break;
-      case 'maintenance':
-        color = const Color(0xFFF59E0B); // amber
-        icon = Icons.construction_outlined;
-        label = 'Maintenance';
+      case StationStatus.closingSoon:
+        color = Colors.orange;
+        icon = Icons.warning_amber_rounded;
+        label = 'Closing Soon';
         break;
-      case 'inactive':
+      case StationStatus.closed:
         color = const Color(0xFFEF4444); // red
         icon = Icons.cancel_outlined;
-        label = 'Inactive';
+        label = 'Closed';
         break;
-      default:
-        color = Colors.grey;
-        icon = Icons.help_outline;
-        label = status;
+    }
+
+    // If backend status is maintenance, override
+    if (station.status.toLowerCase() == 'maintenance') {
+      color = const Color(0xFFF59E0B);
+      icon = Icons.construction_outlined;
+      label = 'Maintenance';
     }
 
     return Container(
@@ -665,8 +668,31 @@ class _StationsViewState extends ConsumerState<StationsView> {
           const SizedBox(width: 4),
           Text(
             label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
             style: TextStyle(
               color: color,
               fontSize: 10,

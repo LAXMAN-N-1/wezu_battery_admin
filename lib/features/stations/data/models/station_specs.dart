@@ -73,18 +73,18 @@ class ChargerConfig {
 
   Map<String, dynamic> toJson() => {
     'type': type.name,
-    'powerKw': powerKw,
-    'chargingSpeedKmh': chargingSpeedKmh,
-    'efficiencyPercent': efficiencyPercent,
+    'power_kw': powerKw,
+    'charging_speed_kmh': chargingSpeedKmh,
+    'efficiency_percent': efficiencyPercent,
     'count': count,
   };
 
   factory ChargerConfig.fromJson(Map<String, dynamic> json) => ChargerConfig(
-    type: ChargerTypeX.fromString(json['type'] as String),
-    powerKw: (json['powerKw'] as num).toDouble(),
-    chargingSpeedKmh: (json['chargingSpeedKmh'] as num).toDouble(),
-    efficiencyPercent: (json['efficiencyPercent'] as num).toDouble(),
-    count: json['count'] as int,
+    type: ChargerTypeX.fromString(json['type'] as String? ?? 'standard'),
+    powerKw: (json['power_kw'] as num?)?.toDouble() ?? 0.0,
+    chargingSpeedKmh: (json['charging_speed_kmh'] as num?)?.toDouble() ?? 0.0,
+    efficiencyPercent: (json['efficiency_percent'] as num?)?.toDouble() ?? 0.0,
+    count: json['count'] as int? ?? 0,
   );
 }
 
@@ -146,25 +146,30 @@ class StationSpecs {
   );
 
   Map<String, dynamic> toJson() => {
-    'stationId': stationId,
-    'maxBatteryCapacity': maxBatteryCapacity,
+    'station_id': stationId,
+    'max_capacity': maxBatteryCapacity,
     'chargers': chargers.map((c) => c.toJson()).toList(),
-    'safetyFeatures': safetyFeatures,
-    'minTempC': minTempC,
-    'maxTempC': maxTempC,
-    'photoUrls': photoUrls,
+    'safety_features': safetyFeatures,
+    'min_temp_c': minTempC,
+    'max_temp_c': maxTempC,
+    'photo_urls': photoUrls,
   };
 
   factory StationSpecs.fromJson(Map<String, dynamic> json) => StationSpecs(
-    stationId: json['stationId'] as int,
-    maxBatteryCapacity: json['maxBatteryCapacity'] as int,
-    chargers: (json['chargers'] as List<dynamic>)
-        .map((e) => ChargerConfig.fromJson(e as Map<String, dynamic>))
-        .toList(),
-    safetyFeatures: List<String>.from(json['safetyFeatures'] as List),
-    minTempC: (json['minTempC'] as num).toDouble(),
-    maxTempC: (json['maxTempC'] as num).toDouble(),
-    photoUrls: List<String>.from(json['photoUrls'] as List),
+    stationId: json['station_id'] as int? ?? 0,
+    maxBatteryCapacity: json['max_capacity'] as int? ?? 20,
+    chargers: (json['chargers'] as List<dynamic>?)
+            ?.map((e) => ChargerConfig.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        const [],
+    safetyFeatures: json['safety_features'] is List 
+        ? List<String>.from(json['safety_features'] as List)
+        : [],
+    minTempC: (json['min_temp_c'] as num?)?.toDouble() ?? 0.0,
+    maxTempC: (json['max_temp_c'] as num?)?.toDouble() ?? 45.0,
+    photoUrls: json['photo_urls'] is List
+        ? List<String>.from(json['photo_urls'] as List)
+        : [],
   );
 
   // Default specs for a new station
