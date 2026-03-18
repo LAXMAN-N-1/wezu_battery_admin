@@ -6,9 +6,9 @@ class RBACRepository {
 
   Future<List<Role>> getRoles() async {
     try {
-      final response = await _api.get('/api/v1/admin/rbac/roles');
+      final response = await _api.get('/api/v1/admin/roles/');
       final data = response.data;
-      return (data['roles'] as List).map((r) => Role.fromJson(r)).toList();
+      return (data as List).map((r) => Role.fromJson(r)).toList();
     } catch (e) {
       return [];
     }
@@ -16,7 +16,7 @@ class RBACRepository {
 
   Future<Role?> getRoleDetail(int roleId) async {
     try {
-      final response = await _api.get('/api/v1/admin/rbac/roles/$roleId');
+      final response = await _api.get('/api/v1/admin/roles/$roleId');
       return Role.fromJson(response.data);
     } catch (e) {
       return null;
@@ -31,7 +31,7 @@ class RBACRepository {
     List<int> permissionIds = const [],
   }) async {
     try {
-      await _api.post('/api/v1/admin/rbac/roles', data: {
+      await _api.post('/api/v1/admin/roles/', data: {
         'name': name,
         'description': description,
         'category': category,
@@ -56,7 +56,7 @@ class RBACRepository {
       if (description != null) data['description'] = description;
       if (isActive != null) data['is_active'] = isActive;
       if (permissionIds != null) data['permission_ids'] = permissionIds;
-      await _api.put('/api/v1/admin/rbac/roles/$roleId', data: data);
+      await _api.put('/api/v1/admin/roles/$roleId', data: data);
       return true;
     } catch (e) {
       return false;
@@ -65,7 +65,7 @@ class RBACRepository {
 
   Future<bool> deleteRole(int roleId) async {
     try {
-      await _api.delete('/api/v1/admin/rbac/roles/$roleId');
+      await _api.delete('/api/v1/admin/roles/$roleId');
       return true;
     } catch (e) {
       return false;
@@ -74,14 +74,14 @@ class RBACRepository {
 
   Future<Map<String, List<Permission>>> getPermissions() async {
     try {
-      final response = await _api.get('/api/v1/admin/rbac/permissions');
-      final permsMap = response.data['permissions'] as Map<String, dynamic>;
-      return permsMap.map((module, perms) {
-        return MapEntry(
-          module,
-          (perms as List).map((p) => Permission.fromJson(p)).toList(),
-        );
-      });
+      final response = await _api.get('/api/v1/admin/roles/permissions');
+      // The roles API might return a list of permissions, we'll group them by module here
+      final permsList = (response.data as List).map((p) => Permission.fromJson(p)).toList();
+      final grouped = <String, List<Permission>>{};
+      for (var p in permsList) {
+        grouped.putIfAbsent(p.module ?? 'general', () => []).add(p);
+      }
+      return grouped;
     } catch (e) {
       return {};
     }
@@ -89,8 +89,9 @@ class RBACRepository {
 
   Future<bool> assignRoleToUser(int userId, int roleId) async {
     try {
-      await _api.post('/api/v1/admin/rbac/users/$userId/assign-role', data: {
+      await _api.put('/api/v1/admin/users/$userId/role', data: {
         'role_id': roleId,
+        'reason': 'Assigned from RBAC panel'
       });
       return true;
     } catch (e) {

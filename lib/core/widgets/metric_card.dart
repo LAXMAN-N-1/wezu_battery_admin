@@ -13,6 +13,7 @@ class MetricCard extends StatelessWidget {
   final Color color;
   final List<double>? sparkData;
   final bool isLoading;
+  final double? changeValue;
 
   const MetricCard({
     super.key,
@@ -25,12 +26,17 @@ class MetricCard extends StatelessWidget {
     required this.color,
     this.sparkData,
     this.isLoading = false,
+    this.changeValue,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final isPositive = !trend.startsWith('-');
+    final parsed =
+        changeValue ?? double.tryParse(trend.replaceAll(RegExp('[^0-9.-]'), ''));
+    final bool isPositive = parsed != null && parsed > 0;
+    final bool isNegative = parsed != null && parsed < 0;
+    final bool isNeutral = parsed == null || parsed == 0;
 
     if (isLoading) {
       return _buildLoading(colors);
@@ -41,7 +47,12 @@ class MetricCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: colors.border),
+        border: Border(
+          left: BorderSide(color: color, width: 4),
+          top: BorderSide(color: colors.border),
+          right: BorderSide(color: colors.border),
+          bottom: BorderSide(color: colors.border),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +101,7 @@ class MetricCard extends StatelessWidget {
             subtitle,
             style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 13),
           ),
-          if (sparkData != null && sparkData!.isNotEmpty) ...[
+          if (sparkData != null && sparkData!.length > 1) ...[
             const Spacer(),
             SizedBox(
               height: 40,
@@ -136,24 +147,33 @@ class MetricCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: (isPositive ? colors.success : colors.danger).withValues(
-                alpha: 0.08,
-              ),
+              color: isNeutral
+                  ? colors.textTertiary.withValues(alpha: 0.12)
+                  : (isPositive ? colors.success : colors.danger)
+                      .withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
+                  isNeutral
+                      ? Icons.horizontal_rule_rounded
+                      : isPositive
+                          ? Icons.trending_up
+                          : Icons.trending_down,
                   size: 14,
-                  color: isPositive ? colors.success : colors.danger,
+                  color: isNeutral
+                      ? colors.textTertiary
+                      : (isPositive ? colors.success : colors.danger),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   trend,
                   style: GoogleFonts.inter(
-                    color: isPositive ? colors.success : colors.danger,
+                    color: isNeutral
+                        ? colors.textSecondary
+                        : (isPositive ? colors.success : colors.danger),
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),

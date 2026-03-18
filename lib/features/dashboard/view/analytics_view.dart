@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,11 +7,18 @@ import '../../../core/theme/app_themes.dart';
 import '../providers/dashboard_providers.dart';
 import '../data/dashboard_models.dart';
 
-class AnalyticsView extends ConsumerWidget {
+class AnalyticsView extends ConsumerStatefulWidget {
   const AnalyticsView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AnalyticsView> createState() => _AnalyticsViewState();
+}
+
+class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
+  String _stationMetric = 'revenue'; // revenue | rentals | utilization
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.appColors;
 
     return Container(
@@ -31,8 +39,16 @@ class AnalyticsView extends ConsumerWidget {
                   ),
                 ),
                 const Spacer(),
+                _buildPeriodSelector(colors),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _manualRefreshAll,
+                  tooltip: 'Refresh data',
+                  icon: Icon(Icons.refresh_outlined, color: colors.textSecondary),
+                ),
+                const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: () => _handleExport(context, ref),
+                  onPressed: () => _handleExport(context),
                   icon: const Icon(Icons.download_outlined, size: 18),
                   label: const Text('Export CSV'),
                   style: ElevatedButton.styleFrom(
@@ -43,20 +59,45 @@ class AnalyticsView extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 24),
-            _buildRevenueSection(context, ref, colors),
+            _buildRevenueSection(context, colors),
             const SizedBox(height: 24),
-            _buildUserBehaviorSection(context, ref, colors),
+            _buildUserBehaviorSection(context, colors),
             const SizedBox(height: 24),
-            _buildFunnelAndGrowthSection(context, ref, colors),
+            _buildFunnelAndGrowthSection(context, colors),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildPeriodSelector(AppColorsExtension colors) {
+    final period = ref.watch(analyticsPeriodProvider);
+    const options = ['today', '7d', '30d', '90d'];
+    return Wrap(
+      spacing: 8,
+      children: options.map((p) {
+        final isSelected = p == period;
+        return ChoiceChip(
+          label: Text(
+            p.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isSelected ? Colors.white : colors.textSecondary,
+            ),
+          ),
+          selected: isSelected,
+          onSelected: (_) => ref.read(analyticsPeriodProvider.notifier).state = p,
+          selectedColor: colors.accent,
+          backgroundColor: colors.scaffoldBg.withValues(alpha: 0.4),
+          side: BorderSide(color: colors.border),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildUserBehaviorSection(
     BuildContext context,
-    WidgetRef ref,
     AppColorsExtension colors,
   ) {
     final behaviorAsync = ref.watch(userBehaviorProvider);
@@ -81,24 +122,44 @@ class AnalyticsView extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           behaviorAsync.when(
-            data: (data) => Row(
+            data: (data) => Column(
               children: [
-                _buildBehaviorStat(
-                  'Avg. Session',
-                  '${data.avgSessionDuration.toStringAsFixed(1)}m',
-                  colors,
+                Row(
+                  children: [
+                    _buildBehaviorStat(
+                      'Avg. Session',
+                      '${data.avgSessionDuration.toStringAsFixed(1)}m',
+                      colors,
+                    ),
+                    _buildBehaviorStat(
+                      'Rentals/User',
+                      data.avgRentalsPerUser.toStringAsFixed(1),
+                      colors,
+                    ),
+                    _buildBehaviorStat(
+                      'Peak Traffic',
+                      data.peakHours.keys.isNotEmpty
+                          ? data.peakHours.keys.first
+                          : 'N/A',
+                      colors,
+                    ),
+                  ],
                 ),
-                _buildBehaviorStat(
-                  'Rentals/User',
-                  data.avgRentalsPerUser.toStringAsFixed(1),
-                  colors,
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 180,
+                  child: Row(
+                    children: [
+                      Expanded(child: _buildSessionHistogram(data, colors)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildCohortBreakdown(data, colors)),
+                    ],
+                  ),
                 ),
-                _buildBehaviorStat(
-                  'Peak Traffic',
-                  data.peakHours.keys.isNotEmpty
-                      ? data.peakHours.keys.first
-                      : 'N/A',
-                  colors,
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 220,
+                  child: _buildHeatmap(data, colors),
                 ),
               ],
             ),
@@ -135,9 +196,194 @@ class AnalyticsView extends ConsumerWidget {
     );
   }
 
+  Widget _buildSessionHistogram(UserBehavior data, AppColorsExtension colors) {
+    final buckets = data.sessionHistogram.isNotEmpty
+        ? data.sessionHistogram
+        : [
+            SessionBucket(range: '0-5m', count: 100),
+            SessionBucket(range: '5-10m', count: 220),
+            SessionBucket(range: '10-15m', count: 180),
+            SessionBucket(range: '15-20m', count: 120),
+            SessionBucket(range: '20m+', count: 80),
+          ];
+    final maxY = buckets.map((b) => b.count).fold<int>(0,
+        (prev, element) => element > prev ? element : prev);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Session Duration Histogram',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: (maxY * 1.2).toDouble(),
+              titlesData: FlTitlesData(
+                leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final idx = value.toInt();
+                      if (idx < buckets.length) {
+                        return Text(
+                          buckets[idx].range,
+                          style: TextStyle(
+                              color: colors.textTertiary, fontSize: 10),
+                        );
+                      }
+                      return const SizedBox();
+                    },
+                  ),
+                ),
+              ),
+              gridData: FlGridData(show: false),
+              borderData: FlBorderData(show: false),
+              barGroups: buckets.asMap().entries.map((entry) {
+                return BarChartGroupData(
+                  x: entry.key,
+                  barRods: [
+                    BarChartRodData(
+                      toY: entry.value.count.toDouble(),
+                      color: colors.accent,
+                      width: 12,
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(8)),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCohortBreakdown(UserBehavior data, AppColorsExtension colors) {
+    final cohorts = data.cohortBreakdown.isNotEmpty
+        ? data.cohortBreakdown
+        : {'New Users': 60.0, 'Returning Users': 40.0};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Cohort Breakdown',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...cohorts.entries.map((e) {
+          final percent = e.value;
+          final barColor =
+              e.key.toLowerCase().contains('return') ? colors.secondary : colors.success;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(e.key, style: TextStyle(color: colors.textSecondary)),
+                    Text('${percent.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                            color: barColor, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: percent / 100,
+                    minHeight: 8,
+                    backgroundColor: colors.border.withValues(alpha: 0.4),
+                    valueColor: AlwaysStoppedAnimation(barColor),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildHeatmap(UserBehavior data, AppColorsExtension colors) {
+    List<List<int>> matrix = data.heatmap;
+    if (matrix.isEmpty) {
+      // build 7x24 from peak hours if provided, else default
+      matrix = List.generate(7, (day) {
+        return List.generate(
+            24,
+            (hour) => (hour >= 8 && hour <= 21)
+                ? ((data.peakHours['$hour:00'] ?? 20) as num).toInt()
+                : 5);
+      });
+    }
+    final maxVal = matrix
+        .expand((row) => row)
+        .fold<int>(0, (prev, e) => e > prev ? e : prev);
+    final dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    Color cellColor(int value) {
+      final intensity = maxVal == 0 ? 0.05 : (value / maxVal).clamp(0.05, 1.0);
+      return colors.accent.withValues(alpha: intensity * 0.8);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Peak Traffic Heatmap',
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 24,
+              mainAxisSpacing: 4,
+              crossAxisSpacing: 4,
+            ),
+            itemCount: matrix.length * 24,
+            itemBuilder: (context, idx) {
+              final day = idx ~/ 24;
+              final hour = idx % 24;
+              final value = matrix[day][hour];
+              return Container(
+                decoration: BoxDecoration(
+                  color: cellColor(value),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFunnelAndGrowthSection(
     BuildContext context,
-    WidgetRef ref,
     AppColorsExtension colors,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -146,23 +392,23 @@ class AnalyticsView extends ConsumerWidget {
     if (isVertical) {
       return Column(
         children: [
-          _buildGrowthChart(ref, colors),
+          _buildGrowthChart(colors),
           const SizedBox(height: 24),
-          _buildDetailedFunnel(ref, colors),
+          _buildDetailedFunnel(colors),
         ],
       );
     }
 
     return Row(
       children: [
-        Expanded(child: _buildGrowthChart(ref, colors)),
+        Expanded(child: _buildGrowthChart(colors)),
         const SizedBox(width: 24),
-        Expanded(child: _buildDetailedFunnel(ref, colors)),
+        Expanded(child: _buildDetailedFunnel(colors)),
       ],
     );
   }
 
-  Widget _buildGrowthChart(WidgetRef ref, AppColorsExtension colors) {
+  Widget _buildGrowthChart(AppColorsExtension colors) {
     final growthAsync = ref.watch(userGrowthProvider);
     return Container(
       height: 400,
@@ -186,10 +432,26 @@ class AnalyticsView extends ConsumerWidget {
           const SizedBox(height: 24),
           Expanded(
             child: growthAsync.when(
-              data: (data) => LineChart(
-                key: const ValueKey('analytics_user_growth_chart'),
+              data: (data) {
+                if (data.points.length < 2) return const Center(child: Text('Not enough growth data', style: TextStyle(color: Colors.white38)));
+                return LineChart(
+                  key: const ValueKey('analytics_user_growth_chart'),
                 LineChartData(
-                  gridData: const FlGridData(show: false),
+                  gridData: FlGridData(
+                    show: true,
+                    horizontalInterval: data.points.isEmpty
+                        ? 1
+                        : (data.points
+                                    .map((p) => p.totalUsers.toDouble())
+                                    .reduce((a, b) => a > b ? a : b) /
+                                4)
+                            .clamp(1, double.infinity),
+                    getDrawingHorizontalLine: (value) => FlLine(
+                      color: colors.border.withValues(alpha: 0.2),
+                      strokeWidth: 1,
+                    ),
+                    drawVerticalLine: false,
+                  ),
                   titlesData: FlTitlesData(
                     leftTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),
@@ -226,10 +488,25 @@ class AnalyticsView extends ConsumerWidget {
                   lineBarsData: [
                     LineChartBarData(
                       spots: data.points.asMap().entries.map((e) {
-                        return FlSpot(
-                          e.key.toDouble(),
-                          e.value.totalUsers.toDouble(),
-                        );
+                        final returning = e.value.returningUsers.toDouble();
+                        return FlSpot(e.key.toDouble(), returning);
+                      }).toList(),
+                      isCurved: true,
+                      color: colors.secondary,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: colors.secondary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    LineChartBarData(
+                      spots: data.points.asMap().entries.map((e) {
+                        final total =
+                            (e.value.returningUsers + e.value.newUsers)
+                                .toDouble();
+                        return FlSpot(e.key.toDouble(), total);
                       }).toList(),
                       isCurved: true,
                       color: colors.accent,
@@ -238,12 +515,13 @@ class AnalyticsView extends ConsumerWidget {
                       dotData: const FlDotData(show: false),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: colors.accent.withValues(alpha: 0.1),
+                        color: colors.accent.withValues(alpha: 0.12),
                       ),
                     ),
                   ],
                 ),
-              ),
+              );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, s) => Text('Error: $e'),
             ),
@@ -253,7 +531,7 @@ class AnalyticsView extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailedFunnel(WidgetRef ref, AppColorsExtension colors) {
+  Widget _buildDetailedFunnel(AppColorsExtension colors) {
     final funnelAsync = ref.watch(conversionFunnelProvider);
     return Container(
       height: 400,
@@ -339,7 +617,9 @@ class AnalyticsView extends ConsumerWidget {
                           'Conversion: ${s.conversionRate}% | Drop-off: ${s.dropOffRate}%',
                           style: TextStyle(
                             fontSize: 11,
-                            color: colors.textSecondary,
+                            color: s.dropOffRate > 30
+                                ? colors.danger
+                                : colors.textSecondary,
                           ),
                         ),
                       ],
@@ -358,7 +638,6 @@ class AnalyticsView extends ConsumerWidget {
 
   Widget _buildRevenueSection(
     BuildContext context,
-    WidgetRef ref,
     AppColorsExtension colors,
   ) {
     final stationRevenueAsync = ref.watch(revenueByStationProvider);
@@ -459,6 +738,7 @@ class AnalyticsView extends ConsumerWidget {
                     ),
                 ],
               ),
+              if (isStation) _buildStationMetricToggle(colors),
             ],
           ),
           const SizedBox(height: 24),
@@ -479,21 +759,72 @@ class AnalyticsView extends ConsumerWidget {
     );
   }
 
+  Widget _buildStationMetricToggle(AppColorsExtension colors) {
+    final options = {
+      'revenue': 'Revenue',
+      'rentals': 'Rentals',
+      'utilization': 'Utilization',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.scaffoldBg.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: options.entries.map((entry) {
+          final isSelected = _stationMetric == entry.key;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: ChoiceChip(
+              label: Text(entry.value, style: const TextStyle(fontSize: 11)),
+              selected: isSelected,
+              onSelected: (_) => setState(() => _stationMetric = entry.key),
+              selectedColor: colors.accent,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : colors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+              backgroundColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              side: BorderSide(color: colors.border),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildStationBarChart(
     StationRevenueData data,
     AppColorsExtension colors,
   ) {
+    if (data.stations.isEmpty) return const Center(child: Text('No station data', style: TextStyle(color: Colors.white38)));
     final displayData = data.stations.take(8).toList();
-    final maxY = displayData.isEmpty
-        ? 100.0
-        : (displayData.map((e) => e.revenue).reduce((a, b) => a > b ? a : b) *
-              1.2);
+
+    double metricValue(StationRevenue r) {
+      switch (_stationMetric) {
+        case 'rentals':
+          return r.rentalCount.toDouble();
+        case 'utilization':
+          return r.utilization > 0 ? r.utilization : r.percentage;
+        default:
+          return r.revenue;
+      }
+    }
+
+    final sorted = List<StationRevenue>.from(displayData)
+      ..sort((a, b) => metricValue(b).compareTo(metricValue(a)));
+    final maxY =
+        displayData.isEmpty ? 100.0 : math.max(metricValue(sorted.first) * 1.2, 1.0);
 
     return BarChart(
       key: const ValueKey('analytics_station_revenue_chart'),
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
-        maxY: maxY,
+        maxY: maxY <= 0 ? 1 : maxY,
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipColor: (_) => colors.cardBg,
@@ -507,9 +838,20 @@ class AnalyticsView extends ConsumerWidget {
                 ),
                 children: [
                   TextSpan(
-                    text: _formatCurrency(rod.toY),
+                    text:
+                        'Revenue: ${_formatCurrency(displayData[groupIndex].revenue)}\n',
                     style: TextStyle(color: colors.success),
                   ),
+                  TextSpan(
+                    text: 'Rentals: ${displayData[groupIndex].rentalCount}\n',
+                    style: TextStyle(color: colors.textSecondary),
+                  ),
+                  if (displayData[groupIndex].avgSessionDuration > 0)
+                    TextSpan(
+                      text:
+                          'Avg Session: ${displayData[groupIndex].avgSessionDuration.toStringAsFixed(1)}m',
+                      style: TextStyle(color: colors.textSecondary),
+                    ),
                 ],
               );
             },
@@ -526,11 +868,20 @@ class AnalyticsView extends ConsumerWidget {
                   final label = displayData[index].stationName;
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      label.length > 5 ? '${label.substring(0, 5)}..' : label,
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 10,
+                    child: Transform.rotate(
+                      angle: -0.8,
+                      child: SizedBox(
+                        width: 72,
+                        child: Text(
+                          label,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: TextStyle(
+                            color: colors.textTertiary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -559,7 +910,7 @@ class AnalyticsView extends ConsumerWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: maxY / 4,
+          horizontalInterval: math.max(1, maxY / 4),
           getDrawingHorizontalLine: (value) => FlLine(
             color: colors.border.withValues(alpha: 0.05),
             strokeWidth: 1,
@@ -567,17 +918,24 @@ class AnalyticsView extends ConsumerWidget {
         ),
         borderData: FlBorderData(show: false),
         barGroups: displayData.asMap().entries.map((e) {
+          final rankIndex = sorted.indexWhere(
+              (element) => element.stationName == e.value.stationName);
+          Color barColor;
+          if (rankIndex <= 2) {
+            barColor = colors.success;
+          } else if (rankIndex >= displayData.length - 3) {
+            barColor = Colors.orange;
+          } else {
+            barColor = colors.accent;
+          }
+
           return BarChartGroupData(
             x: e.key,
             barRods: [
               BarChartRodData(
-                toY: e.value.revenue,
-                color: e.key % 3 == 0
-                    ? colors.success
-                    : e.key % 3 == 1
-                    ? Colors.orange
-                    : colors.secondary,
-                width: 22,
+                toY: metricValue(e.value),
+                color: barColor,
+                width: 20,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(8),
                 ),
@@ -593,6 +951,128 @@ class AnalyticsView extends ConsumerWidget {
     BatteryTypeRevenueData data,
     AppColorsExtension colors,
   ) {
+    if (data.types.isEmpty && data.stationMix.isEmpty) return const Center(child: Text('No battery revenue data', style: TextStyle(color: Colors.white38)));
+    // Prefer station-level stacked composition if available
+    if (data.stationMix.isNotEmpty) {
+      final stations = data.stationMix.take(5).toList();
+      final maxY = stations
+              .map<double>((s) =>
+                  s.batteryMix.fold(0, (prev, b) => prev + b.revenue))
+              .fold<double>(0, (prev, element) => element > prev ? element : prev) *
+          1.2;
+
+      return BarChart(
+        key: const ValueKey('analytics_battery_revenue_chart'),
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxY <= 0 ? 100 : maxY,
+          barTouchData: BarTouchData(
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (_) => colors.cardBg,
+              tooltipBorder: BorderSide(color: colors.border),
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final station = stations[groupIndex];
+                final total = station.batteryMix
+                    .fold<double>(0, (prev, b) => prev + b.revenue);
+                return BarTooltipItem(
+                  '${station.stationName}\n',
+                  GoogleFonts.inter(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  children: station.batteryMix
+                      .map((b) => TextSpan(
+                            text:
+                                '${b.type}: ${_formatCurrency(b.revenue)} (${(b.revenue / total * 100).toStringAsFixed(1)}%)\n',
+                            style: TextStyle(
+                                color: colors.textSecondary, fontSize: 11),
+                          ))
+                      .toList(),
+                );
+              },
+            ),
+          ),
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index < stations.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Transform.rotate(
+                        angle: -0.7,
+                        child: Text(
+                          stations[index].stationName,
+                          style: TextStyle(
+                            color: colors.textTertiary,
+                            fontSize: 10,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    );
+                  }
+                  return const SizedBox();
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 40,
+                getTitlesWidget: (value, meta) => Text(
+                  _compactNumber(value),
+                  style: TextStyle(color: colors.textTertiary, fontSize: 10),
+                ),
+              ),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+          ),
+          gridData: const FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          barGroups: stations.asMap().entries.map((entry) {
+            final station = entry.value;
+            double running = 0;
+            final stacks = station.batteryMix.map((mix) {
+              final start = running;
+              running += mix.revenue;
+              return BarChartRodStackItem(
+                start,
+                running,
+                mix.type.contains('LFP')
+                    ? Colors.orange
+                    : mix.type.toLowerCase().contains('nimh')
+                        ? colors.secondary
+                        : colors.success,
+              );
+            }).toList();
+
+            return BarChartGroupData(
+              x: entry.key,
+              barRods: [
+                BarChartRodData(
+                  toY: running,
+                  width: 32,
+                  rodStackItems: stacks,
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12), bottom: Radius.circular(4)),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      );
+    }
+
+    // Fallback: aggregated types
     final displayData = data.types;
     final maxY = displayData.isEmpty
         ? 100.0
@@ -681,7 +1161,21 @@ class AnalyticsView extends ConsumerWidget {
     return n.toInt().toString();
   }
 
-  Future<void> _handleExport(BuildContext context, WidgetRef ref) async {
+  void _manualRefreshAll() {
+    ref.read(dashboardRefreshTriggerProvider.notifier).state++;
+    ref.invalidate(revenueByStationProvider);
+    ref.invalidate(revenueByBatteryTypeProvider);
+    ref.invalidate(userBehaviorProvider);
+    ref.invalidate(conversionFunnelProvider);
+    ref.invalidate(userGrowthProvider);
+    ref.invalidate(revenueByRegionProvider);
+    ref.invalidate(demandForecastProvider);
+    ref.invalidate(inventoryStatusProvider);
+    ref.invalidate(trendDataProvider);
+    ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
+  }
+
+  Future<void> _handleExport(BuildContext context) async {
     final repo = ref.read(analyticsRepositoryProvider);
     try {
       final response = await repo.exportReport();

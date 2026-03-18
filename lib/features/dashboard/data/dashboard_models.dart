@@ -47,6 +47,8 @@ class DashboardOverview {
   final KpiMetric activeDealers;
   final KpiMetric avgBatteryHealth;
   final KpiMetric openTickets;
+  final KpiMetric revenuePerRental;
+  final KpiMetric avgSessionDuration;
   final List<KpiMetric> allMetrics;
 
   const DashboardOverview({
@@ -58,6 +60,8 @@ class DashboardOverview {
     required this.activeDealers,
     required this.avgBatteryHealth,
     required this.openTickets,
+    required this.revenuePerRental,
+    required this.avgSessionDuration,
     this.allMetrics = const [],
   });
 
@@ -109,6 +113,8 @@ class DashboardOverview {
         0,
       ),
       openTickets: _extract('open_tickets', 'Open Tickets', 0),
+      revenuePerRental: _extract('revenue_per_rental', 'Revenue per Rental', 0),
+      avgSessionDuration: _extract('avg_session_duration', 'Avg. Session', 0),
       allMetrics: metrics,
     );
   }
@@ -228,18 +234,32 @@ class HealthBucket {
 
 class BatteryHealthDistribution {
   final List<HealthBucket> buckets;
+  final List<HealthBucket> previousBuckets;
   final int totalBatteries;
+  final int previousTotal;
 
   const BatteryHealthDistribution({
     required this.buckets,
     this.totalBatteries = 0,
+    this.previousBuckets = const [],
+    this.previousTotal = 0,
   });
 
   factory BatteryHealthDistribution.fromJson(Map<String, dynamic> json) {
     final raw = json['distribution'] ?? json['buckets'] ?? json['data'] ?? [];
+    final rawPrevious = json['previous_distribution'] ??
+        json['previous'] ??
+        json['previous_buckets'] ??
+        [];
+
     return BatteryHealthDistribution(
       buckets: (raw as List).map((e) => HealthBucket.fromJson(e)).toList(),
       totalBatteries: (json['total'] ?? json['total_batteries'] ?? 0).toInt(),
+      previousBuckets: (rawPrevious as List)
+          .map((e) => HealthBucket.fromJson(e))
+          .toList(),
+      previousTotal: (json['previous_total'] ?? json['prev_total'] ?? json['total_previous'] ?? 0)
+          .toInt(),
     );
   }
 }
@@ -248,16 +268,34 @@ class BatteryHealthDistribution {
 // User Behavior
 // ─────────────────────────────────────────────
 
+class SessionBucket {
+  final String range;
+  final int count;
+
+  const SessionBucket({required this.range, required this.count});
+
+  factory SessionBucket.fromJson(Map<String, dynamic> json) => SessionBucket(
+        range: json['range'] ?? json['label'] ?? '',
+        count: (json['count'] ?? json['value'] ?? 0).toInt(),
+      );
+}
+
 class UserBehavior {
   final double avgSessionDuration;
   final double avgRentalsPerUser;
   final Map<String, dynamic> peakHours;
+  final List<List<int>> heatmap; // 7x24 matrix for peak traffic
+  final List<SessionBucket> sessionHistogram;
+  final Map<String, double> cohortBreakdown; // new vs returning %
   final Map<String, dynamic> raw;
 
   const UserBehavior({
     this.avgSessionDuration = 0,
     this.avgRentalsPerUser = 0,
     this.peakHours = const {},
+    this.heatmap = const [],
+    this.sessionHistogram = const [],
+    this.cohortBreakdown = const {},
     this.raw = const {},
   });
 
@@ -266,6 +304,23 @@ class UserBehavior {
       avgSessionDuration: (json['avg_session_duration'] ?? 0).toDouble(),
       avgRentalsPerUser: (json['avg_rentals_per_user'] ?? 0).toDouble(),
       peakHours: (json['peak_hours'] is Map) ? json['peak_hours'] : {},
+      heatmap: (json['heatmap'] is List)
+          ? (json['heatmap'] as List)
+              .map<List<int>>((row) => (row as List)
+                  .map<int>((e) => (e as num).toInt())
+                  .toList())
+              .toList()
+          : const [],
+      sessionHistogram: (json['session_histogram'] is List)
+          ? (json['session_histogram'] as List)
+              .map((e) => SessionBucket.fromJson(e))
+              .toList()
+          : const [],
+      cohortBreakdown: (json['cohort_breakdown'] is Map)
+          ? (json['cohort_breakdown'] as Map).map(
+              (k, v) => MapEntry(k.toString(), (v as num).toDouble()),
+            )
+          : const {},
       raw: json,
     );
   }
@@ -355,18 +410,25 @@ class GrowthPoint {
   final String period;
   final int totalUsers;
   final int newUsers;
+  final int returningUsers;
 
   const GrowthPoint({
     required this.period,
     this.totalUsers = 0,
     this.newUsers = 0,
+    this.returningUsers = 0,
   });
 
   factory GrowthPoint.fromJson(Map<String, dynamic> json) {
+    final total = (json['total_users'] ?? json['total'] ?? 0).toInt();
+    final newUsers = (json['new_users'] ?? json['new'] ?? 0).toInt();
+    final returning = (json['returning_users'] ?? (total - newUsers)).toInt();
+
     return GrowthPoint(
       period: json['period'] ?? json['date'] ?? json['month'] ?? '',
-      totalUsers: (json['total_users'] ?? json['total'] ?? 0).toInt(),
-      newUsers: (json['new_users'] ?? json['new'] ?? 0).toInt(),
+      totalUsers: total,
+      newUsers: newUsers,
+      returningUsers: returning < 0 ? 0 : returning,
     );
   }
 }
@@ -447,12 +509,18 @@ class StationRevenue {
   final double revenue;
   final int rentalCount;
   final double percentage;
+  final double avgSessionDuration;
+  final List<BatteryTypeRevenue> batteryMix;
+  final double utilization;
 
   const StationRevenue({
     required this.stationName,
     required this.revenue,
     required this.rentalCount,
     this.percentage = 0,
+    this.avgSessionDuration = 0,
+    this.batteryMix = const [],
+    this.utilization = 0,
   });
 
   factory StationRevenue.fromJson(Map<String, dynamic> json) {
@@ -461,6 +529,15 @@ class StationRevenue {
       revenue: (json['revenue'] ?? 0).toDouble(),
       rentalCount: (json['rental_count'] ?? json['rentals'] ?? 0).toInt(),
       percentage: (json['percentage'] ?? 0).toDouble(),
+      avgSessionDuration:
+          (json['avg_session_duration'] ?? json['avg_session'] ?? 0)
+              .toDouble(),
+      batteryMix: (json['battery_mix'] is List)
+          ? (json['battery_mix'] as List)
+              .map((e) => BatteryTypeRevenue.fromJson(e))
+              .toList()
+          : const [],
+      utilization: (json['utilization'] ?? json['util'] ?? 0).toDouble(),
     );
   }
 }
@@ -512,13 +589,18 @@ class BatteryTypeRevenue {
 
 class BatteryTypeRevenueData {
   final List<BatteryTypeRevenue> types;
+  final List<StationRevenue> stationMix; // reuse StationRevenue for per-station mix
 
-  const BatteryTypeRevenueData({required this.types});
+  const BatteryTypeRevenueData({required this.types, this.stationMix = const []});
 
   factory BatteryTypeRevenueData.fromJson(Map<String, dynamic> json) {
     final raw = json['types'] ?? json['data'] ?? [];
+    final stationRaw = json['station_mix'] ?? json['stations'] ?? [];
     return BatteryTypeRevenueData(
       types: (raw as List).map((e) => BatteryTypeRevenue.fromJson(e)).toList(),
+      stationMix: (stationRaw as List)
+          .map((e) => StationRevenue.fromJson(e))
+          .toList(),
     );
   }
 }
@@ -531,12 +613,18 @@ class RecentActivityItem {
   final String description;
   final String time;
   final String type; // 'user', 'rental', 'swap', 'payment', 'alert'
+  final Map<String, dynamic> details;
+  final String? entityId;
+  final String? severity;
 
   const RecentActivityItem({
     required this.title,
     required this.description,
     required this.time,
     required this.type,
+    this.details = const {},
+    this.entityId,
+    this.severity,
   });
 
   factory RecentActivityItem.fromJson(Map<String, dynamic> json) {
@@ -545,6 +633,9 @@ class RecentActivityItem {
       description: json['description'] ?? '',
       time: json['time'] ?? '',
       type: json['type'] ?? 'user',
+      details: (json['details'] is Map) ? json['details'] : const {},
+      entityId: json['entity_id'],
+      severity: json['severity'],
     );
   }
 }
@@ -576,6 +667,10 @@ class TopStation {
   final double revenue;
   final double utilization;
   final double rating;
+  final double availablePercent;
+  final double chargingPercent;
+  final double offlinePercent;
+  final List<double> sparkline;
 
   const TopStation({
     required this.id,
@@ -585,6 +680,10 @@ class TopStation {
     required this.revenue,
     required this.utilization,
     required this.rating,
+    this.availablePercent = 0,
+    this.chargingPercent = 0,
+    this.offlinePercent = 0,
+    this.sparkline = const [],
   });
 
   factory TopStation.fromJson(Map<String, dynamic> json) {
@@ -596,6 +695,17 @@ class TopStation {
       revenue: (json['revenue'] ?? 0).toDouble(),
       utilization: (json['utilization'] ?? 0).toDouble(),
       rating: (json['rating'] ?? 0).toDouble(),
+      availablePercent:
+          (json['available_percent'] ?? json['available'] ?? 0).toDouble(),
+      chargingPercent:
+          (json['charging_percent'] ?? json['charging'] ?? 0).toDouble(),
+      offlinePercent:
+          (json['offline_percent'] ?? json['offline'] ?? 0).toDouble(),
+      sparkline: (json['sparkline'] is List)
+          ? (json['sparkline'] as List)
+              .map((e) => (e as num).toDouble())
+              .toList()
+          : const [],
     );
   }
 }

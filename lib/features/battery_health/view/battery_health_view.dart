@@ -516,7 +516,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     if (trend.isEmpty) return const Center(child: Text('No trend data', style: TextStyle(color: Colors.white38)));
 
     final validTrend = trend.where((t) => t.avgHealth > 0).toList();
-    if (validTrend.isEmpty) return const Center(child: Text('No trend data', style: TextStyle(color: Colors.white38)));
+    if (validTrend.length < 2) return const Center(child: Text('Not enough trend data', style: TextStyle(color: Colors.white38)));
 
     final spots = validTrend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.avgHealth)).toList();
     final minY = (validTrend.map((t) => t.avgHealth).reduce((a, b) => a < b ? a : b) - 5).clamp(0, 100).toDouble();

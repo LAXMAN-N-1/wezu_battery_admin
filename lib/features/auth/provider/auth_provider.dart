@@ -55,11 +55,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Primary: POST /api/v1/auth/login with JSON body
-      final response = await _apiClient.post('/api/v1/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
+      final response = await _apiClient.post(
+        '/api/v1/auth/admin/login',
+        data: {
+          'username': email.trim(),
+          'password': password,
+        },
+      );
 
       if (response.statusCode == 200) {
         final accessToken = response.data['access_token'];
@@ -84,7 +86,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (e.response?.statusCode != 401 && e.response?.statusCode != 400) {
         try {
           final formData = FormData.fromMap({
-            'username': email,
+            'username': email.trim(),
             'password': password,
           });
           final fallbackResponse = await _apiClient.post('/api/v1/auth/token', data: formData);
@@ -111,9 +113,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         }
       }
 
+      String errorMessage = 'An error occurred';
+      final responseData = e.response?.data;
+      if (responseData is Map && responseData['detail'] != null) {
+        errorMessage = responseData['detail'].toString();
+      }
+
       state = state.copyWith(
         isLoading: false,
-        error: e.response?.data['detail'] ?? 'An error occurred',
+        error: errorMessage,
       );
     }
   }

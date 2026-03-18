@@ -9,55 +9,35 @@ final legalRepositoryProvider = Provider<LegalRepository>((ref) {
 class LegalRepository {
   final ApiClient _apiClient;
 
-  LegalRepository(this._apiClient);
+  LegalRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
   Future<List<LegalDocument>> getLegalDocuments() async {
-    try {
-      final response = await _apiClient.dio.get('admin/legal');
-      return (response.data as List).map((e) => LegalDocument.fromJson(e)).toList();
-    } catch (e) {
-      rethrow;
-    }
+    final response = await _apiClient.get('/api/v1/admin/legal');
+    return (response.data as List).map((e) => LegalDocument.fromJson(e)).toList();
   }
 
   Future<LegalDocument> getLegalDocument(int id) async {
-    try {
-      final response = await _apiClient.dio.get('admin/legal/$id');
-      return LegalDocument.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    final response = await _apiClient.get('/api/v1/admin/legal/$id');
+    return LegalDocument.fromJson(response.data);
   }
 
   Future<LegalDocument> createLegalDocument(LegalDocument doc) async {
-    try {
-      final response = await _apiClient.dio.post(
-        'admin/legal',
-        data: doc.toJson(),
-      );
-      return LegalDocument.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    final response = await _apiClient.post(
+      '/api/v1/admin/legal',
+      data: doc.toJson(),
+    );
+    return LegalDocument.fromJson(response.data);
   }
 
   Future<LegalDocument> updateLegalDocument(int id, Map<String, dynamic> data) async {
-    try {
-      final response = await _apiClient.dio.patch(
-        'admin/legal/$id',
-        data: data,
-      );
-      return LegalDocument.fromJson(response.data);
-    } catch (e) {
-      rethrow;
-    }
+    final response = await _apiClient.patch(
+      '/api/v1/admin/legal/$id',
+      data: data,
+    );
+    return LegalDocument.fromJson(response.data);
   }
 
   Future<void> deleteLegalDocument(int id) async {
-    try {
-      await _apiClient.dio.delete('admin/legal/$id');
-    } catch (e) {
-      rethrow;
-    }
+    await _apiClient.delete('/api/v1/admin/legal/$id');
   }
 }
