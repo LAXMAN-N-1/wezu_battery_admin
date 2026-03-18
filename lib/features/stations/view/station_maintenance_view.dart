@@ -7,8 +7,8 @@ import '../data/providers/maintenance_provider.dart';
 import '../data/providers/checklist_provider.dart';
 import '../data/models/maintenance_event.dart';
 import 'maintenance_form_dialog.dart';
-import 'checklist_template_dialog.dart';
 import 'maintenance_execution_view.dart';
+import 'checklist_template_list_dialog.dart';
 
 class StationMaintenanceView extends ConsumerStatefulWidget {
   const StationMaintenanceView({super.key});
@@ -212,7 +212,7 @@ class _StationMaintenanceViewState extends ConsumerState<StationMaintenanceView>
   void _showTemplatesDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => const ChecklistTemplateDialog(),
+      builder: (context) => const ChecklistTemplateListDialog(),
     );
   }
 
