@@ -55,47 +55,72 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Use JSON map to match FastAPI AdminLoginRequest requirements
-      final response = await _apiClient.post(
-        '/api/v1/auth/admin/login', 
-        data: {
-          'username': email,
-          'password': password,
-        },
-      );
+      // Primary: POST /api/v1/auth/login with JSON body
+      final response = await _apiClient.post('/api/v1/auth/login', data: {
+        'email': email,
+        'password': password,
+      });
 
       if (response.statusCode == 200) {
-        final token = response.data['access_token'];
-        await _apiClient.storage.write(key: 'admin_token', value: token);
-        state = state.copyWith(isLoading: false, isAuthenticated: true);
+        final accessToken = response.data['access_token'];
+        final refreshToken = response.data['refresh_token'];
+        final user = response.data['user'];
+
+        await _apiClient.storage.write(key: 'admin_token', value: accessToken);
+        if (refreshToken != null) {
+          await _apiClient.storage.write(key: 'admin_refresh_token', value: refreshToken);
+        }
+
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: true,
+          user: user is Map<String, dynamic> ? user : null,
+        );
       } else {
         state = state.copyWith(isLoading: false, error: 'Login failed');
       }
     } on DioException catch (e) {
-      String errorMessage = 'An error occurred';
-      final detail = e.response?.data['detail'];
-      
-      if (detail is String) {
-        errorMessage = detail;
-      } else if (detail is List && detail.isNotEmpty) {
-        // Handle FastAPI validation error list
-        final firstError = detail[0];
-        if (firstError is Map) {
-          errorMessage = firstError['msg']?.toString() ?? 'Validation error';
+      // Fallback: POST /api/v1/auth/token with form data (OAuth2 compatible)
+      if (e.response?.statusCode != 401 && e.response?.statusCode != 400) {
+        try {
+          final formData = FormData.fromMap({
+            'username': email,
+            'password': password,
+          });
+          final fallbackResponse = await _apiClient.post('/api/v1/auth/token', data: formData);
+
+          if (fallbackResponse.statusCode == 200) {
+            final accessToken = fallbackResponse.data['access_token'];
+            final refreshToken = fallbackResponse.data['refresh_token'];
+            final user = fallbackResponse.data['user'];
+
+            await _apiClient.storage.write(key: 'admin_token', value: accessToken);
+            if (refreshToken != null) {
+              await _apiClient.storage.write(key: 'admin_refresh_token', value: refreshToken);
+            }
+
+            state = state.copyWith(
+              isLoading: false,
+              isAuthenticated: true,
+              user: user is Map<String, dynamic> ? user : null,
+            );
+            return;
+          }
+        } catch (_) {
+          // Fallback also failed, use original error
         }
-      } else if (detail is Map) {
-        errorMessage = detail['message']?.toString() ?? 'Error occurred';
       }
 
       state = state.copyWith(
-        isLoading: false, 
-        error: errorMessage,
+        isLoading: false,
+        error: e.response?.data['detail'] ?? 'An error occurred',
       );
     }
   }
 
   Future<void> logout() async {
     await _apiClient.storage.delete(key: 'admin_token');
-    state = state.copyWith(isAuthenticated: false);
+    await _apiClient.storage.delete(key: 'admin_refresh_token');
+    state = state.copyWith(isAuthenticated: false, user: null);
   }
 }

@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/faq.dart';
 import '../data/repositories/faq_repository.dart';
 
-class FaqListView extends ConsumerStatefulWidget {
+class FaqListView extends StatefulWidget {
   const FaqListView({super.key});
 
   @override
-  ConsumerState<FaqListView> createState() => _FaqListViewState();
+  State<FaqListView> createState() => _FaqListViewState();
 }
 
-class _FaqListViewState extends ConsumerState<FaqListView> {
-  late final FaqRepository _repository;
+class _FaqListViewState extends State<FaqListView> {
+  final FaqRepository _repository = FaqRepository();
   List<FAQ> _faqs = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -24,7 +21,6 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(faqRepositoryProvider);
     _loadData();
   }
 
@@ -56,20 +52,32 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PageHeader(
-            title: 'FAQ Management',
-            subtitle: 'Add and categorize frequently asked questions.',
-            actionButton: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add_comment_outlined, size: 20, color: Colors.white),
-              label: const Text('Add New FAQ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'FAQ Management',
+                style: GoogleFonts.outfit(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
+              
+              ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Navigate to create view
+                },
+                icon: const Icon(Icons.add_comment_outlined),
+                label: const Text('Add New FAQ'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 32),
 
           // Filters
@@ -87,14 +95,10 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
                     hintStyle: const TextStyle(color: Colors.white38),
                     prefixIcon: const Icon(Icons.search, color: Colors.white38),
                     filled: true,
-                    fillColor: Colors.black.withValues(alpha: 0.2),
+                    fillColor: Colors.white.withValues(alpha: 0.05),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
@@ -110,7 +114,7 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
                 }),
               ),
             ],
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
+          ),
           const SizedBox(height: 24),
 
           _isLoading
@@ -123,7 +127,7 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
                       itemCount: _faqs.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        return _buildFaqTile(_faqs[index]).animate().fadeIn(duration: 400.ms, delay: (200 + index * 50).ms).slideY(begin: 0.05);
+                        return _buildFaqTile(_faqs[index]);
                       },
                     ),
         ],
@@ -189,7 +193,7 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
             onChanged: (val) {
               // TODO: Update status
             },
-            activeTrackColor: Colors.green,
+            activeColor: Colors.green,
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.white38),
@@ -214,12 +218,12 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
                 style: const TextStyle(color: Colors.white70, height: 1.5),
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _buildStat(Icons.thumb_up_alt_outlined, Colors.green, faq.helpfulCount.toString()),
                   const SizedBox(width: 16),
                   _buildStat(Icons.thumb_down_alt_outlined, Colors.red, faq.notHelpfulCount.toString()),
-                  const Spacer(),
+                  
                   Text(
                     'Last updated: ${DateFormat('MMM d, y').format(faq.updatedAt)}',
                     style: const TextStyle(color: Colors.white24, fontSize: 11),
@@ -238,7 +242,8 @@ class _FaqListViewState extends ConsumerState<FaqListView> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
       ),
       child: Text(
         category.toUpperCase(),

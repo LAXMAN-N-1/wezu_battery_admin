@@ -53,12 +53,13 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     ),
                     
                     // Content
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 64),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                    Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 64, vertical: 32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           const WezuLogo(size: 100),
                           const SizedBox(height: 32),
                           Text(
@@ -110,6 +111,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         ],
                       ),
                     ),
+                  ),
                   ],
                 ),
               ),

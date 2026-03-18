@@ -90,7 +90,7 @@ class _SupportViewState extends ConsumerState<SupportView> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 CircleAvatar(
                   radius: 6,
@@ -105,7 +105,7 @@ class _SupportViewState extends ConsumerState<SupportView> {
                     fontSize: 16,
                   ),
                 ),
-                const Spacer(),
+                
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(

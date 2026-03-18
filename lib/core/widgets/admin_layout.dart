@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/navigation_provider.dart';
-import '../theme/app_themes.dart';
-import '../theme/theme_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
+import '../utils/responsive.dart';
 
 /// Menu section data model
 class MenuSection {
@@ -49,9 +48,14 @@ const List<MenuSection> _menuSections = [
     label: 'User Management',
     children: [
       MenuItem(label: 'All Users', route: '/users'),
-      MenuItem(label: 'KYC Requests', route: '/users/kyc'),
+      MenuItem(label: 'KYC Verification', route: '/users/kyc'),
+      MenuItem(label: 'KYC Dashboard', route: '/users/kyc-dashboard'),
       MenuItem(label: 'Roles & Permissions', route: '/users/roles'),
       MenuItem(label: 'Suspended Accounts', route: '/users/suspended'),
+      MenuItem(label: 'User Analytics', route: '/users/analytics'),
+      MenuItem(label: 'Fraud Risk', route: '/users/fraud'),
+      MenuItem(label: 'Bulk Operations', route: '/users/bulk'),
+      MenuItem(label: 'Session Activity', route: '/users/activity'),
     ],
   ),
   MenuSection(
@@ -206,26 +210,26 @@ class AdminLayout extends ConsumerWidget {
   final Widget child;
   final String title;
 
-  const AdminLayout({super.key, required this.child, required this.title});
+  const AdminLayout({
+    super.key,
+    required this.child,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.appColors;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768;
+    final isDesktop = Responsive.isDesktop(context);
 
     return Scaffold(
-      backgroundColor: colors.scaffoldBg,
-      drawer: isMobile
-          ? Drawer(child: _buildSidebarContent(context, ref, colors))
-          : null,
+      backgroundColor: const Color(0xFF0F172A),
+      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context, ref)),
       body: Row(
         children: [
-          if (!isMobile) _buildSidebar(context, ref, colors),
+          if (isDesktop) _buildSidebar(context, ref),
           Expanded(
             child: Column(
               children: [
-                _buildHeader(context, ref, title, colors, isMobile),
+                _buildHeader(context, ref, title, isDesktop),
                 Expanded(child: child),
               ],
             ),
@@ -235,175 +239,113 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebar(
-    BuildContext context,
-    WidgetRef ref,
-    AppColorsExtension colors,
-  ) {
-    return Container(
-      width: 270,
-      decoration: BoxDecoration(
-        color: colors.sidebarBg,
-        border: Border(right: BorderSide(color: colors.border)),
-      ),
-      child: _buildSidebarContent(context, ref, colors),
-    );
-  }
-
-  Widget _buildSidebarContent(
-    BuildContext context,
-    WidgetRef ref,
-    AppColorsExtension colors,
-  ) {
+  Widget _buildSidebar(BuildContext context, WidgetRef ref) {
     final currentRoute = ref.watch(selectedRouteProvider);
     final expandedSections = ref.watch(expandedSectionsProvider);
 
-    return Column(
-      children: [
-        // Logo header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade600, Colors.blue.shade400],
+    return Container(
+      width: 270,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        border: Border(right: BorderSide(color: Colors.white.withOpacity(0.06))),
+      ),
+      child: Column(
+        children: [
+          // Logo header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue.shade600, Colors.blue.shade400],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                  child: const Icon(Icons.bolt, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'WEZU Energy',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Admin Portal',
+                      style: GoogleFonts.inter(
+                        color: Colors.white38,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.bolt, color: Colors.white, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'WEZU Energy',
-                    style: GoogleFonts.outfit(
-                      color: colors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Admin Portal',
-                    style: GoogleFonts.inter(
-                      color: colors.textTertiary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        Divider(color: colors.border, height: 1),
-        const SizedBox(height: 8),
-
-        // Scrollable menu
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            children: [
-              for (final section in _menuSections) ...[
-                _buildSection(
-                  context,
-                  ref,
-                  section,
-                  currentRoute,
-                  expandedSections,
-                  colors,
-                ),
               ],
-            ],
+            ),
           ),
-        ),
+          Divider(color: Colors.white.withOpacity(0.06), height: 1),
+          const SizedBox(height: 8),
 
-        // Sign out
-        Divider(color: colors.border, height: 1),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: ListTile(
-            onTap: () => ref.read(authProvider.notifier).logout(),
-            dense: true,
-            leading: Icon(
-              Icons.logout_outlined,
-              color: colors.danger,
-              size: 18,
+          // Scrollable menu
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              children: [
+                for (final section in _menuSections) ...[
+                  _buildSection(ref, section, currentRoute, expandedSections),
+                ],
+              ],
             ),
-            title: Text(
-              'Sign Out',
-              style: GoogleFonts.inter(
-                color: colors.danger,
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            hoverColor: colors.danger.withValues(alpha: 0.05),
           ),
-        ),
-      ],
+
+          // Sign out
+          Divider(color: Colors.white.withOpacity(0.06), height: 1),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: ListTile(
+              onTap: () => ref.read(authProvider.notifier).logout(),
+              dense: true,
+              leading: Icon(Icons.logout_outlined, color: Colors.red.shade300, size: 18),
+              title: Text(
+                'Sign Out',
+                style: GoogleFonts.inter(color: Colors.red.shade300, fontWeight: FontWeight.w500, fontSize: 13),
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              hoverColor: Colors.red.withOpacity(0.05),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildSection(
-    BuildContext context,
-    WidgetRef ref,
-    MenuSection section,
-    String currentRoute,
-    Set<String> expandedSections,
-    AppColorsExtension colors,
-  ) {
+  Widget _buildSection(WidgetRef ref, MenuSection section, String currentRoute, Set<String> expandedSections) {
     final bool isExpanded = expandedSections.contains(section.id);
-    final bool isSectionActive =
-        currentRoute.startsWith('/${section.id}') ||
+    final bool isSectionActive = currentRoute.startsWith('/${section.id}') ||
         section.children.any((c) => currentRoute == c.route) ||
         (section.route != null && currentRoute == section.route);
 
     // For dashboard, handle the direct route matching
     if (section.id == 'dashboard') {
       final isDashActive = currentRoute.startsWith('/dashboard');
-      return _buildSectionTile(
-        context,
-        ref,
-        section,
-        isDashActive,
-        isExpanded,
-        colors,
-      );
+      return _buildSectionTile(ref, section, isDashActive, isExpanded);
     }
 
-    return _buildSectionTile(
-      context,
-      ref,
-      section,
-      isSectionActive,
-      isExpanded,
-      colors,
-    );
+    return _buildSectionTile(ref, section, isSectionActive, isExpanded);
   }
 
-  Widget _buildSectionTile(
-    BuildContext context,
-    WidgetRef ref,
-    MenuSection section,
-    bool isActive,
-    bool isExpanded,
-    AppColorsExtension colors,
-  ) {
+  Widget _buildSectionTile(WidgetRef ref, MenuSection section, bool isActive, bool isExpanded) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -418,28 +360,24 @@ class AdminLayout extends ConsumerWidget {
                 if (!isExpanded && section.children.isNotEmpty) {
                   final firstRoute = section.children.first.route;
                   ref.read(selectedRouteProvider.notifier).state = firstRoute;
-                  GoRouter.of(context).go(firstRoute);
+                  GoRouter.of(ref.context).go(firstRoute);
                 }
               } else if (section.route != null) {
                 ref.read(selectedRouteProvider.notifier).state = section.route!;
-                GoRouter.of(context).go(section.route!);
-              }
-              // Close drawer on mobile
-              if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-                Navigator.of(context).pop();
+                GoRouter.of(ref.context).go(section.route!);
               }
             },
             dense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: Icon(
               section.icon,
-              color: isActive ? colors.accent : colors.textSecondary,
+              color: isActive ? Colors.blue.shade400 : Colors.white38,
               size: 19,
             ),
             title: Text(
               section.label,
               style: GoogleFonts.inter(
-                color: isActive ? colors.textPrimary : colors.textSecondary,
+                color: isActive ? Colors.white : Colors.white60,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 13,
               ),
@@ -447,17 +385,13 @@ class AdminLayout extends ConsumerWidget {
             trailing: section.children.length > 1
                 ? Icon(
                     isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: colors.textTertiary,
+                    color: Colors.white24,
                     size: 18,
                   )
                 : null,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            tileColor: isActive && !isExpanded
-                ? colors.accent.withValues(alpha: 0.08)
-                : Colors.transparent,
-            hoverColor: colors.textPrimary.withValues(alpha: 0.03),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            tileColor: isActive && !isExpanded ? Colors.blue.withOpacity(0.08) : Colors.transparent,
+            hoverColor: Colors.white.withOpacity(0.03),
           ),
         ),
 
@@ -467,15 +401,8 @@ class AdminLayout extends ConsumerWidget {
             padding: const EdgeInsets.only(left: 20, bottom: 4),
             child: Column(
               children: section.children.map((item) {
-                final isChildActive =
-                    ref.watch(selectedRouteProvider) == item.route;
-                return _buildChildItem(
-                  context,
-                  ref,
-                  item,
-                  isChildActive,
-                  colors,
-                );
+                final isChildActive = ref.watch(selectedRouteProvider) == item.route;
+                return _buildChildItem(ref, item, isChildActive);
               }).toList(),
             ),
           ),
@@ -483,23 +410,13 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildChildItem(
-    BuildContext context,
-    WidgetRef ref,
-    MenuItem item,
-    bool isActive,
-    AppColorsExtension colors,
-  ) {
+  Widget _buildChildItem(WidgetRef ref, MenuItem item, bool isActive) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0.5),
       child: ListTile(
         onTap: () {
           ref.read(selectedRouteProvider.notifier).state = item.route;
-          GoRouter.of(context).go(item.route);
-          // Close drawer on mobile
-          if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-            Navigator.of(context).pop();
-          }
+          GoRouter.of(ref.context).go(item.route);
         },
         dense: true,
         visualDensity: const VisualDensity(vertical: -3),
@@ -509,82 +426,55 @@ class AdminLayout extends ConsumerWidget {
           height: 5,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive ? colors.accent : colors.border,
+            color: isActive ? Colors.blue.shade400 : Colors.white12,
           ),
         ),
         title: Text(
           item.label,
           style: GoogleFonts.inter(
-            color: isActive ? colors.accent : colors.textSecondary,
+            color: isActive ? Colors.blue.shade300 : Colors.white54,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             fontSize: 12,
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: isActive
-            ? colors.accent.withValues(alpha: 0.06)
-            : Colors.transparent,
-        hoverColor: colors.textPrimary.withValues(alpha: 0.03),
+        tileColor: isActive ? Colors.blue.withOpacity(0.06) : Colors.transparent,
+        hoverColor: Colors.white.withOpacity(0.03),
       ),
     );
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    WidgetRef ref,
-    String title,
-    AppColorsExtension colors,
-    bool isMobile,
-  ) {
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
-
+  Widget _buildHeader(BuildContext context, WidgetRef ref, String title, bool isDesktop) {
     return Container(
       height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
       decoration: BoxDecoration(
-        color: colors.cardBg,
-        border: Border(bottom: BorderSide(color: colors.border)),
+        color: const Color(0xFF1E293B),
+        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
       ),
       child: Row(
         children: [
-          if (isMobile) ...[
-            IconButton(
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: Icon(Icons.menu, color: colors.textSecondary, size: 22),
+          if (!isDesktop) ...[
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
             ),
             const SizedBox(width: 8),
           ],
-          Expanded(
-            child: Text(
-              title,
-              style: GoogleFonts.inter(
-                color: colors.textPrimary,
-                fontSize: 17,
-                fontWeight: FontWeight.w600,
-              ),
-              overflow: TextOverflow.ellipsis,
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: isDesktop ? 17 : 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          // Theme toggle
-          IconButton(
-            onPressed: () => ref.read(themeProvider.notifier).toggle(),
-            icon: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, anim) =>
-                  RotationTransition(turns: anim, child: child),
-              child: Icon(
-                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                key: ValueKey(isDark),
-                color: colors.textSecondary,
-                size: 20,
-              ),
-            ),
-            tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
-          ),
-          const SizedBox(width: 4),
+          const Spacer(),
           IconButton(
             onPressed: () {},
-            icon: Icon(Icons.search, color: colors.textSecondary, size: 20),
+            icon: const Icon(Icons.search, color: Colors.white54, size: 20),
             tooltip: 'Search',
           ),
           const SizedBox(width: 4),
@@ -592,11 +482,7 @@ class AdminLayout extends ConsumerWidget {
             children: [
               IconButton(
                 onPressed: () {},
-                icon: Icon(
-                  Icons.notifications_none,
-                  color: colors.textSecondary,
-                  size: 20,
-                ),
+                icon: const Icon(Icons.notifications_none, color: Colors.white54, size: 20),
                 tooltip: 'Notifications',
               ),
               Positioned(
@@ -606,7 +492,7 @@ class AdminLayout extends ConsumerWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: colors.danger,
+                    color: Colors.red.shade400,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -614,44 +500,22 @@ class AdminLayout extends ConsumerWidget {
             ],
           ),
           const SizedBox(width: 16),
-          Container(height: 28, width: 1, color: colors.border),
+          Container(height: 28, width: 1, color: Colors.white.withOpacity(0.08)),
           const SizedBox(width: 16),
           CircleAvatar(
             radius: 16,
-            backgroundColor: colors.accent,
-            child: const Text(
-              "L",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
+            backgroundColor: Colors.blue.shade600,
+            child: const Text("L", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
           ),
-          if (!isMobile) ...[
-            const SizedBox(width: 10),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Laxman",
-                  style: GoogleFonts.inter(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  "Super Admin",
-                  style: GoogleFonts.inter(
-                    color: colors.textTertiary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          const SizedBox(width: 10),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Laxman", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+              Text("Super Admin", style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+            ],
+          ),
         ],
       ),
     );
