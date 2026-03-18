@@ -58,17 +58,11 @@ dependencies:
   intl: ^0.20.2
   fl_chart: ^1.1.1
   google_maps_flutter: ^2.14.2
-  geocoding: ^3.0.0
   flutter_animate: ^4.5.2
-  syncfusion_flutter_calendar: ^28.2.3
-  rrule: ^0.2.18
-  flutter_local_notifications: ^18.0.1
-  timezone: ^0.10.0
-  pdf: ^3.11.3
-  printing: ^5.14.2
+  file_picker: ^10.3.10
+  desktop_drop: ^0.7.0
+  url_launcher: ^6.3.2
   path_provider: ^2.1.5
-  csv: ^6.0.0
-  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_test:
@@ -96,7 +90,6 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/logo.png
-    - assets/map_style_night.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

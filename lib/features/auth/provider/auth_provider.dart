@@ -72,6 +72,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+<<<<<<< HEAD
       final formData = FormData.fromMap({
         'username': email,
         'password': password,
@@ -80,6 +81,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final response = await _apiClient.post(
         'customer/auth/login',
         data: formData,
+=======
+      // Use JSON map to match FastAPI AdminLoginRequest requirements
+      final response = await _apiClient.post(
+        '/api/v1/auth/admin/login', 
+        data: {
+          'username': email,
+          'password': password,
+        },
+>>>>>>> origin/main
       );
 
       if (response.statusCode == 200) {
@@ -101,6 +111,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       }
     } on DioException catch (e) {
+<<<<<<< HEAD
       String errorMessage = 'Network error occurred.';
       if (e.response?.data is Map) {
         errorMessage = e.response?.data['detail'] ?? 'Network error occurred.';
@@ -113,6 +124,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         error: 'An unexpected error occurred.',
+=======
+      String errorMessage = 'An error occurred';
+      final detail = e.response?.data['detail'];
+      
+      if (detail is String) {
+        errorMessage = detail;
+      } else if (detail is List && detail.isNotEmpty) {
+        // Handle FastAPI validation error list
+        final firstError = detail[0];
+        if (firstError is Map) {
+          errorMessage = firstError['msg']?.toString() ?? 'Validation error';
+        }
+      } else if (detail is Map) {
+        errorMessage = detail['message']?.toString() ?? 'Error occurred';
+      }
+
+      state = state.copyWith(
+        isLoading: false, 
+        error: errorMessage,
+>>>>>>> origin/main
       );
     }
   }
