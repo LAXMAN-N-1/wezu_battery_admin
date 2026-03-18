@@ -29,10 +29,6 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    final isPositive = trend.startsWith('+');
-
-=======
     final colors = context.appColors;
     final isPositive = !trend.startsWith('-');
 
@@ -184,17 +180,12 @@ class MetricCard extends StatelessWidget {
   }
 
   Widget _buildLoading(AppColorsExtension colors) {
->>>>>>> origin/main
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colors.cardBg,
         borderRadius: BorderRadius.circular(16),
-<<<<<<< HEAD
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-=======
         border: Border.all(color: colors.border),
->>>>>>> origin/main
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,54 +200,11 @@ class MetricCard extends StatelessWidget {
                   color: colors.border,
                   borderRadius: BorderRadius.circular(8),
                 ),
-<<<<<<< HEAD
-                child: Icon(icon, color: color, size: 20),
-=======
->>>>>>> origin/main
               ),
               Container(
                 width: 50,
                 height: 20,
                 decoration: BoxDecoration(
-<<<<<<< HEAD
-                  color: isPositive
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  trend,
-                  style: TextStyle(
-                    color: isPositive ? Colors.green : Colors.red,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: GoogleFonts.outfit(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-=======
                   color: colors.border,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -280,7 +228,6 @@ class MetricCard extends StatelessWidget {
               color: colors.border,
               borderRadius: BorderRadius.circular(4),
             ),
->>>>>>> origin/main
           ),
         ],
       ),

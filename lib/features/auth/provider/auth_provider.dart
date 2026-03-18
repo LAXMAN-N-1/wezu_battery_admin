@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/api/api_client.dart';
+import '../../core/api/api_client.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
@@ -38,31 +38,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final ApiClient _apiClient;
 
   AuthNotifier(this._apiClient) : super(AuthState()) {
-    _apiClient.onUnauthorized = logout;
     _checkStatus();
   }
 
   Future<void> _checkStatus() async {
     state = state.copyWith(isLoading: true);
-
     final token = await _apiClient.storage.read(key: 'admin_token');
     if (token != null) {
-      try {
-        // Verify token by fetching current user profile
-        final response = await _apiClient.get('customer/users/me');
-        if (response.statusCode == 200) {
-          state = state.copyWith(
-            isLoading: false,
-            isAuthenticated: true,
-            user: response.data,
-          );
-        } else {
-          await logout();
-        }
-      } catch (e) {
-        // If 401 or network error, assume not authenticated for safety
-        await logout();
-      }
+      // Potentially fetch user profile here to verify token
+      state = state.copyWith(isLoading: false, isAuthenticated: true);
     } else {
       state = state.copyWith(isLoading: false, isAuthenticated: false);
     }
@@ -70,18 +54,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-<<<<<<< HEAD
-      final formData = FormData.fromMap({
-        'username': email,
-        'password': password,
-      });
-
-      final response = await _apiClient.post(
-        'customer/auth/login',
-        data: formData,
-=======
       // Use JSON map to match FastAPI AdminLoginRequest requirements
       final response = await _apiClient.post(
         '/api/v1/auth/admin/login', 
@@ -89,42 +62,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
           'username': email,
           'password': password,
         },
->>>>>>> origin/main
       );
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        final token = data['access_token'];
-
+        final token = response.data['access_token'];
         await _apiClient.storage.write(key: 'admin_token', value: token);
-        _apiClient.dio.options.headers['Authorization'] = 'Bearer $token';
-
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: true,
-          user: data['user'],
-        );
+        state = state.copyWith(isLoading: false, isAuthenticated: true);
       } else {
-        state = state.copyWith(
-          isLoading: false,
-          error: 'Login failed. Please check your credentials.',
-        );
+        state = state.copyWith(isLoading: false, error: 'Login failed');
       }
     } on DioException catch (e) {
-<<<<<<< HEAD
-      String errorMessage = 'Network error occurred.';
-      if (e.response?.data is Map) {
-        errorMessage = e.response?.data['detail'] ?? 'Network error occurred.';
-      }
-      state = state.copyWith(
-        isLoading: false,
-        error: errorMessage,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'An unexpected error occurred.',
-=======
       String errorMessage = 'An error occurred';
       final detail = e.response?.data['detail'];
       
@@ -143,19 +90,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(
         isLoading: false, 
         error: errorMessage,
->>>>>>> origin/main
       );
     }
   }
 
   Future<void> logout() async {
     await _apiClient.storage.delete(key: 'admin_token');
-    _apiClient.dio.options.headers.remove('Authorization');
-    state = state.copyWith(
-      isAuthenticated: false,
-      user: null,
-      error: null,
-      isLoading: false,
-    );
+    state = state.copyWith(isAuthenticated: false);
   }
 }

@@ -1,24 +1,18 @@
-<<<<<<< HEAD
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/api/api_client.dart';
-=======
-import '../../../core/api/api_client.dart';
->>>>>>> origin/main
+import 'package:dio/dio.dart';
+import 'package:frontend_admin/core/api/api_client.dart';
 import '../models/blog.dart';
-
-final blogRepositoryProvider = Provider<BlogRepository>((ref) {
-  return BlogRepository(ref.read(apiClientProvider));
-});
 
 class BlogRepository {
   final ApiClient _apiClient;
 
   BlogRepository(this._apiClient);
 
+  static const String _basePath = '/api/v1/admin/main/cms/blogs';
+
   Future<List<Blog>> getBlogs({String? category, String? status}) async {
     try {
-      final response = await _apiClient.dio.get(
-        'admin/blogs',
+      final response = await _apiClient.get(
+        '$_basePath/',
         queryParameters: {
           if (category != null) 'category': category,
           if (status != null) 'status': status,
@@ -32,7 +26,7 @@ class BlogRepository {
 
   Future<Blog> getBlog(int id) async {
     try {
-      final response = await _apiClient.dio.get('admin/blogs/$id');
+      final response = await _apiClient.get('$_basePath/$id');
       return Blog.fromJson(response.data);
     } catch (e) {
       rethrow;
@@ -41,8 +35,8 @@ class BlogRepository {
 
   Future<Blog> createBlog(Blog blog) async {
     try {
-      final response = await _apiClient.dio.post(
-        'admin/blogs',
+      final response = await _apiClient.post(
+        '$_basePath/',
         data: blog.toJson(),
       );
       return Blog.fromJson(response.data);
@@ -53,8 +47,8 @@ class BlogRepository {
 
   Future<Blog> updateBlog(int id, Map<String, dynamic> data) async {
     try {
-      final response = await _apiClient.dio.patch(
-        'admin/blogs/$id',
+      final response = await _apiClient.put(
+        '$_basePath/$id',
         data: data,
       );
       return Blog.fromJson(response.data);
@@ -65,7 +59,7 @@ class BlogRepository {
 
   Future<void> deleteBlog(int id) async {
     try {
-      await _apiClient.dio.delete('admin/blogs/$id');
+      await _apiClient.delete('$_basePath/$id');
     } catch (e) {
       rethrow;
     }

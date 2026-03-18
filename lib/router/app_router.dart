@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import '../features/auth/view/login_view.dart';
-import '../features/auth/provider/auth_provider.dart';
 import '../features/dashboard/view/dashboard_view.dart';
 import '../features/dashboard/view/analytics_view.dart';
 import '../features/cms/view/blog_list_view.dart';
@@ -13,89 +11,31 @@ import '../features/cms/view/banner_list_view.dart';
 import '../features/cms/view/media_library_view.dart';
 import '../features/inventory/view/batteries_view.dart';
 import '../features/inventory/view/stock_levels_view.dart';
-import '../features/inventory/view/bulk_import_export_view.dart';
 import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
-<<<<<<< HEAD
-import '../features/stations/view/station_monitor_view.dart';
-import '../features/stations/view/station_performance_view.dart';
-import '../features/stations/view/station_maintenance_view.dart';
-import '../features/stations/view/maintenance_compliance_view.dart';
-import '../features/stations/view/station_map_view.dart';
-=======
-import '../features/stations/view/station_map_view.dart';
-import '../features/stations/view/station_performance_view.dart';
-import '../features/stations/view/station_maintenance_view.dart';
-import '../features/dealers/view/dealers_view.dart';
-import '../features/dealers/view/dealer_onboarding_view.dart';
-import '../features/dealers/view/dealer_kyc_view.dart';
-import '../features/dealers/view/dealer_commissions_view.dart';
-import '../features/dealers/view/dealer_documents_view.dart';
-import '../features/rentals/view/active_rentals_view.dart';
-import '../features/rentals/view/rental_history_view.dart';
-import '../features/rentals/view/battery_swaps_view.dart';
-import '../features/rentals/view/purchase_orders_view.dart';
-import '../features/rentals/view/late_fees_view.dart';
-import '../features/fleet_ops/view/iot_dashboard_view.dart';
-import '../features/fleet_ops/view/geofencing_view.dart';
-import '../features/fleet_ops/view/telematics_view.dart';
-import '../features/fleet_ops/view/alerts_alarms_view.dart';
->>>>>>> origin/main
 import '../features/users/view/users_view.dart';
-import '../features/users/view/kyc_documents_view.dart';
-import '../features/users/view/roles_permissions_view.dart';
-import '../features/users/view/suspended_accounts_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/support/view/support_view.dart';
 import '../core/widgets/admin_layout.dart';
 import '../core/widgets/placeholder_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/dashboard',
     debugLogDiagnostics: true,
-    refreshListenable: RouterRefreshListenable(ref),
     redirect: (context, state) {
-      final isLoggingIn = state.matchedLocation == '/login';
-<<<<<<< HEAD
-      
-      debugPrint('Router Redirect Diagnostic:');
-      debugPrint(' - Current path: ${state.matchedLocation}');
-      debugPrint(' - isAuthenticated: ${authState.isAuthenticated}');
-      debugPrint(' - isLoading: ${authState.isLoading}');
+      // final isLoggingIn = state.matchedLocation == '/login';
 
-      // Still loading authentication state
-      if (authState.isLoading) {
-         debugPrint(' - Action: Keep on login or wait');
-         return isLoggingIn ? null : '/login';
-      }
+      // if (!authState.isAuthenticated && !isLoggingIn) {
+      //   return '/login';
+      // }
 
-      // Not authenticated
-      if (!authState.isAuthenticated) {
-        debugPrint(' - Action: Force Login');
-        return isLoggingIn ? null : '/login';
-      }
+      // if (authState.isAuthenticated && isLoggingIn) {
+      //   return '/dashboard';
+      // }
 
-      // Authenticated but trying to access login page
-      if (isLoggingIn) {
-        debugPrint(' - Action: Redirect to Dashboard');
-        return '/dashboard';
-      }
-      
-      debugPrint(' - Action: Proceed');
-=======
-
-      if (!authState.isAuthenticated && !isLoggingIn) {
-        return '/login';
-      }
-
-      if (authState.isAuthenticated && isLoggingIn) {
-        return '/dashboard';
-      }
-
->>>>>>> origin/main
       return null;
     },
     routes: [
@@ -135,19 +75,35 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'kyc',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: KYCDocumentsView(),
+                  child: PlaceholderScreen(
+                    title: 'KYC Requests',
+                    icon: Icons.verified_user_outlined,
+                    description:
+                        'Review and approve/reject user KYC submissions. View documents and verification status.',
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'roles',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: RolesPermissionsView(),
+                  child: PlaceholderScreen(
+                    title: 'Roles & Permissions',
+                    icon: Icons.admin_panel_settings_outlined,
+                    description:
+                        'Define admin roles and assign granular permissions for platform access control.',
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'suspended',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: SuspendedAccountsView(),
+                  child: PlaceholderScreen(
+                    title: 'Suspended Accounts',
+                    icon: Icons.block_outlined,
+                    description:
+                        'View and manage suspended user accounts. Reactivate or permanently disable.',
+                    accentColor: Color(0xFFEF4444),
+                  ),
                 ),
               ),
             ],
@@ -164,13 +120,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet/stock',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: StockLevelsView(),
+              child: const StockLevelsView(),
             ),
           ),
           GoRoute(
             path: '/fleet/health',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: BatteryHealthView(),
+              child: const BatteryHealthView(),
             ),
           ),
           GoRoute(
@@ -186,8 +142,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/fleet/bulk',
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: BulkImportExportView(),
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PlaceholderScreen(
+                title: 'Bulk Import / Export',
+                icon: Icons.cloud_upload_outlined,
+                description:
+                    'Import batteries via CSV/Excel. Export inventory data for reports.',
+              ),
             ),
           ),
 
@@ -197,51 +158,40 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/stations',
             pageBuilder: (context, state) =>
-                NoTransitionPage(child: StationsView()),
+                const NoTransitionPage(child: StationsView()),
             routes: [
-              GoRoute(
-                path: 'monitor',
-                pageBuilder: (context, state) => const NoTransitionPage(child: StationMonitorView()),
-              ),
               GoRoute(
                 path: 'map',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: StationMapView(),
+                  child: PlaceholderScreen(
+                    title: 'Station Map',
+                    icon: Icons.map_outlined,
+                    description:
+                        'Interactive geo-map of all stations with clusters, status indicators, and heatmaps.',
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'performance/:id/:name',
-                pageBuilder: (context, state) {
-                  final id = int.parse(state.pathParameters['id']!);
-                  final name = state.pathParameters['name']!;
-                  return NoTransitionPage(
-                    child: StationPerformanceView(stationId: id, stationName: name),
-                  );
-                },
               ),
               GoRoute(
                 path: 'performance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-<<<<<<< HEAD
-                  child: StationMonitorView(), // Fallback to monitor or an overview if needed
-=======
-                  child: StationPerformanceView(),
->>>>>>> origin/main
+                  child: PlaceholderScreen(
+                    title: 'Station Performance',
+                    icon: Icons.trending_up_outlined,
+                    description:
+                        'Revenue per station, utilization rates, customer ratings, and rental counts.',
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'maintenance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: StationMaintenanceView(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'compliance',
-                    pageBuilder: (context, state) => const NoTransitionPage(
-                      child: MaintenanceComplianceView(),
-                    ),
+                  child: PlaceholderScreen(
+                    title: 'Maintenance Schedules',
+                    icon: Icons.build_outlined,
+                    description:
+                        'Maintenance calendar, recurring schedules, overdue alerts, and checklists.',
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -252,31 +202,56 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/dealers',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: DealersView(),
+              child: PlaceholderScreen(
+                title: 'All Dealers',
+                icon: Icons.handshake_outlined,
+                description:
+                    'View all registered dealers, their stations, commission rates, and status.',
+              ),
             ),
             routes: [
               GoRoute(
                 path: 'registrations',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerOnboardingView(),
+                  child: PlaceholderScreen(
+                    title: 'Registration Requests',
+                    icon: Icons.person_add_outlined,
+                    description:
+                        '8-stage dealer onboarding queue. Review, approve or reject new dealer applications.',
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'kyc',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerKycView(),
+                  child: PlaceholderScreen(
+                    title: 'Dealer KYC & Verification',
+                    icon: Icons.fact_check_outlined,
+                    description:
+                        'Field visit verification, document review, and KYC status management for dealers.',
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'commissions',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerCommissionsView(),
+                  child: PlaceholderScreen(
+                    title: 'Commissions',
+                    icon: Icons.payments_outlined,
+                    description:
+                        'Configure commission rates, view monthly statements, and track settlement payments.',
+                  ),
                 ),
               ),
               GoRoute(
                 path: 'documents',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerDocumentsView(),
+                  child: PlaceholderScreen(
+                    title: 'Dealer Documents',
+                    icon: Icons.folder_outlined,
+                    description:
+                        'Business licenses, GST certificates, insurance documents with version control.',
+                  ),
                 ),
               ),
             ],
@@ -286,42 +261,60 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 6. RENTALS & ORDERS
           // ==========================================
           GoRoute(
-            path: '/rentals',
+            path: '/rentals/active',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: ActiveRentalsView(),
+              child: PlaceholderScreen(
+                title: 'Active Rentals',
+                icon: Icons.electric_bolt_outlined,
+                description:
+                    'Live rental tracking with GPS, battery health monitoring, and countdown timers.',
+              ),
             ),
-            routes: [
-              GoRoute(
-                path: 'active',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: ActiveRentalsView(),
-                ),
+          ),
+          GoRoute(
+            path: '/rentals/history',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PlaceholderScreen(
+                title: 'Rental History',
+                icon: Icons.history_outlined,
+                description:
+                    'Complete rental history with search, filters, and export capabilities.',
               ),
-              GoRoute(
-                path: 'history',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: RentalHistoryView(),
-                ),
+            ),
+          ),
+          GoRoute(
+            path: '/rentals/swaps',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PlaceholderScreen(
+                title: 'Battery Swaps',
+                icon: Icons.swap_horiz_outlined,
+                description:
+                    'Swap requests, status tracking, and station selection for battery exchanges.',
               ),
-              GoRoute(
-                path: 'swaps',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BatterySwapsView(),
-                ),
+            ),
+          ),
+          GoRoute(
+            path: '/rentals/purchases',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PlaceholderScreen(
+                title: 'Purchase Orders',
+                icon: Icons.shopping_cart_outlined,
+                description:
+                    'Battery purchase orders, delivery tracking, and invoice generation.',
               ),
-              GoRoute(
-                path: 'purchases',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PurchaseOrdersView(),
-                ),
+            ),
+          ),
+          GoRoute(
+            path: '/rentals/late-fees',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: PlaceholderScreen(
+                title: 'Late Fees',
+                icon: Icons.timer_off_outlined,
+                description:
+                    'Overdue rentals, late fee calculations, and automated notifications.',
+                accentColor: Color(0xFFEF4444),
               ),
-              GoRoute(
-                path: 'late-fees',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: LateFeesView(),
-                ),
-              ),
-            ],
+            ),
           ),
 
           // ==========================================
@@ -444,25 +437,46 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet-ops/iot',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: IoTDashboardView(),
+              child: PlaceholderScreen(
+                title: 'IoT Dashboard',
+                icon: Icons.sensors_outlined,
+                description:
+                    'Real-time telemetry data — voltage, temperature, charge levels from IoT devices.',
+              ),
             ),
           ),
           GoRoute(
             path: '/fleet-ops/geofence',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: GeofencingView(),
+              child: PlaceholderScreen(
+                title: 'Geofencing',
+                icon: Icons.fence_outlined,
+                description:
+                    'Configure geofence boundaries, view violations, and manage alerts.',
+              ),
             ),
           ),
           GoRoute(
             path: '/fleet-ops/telematics',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: TelematicsView(),
+              child: PlaceholderScreen(
+                title: 'Telematics',
+                icon: Icons.timeline_outlined,
+                description:
+                    'Battery movement history, route replay, and location analytics.',
+              ),
             ),
           ),
           GoRoute(
             path: '/fleet-ops/alerts',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: AlertsAlarmsView(),
+              child: PlaceholderScreen(
+                title: 'Alerts & Alarms',
+                icon: Icons.warning_amber_outlined,
+                description:
+                    'Critical health alerts, temperature warnings, and geofence violations.',
+                accentColor: Color(0xFFF59E0B),
+              ),
             ),
           ),
 
@@ -520,28 +534,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 11. SUPPORT
           // ==========================================
           GoRoute(
-<<<<<<< HEAD
-            path: '/support',
-            pageBuilder: (context, state) => const NoTransitionPage(child: SupportView()),
-            routes: [
-              GoRoute(
-                path: 'tickets',
-                pageBuilder: (context, state) => const NoTransitionPage(child: SupportView()),
-              ),
-              GoRoute(
-                path: 'knowledge',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Knowledge Base', icon: Icons.menu_book_outlined, description: 'FAQ articles, categorized guides, and self-service knowledge management.'),
-                ),
-              ),
-              GoRoute(
-                path: 'performance',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Team Performance', icon: Icons.leaderboard_outlined, description: 'Agent resolution times, CSAT scores, ticket volumes, and quality metrics.'),
-                ),
-              ),
-            ],
-=======
             path: '/support/tickets',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SupportView()),
@@ -567,11 +559,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     'Agent resolution times, CSAT scores, ticket volumes, and quality metrics.',
               ),
             ),
->>>>>>> origin/main
           ),
 
           // ==========================================
-          // 12. NOTIFICATIONS
+          // 11. NOTIFICATIONS
           // ==========================================
           GoRoute(
             path: '/notifications',
@@ -625,7 +616,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 13. CMS
+          // 12. CMS
           // ==========================================
           GoRoute(
             path: '/cms',
@@ -660,7 +651,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 14. AUDIT & SECURITY
+          // 13. AUDIT & SECURITY
           // ==========================================
           GoRoute(
             path: '/audit/logs',
@@ -698,7 +689,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 15. SETTINGS
+          // 14. SETTINGS
           // ==========================================
           GoRoute(
             path: '/settings',
@@ -761,11 +752,9 @@ String _getTitle(String location) {
 
   // Stations
   if (location == '/stations') return 'All Stations';
-  if (location == '/stations/monitor') return 'Station Monitor';
   if (location == '/stations/map') return 'Station Map';
   if (location == '/stations/performance') return 'Station Performance';
   if (location == '/stations/maintenance') return 'Maintenance Schedules';
-  if (location == '/stations/maintenance/compliance') return 'Compliance Dashboard';
 
   // Dealers
   if (location == '/dealers') return 'All Dealers';
@@ -808,29 +797,14 @@ String _getTitle(String location) {
   if (location == '/bess/reports') return 'BESS Reports';
 
   // Support
-  if (location == '/support') return 'Support Center';
   if (location == '/support/tickets') return 'Support Tickets';
   if (location == '/support/knowledge') return 'Knowledge Base';
   if (location == '/support/performance') return 'Team Performance';
 
   // CMS
-  if (location.startsWith('/cms')) {
-    if (location == '/cms/blogs') return 'Blog Management';
-    if (location == '/cms/faqs') return 'FAQ Management';
-    if (location == '/cms/banners') return 'Banner Management';
-    if (location == '/cms/legal') return 'Legal Content';
-    if (location == '/cms/media') return 'Media Library';
-    return 'CMS Management';
-  }
-
-  // Notifications
-  if (location.startsWith('/notifications')) {
-      if (location == '/notifications/send') return 'Send Push Notifications';
-      if (location == '/notifications/triggers') return 'Automated Triggers';
-      if (location == '/notifications/logs') return 'Notification Logs';
-      if (location == '/notifications/config') return 'SMS & Email Config';
-      return 'Notifications Management';
-  }
+  if (location == '/cms/notifications') return 'Push Notifications';
+  if (location == '/cms/promotions') return 'Promotions';
+  if (location == '/cms/faqs') return 'FAQ Management';
 
   // Audit
   if (location == '/audit/logs') return 'Audit Logs';
@@ -843,10 +817,4 @@ String _getTitle(String location) {
   if (location == '/settings/health') return 'System Health';
 
   return 'Admin Portal';
-}
-
-class RouterRefreshListenable extends ChangeNotifier {
-  RouterRefreshListenable(Ref ref) {
-    ref.listen(authProvider, (_, __) => notifyListeners());
-  }
 }

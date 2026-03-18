@@ -1,30 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-<<<<<<< HEAD
-=======
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
->>>>>>> origin/main
 import '../data/models/legal_document.dart';
 import '../data/repositories/legal_repository.dart';
 
-class LegalListView extends ConsumerStatefulWidget {
+class LegalListView extends StatefulWidget {
   const LegalListView({super.key});
 
   @override
-  ConsumerState<LegalListView> createState() => _LegalListViewState();
+  State<LegalListView> createState() => _LegalListViewState();
 }
 
-class _LegalListViewState extends ConsumerState<LegalListView> {
-  late final LegalRepository _repository;
+class _LegalListViewState extends State<LegalListView> {
+  final LegalRepository _repository = LegalRepository();
   List<LegalDocument> _documents = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(legalRepositoryProvider);
     _loadData();
   }
 
