@@ -146,6 +146,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
         // Recalculate emptySlots whenever capacity changes
         emptySlots: capacity - (widget.station?.availableBatteries ?? 0),
         lastPing: widget.station?.lastPing ?? DateTime.now(),
+        createdAt: widget.station?.createdAt ?? DateTime.now(),
         capacity: capacity,
         contactPhone: phone,
       );
