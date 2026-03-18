@@ -61,7 +61,7 @@ class _BlogListViewState extends State<BlogListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Blog Posts',
@@ -71,7 +71,7 @@ class _BlogListViewState extends State<BlogListView> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              
               ElevatedButton.icon(
                 onPressed: () {
                   // TODO: Navigate to create view
@@ -237,12 +237,12 @@ class _BlogListViewState extends State<BlogListView> {
                     style: const TextStyle(color: Colors.white54, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Icon(Icons.visibility_outlined, color: Colors.white38, size: 14),
                       const SizedBox(width: 4),
                       Text('${blog.viewsCount}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                      const Spacer(),
+                      
                       Text(
                         DateFormat('MMM d, y').format(blog.createdAt),
                         style: const TextStyle(color: Colors.white38, fontSize: 12),

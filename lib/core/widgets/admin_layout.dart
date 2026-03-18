@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/navigation_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
+import '../utils/responsive.dart';
 
 /// Menu section data model
 class MenuSection {
@@ -47,9 +48,14 @@ const List<MenuSection> _menuSections = [
     label: 'User Management',
     children: [
       MenuItem(label: 'All Users', route: '/users'),
-      MenuItem(label: 'KYC Requests', route: '/users/kyc'),
+      MenuItem(label: 'KYC Verification', route: '/users/kyc'),
+      MenuItem(label: 'KYC Dashboard', route: '/users/kyc-dashboard'),
       MenuItem(label: 'Roles & Permissions', route: '/users/roles'),
       MenuItem(label: 'Suspended Accounts', route: '/users/suspended'),
+      MenuItem(label: 'User Analytics', route: '/users/analytics'),
+      MenuItem(label: 'Fraud Risk', route: '/users/fraud'),
+      MenuItem(label: 'Bulk Operations', route: '/users/bulk'),
+      MenuItem(label: 'Session Activity', route: '/users/activity'),
     ],
   ),
   MenuSection(
@@ -212,15 +218,18 @@ class AdminLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDesktop = Responsive.isDesktop(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
+      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context, ref)),
       body: Row(
         children: [
-          _buildSidebar(context, ref),
+          if (isDesktop) _buildSidebar(context, ref),
           Expanded(
             child: Column(
               children: [
-                _buildHeader(ref, title),
+                _buildHeader(context, ref, title, isDesktop),
                 Expanded(child: child),
               ],
             ),
@@ -435,21 +444,30 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(WidgetRef ref, String title) {
+  Widget _buildHeader(BuildContext context, WidgetRef ref, String title, bool isDesktop) {
     return Container(
       height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
       ),
       child: Row(
         children: [
+          if (!isDesktop) ...[
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Text(
             title,
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 17,
+              fontSize: isDesktop ? 17 : 15,
               fontWeight: FontWeight.w600,
             ),
           ),

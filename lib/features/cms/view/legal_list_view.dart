@@ -47,7 +47,7 @@ class _LegalListViewState extends State<LegalListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Legal & Compliance',
@@ -57,7 +57,7 @@ class _LegalListViewState extends State<LegalListView> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              
               ElevatedButton.icon(
                 onPressed: () {
                   // TODO: Navigate to create view
@@ -141,7 +141,7 @@ class _LegalListViewState extends State<LegalListView> {
               ],
             ),
             const Spacer(),
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 if (doc.forceUpdate)
                    Container(
@@ -158,7 +158,7 @@ class _LegalListViewState extends State<LegalListView> {
                       ],
                     ),
                   ),
-                const Spacer(),
+                
                 TextButton(
                   onPressed: () {},
                   child: const Text('Edit Content'),

@@ -48,7 +48,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Media Library',
@@ -58,7 +58,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              
               ElevatedButton.icon(
                 onPressed: () {
                   // TODO: Trigger file picker

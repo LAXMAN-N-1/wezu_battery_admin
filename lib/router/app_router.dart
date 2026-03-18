@@ -12,6 +12,14 @@ import '../features/cms/view/media_library_view.dart';
 import '../features/inventory/view/batteries_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/users/view/users_view.dart';
+import '../features/users/view/roles_permissions_view.dart';
+import '../features/users/view/kyc_verification_view.dart';
+import '../features/users/view/kyc_dashboard_view.dart';
+import '../features/users/view/suspended_accounts_view.dart';
+import '../features/users/view/user_analytics_view.dart';
+import '../features/users/view/fraud_risk_view.dart';
+import '../features/users/view/bulk_operations_view.dart';
+import '../features/users/view/session_activity_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/support/view/support_view.dart';
 import '../core/widgets/admin_layout.dart';
@@ -75,19 +83,49 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'kyc',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'KYC Requests', icon: Icons.verified_user_outlined, description: 'Review and approve/reject user KYC submissions. View documents and verification status.'),
+                  child: KycVerificationView(),
+                ),
+              ),
+              GoRoute(
+                path: 'kyc-dashboard',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: KycDashboardView(),
                 ),
               ),
               GoRoute(
                 path: 'roles',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Roles & Permissions', icon: Icons.admin_panel_settings_outlined, description: 'Define admin roles and assign granular permissions for platform access control.'),
+                  child: RolesPermissionsView(),
                 ),
               ),
               GoRoute(
                 path: 'suspended',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Suspended Accounts', icon: Icons.block_outlined, description: 'View and manage suspended user accounts. Reactivate or permanently disable.', accentColor: Color(0xFFEF4444)),
+                  child: SuspendedAccountsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'analytics',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: UserAnalyticsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'fraud',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: FraudRiskView(),
+                ),
+              ),
+              GoRoute(
+                path: 'bulk',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: BulkOperationsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'activity',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: SessionActivityView(),
                 ),
               ),
             ],
@@ -501,9 +539,14 @@ String _getTitle(String location) {
 
   // Users
   if (location == '/users') return 'All Users';
-  if (location == '/users/kyc') return 'KYC Requests';
+  if (location == '/users/kyc') return 'KYC Verification';
+  if (location == '/users/kyc-dashboard') return 'KYC Dashboard';
   if (location == '/users/roles') return 'Roles & Permissions';
   if (location == '/users/suspended') return 'Suspended Accounts';
+  if (location == '/users/analytics') return 'User Analytics';
+  if (location == '/users/fraud') return 'Fraud Risk Monitoring';
+  if (location == '/users/bulk') return 'Bulk Operations';
+  if (location == '/users/activity') return 'Session Activity';
 
   // Fleet
   if (location == '/fleet/batteries') return 'All Batteries';

@@ -17,7 +17,7 @@ class LocationView extends ConsumerWidget {
         // Header
         Padding(
           padding: const EdgeInsets.all(40),
-          child: Row(
+          child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Location Management',
@@ -27,7 +27,7 @@ class LocationView extends ConsumerWidget {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              
               ElevatedButton.icon(
                 onPressed: () => _showAddDialog(context, ref),
                 icon: const Icon(Icons.add, size: 18),

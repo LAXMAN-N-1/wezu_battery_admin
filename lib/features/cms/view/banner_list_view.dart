@@ -47,7 +47,7 @@ class _BannerListViewState extends State<BannerListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'App Banners',
@@ -57,7 +57,7 @@ class _BannerListViewState extends State<BannerListView> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              
               ElevatedButton.icon(
                 onPressed: () {
                   // TODO: Navigate to create view
@@ -142,12 +142,12 @@ class _BannerListViewState extends State<BannerListView> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Icon(Icons.ads_click, size: 14, color: Colors.white38),
                         const SizedBox(width: 4),
                         Text('${banner.clickCount} Clicks', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                        const Spacer(),
+                        
                         if (banner.startDate != null)
                           Text(
                             'Starts: ${DateFormat('MMM d').format(banner.startDate!)}',

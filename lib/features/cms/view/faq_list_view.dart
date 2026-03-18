@@ -52,7 +52,7 @@ class _FaqListViewState extends State<FaqListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'FAQ Management',
@@ -62,7 +62,7 @@ class _FaqListViewState extends State<FaqListView> {
                   color: Colors.white,
                 ),
               ),
-              const Spacer(),
+              
               ElevatedButton.icon(
                 onPressed: () {
                   // TODO: Navigate to create view
@@ -218,12 +218,12 @@ class _FaqListViewState extends State<FaqListView> {
                 style: const TextStyle(color: Colors.white70, height: 1.5),
               ),
               const SizedBox(height: 16),
-              Row(
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _buildStat(Icons.thumb_up_alt_outlined, Colors.green, faq.helpfulCount.toString()),
                   const SizedBox(width: 16),
                   _buildStat(Icons.thumb_down_alt_outlined, Colors.red, faq.notHelpfulCount.toString()),
-                  const Spacer(),
+                  
                   Text(
                     'Last updated: ${DateFormat('MMM d, y').format(faq.updatedAt)}',
                     style: const TextStyle(color: Colors.white24, fontSize: 11),

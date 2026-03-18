@@ -13,7 +13,7 @@ class ApiClient {
   ApiClient() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8000', // Update for staging/prod
+        baseUrl: 'https://145.223.19.229.sslip.io:28443', // Update for staging/prod
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
@@ -53,15 +53,15 @@ class ApiClient {
     return await dio.get(path, queryParameters: queryParameters);
   }
 
-  Future<Response> post(String path, {dynamic data}) async {
-    return await dio.post(path, data: data);
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await dio.post(path, data: data, queryParameters: queryParameters);
   }
 
-  Future<Response> put(String path, {dynamic data}) async {
-    return await dio.put(path, data: data);
+  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await dio.put(path, data: data, queryParameters: queryParameters);
   }
 
-  Future<Response> delete(String path) async {
-    return await dio.delete(path);
+  Future<Response> delete(String path, {Map<String, dynamic>? queryParameters}) async {
+    return await dio.delete(path, queryParameters: queryParameters);
   }
 }

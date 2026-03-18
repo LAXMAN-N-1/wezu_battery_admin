@@ -99,7 +99,7 @@ class _BatteriesViewState extends State<BatteriesView> {
                         ),
                       ),
                       child: SingleChildScrollView(
-                        child: DataTable(
+                        child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
                           sortColumnIndex: _sortColumnIndex,
                           sortAscending: _sortAscending,
                           headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.02)),
@@ -150,7 +150,7 @@ class _BatteriesViewState extends State<BatteriesView> {
                               ],
                             );
                           }).toList(),
-                        ),
+                        )),
                       ),
                     ),
             ),

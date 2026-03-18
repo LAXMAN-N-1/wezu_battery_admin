@@ -72,7 +72,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
   // HEADER ROW
   // ============================
   Widget _buildHeaderRow() {
-    return Row(
+    return Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +88,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
             ),
           ],
         ),
-        const Spacer(),
+        
         _buildPeriodSelector(),
       ],
     );
@@ -240,10 +240,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Revenue & Rentals', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
-              const Spacer(),
+              
               _chartLegend('Revenue', const Color(0xFF3B82F6)),
               const SizedBox(width: 16),
               _chartLegend('Rentals', const Color(0xFF8B5CF6)),
@@ -536,10 +536,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Recent Activity', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
-              const Spacer(),
+              
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(color: const Color(0xFF22C55E).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
@@ -604,10 +604,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Top Performing Stations', style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
-              const Spacer(),
+              
               TextButton.icon(
                 onPressed: () {},
                 icon: const Icon(Icons.open_in_new, size: 14),
@@ -740,7 +740,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.all(10),
@@ -750,7 +750,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> with SingleTicker
                   ),
                   child: Icon(icon, color: Colors.white, size: 20),
                 ),
-                const Spacer(),
+                
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
