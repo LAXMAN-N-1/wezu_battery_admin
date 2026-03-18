@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,15 +7,15 @@ import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/blog.dart';
 import '../data/repositories/blog_repository.dart';
 
-class BlogListView extends StatefulWidget {
+class BlogListView extends ConsumerStatefulWidget {
   const BlogListView({super.key});
 
   @override
-  State<BlogListView> createState() => _BlogListViewState();
+  ConsumerState<BlogListView> createState() => _BlogListViewState();
 }
 
-class _BlogListViewState extends State<BlogListView> {
-  final BlogRepository _repository = BlogRepository();
+class _BlogListViewState extends ConsumerState<BlogListView> {
+  late final BlogRepository _repository;
   List<Blog> _blogs = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -24,6 +25,7 @@ class _BlogListViewState extends State<BlogListView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(blogRepositoryProvider);
     _loadData();
   }
 

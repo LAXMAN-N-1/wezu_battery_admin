@@ -1,15 +1,22 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import '../../../core/api/api_client.dart';
+import '../../../../core/api/api_client.dart';
 import '../models/media_asset.dart';
 
+final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
+  return MediaRepository(ref.read(apiClientProvider));
+});
+
 class MediaRepository {
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+
+  MediaRepository(this._apiClient);
 
   Future<List<MediaAsset>> getMediaAssets({String? category}) async {
     try {
       final response = await _apiClient.dio.get(
-        '/admin/media',
+        'admin/media',
         queryParameters: {
           if (category != null) 'category': category,
         },
@@ -30,7 +37,7 @@ class MediaRepository {
       });
 
       final response = await _apiClient.dio.post(
-        '/admin/media/upload',
+        'admin/media/upload',
         data: formData,
       );
       return MediaAsset.fromJson(response.data);
@@ -41,7 +48,7 @@ class MediaRepository {
 
   Future<void> deleteMediaAsset(int id) async {
     try {
-      await _apiClient.dio.delete('/admin/media/$id');
+      await _apiClient.dio.delete('admin/media/$id');
     } catch (e) {
       rethrow;
     }

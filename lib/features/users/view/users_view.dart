@@ -55,6 +55,23 @@ class _UsersViewState extends State<UsersView> {
     }
   }
 
+<<<<<<< HEAD
+  List<User> get _filteredUsers {
+    return _users.where((user) {
+      final matchesSearch =
+          user.fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          user.phoneNumber.contains(_searchQuery);
+      final matchesRole = _filterRole == null || user.role == _filterRole;
+      return matchesSearch && matchesRole;
+    }).toList();
+  }
+
+  int get _pendingKycCount =>
+      _users.where((u) => u.kycStatus == 'pending').length;
+
+=======
+>>>>>>> origin/main
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -113,6 +130,49 @@ class _UsersViewState extends State<UsersView> {
             children: [
               _buildStatCard('Total Users', (_stats['total_users'] ?? _totalCount).toString(), Icons.people_outline, const Color(0xFF3B82F6)),
               const SizedBox(width: 16),
+<<<<<<< HEAD
+              DropdownButtonHideUnderline(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButton<String>(
+                    value: _filterRole,
+                    hint: const Text(
+                      'All Roles',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                    dropdownColor: const Color(0xFF1E293B),
+                    icon: const Icon(Icons.filter_list, color: Colors.white70),
+                    style: GoogleFonts.inter(color: Colors.white),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('All Roles'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'customer',
+                        child: Text('Customer'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'driver',
+                        child: Text('Driver'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'dealer',
+                        child: Text('Dealer'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'admin',
+                        child: Text('Admin'),
+                      ),
+                    ],
+                    onChanged: (value) => setState(() => _filterRole = value),
+                  ),
+                ),
+=======
               _buildStatCard('Active', (_stats['active_users'] ?? 0).toString(), Icons.check_circle_outline, const Color(0xFF22C55E)),
               const SizedBox(width: 16),
               _buildStatCard('Suspended', (_stats['suspended_users'] ?? 0).toString(), Icons.block_outlined, const Color(0xFFEF4444)),
@@ -144,12 +204,144 @@ class _UsersViewState extends State<UsersView> {
                   DropdownMenuItem(value: 'support_agent', child: Text('Support')),
                 ],
                 onChanged: (v) { _filterRole = v; _loadData(); },
+>>>>>>> origin/main
               ),
             ],
           ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
           const SizedBox(height: 24),
 
           // Data Table
+<<<<<<< HEAD
+          Card(
+            color: Colors.white.withValues(alpha: 0.05),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(
+                        dividerColor: Colors.white.withValues(alpha: 0.1),
+                        iconTheme: const IconThemeData(color: Colors.white70),
+                      ),
+                      child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(
+                          Colors.white.withValues(alpha: 0.05),
+                        ),
+                        dataRowMinHeight: 60,
+                        dataRowMaxHeight: 60,
+                        columns: const [
+                          DataColumn(
+                            label: Text(
+                              'User',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Role',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Status',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'KYC',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Joined',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Actions',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ],
+                        rows: _filteredUsers.map((user) {
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Colors.blue.withValues(alpha: 0.2),
+                                      child: Text(
+                                        user.fullName[0].toUpperCase(),
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            user.fullName,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            user.email,
+                                            style: const TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              DataCell(_buildRoleBadge(user.role)),
+                              DataCell(_buildStatusBadge(user.isActive)),
+                              DataCell(_buildKycBadge(user.kycStatus)),
+                              DataCell(
+                                Text(
+                                  DateFormat('MMM d, y').format(user.joinedAt),
+                                  style: const TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_outlined, size: 18),
+                                      color: Colors.blue,
+                                      onPressed: () {},
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, size: 18),
+                                      color: Colors.redAccent,
+                                      onPressed: () {},
+                                    ),
+                                  ],
+=======
           AdvancedCard(
             padding: EdgeInsets.zero,
             child: _isLoading
@@ -199,6 +391,7 @@ class _UsersViewState extends State<UsersView> {
                                       Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 12), overflow: TextOverflow.ellipsis),
                                     ],
                                   ),
+>>>>>>> origin/main
                                 ),
                               ],
                             ),
@@ -228,6 +421,15 @@ class _UsersViewState extends State<UsersView> {
     );
   }
 
+<<<<<<< HEAD
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+=======
   Widget _buildRefreshButton() {
     return Container(
       decoration: BoxDecoration(
@@ -245,6 +447,7 @@ class _UsersViewState extends State<UsersView> {
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return AdvancedCard(
+>>>>>>> origin/main
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       width: 180,
       child: Row(
@@ -262,8 +465,23 @@ class _UsersViewState extends State<UsersView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+<<<<<<< HEAD
+              Text(
+                value,
+                style: GoogleFonts.outfit(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                title,
+                style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+              ),
+=======
               Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
               Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+>>>>>>> origin/main
             ],
           ),
         ],
@@ -271,6 +489,68 @@ class _UsersViewState extends State<UsersView> {
     );
   }
 
+<<<<<<< HEAD
+  Widget _buildRoleBadge(String role) {
+    Color color;
+    switch (role.toLowerCase()) {
+      case 'admin':
+        color = Colors.purple;
+        break;
+      case 'dealer':
+        color = Colors.orange;
+        break;
+      case 'driver':
+        color = Colors.blue;
+        break;
+      default:
+        color = Colors.green;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        role.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8, height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isActive ? Colors.green : Colors.grey,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isActive ? 'Active' : 'Inactive',
+            style: TextStyle(
+              color: isActive ? Colors.green : Colors.red,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+=======
   Widget _buildFilterDropdown({
     String? value,
     required String hint,
@@ -294,10 +574,43 @@ class _UsersViewState extends State<UsersView> {
           items: items,
           onChanged: (v) => setState(() => onChanged(v)),
         ),
+>>>>>>> origin/main
       ),
     );
   }
 
+<<<<<<< HEAD
+  Widget _buildKycBadge(String status) {
+    Color color;
+    IconData icon;
+    switch (status) {
+      case 'verified':
+        color = Colors.green;
+        icon = Icons.check_circle;
+        break;
+      case 'pending':
+        color = Colors.orange;
+        icon = Icons.pending;
+        break;
+      case 'rejected':
+        color = Colors.red;
+        icon = Icons.cancel;
+        break;
+      default:
+        color = Colors.grey;
+        icon = Icons.help;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 6),
+        Text(
+          status.replaceAll('_', ' ').capitalize(),
+          style: TextStyle(color: color, fontSize: 12),
+        ),
+=======
   Widget _buildActionMenuButton(User user) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_horiz, size: 20, color: Colors.white54),
@@ -311,10 +624,18 @@ class _UsersViewState extends State<UsersView> {
         if (user.status == 'suspended')
           _buildPopupItem('reactivate', Icons.check_circle_outline, 'Reactivate', color: const Color(0xFF22C55E)),
         _buildPopupItem('toggle', Icons.power_settings_new, user.isActive ? 'Deactivate' : 'Activate'),
+>>>>>>> origin/main
       ],
     );
   }
 
+<<<<<<< HEAD
+
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return "${this[0].toUpperCase()}${substring(1)}";
+=======
   PopupMenuItem<String> _buildPopupItem(String value, IconData icon, String text, {Color? color}) {
     return PopupMenuItem(
       value: value,
@@ -594,5 +915,6 @@ class _UsersViewState extends State<UsersView> {
         },
       ),
     );
+>>>>>>> origin/main
   }
 }

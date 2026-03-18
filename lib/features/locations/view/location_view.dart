@@ -35,8 +35,13 @@ class LocationView extends ConsumerWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3B82F6),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -59,12 +64,13 @@ class LocationView extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: GridView.builder(
                     padding: const EdgeInsets.all(8),
-                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 250,
-                      childAspectRatio: 2.5,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 250,
+                          childAspectRatio: 2.5,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
                     itemCount: state.nodes.length,
                     itemBuilder: (context, index) {
                       final node = state.nodes[index];
@@ -79,12 +85,22 @@ class LocationView extends ConsumerWidget {
 
   Widget _buildBreadcrumbs(WidgetRef ref, LocationState state) {
     List<Widget> children = [
-      _breadcrumbItem('Global', onTap: () => ref.read(locationProvider.notifier).resetToLevel(-1)),
+      _breadcrumbItem(
+        'Global',
+        onTap: () => ref.read(locationProvider.notifier).resetToLevel(-1),
+      ),
     ];
 
     for (int i = 0; i < state.path.length; i++) {
-      children.add(const Icon(Icons.chevron_right, color: Colors.white24, size: 16));
-      children.add(_breadcrumbItem(state.path[i].name, onTap: () => ref.read(locationProvider.notifier).resetToLevel(i)));
+      children.add(
+        const Icon(Icons.chevron_right, color: Colors.white24, size: 16),
+      );
+      children.add(
+        _breadcrumbItem(
+          state.path[i].name,
+          onTap: () => ref.read(locationProvider.notifier).resetToLevel(i),
+        ),
+      );
     }
 
     return Row(children: children);
@@ -98,17 +114,27 @@ class LocationView extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
           label,
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+          style: GoogleFonts.inter(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildLocationCard(WidgetRef ref, LocationNode node, LocationState state) {
+  Widget _buildLocationCard(
+    WidgetRef ref,
+    LocationNode node,
+    LocationState state,
+  ) {
     final hasNext = state.currentLevel.next != null;
 
     return InkWell(
-      onTap: hasNext ? () => ref.read(locationProvider.notifier).dive(node) : null,
+      onTap: hasNext
+          ? () => ref.read(locationProvider.notifier).dive(node)
+          : null,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -125,17 +151,25 @@ class LocationView extends ConsumerWidget {
                 color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.location_on_outlined, color: Colors.blue.shade400, size: 20),
+              child: Icon(
+                Icons.location_on_outlined,
+                color: Colors.blue.shade400,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
                 node.name,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-            if (hasNext) const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+            if (hasNext)
+              const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
           ],
         ),
       ),
@@ -148,7 +182,10 @@ class LocationView extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: Text('Add New ${ref.read(locationProvider).currentLevel.name}', style: const TextStyle(color: Colors.white)),
+        title: Text(
+          'Add New ${ref.read(locationProvider).currentLevel.name}',
+          style: const TextStyle(color: Colors.white),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -159,7 +196,10 @@ class LocationView extends ConsumerWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               ref.read(locationProvider.notifier).addLocation(controller.text);

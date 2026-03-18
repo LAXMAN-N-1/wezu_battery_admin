@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,15 +7,15 @@ import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/media_asset.dart';
 import '../data/repositories/media_repository.dart';
 
-class MediaLibraryView extends StatefulWidget {
+class MediaLibraryView extends ConsumerStatefulWidget {
   const MediaLibraryView({super.key});
 
   @override
-  State<MediaLibraryView> createState() => _MediaLibraryViewState();
+  ConsumerState<MediaLibraryView> createState() => _MediaLibraryViewState();
 }
 
-class _MediaLibraryViewState extends State<MediaLibraryView> {
-  final MediaRepository _repository = MediaRepository();
+class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
+  late final MediaRepository _repository;
   List<MediaAsset> _assets = [];
   bool _isLoading = true;
   String? _filterCategory;
@@ -22,6 +23,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(mediaRepositoryProvider);
     _loadData();
   }
 
