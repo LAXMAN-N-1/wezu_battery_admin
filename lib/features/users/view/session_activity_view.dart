@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../data/models/audit_log.dart';
 import '../data/repositories/audit_log_repository.dart';
+import '../provider/audit_provider.dart';
 
-class SessionActivityView extends StatefulWidget {
+class SessionActivityView extends ConsumerStatefulWidget {
   const SessionActivityView({super.key});
 
   @override
-  State<SessionActivityView> createState() => _SessionActivityViewState();
+  ConsumerState<SessionActivityView> createState() => _SessionActivityViewState();
 }
 
-class _SessionActivityViewState extends State<SessionActivityView> {
-  final AuditLogRepository _repository = AuditLogRepository();
-  List<AuditLog> _logs = [];
-  bool _isLoading = true;
+class _SessionActivityViewState extends ConsumerState<SessionActivityView> {
   String _actionFilter = 'all';
   String _moduleFilter = 'all';
   List<String> _actionTypes = [];
@@ -23,27 +22,33 @@ class _SessionActivityViewState extends State<SessionActivityView> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadTypes();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    final logs = await _repository.getLogs(
+  Future<void> _loadTypes() async {
+    final repo = ref.read(auditRepositoryProvider);
+    final actions = await repo.getActionTypes();
+    final modules = await repo.getModules();
+    if (mounted) {
+      setState(() {
+        _actionTypes = actions;
+        _modules = modules;
+      });
+    }
+    _refresh();
+  }
+
+  void _refresh() {
+    ref.read(auditProvider.notifier).loadLogs(
       action: _actionFilter == 'all' ? null : _actionFilter,
       module: _moduleFilter == 'all' ? null : _moduleFilter,
     );
-    final actions = await _repository.getActionTypes();
-    final modules = await _repository.getModules();
-    setState(() {
-      _logs = logs;
-      _actionTypes = actions;
-      _modules = modules;
-      _isLoading = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final auditState = ref.watch(auditProvider);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -74,13 +79,13 @@ class _SessionActivityViewState extends State<SessionActivityView> {
           // Summary cards
           Row(
             children: [
-              _buildMiniCard('Total Events', _logs.length.toString(), Icons.list_alt, Colors.blue),
+              _buildMiniCard('Total Events', auditState.logs.length.toString(), Icons.list_alt, Colors.blue),
               const SizedBox(width: 12),
-              _buildMiniCard('Logins', _logs.where((l) => l.action == 'login').length.toString(), Icons.login, Colors.green),
+              _buildMiniCard('Logins', auditState.logs.where((l) => l.action == 'login').length.toString(), Icons.login, Colors.green),
               const SizedBox(width: 12),
-              _buildMiniCard('Modifications', _logs.where((l) => l.action == 'update' || l.action == 'create' || l.action == 'delete').length.toString(), Icons.edit_note, Colors.amber),
+              _buildMiniCard('Modifications', auditState.logs.where((l) => ['update', 'create', 'delete'].contains(l.action)).length.toString(), Icons.edit_note, Colors.amber),
               const SizedBox(width: 12),
-              _buildMiniCard('Security', _logs.where((l) => l.action == 'suspend' || l.action == 'permission_change').length.toString(), Icons.shield_outlined, Colors.red),
+              _buildMiniCard('Security', auditState.logs.where((l) => ['suspend', 'permission_change'].contains(l.action)).length.toString(), Icons.shield_outlined, Colors.red),
             ],
           ),
           const SizedBox(height: 20),
@@ -92,22 +97,34 @@ class _SessionActivityViewState extends State<SessionActivityView> {
               const SizedBox(width: 12),
               _buildDropdownFilter('Action', _actionFilter, _actionTypes, (v) {
                 setState(() => _actionFilter = v);
-                _loadData();
+                _refresh();
               }),
               const SizedBox(width: 12),
               _buildDropdownFilter('Module', _moduleFilter, _modules, (v) {
                 setState(() => _moduleFilter = v);
-                _loadData();
+                _refresh();
               }),
               
-              Text('${_logs.length} events', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+              Text('${auditState.logs.length} events', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
 
           // Activity log
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
+          if (auditState.isLoading)
+            const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
+          else if (auditState.error != null)
+            Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text('Error: ${auditState.error}', style: const TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(onPressed: _refresh, child: const Text('Retry')),
+                ],
+              ),
+            )
           else
             Container(
               decoration: BoxDecoration(
@@ -116,9 +133,9 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                 border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
               ),
               child: Column(
-                children: _logs.asMap().entries.map((entry) {
+                children: auditState.logs.asMap().entries.map((entry) {
                   final log = entry.value;
-                  final isLast = entry.key == _logs.length - 1;
+                  final isLast = entry.key == auditState.logs.length - 1;
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -133,10 +150,10 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: _actionColor(log.action).withValues(alpha: 0.15),
+                                color: _getAuditActionColor(log.action).withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(_actionIcon(log.action), color: _actionColor(log.action), size: 14),
+                              child: Icon(_getAuditActionIcon(log.action), color: _getAuditActionColor(log.action), size: 14),
                             ),
                           ],
                         ),
@@ -154,10 +171,10 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: _actionColor(log.action).withValues(alpha: 0.12),
+                                      color: _getAuditActionColor(log.action).withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: Text(log.actionLabel, style: TextStyle(color: _actionColor(log.action), fontSize: 10, fontWeight: FontWeight.bold)),
+                                    child: Text(log.actionLabel, style: TextStyle(color: _getAuditActionColor(log.action), fontSize: 10, fontWeight: FontWeight.bold)),
                                   ),
                                   const SizedBox(width: 8),
                                   Container(
@@ -201,7 +218,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                                     const SizedBox(width: 12),
                                   ],
                                   if (log.userAgent != null)
-                                    Text(log.userAgent!, style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
+                                    Expanded(child: Text(log.userAgent!, style: GoogleFonts.inter(color: Colors.white24, fontSize: 10), overflow: TextOverflow.ellipsis)),
                                 ],
                               ),
                             ],
@@ -273,8 +290,8 @@ class _SessionActivityViewState extends State<SessionActivityView> {
     );
   }
 
-  Color _actionColor(String action) {
-    switch (action) {
+  Color _getAuditActionColor(String action) {
+    switch (action.toLowerCase()) {
       case 'login': case 'logout': return Colors.blue;
       case 'create': return Colors.green;
       case 'update': return Colors.amber;
@@ -288,8 +305,8 @@ class _SessionActivityViewState extends State<SessionActivityView> {
     }
   }
 
-  IconData _actionIcon(String action) {
-    switch (action) {
+  IconData _getAuditActionIcon(String action) {
+    switch (action.toLowerCase()) {
       case 'login': return Icons.login;
       case 'logout': return Icons.logout;
       case 'create': return Icons.add_circle_outline;

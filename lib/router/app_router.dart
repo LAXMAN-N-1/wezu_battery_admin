@@ -82,49 +82,49 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'kyc',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: KycVerificationView(),
                 ),
               ),
               GoRoute(
                 path: 'kyc-dashboard',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: KycDashboardView(),
                 ),
               ),
               GoRoute(
                 path: 'roles',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: RolesPermissionsView(),
                 ),
               ),
               GoRoute(
                 path: 'suspended',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: SuspendedAccountsView(),
                 ),
               ),
               GoRoute(
                 path: 'analytics',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: UserAnalyticsView(),
                 ),
               ),
               GoRoute(
                 path: 'fraud',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: FraudRiskView(),
                 ),
               ),
               GoRoute(
                 path: 'bulk',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: BulkOperationsView(),
                 ),
               ),
               GoRoute(
                 path: 'activity',
-                pageBuilder: (context, state) => const NoTransitionPage(
+                pageBuilder: (context, state) => NoTransitionPage(
                   child: SessionActivityView(),
                 ),
               ),

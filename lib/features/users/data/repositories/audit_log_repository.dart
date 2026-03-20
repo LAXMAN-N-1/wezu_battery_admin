@@ -1,20 +1,10 @@
+import '../../../../core/api/api_client.dart';
 import '../models/audit_log.dart';
 
 class AuditLogRepository {
-  static final List<AuditLog> _logs = [
-    AuditLog(id: 1, userId: 1, userName: 'Murari Varma', action: 'login', module: 'auth', details: 'Admin login successful', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(minutes: 5))),
-    AuditLog(id: 2, userId: 1, userName: 'Murari Varma', action: 'update', module: 'users', details: 'Updated user profile for Rahul Sharma', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(minutes: 15)), beforeValue: 'role: driver', afterValue: 'role: driver'),
-    AuditLog(id: 3, userId: 7, userName: 'Deepak Verma', action: 'kyc_reject', module: 'kyc', details: 'Rejected KYC for Suresh Kumar — blurry document', ipAddress: '103.55.90.12', userAgent: 'Firefox 121 / Mac', timestamp: DateTime.now().subtract(const Duration(hours: 2))),
-    AuditLog(id: 4, userId: 1, userName: 'Murari Varma', action: 'suspend', module: 'users', details: 'Suspended Kavita Reddy — fraud suspected', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(hours: 5))),
-    AuditLog(id: 5, userId: 1, userName: 'Murari Varma', action: 'permission_change', module: 'roles', details: 'Removed finance.manage from Supervisor role', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(hours: 8)), beforeValue: 'finance.manage: true', afterValue: 'finance.manage: false'),
-    AuditLog(id: 6, userId: 8, userName: 'Neha Gupta', action: 'login', module: 'auth', details: 'Support staff login', ipAddress: '172.20.10.5', userAgent: 'Edge 120 / Windows', timestamp: DateTime.now().subtract(const Duration(hours: 10))),
-    AuditLog(id: 7, userId: 7, userName: 'Deepak Verma', action: 'kyc_approve', module: 'kyc', details: 'Approved KYC for Amit Patel', ipAddress: '103.55.90.12', userAgent: 'Firefox 121 / Mac', timestamp: DateTime.now().subtract(const Duration(days: 1))),
-    AuditLog(id: 8, userId: 1, userName: 'Murari Varma', action: 'create', module: 'users', details: 'Created new user account for Vikram Malhotra', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3))),
-    AuditLog(id: 9, userId: 1, userName: 'Murari Varma', action: 'update', module: 'settings', details: 'Updated platform timezone to IST', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 2))),
-    AuditLog(id: 10, userId: 7, userName: 'Deepak Verma', action: 'reactivate', module: 'users', details: 'Reactivated account for Suresh Kumar', ipAddress: '103.55.90.12', userAgent: 'Firefox 121 / Mac', timestamp: DateTime.now().subtract(const Duration(days: 3))),
-    AuditLog(id: 11, userId: 1, userName: 'Murari Varma', action: 'delete', module: 'users', details: 'Deleted inactive test account', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 4))),
-    AuditLog(id: 12, userId: 8, userName: 'Neha Gupta', action: 'logout', module: 'auth', details: 'Support staff logout', ipAddress: '172.20.10.5', userAgent: 'Edge 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 4, hours: 6))),
-  ];
+  final ApiClient _api;
+
+  AuditLogRepository(this._api);
 
   Future<List<AuditLog>> getLogs({
     String? action,
@@ -22,28 +12,72 @@ class AuditLogRepository {
     int? userId,
     DateTime? fromDate,
     DateTime? toDate,
+    int page = 1,
+    int limit = 20,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    var filtered = List<AuditLog>.from(_logs);
+    try {
+      final queryParams = <String, dynamic>{
+        'page': page,
+        'limit': limit,
+      };
+      if (userId != null) queryParams['user_id'] = userId;
+      if (fromDate != null) queryParams['start_date'] = fromDate.toIso8601String();
+      if (toDate != null) queryParams['end_date'] = toDate.toIso8601String();
+      if (module != null && module != 'all') queryParams['resource_type'] = module;
 
-    if (action != null && action != 'all') {
-      filtered = filtered.where((l) => l.action == action).toList();
+      final response = await _api.get('/api/v1/admin/audit/data-access', queryParameters: queryParams);
+      final List data = response.data['logs'] ?? [];
+      return data.map((json) => AuditLog.fromGenericJson(json)).toList();
+    } catch (e) {
+      print('Error fetching audit logs: $e');
+      return [];
     }
-    if (module != null && module != 'all') {
-      filtered = filtered.where((l) => l.module == module).toList();
-    }
-    if (userId != null) {
-      filtered = filtered.where((l) => l.userId == userId).toList();
-    }
-    if (fromDate != null) {
-      filtered = filtered.where((l) => l.timestamp.isAfter(fromDate)).toList();
-    }
-    if (toDate != null) {
-      filtered = filtered.where((l) => l.timestamp.isBefore(toDate)).toList();
-    }
+  }
 
-    filtered.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    return filtered;
+  Future<List<AuditLog>> getUserAuditLog(int userId, {int page = 1, int limit = 20}) async {
+    try {
+      final response = await _api.get('/api/v1/admin/audit/users/$userId', queryParameters: {'page': page, 'limit': limit});
+      final List data = response.data['logs'] ?? [];
+      return data.map((json) => AuditLog.fromUserAuditJson(json)).toList();
+    } catch (e) {
+      print('Error fetching user audit logs: $e');
+      return [];
+    }
+  }
+
+  Future<List<AuditLog>> getRoleAuditLog(int roleId, {int page = 1, int limit = 20}) async {
+    try {
+      final response = await _api.get('/api/v1/admin/audit/roles/$roleId/changes', queryParameters: {'page': page, 'limit': limit});
+      final List data = response.data['logs'] ?? [];
+      return data.map((json) => AuditLog.fromRoleAuditJson(json)).toList();
+    } catch (e) {
+      print('Error fetching role audit logs: $e');
+      return [];
+    }
+  }
+
+  Future<dynamic> getPermissionUsage() async {
+    try {
+      final response = await _api.get('/api/v1/admin/audit/permissions/usage');
+      return response.data;
+    } catch (e) {
+      print('Error fetching permission usage: $e');
+      return null;
+    }
+  }
+
+  Future<List<AuditLog>> getAuthFailures({int? userId, int page = 1, int limit = 20}) async {
+    try {
+      final queryParams = <String, dynamic>{'page': page, 'limit': limit};
+      if (userId != null) queryParams['user_id'] = userId;
+      
+      final response = await _api.get('/api/v1/admin/audit/auth/failures', queryParameters: queryParams);
+      final List data = response.data['logs'] ?? [];
+      return data.map((json) => AuditLog.fromGenericJson(json)).toList();
+    } catch (e) {
+      print('Error fetching auth failures: $e');
+      return [];
+    }
   }
 
   Future<List<String>> getActionTypes() async {
