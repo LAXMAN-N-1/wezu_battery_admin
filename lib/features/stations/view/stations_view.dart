@@ -617,8 +617,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
     );
   }
 
-  Widget _buildStationStatusBadge(Station station) {
-    final String label;
+  Widget _buildStationStatusBadge(Station station) {    final String label;
     final Color color;
     final IconData icon;
 
@@ -637,8 +636,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
       color = isPageOpen ? Colors.green : Colors.red;
       icon = isPageOpen ? Icons.check_circle : Icons.do_not_disturb_on;
     }
-
-    return Container(
+return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),

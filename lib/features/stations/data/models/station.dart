@@ -123,7 +123,6 @@ class Station {
     // Map frontend status to backend status
     // StationUpdate schema and defaults suggest lowercase 'active', 'inactive', 'maintenance'
     String backendStatus = status.toLowerCase();
-    if (backendStatus == 'active') backendStatus = 'active'; // Default in StationResponse
     
     return {
       'name': name,
