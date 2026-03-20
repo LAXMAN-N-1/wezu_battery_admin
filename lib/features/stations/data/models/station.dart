@@ -1,3 +1,4 @@
+import 'dart:convert';
 
 class StationCamera {
   final int id;
@@ -42,26 +43,14 @@ class Station {
   final String stationType;
   final int totalSlots;
   final int availableBatteries;
-<<<<<<< HEAD
   final int emptySlots;
   final DateTime lastPing;
   final String? contactPhone;
   final String? contactEmail;
   final int? capacity;
   final String? openingHours;
-  final List<StationCamera> cameras;
-=======
-  final int availableSlots;
-  final double? powerRatingKw;
-  final double rating;
-  final int totalReviews;
-  final String? contactPhone;
-  final String? operatingHours;
   final bool is24x7;
-  final String? imageUrl;
-  final DateTime? lastHeartbeat;
-  final DateTime createdAt;
->>>>>>> origin/main
+  final List<StationCamera> cameras;
 
   Station({
     required this.id,
@@ -74,30 +63,18 @@ class Station {
     this.stationType = 'automated',
     required this.totalSlots,
     required this.availableBatteries,
-<<<<<<< HEAD
     required this.emptySlots,
     required this.lastPing,
     this.contactPhone,
     this.contactEmail,
     this.capacity,
     this.openingHours,
-    this.cameras = const [],
-=======
-    required this.availableSlots,
-    this.powerRatingKw,
-    this.rating = 0.0,
-    this.totalReviews = 0,
-    this.contactPhone,
-    this.operatingHours,
     this.is24x7 = false,
-    this.imageUrl,
-    this.lastHeartbeat,
-    required this.createdAt,
->>>>>>> origin/main
+    this.cameras = const [],
   });
 
   // Alias for backward compatibility
-  int get emptySlots => availableSlots;
+  int get availableSlots => emptySlots;
 
   factory Station.fromJson(Map<String, dynamic> json) {
     // Map backend status to frontend status
@@ -108,7 +85,6 @@ class Station {
     if (rawStatus == 'error' || rawStatus == 'offline') mappedStatus = 'inactive';
 
     return Station(
-<<<<<<< HEAD
       id: json['id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
@@ -127,8 +103,16 @@ class Station {
       contactEmail: json['contact_email'] as String?,
       capacity: json['total_slots'] as int?,
       // Backend uses opening_hours in GET but operating_hours in some schemas
-      openingHours:
-          (json['opening_hours'] ?? json['operating_hours']) as String?,
+      openingHours: json['opening_hours'] != null
+          ? (json['opening_hours'] is String
+              ? json['opening_hours'] as String
+              : jsonEncode(json['opening_hours']))
+          : (json['operating_hours'] != null
+              ? (json['operating_hours'] is String
+                  ? json['operating_hours'] as String
+                  : jsonEncode(json['operating_hours']))
+              : null),
+      is24x7: json['is_24x7'] as bool? ?? false,
       cameras: json['cameras'] != null
           ? (json['cameras'] as List).map((c) => StationCamera.fromJson(c as Map<String, dynamic>)).toList()
           : [],
@@ -151,6 +135,7 @@ class Station {
       'contact_phone': contactPhone,
       'contact_email': contactEmail,
       'opening_hours': openingHours,
+      'is_24x7': is24x7,
     };
   }
 
@@ -169,6 +154,7 @@ class Station {
     String? contactEmail,
     int? capacity,
     String? openingHours,
+    bool? is24x7,
     List<StationCamera>? cameras,
   }) {
     return Station(
@@ -191,84 +177,8 @@ class Station {
       contactEmail: contactEmail ?? this.contactEmail,
       capacity: capacity ?? this.capacity,
       openingHours: openingHours ?? this.openingHours,
+      is24x7: is24x7 ?? this.is24x7,
       cameras: cameras ?? this.cameras,
-=======
-      id: json['id'] as int,
-      name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'],
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] ?? 'OPERATIONAL',
-      stationType: json['station_type'] ?? 'automated',
-      totalSlots: json['total_slots'] ?? 0,
-      availableBatteries: json['available_batteries'] ?? 0,
-      availableSlots: json['available_slots'] ?? json['empty_slots'] ?? 0,
-      powerRatingKw: (json['power_rating_kw'] as num?)?.toDouble(),
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      totalReviews: json['total_reviews'] ?? 0,
-      contactPhone: json['contact_phone'],
-      operatingHours: json['operating_hours'],
-      is24x7: json['is_24x7'] ?? false,
-      imageUrl: json['image_url'],
-      lastHeartbeat: json['last_heartbeat'] != null ? DateTime.parse(json['last_heartbeat']) : null,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-    );
-  }
-
-  String get statusDisplay {
-    switch (status.toUpperCase()) {
-      case 'OPERATIONAL': return 'Operational';
-      case 'MAINTENANCE': return 'Maintenance';
-      case 'CLOSED': return 'Closed';
-      case 'ERROR': return 'Error';
-      case 'OFFLINE': return 'Offline';
-      default: return status;
-    }
-  }
-}
-
-class StationPerformance {
-  final int stationId;
-  final String stationName;
-  final String? city;
-  final String status;
-  final double utilizationPercentage;
-  final int totalSlots;
-  final int occupiedSlots;
-  final int availableBatteries;
-  final double rating;
-  final int totalReviews;
-  final double? powerRatingKw;
-
-  const StationPerformance({
-    required this.stationId,
-    required this.stationName,
-    this.city,
-    required this.status,
-    required this.utilizationPercentage,
-    required this.totalSlots,
-    required this.occupiedSlots,
-    required this.availableBatteries,
-    required this.rating,
-    required this.totalReviews,
-    this.powerRatingKw,
-  });
-
-  factory StationPerformance.fromJson(Map<String, dynamic> json) {
-    return StationPerformance(
-      stationId: json['station_id'] as int,
-      stationName: json['station_name'] ?? '',
-      city: json['city'],
-      status: json['status'] ?? '',
-      utilizationPercentage: (json['utilization_percentage'] as num?)?.toDouble() ?? 0.0,
-      totalSlots: json['total_slots'] ?? 0,
-      occupiedSlots: json['occupied_slots'] ?? 0,
-      availableBatteries: json['available_batteries'] ?? 0,
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      totalReviews: json['total_reviews'] ?? 0,
-      powerRatingKw: (json['power_rating_kw'] as num?)?.toDouble(),
->>>>>>> origin/main
     );
   }
 }

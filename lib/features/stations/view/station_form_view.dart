@@ -148,6 +148,8 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
         lastPing: widget.station?.lastPing ?? DateTime.now(),
         capacity: capacity,
         contactPhone: phone,
+        openingHours: widget.station?.openingHours,
+        is24x7: widget.station?.is24x7 ?? false,
       );
 
       try {
