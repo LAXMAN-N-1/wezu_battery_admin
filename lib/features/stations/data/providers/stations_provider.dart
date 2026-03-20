@@ -11,7 +11,8 @@ part 'stations_provider.g.dart';
 
 @riverpod
 StationRepository stationRepository(Ref ref) {
-  return StationRepository(ref.read(apiClientProvider));
+  final apiClient = ref.read(apiClientProvider);
+  return StationRepository.withClient(apiClient);
 }
 
 @riverpod
@@ -20,7 +21,7 @@ class Stations extends _$Stations {
   FutureOr<List<Station>> build() async {
     // Watch maintenance schedules so this provider rebuilds when one starts/ends
     final maintenanceSchedules = ref.watch(maintenanceProvider);
-    
+
     // Core polling logic: refresh every 30 seconds
     final timer = Timer.periodic(const Duration(seconds: 30), (_) {
       ref.invalidateSelf();
@@ -46,7 +47,7 @@ class Stations extends _$Stations {
 
   Future<void> addStation(Station station) async {
     final currentList = state.valueOrNull ?? [];
-    
+
     // Optimistically update the UI immediately
     // If the station doesn't have an ID yet, it's effectively "pending"
     // but showing it in the list removes the perceived lag.
@@ -55,14 +56,14 @@ class Stations extends _$Stations {
     try {
       final repo = ref.read(stationRepositoryProvider);
       final newStation = await repo.addStation(station);
-      
+
       // Once server confirms, replace the optimistic one with the real one (with correct ID)
       final confirmedList = (state.valueOrNull ?? []).map((s) {
         // If we identify the optimistic one by name/address match if ID is 0
         if (s.id == 0 && s.name == station.name) return newStation;
         return s;
       }).toList();
-      
+
       state = AsyncValue.data(confirmedList);
     } catch (e, stack) {
       // Revert to the original list on failure

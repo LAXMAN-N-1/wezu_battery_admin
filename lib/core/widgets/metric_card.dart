@@ -33,9 +33,9 @@ class MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final parsed =
-        changeValue ?? double.tryParse(trend.replaceAll(RegExp('[^0-9.-]'), ''));
+        changeValue ??
+        double.tryParse(trend.replaceAll(RegExp('[^0-9.-]'), ''));
     final bool isPositive = parsed != null && parsed > 0;
-    final bool isNegative = parsed != null && parsed < 0;
     final bool isNeutral = parsed == null || parsed == 0;
 
     if (isLoading) {
@@ -149,8 +149,9 @@ class MetricCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: isNeutral
                   ? colors.textTertiary.withValues(alpha: 0.12)
-                  : (isPositive ? colors.success : colors.danger)
-                      .withValues(alpha: 0.08),
+                  : (isPositive ? colors.success : colors.danger).withValues(
+                      alpha: 0.08,
+                    ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -160,8 +161,8 @@ class MetricCard extends StatelessWidget {
                   isNeutral
                       ? Icons.horizontal_rule_rounded
                       : isPositive
-                          ? Icons.trending_up
-                          : Icons.trending_down,
+                      ? Icons.trending_up
+                      : Icons.trending_down,
                   size: 14,
                   color: isNeutral
                       ? colors.textTertiary

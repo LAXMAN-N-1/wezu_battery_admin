@@ -1,4 +1,10 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/transaction.dart';
+
+final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
+  return FinanceRepository();
+});
 
 class FinanceRepository {
   Future<Map<String, dynamic>> getFinanceDashboardData() async {
@@ -42,7 +48,7 @@ class FinanceRepository {
         status: 'pending',
         timestamp: DateTime.now().subtract(const Duration(hours: 3)),
       ),
-       Transaction(
+      Transaction(
         id: 'TXN_1004',
         userId: 'USER_445',
         userName: 'Amit Patel',
