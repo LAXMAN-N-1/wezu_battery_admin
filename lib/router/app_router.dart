@@ -520,7 +520,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/audit/fraud',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Fraud Detection', icon: Icons.policy_outlined, description: 'Fraud risk scores, suspicious activity monitoring, and detection rules.', accentColor: Color(0xFFEF4444)),
+              child: FraudRiskView(),
             ),
           ),
           GoRoute(
