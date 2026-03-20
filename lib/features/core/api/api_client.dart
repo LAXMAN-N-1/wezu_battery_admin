@@ -13,7 +13,8 @@ class ApiClient {
   ApiClient() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'https://145.223.19.229.sslip.io:28443', // Update for staging/prod
+        baseUrl:
+            'http://localhost:8000', // Update for local development
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
@@ -43,29 +44,74 @@ class ApiClient {
     );
 
     // Add logging in debug mode
-    dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-    ));
+    dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    return await dio.get(path, queryParameters: queryParameters);
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await dio.get(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
-  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await dio.post(path, data: data, queryParameters: queryParameters);
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await dio.post(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
-  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await dio.put(path, data: data, queryParameters: queryParameters);
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await dio.put(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
-  Future<Response> patch(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await dio.patch(path, data: data, queryParameters: queryParameters);
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await dio.patch(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 
-  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await dio.delete(path, data: data, queryParameters: queryParameters);
+  Future<Response> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return await dio.delete(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
   }
 }

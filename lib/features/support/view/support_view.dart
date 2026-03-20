@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
 
-class SupportView extends ConsumerStatefulWidget {
+class SupportView extends StatefulWidget {
   const SupportView({super.key});
 
   @override
-  ConsumerState<SupportView> createState() => _SupportViewState();
+  State<SupportView> createState() => _SupportViewState();
 }
 
-class _SupportViewState extends ConsumerState<SupportView> {
-  late final SupportRepository _repository;
+class _SupportViewState extends State<SupportView> {
+  final SupportRepository _repository = SupportRepository();
   List<SupportTicket> _tickets = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(supportRepositoryProvider);
     _loadData();
   }
 
@@ -90,7 +88,7 @@ class _SupportViewState extends ConsumerState<SupportView> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
                 CircleAvatar(
                   radius: 6,
@@ -105,7 +103,7 @@ class _SupportViewState extends ConsumerState<SupportView> {
                     fontSize: 16,
                   ),
                 ),
-                
+                const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(

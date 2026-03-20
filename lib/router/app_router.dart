@@ -9,7 +9,9 @@ import '../features/cms/view/faq_list_view.dart';
 import '../features/cms/view/legal_list_view.dart';
 import '../features/cms/view/banner_list_view.dart';
 import '../features/cms/view/media_library_view.dart';
-import '../features/inventory/view/batteries_view.dart';
+import '../features/inventory/view/stock_levels_view.dart';
+import '../features/inventory/view/bulk_import_export_view.dart';
+import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/users/view/users_view.dart';
 import '../features/users/view/roles_permissions_view.dart';
@@ -21,7 +23,27 @@ import '../features/users/view/fraud_risk_view.dart';
 import '../features/users/view/bulk_operations_view.dart';
 import '../features/users/view/session_activity_view.dart';
 import '../features/finance/view/finance_view.dart';
+import '../features/inventory/view/batteries_view.dart';
 import '../features/support/view/support_view.dart';
+import '../features/dashboard/view/analytics_view.dart';
+import '../features/stations/view/station_map_view.dart';
+import '../features/stations/view/station_performance_view.dart';
+import '../features/stations/view/station_maintenance_view.dart';
+import '../features/dealers/view/dealers_view.dart';
+import '../features/dealers/view/dealer_onboarding_view.dart';
+import '../features/dealers/view/dealer_kyc_view.dart';
+import '../features/dealers/view/dealer_commissions_view.dart';
+import '../features/dealers/view/dealer_documents_view.dart';
+import '../features/locations/view/location_view.dart';
+import '../features/rentals/view/active_rentals_view.dart';
+import '../features/rentals/view/rental_history_view.dart';
+import '../features/rentals/view/battery_swaps_view.dart';
+import '../features/rentals/view/purchase_orders_view.dart';
+import '../features/rentals/view/late_fees_view.dart';
+import '../features/fleet_ops/view/iot_dashboard_view.dart';
+import '../features/fleet_ops/view/geofencing_view.dart';
+import '../features/fleet_ops/view/telematics_view.dart';
+import '../features/fleet_ops/view/alerts_alarms_view.dart';
 import '../core/widgets/admin_layout.dart';
 import '../core/widgets/placeholder_screen.dart';
 
@@ -67,7 +89,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'analytics',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Platform Analytics', icon: Icons.analytics_outlined, description: 'Conversion funnels, trend analysis, usage heatmaps, and growth metrics.'),
+                  child: AnalyticsView(),
                 ),
               ),
             ],
@@ -130,6 +152,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          
+          GoRoute(
+            path: '/locations',
+            pageBuilder: (context, state) => const NoTransitionPage(child: LocationView()),
+          ),
 
           // ==========================================
           // 3. FLEET & INVENTORY
@@ -141,13 +168,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet/stock',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Stock Levels', icon: Icons.inventory_2_outlined, description: 'Real-time stock per station, low-stock alerts, utilization percentages.'),
+              child: StockLevelsView(),
             ),
           ),
           GoRoute(
             path: '/fleet/health',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Battery Health', icon: Icons.health_and_safety_outlined, description: 'Health distribution charts, degradation trends, and maintenance recommendations.'),
+              child: BatteryHealthView(),
             ),
           ),
           GoRoute(
@@ -159,7 +186,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet/bulk',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Bulk Import / Export', icon: Icons.cloud_upload_outlined, description: 'Import batteries via CSV/Excel. Export inventory data for reports.'),
+              child: BulkImportExportView(),
             ),
           ),
 
@@ -173,19 +200,19 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: 'map',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Station Map', icon: Icons.map_outlined, description: 'Interactive geo-map of all stations with clusters, status indicators, and heatmaps.'),
+                  child: StationMapView(),
                 ),
               ),
               GoRoute(
                 path: 'performance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Station Performance', icon: Icons.trending_up_outlined, description: 'Revenue per station, utilization rates, customer ratings, and rental counts.'),
+                  child: StationPerformanceView(),
                 ),
               ),
               GoRoute(
                 path: 'maintenance',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Maintenance Schedules', icon: Icons.build_outlined, description: 'Maintenance calendar, recurring schedules, overdue alerts, and checklists.'),
+                  child: StationMaintenanceView(),
                 ),
               ),
             ],
@@ -197,31 +224,31 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/dealers',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'All Dealers', icon: Icons.handshake_outlined, description: 'View all registered dealers, their stations, commission rates, and status.'),
+              child: DealersView(),
             ),
             routes: [
               GoRoute(
                 path: 'registrations',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Registration Requests', icon: Icons.person_add_outlined, description: '8-stage dealer onboarding queue. Review, approve or reject new dealer applications.'),
+                  child: DealerOnboardingView(),
                 ),
               ),
               GoRoute(
                 path: 'kyc',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Dealer KYC & Verification', icon: Icons.fact_check_outlined, description: 'Field visit verification, document review, and KYC status management for dealers.'),
+                  child: DealerKycView(),
                 ),
               ),
               GoRoute(
                 path: 'commissions',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Commissions', icon: Icons.payments_outlined, description: 'Configure commission rates, view monthly statements, and track settlement payments.'),
+                  child: DealerCommissionsView(),
                 ),
               ),
               GoRoute(
                 path: 'documents',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Dealer Documents', icon: Icons.folder_outlined, description: 'Business licenses, GST certificates, insurance documents with version control.'),
+                  child: DealerDocumentsView(),
                 ),
               ),
             ],
@@ -233,31 +260,31 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/rentals/active',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Active Rentals', icon: Icons.electric_bolt_outlined, description: 'Live rental tracking with GPS, battery health monitoring, and countdown timers.'),
+              child: ActiveRentalsView(),
             ),
           ),
           GoRoute(
             path: '/rentals/history',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Rental History', icon: Icons.history_outlined, description: 'Complete rental history with search, filters, and export capabilities.'),
+              child: RentalHistoryView(),
             ),
           ),
           GoRoute(
             path: '/rentals/swaps',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Battery Swaps', icon: Icons.swap_horiz_outlined, description: 'Swap requests, status tracking, and station selection for battery exchanges.'),
+              child: BatterySwapsView(),
             ),
           ),
           GoRoute(
             path: '/rentals/purchases',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Purchase Orders', icon: Icons.shopping_cart_outlined, description: 'Battery purchase orders, delivery tracking, and invoice generation.'),
+              child: PurchaseOrdersView(),
             ),
           ),
           GoRoute(
             path: '/rentals/late-fees',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Late Fees', icon: Icons.timer_off_outlined, description: 'Overdue rentals, late fee calculations, and automated notifications.', accentColor: Color(0xFFEF4444)),
+              child: LateFeesView(),
             ),
           ),
 
@@ -335,25 +362,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet-ops/iot',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'IoT Dashboard', icon: Icons.sensors_outlined, description: 'Real-time telemetry data — voltage, temperature, charge levels from IoT devices.'),
+              child: IoTDashboardView(),
             ),
           ),
           GoRoute(
             path: '/fleet-ops/geofence',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Geofencing', icon: Icons.fence_outlined, description: 'Configure geofence boundaries, view violations, and manage alerts.'),
+              child: GeofencingView(),
             ),
           ),
           GoRoute(
             path: '/fleet-ops/telematics',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Telematics', icon: Icons.timeline_outlined, description: 'Battery movement history, route replay, and location analytics.'),
+              child: TelematicsView(),
             ),
           ),
           GoRoute(
             path: '/fleet-ops/alerts',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Alerts & Alarms', icon: Icons.warning_amber_outlined, description: 'Critical health alerts, temperature warnings, and geofence violations.', accentColor: Color(0xFFF59E0B)),
+              child: AlertsAlarmsView(),
             ),
           ),
 
