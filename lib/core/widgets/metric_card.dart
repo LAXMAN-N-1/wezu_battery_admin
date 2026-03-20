@@ -14,6 +14,7 @@ class MetricCard extends StatelessWidget {
   final List<double>? sparkData;
   final bool isLoading;
   final double? changeValue;
+  final VoidCallback? onTap;
 
   const MetricCard({
     super.key,
@@ -27,6 +28,7 @@ class MetricCard extends StatelessWidget {
     this.sparkData,
     this.isLoading = false,
     this.changeValue,
+    this.onTap,
   });
 
   @override
@@ -42,7 +44,7 @@ class MetricCard extends StatelessWidget {
       return _buildLoading(colors);
     }
 
-    return Container(
+    Widget content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         color: colors.cardBg,
@@ -198,6 +200,18 @@ class MetricCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: content,
+        ),
+      );
+    }
+    return content;
   }
 
   Widget _buildLoading(AppColorsExtension colors) {

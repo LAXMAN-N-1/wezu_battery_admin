@@ -44,6 +44,12 @@ import '../features/fleet_ops/view/iot_dashboard_view.dart';
 import '../features/fleet_ops/view/geofencing_view.dart';
 import '../features/fleet_ops/view/telematics_view.dart';
 import '../features/fleet_ops/view/alerts_alarms_view.dart';
+import '../features/user_master/view/users_master_list_view.dart';
+import '../features/user_master/view/user_master_form_view.dart';
+import '../features/user_master/view/roles_permissions_master_view.dart';
+import '../features/user_master/view/admin_groups_master_view.dart';
+import '../features/user_master/view/access_logs_master_view.dart';
+import '../features/user_master/view/user_bulk_master_view.dart';
 import '../core/widgets/admin_layout.dart';
 import '../core/widgets/placeholder_screen.dart';
 
@@ -96,58 +102,40 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 2. USER MANAGEMENT
+          // 2. USER MASTER
           // ==========================================
           GoRoute(
-            path: '/users',
-            pageBuilder: (context, state) => const NoTransitionPage(child: UsersView()),
+            path: '/user-master',
+            pageBuilder: (context, state) => const NoTransitionPage(child: UsersMasterListView()),
             routes: [
               GoRoute(
-                path: 'kyc',
+                path: 'edit',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: KycVerificationView(),
-                ),
-              ),
-              GoRoute(
-                path: 'kyc-dashboard',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: KycDashboardView(),
+                  child: UserMasterFormView(),
                 ),
               ),
               GoRoute(
                 path: 'roles',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: RolesPermissionsView(),
+                  child: RolesPermissionsMasterView(),
                 ),
               ),
               GoRoute(
-                path: 'suspended',
+                path: 'groups',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: SuspendedAccountsView(),
+                  child: AdminGroupsMasterView(),
                 ),
               ),
               GoRoute(
-                path: 'analytics',
+                path: 'logs',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: UserAnalyticsView(),
-                ),
-              ),
-              GoRoute(
-                path: 'fraud',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: FraudRiskView(),
+                  child: AccessLogsMasterView(),
                 ),
               ),
               GoRoute(
                 path: 'bulk',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BulkOperationsView(),
-                ),
-              ),
-              GoRoute(
-                path: 'activity',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: SessionActivityView(),
+                  child: UserBulkMasterView(),
                 ),
               ),
             ],
@@ -564,16 +552,13 @@ String _getTitle(String location) {
   if (location == '/dashboard') return 'Dashboard Overview';
   if (location == '/dashboard/analytics') return 'Platform Analytics';
 
-  // Users
-  if (location == '/users') return 'All Users';
-  if (location == '/users/kyc') return 'KYC Verification';
-  if (location == '/users/kyc-dashboard') return 'KYC Dashboard';
-  if (location == '/users/roles') return 'Roles & Permissions';
-  if (location == '/users/suspended') return 'Suspended Accounts';
-  if (location == '/users/analytics') return 'User Analytics';
-  if (location == '/users/fraud') return 'Fraud Risk Monitoring';
-  if (location == '/users/bulk') return 'Bulk Operations';
-  if (location == '/users/activity') return 'Session Activity';
+  // User Master
+  if (location == '/user-master') return 'All Users';
+  if (location == '/user-master/edit') return 'Add / Edit User';
+  if (location == '/user-master/roles') return 'Roles & Permissions';
+  if (location == '/user-master/groups') return 'Admin Groups';
+  if (location == '/user-master/logs') return 'Access Logs';
+  if (location == '/user-master/bulk') return 'Bulk Import/Export';
 
   // Fleet
   if (location == '/fleet/batteries') return 'All Batteries';

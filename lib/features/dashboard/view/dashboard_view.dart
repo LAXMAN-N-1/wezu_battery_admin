@@ -323,6 +323,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             color: colors.secondary,
             sparkData: data.totalUsers.sparkline,
             changeValue: data.totalUsers.changePercent,
+            onTap: () => context.go('/user-master'),
           ),
           MetricCard(
             key: const ValueKey('metric_utilization'),
