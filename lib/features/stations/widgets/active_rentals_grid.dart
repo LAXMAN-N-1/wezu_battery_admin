@@ -55,7 +55,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
             data: (rentals) {
               // Filter rentals for this station
               final stationRentals = rentals.where((r) {
-                return (r['pickup_station_id'] as num?)?.toInt() == stationId;
+                return r.pickupStationId == stationId;
               }).toList();
               
               return _buildRentalTable(stationRentals);
@@ -127,17 +127,14 @@ class ActiveRentalsGrid extends ConsumerWidget {
                 child: Table(
                   columnWidths: columnWidths,
                   children: rentals.map((r) {
-                    final startTime = DateTime.tryParse(r['start_time'] ?? '')?.toLocal();
-                    final timeStr = startTime != null 
-                        ? '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}'
-                        : '---';
+                    final timeStr = '${r.startTime.hour.toString().padLeft(2, '0')}:${r.startTime.minute.toString().padLeft(2, '0')}';
 
                     return TableRow(
                       children: [
-                        _dataCell(r['user_id']?.toString() ?? '---'),
-                        _dataCell(r['battery']?.toString() ?? '---'),
+                        _dataCell(r.id.toString()),
+                        _dataCell(r.battery ?? '---'),
                         _dataCell(timeStr),
-                        _dataCell(r['status'] ?? '---'),
+                        _dataCell(r.status),
                       ],
                     );
                   }).toList(),

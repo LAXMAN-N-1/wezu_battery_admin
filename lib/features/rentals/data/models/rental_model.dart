@@ -19,7 +19,12 @@ class Rental {
     required this.totalAmount,
     required this.status,
     this.batteryLevel,
+    this.pickupStationId, // Added for filtering in grids
+    this.battery, // Added for display in grids
   });
+
+  final int? pickupStationId;
+  final String? battery;
 
   factory Rental.fromJson(Map<String, dynamic> json) {
     return Rental(

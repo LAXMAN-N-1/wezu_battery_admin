@@ -14,7 +14,7 @@ class StationPerformanceView extends StatefulWidget {
 
 class _StationPerformanceViewState extends State<StationPerformanceView> {
   final StationRepository _repository = StationRepository();
-  List<StationPerformance> _stations = [];
+  List<StationPerformanceSummary> _stations = [];
   Map<String, dynamic> _summary = {};
   bool _isLoading = true;
 
@@ -29,7 +29,7 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
     try {
       final data = await _repository.getAllPerformance();
       setState(() {
-        _stations = data['stations'] as List<StationPerformance>;
+        _stations = data['stations'] as List<StationPerformanceSummary>;
         _summary = (data['summary'] as Map<String, dynamic>?) ?? {};
         _isLoading = false;
       });
@@ -183,17 +183,17 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
     ]);
   }
 
-  List<StationPerformance> _getTopPerformers() {
+  List<StationPerformanceSummary> _getTopPerformers() {
     final sorted = [..._stations]..sort((a, b) => b.rating.compareTo(a.rating));
     return sorted.take(5).toList();
   }
 
-  List<StationPerformance> _getBottomPerformers() {
+  List<StationPerformanceSummary> _getBottomPerformers() {
     final sorted = [..._stations]..sort((a, b) => a.utilizationPercentage.compareTo(b.utilizationPercentage));
     return sorted.where((s) => s.status.toUpperCase() != 'CLOSED').take(5).toList();
   }
 
-  Widget _buildPerformerCard(String title, List<StationPerformance> items, Color color, IconData icon) {
+  Widget _buildPerformerCard(String title, List<StationPerformanceSummary> items, Color color, IconData icon) {
     return AdvancedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -26,7 +26,7 @@ class CsvExportService {
       ]);
     }
 
-    String csvData = const ListToCsvConverter().convert(rows);
+    String csvData = Csv().encode(rows);
     
     final directory = await getTemporaryDirectory();
     final file = File('${directory.path}/maintenance_records_${DateTime.now().millisecondsSinceEpoch}.csv');

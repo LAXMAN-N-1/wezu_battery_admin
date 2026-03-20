@@ -32,7 +32,7 @@ class _StationsViewState extends State<StationsView> {
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
-        _repository.getStations(
+        _repository.getStationsPaginated(
           search: _searchQuery.isNotEmpty ? _searchQuery : null,
           status: _filterStatus,
         ),
@@ -337,7 +337,7 @@ class _StationsViewState extends State<StationsView> {
         ElevatedButton(
           onPressed: submitting ? null : () async {
             ss(() => submitting = true);
-            final ok = await _repository.updateStation(s.id, {
+            final ok = await _repository.updateStationData(s.id, {
               'name': nameC.text, 'address': addrC.text, 'city': cityC.text.isNotEmpty ? cityC.text : null,
               'status': selectedStatus, 'total_slots': int.tryParse(slotsC.text),
               'contact_phone': phoneC.text.isNotEmpty ? phoneC.text : null,
@@ -367,7 +367,7 @@ class _StationsViewState extends State<StationsView> {
         ElevatedButton(
           onPressed: () async {
             Navigator.pop(ctx);
-            final ok = await _repository.deleteStation(s.id);
+            final ok = await _repository.deleteStationBoolean(s.id);
             if (ok && mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('"${s.name}" deleted'), backgroundColor: Colors.green)); _loadData(); }
           },
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),

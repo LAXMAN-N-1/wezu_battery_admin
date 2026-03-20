@@ -56,7 +56,7 @@ class _StationMapViewState extends State<StationMapView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final data = await _repository.getStations(status: _filterStatus);
+      final data = await _repository.getStationsPaginated(status: _filterStatus);
       final stations = data['stations'] as List<Station>;
       final markers = stations.map((s) {
         return Marker(

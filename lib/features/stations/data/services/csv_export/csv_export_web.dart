@@ -25,7 +25,7 @@ class CsvExportService {
       ]);
     }
 
-    String csvData = const ListToCsvConverter().convert(rows);
+    String csvData = Csv().encode(rows);
     final bytes = utf8.encode(csvData);
     final blob = html.Blob([bytes], 'text/csv');
     final url = html.Url.createObjectUrlFromBlob(blob);

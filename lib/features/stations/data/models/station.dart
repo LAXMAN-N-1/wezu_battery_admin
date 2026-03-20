@@ -14,11 +14,13 @@ class Station {
   final double rating;
   final int totalReviews;
   final String? contactPhone;
-  final String? operatingHours;
+  final String? openingHours;
   final bool is24x7;
   final String? imageUrl;
   final DateTime? lastHeartbeat;
   final DateTime createdAt;
+  final List<StationCamera> cameras;
+  final int? capacity; // Added for backward compatibility with form
 
   const Station({
     required this.id,
@@ -36,15 +38,18 @@ class Station {
     this.rating = 0.0,
     this.totalReviews = 0,
     this.contactPhone,
-    this.operatingHours,
+    this.openingHours,
     this.is24x7 = false,
     this.imageUrl,
     this.lastHeartbeat,
     required this.createdAt,
+    this.cameras = const [],
+    this.capacity,
   });
 
   // Alias for backward compatibility
   int get emptySlots => availableSlots;
+  DateTime get lastPing => lastHeartbeat ?? createdAt;
 
   factory Station.fromJson(Map<String, dynamic> json) {
     return Station(
@@ -63,11 +68,66 @@ class Station {
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       totalReviews: json['total_reviews'] ?? 0,
       contactPhone: json['contact_phone'],
-      operatingHours: json['operating_hours'],
+      openingHours: json['operating_hours'] ?? json['opening_hours'],
       is24x7: json['is_24x7'] ?? false,
       imageUrl: json['image_url'],
       lastHeartbeat: json['last_heartbeat'] != null ? DateTime.parse(json['last_heartbeat']) : null,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      cameras: (json['cameras'] as List?)
+              ?.map((c) => StationCamera.fromJson(Map<String, dynamic>.from(c)))
+              .toList() ??
+          [],
+      capacity: json['capacity'] ?? json['total_slots'],
+    );
+  }
+
+  Station copyWith({
+    int? id,
+    String? name,
+    String? address,
+    String? city,
+    double? latitude,
+    double? longitude,
+    String? status,
+    String? stationType,
+    int? totalSlots,
+    int? availableBatteries,
+    int? availableSlots,
+    double? powerRatingKw,
+    double? rating,
+    int? totalReviews,
+    String? contactPhone,
+    String? openingHours,
+    bool? is24x7,
+    String? imageUrl,
+    DateTime? lastHeartbeat,
+    DateTime? createdAt,
+    List<StationCamera>? cameras,
+    int? capacity,
+  }) {
+    return Station(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      address: address ?? this.address,
+      city: city ?? this.city,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      status: status ?? this.status,
+      stationType: stationType ?? this.stationType,
+      totalSlots: totalSlots ?? this.totalSlots,
+      availableBatteries: availableBatteries ?? this.availableBatteries,
+      availableSlots: availableSlots ?? this.availableSlots,
+      powerRatingKw: powerRatingKw ?? this.powerRatingKw,
+      rating: rating ?? this.rating,
+      totalReviews: totalReviews ?? this.totalReviews,
+      contactPhone: contactPhone ?? this.contactPhone,
+      openingHours: openingHours ?? this.openingHours,
+      is24x7: is24x7 ?? this.is24x7,
+      imageUrl: imageUrl ?? this.imageUrl,
+      lastHeartbeat: lastHeartbeat ?? this.lastHeartbeat,
+      createdAt: createdAt ?? this.createdAt,
+      cameras: cameras ?? this.cameras,
+      capacity: capacity ?? this.capacity,
     );
   }
 
@@ -83,7 +143,7 @@ class Station {
   }
 }
 
-class StationPerformance {
+class StationPerformanceSummary {
   final int stationId;
   final String stationName;
   final String? city;
@@ -96,7 +156,7 @@ class StationPerformance {
   final int totalReviews;
   final double? powerRatingKw;
 
-  const StationPerformance({
+  const StationPerformanceSummary({
     required this.stationId,
     required this.stationName,
     this.city,
@@ -110,8 +170,8 @@ class StationPerformance {
     this.powerRatingKw,
   });
 
-  factory StationPerformance.fromJson(Map<String, dynamic> json) {
-    return StationPerformance(
+  factory StationPerformanceSummary.fromJson(Map<String, dynamic> json) {
+    return StationPerformanceSummary(
       stationId: json['station_id'] as int,
       stationName: json['station_name'] ?? '',
       city: json['city'],
@@ -123,6 +183,29 @@ class StationPerformance {
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       totalReviews: json['total_reviews'] ?? 0,
       powerRatingKw: (json['power_rating_kw'] as num?)?.toDouble(),
+    );
+  }
+}
+
+class StationCamera {
+  final String id;
+  final String name;
+  final String streamUrl;
+  final String status;
+
+  const StationCamera({
+    required this.id,
+    required this.name,
+    required this.streamUrl,
+    this.status = 'active',
+  });
+
+  factory StationCamera.fromJson(Map<String, dynamic> json) {
+    return StationCamera(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? 'Camera',
+      streamUrl: json['stream_url'] ?? '',
+      status: json['status'] ?? 'active',
     );
   }
 }

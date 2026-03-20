@@ -834,10 +834,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => StationPerformanceView(
-                        stationId: widget.event.stationId,
-                        stationName: widget.event.stationName,
-                      ),
+                      builder: (context) => const StationPerformanceView(),
                     ),
                   );
                 },
