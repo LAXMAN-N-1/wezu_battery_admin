@@ -6,6 +6,7 @@ import '../../../core/widgets/placeholder_screen.dart';
 import '../data/models/station.dart';
 import '../data/models/station_specs.dart';
 import '../data/repositories/station_repository.dart';
+import '../data/providers/stations_provider.dart';
 
 final stationSpecsProvider = FutureProvider.family<StationSpecs, int>((
   ref,

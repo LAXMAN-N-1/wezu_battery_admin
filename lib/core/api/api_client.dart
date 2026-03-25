@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -14,7 +15,7 @@ class ApiClient {
     dio = Dio(
       BaseOptions(
         baseUrl:
-            'http://localhost:8000', // Update for local development
+            'https://145.223.19.229.sslip.io:28443', // Update for staging/prod
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
@@ -23,6 +24,9 @@ class ApiClient {
         },
       ),
     );
+    if (kDebugMode) {
+      print('ApiClient initialized with baseUrl: ${dio.options.baseUrl}');
+    }
 
     dio.interceptors.add(
       InterceptorsWrapper(

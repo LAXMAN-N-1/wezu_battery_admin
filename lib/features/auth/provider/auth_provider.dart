@@ -122,6 +122,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         payload: {'email': username, 'password': password},
       ),
       () => _loginWithToken(username, password),
+      () => _loginWithJson(
+        path: '/api/v1/auth/login',
+        payload: {
+          'username': username,
+          'password': password,
+          'role': 'admin',
+        },
+      ),
     ];
 
     DioException? lastError;
@@ -253,7 +261,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   bool _shouldTryNextEndpoint(DioException error) {
     final statusCode = error.response?.statusCode;
-    return statusCode == 404 ||
+    return statusCode == 403 ||
+        statusCode == 404 ||
         statusCode == 405 ||
         statusCode == 415 ||
         statusCode == 422 ||

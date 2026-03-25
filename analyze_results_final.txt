@@ -1,0 +1,4 @@
+﻿Analyzing dashboard...                                          
+
+   info - Dangling library doc comment - lib\features\dashboard\data\dashboard_models.dart:2:1 - dangling_library_doc_comments
+

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/navigation_provider.dart';
+import '../theme/app_themes.dart';
+import '../theme/theme_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
 import '../utils/responsive.dart';
 
@@ -217,8 +219,10 @@ class AdminLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = Responsive.isDesktop(context);
 
+    final colors = context.appColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: colors.scaffoldBg,
       drawer: isDesktop ? null : Drawer(child: _buildSidebar(context, ref)),
       body: Row(
         children: [
@@ -240,11 +244,12 @@ class AdminLayout extends ConsumerWidget {
     final currentRoute = ref.watch(selectedRouteProvider);
     final expandedSections = ref.watch(expandedSectionsProvider);
 
+    final colors = context.appColors;
     return Container(
       width: 270,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        border: Border(right: BorderSide(color: Colors.white.withOpacity(0.06))),
+        color: colors.sidebarBg,
+        border: Border(right: BorderSide(color: colors.border.withValues(alpha: 0.1))),
       ),
       child: Column(
         children: [
@@ -273,7 +278,7 @@ class AdminLayout extends ConsumerWidget {
                     Text(
                       'WEZU Energy',
                       style: GoogleFonts.outfit(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -281,7 +286,7 @@ class AdminLayout extends ConsumerWidget {
                     Text(
                       'Admin Portal',
                       style: GoogleFonts.inter(
-                        color: Colors.white38,
+                        color: colors.textTertiary,
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
                       ),
@@ -291,7 +296,7 @@ class AdminLayout extends ConsumerWidget {
               ],
             ),
           ),
-          Divider(color: Colors.white.withOpacity(0.06), height: 1),
+          Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
           const SizedBox(height: 8),
 
           // Scrollable menu
@@ -300,14 +305,14 @@ class AdminLayout extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               children: [
                 for (final section in _menuSections) ...[
-                  _buildSection(ref, section, currentRoute, expandedSections),
+                  _buildSection(ref, section, currentRoute, expandedSections, context),
                 ],
               ],
             ),
           ),
 
           // Sign out
-          Divider(color: Colors.white.withOpacity(0.06), height: 1),
+          Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
           Padding(
             padding: const EdgeInsets.all(12),
             child: ListTile(
@@ -327,7 +332,7 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(WidgetRef ref, MenuSection section, String currentRoute, Set<String> expandedSections) {
+  Widget _buildSection(WidgetRef ref, MenuSection section, String currentRoute, Set<String> expandedSections, BuildContext context) {
     final bool isExpanded = expandedSections.contains(section.id);
     final bool isSectionActive = currentRoute.startsWith('/${section.id}') ||
         section.children.any((c) => currentRoute == c.route) ||
@@ -336,13 +341,14 @@ class AdminLayout extends ConsumerWidget {
     // For dashboard, handle the direct route matching
     if (section.id == 'dashboard') {
       final isDashActive = currentRoute.startsWith('/dashboard');
-      return _buildSectionTile(ref, section, isDashActive, isExpanded);
+      return _buildSectionTile(ref, section, isDashActive, isExpanded, context);
     }
 
-    return _buildSectionTile(ref, section, isSectionActive, isExpanded);
+    return _buildSectionTile(ref, section, isSectionActive, isExpanded, context);
   }
 
-  Widget _buildSectionTile(WidgetRef ref, MenuSection section, bool isActive, bool isExpanded) {
+  Widget _buildSectionTile(WidgetRef ref, MenuSection section, bool isActive, bool isExpanded, BuildContext context) {
+    final colors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -368,13 +374,13 @@ class AdminLayout extends ConsumerWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             leading: Icon(
               section.icon,
-              color: isActive ? Colors.blue.shade400 : Colors.white38,
+              color: isActive ? colors.accent : colors.textTertiary,
               size: 19,
             ),
             title: Text(
               section.label,
               style: GoogleFonts.inter(
-                color: isActive ? Colors.white : Colors.white60,
+                color: isActive ? colors.textPrimary : colors.textSecondary,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 13,
               ),
@@ -382,7 +388,7 @@ class AdminLayout extends ConsumerWidget {
             trailing: section.children.length > 1
                 ? Icon(
                     isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: Colors.white24,
+                    color: colors.textTertiary,
                     size: 18,
                   )
                 : null,
@@ -399,7 +405,7 @@ class AdminLayout extends ConsumerWidget {
             child: Column(
               children: section.children.map((item) {
                 final isChildActive = ref.watch(selectedRouteProvider) == item.route;
-                return _buildChildItem(ref, item, isChildActive);
+                return _buildChildItem(ref, item, isChildActive, context);
               }).toList(),
             ),
           ),
@@ -407,7 +413,8 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildChildItem(WidgetRef ref, MenuItem item, bool isActive) {
+  Widget _buildChildItem(WidgetRef ref, MenuItem item, bool isActive, BuildContext context) {
+    final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0.5),
       child: ListTile(
@@ -423,7 +430,7 @@ class AdminLayout extends ConsumerWidget {
           height: 5,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive ? Colors.blue.shade400 : Colors.white12,
+            color: isActive ? colors.accent : colors.border,
           ),
         ),
         title: Text(
@@ -442,19 +449,20 @@ class AdminLayout extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context, WidgetRef ref, String title, bool isDesktop) {
+    final colors = context.appColors;
     return Container(
       height: 72,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+        color: colors.sidebarBg,
+        border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.1))),
       ),
       child: Row(
         children: [
           if (!isDesktop) ...[
             Builder(
               builder: (ctx) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
+                icon: Icon(Icons.menu, color: colors.textPrimary),
                 onPressed: () => Scaffold.of(ctx).openDrawer(),
               ),
             ),
@@ -463,41 +471,31 @@ class AdminLayout extends ConsumerWidget {
           Text(
             title,
             style: GoogleFonts.inter(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: isDesktop ? 17 : 15,
               fontWeight: FontWeight.w600,
             ),
           ),
           const Spacer(),
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.search, color: Colors.white54, size: 20),
-            tooltip: 'Search',
+            onPressed: () => ref.read(themeProvider.notifier).toggle(),
+            icon: Icon(
+              ref.watch(themeProvider) == ThemeMode.dark
+                  ? Icons.wb_sunny_outlined
+                  : Icons.nightlight_round_outlined,
+              color: colors.textSecondary,
+              size: 20,
+            ),
+            tooltip: 'Toggle Theme',
           ),
           const SizedBox(width: 4),
-          Stack(
-            children: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_none, color: Colors.white54, size: 20),
-                tooltip: 'Notifications',
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade400,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
+          IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.notifications_none, color: colors.textSecondary, size: 20),
+            tooltip: 'Notifications',
           ),
           const SizedBox(width: 16),
-          Container(height: 28, width: 1, color: Colors.white.withOpacity(0.08)),
+          Container(height: 28, width: 1, color: colors.border.withValues(alpha: 0.1)),
           const SizedBox(width: 16),
           CircleAvatar(
             radius: 16,
@@ -509,8 +507,8 @@ class AdminLayout extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Laxman", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
-              Text("Super Admin", style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+              Text("Laxman", style: GoogleFonts.inter(color: colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+              Text("Super Admin", style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 11)),
             ],
           ),
         ],

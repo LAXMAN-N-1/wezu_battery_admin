@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import '../../../core/api/api_client.dart';
 import 'dashboard_models.dart';
@@ -56,11 +57,25 @@ class AnalyticsRepository {
           "label": "Avg. Battery Health",
           "value": 92,
           "change_percent": 0.5,
+          "sparkline": [90, 91, 92, 91, 92, 93, 92],
         },
         "open_tickets": {
           "label": "Open Tickets",
-          "value": 15,
-          "change_percent": -10.0,
+          "value": 24,
+          "change_percent": -15.0,
+          "sparkline": [30, 28, 35, 32, 28, 25, 24],
+        },
+        "revenue_per_rental": {
+          "label": "Rev. per Rental",
+          "value": 12.5,
+          "change_percent": 2.1,
+          "sparkline": [11, 12, 12, 13, 12.5, 12, 12.5],
+        },
+        "avg_session": {
+          "label": "Avg. Session",
+          "value": 45,
+          "change_percent": 10.5,
+          "sparkline": [35, 40, 38, 42, 45, 48, 45],
         },
       });
     }
@@ -81,10 +96,12 @@ class AnalyticsRepository {
           30,
           (i) => {
             "date": "Day ${i + 1}",
-            "revenue": 5000.0 + (i * 200) + (i % 3 * 500),
-            "rentals": 40.0 + (i % 5),
-            "users": 100.0 + (i * 5),
-            "battery_health": 85.0 + (i % 4),
+            "revenue": i == 3 
+                ? 13500.0 // Big peak at Day 4 to match image
+                : (5000.0 + (math.Random().nextDouble() * 2000) + (i < 10 ? (i * 1000) : 0)),
+            "rentals": i == 3 ? 0.0 : (40.0 + (i % 5)),
+            "users": i == 3 ? 13.0 : (100.0 + (i * 5)),
+            "battery_health": i == 3 ? 0.0 : (90.0 + (i % 2)), // Higher health by default
           },
         ),
       });
