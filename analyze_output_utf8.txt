@@ -1,0 +1,18 @@
+﻿Analyzing stations...                                           
+
+   info - 'StationAlertsRef' is deprecated and shouldn't be used. Will be removed in 3.0. Use Ref instead - lib\features\stations\data\providers\station_details_provider.dart:11:3 - deprecated_member_use_from_same_package
+   info - 'ChargingQueueRef' is deprecated and shouldn't be used. Will be removed in 3.0. Use Ref instead - lib\features\stations\data\providers\station_details_provider.dart:20:3 - deprecated_member_use_from_same_package
+  error - Undefined class 'StationSpecsRef' - lib\features\stations\data\providers\station_details_provider.dart:29:3 - undefined_class
+   info - 'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead - lib\features\stations\data\services\csv_export\csv_export_web.dart:2:1 - deprecated_member_use
+   info - Don't use web-only libraries outside Flutter web plugins - lib\features\stations\data\services\csv_export\csv_export_web.dart:2:1 - avoid_web_libraries_in_flutter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\stations\view\operating_hours_settings_view.dart:198:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\stations\view\operating_hours_settings_view.dart:214:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\stations\view\operating_hours_settings_view.dart:216:50 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\features\stations\view\station_performance_view.dart:172:20 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\stations\view\station_performance_view.dart:173:25 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\stations\view\station_performance_view.dart:174:10 - curly_braces_in_flow_control_structures
+  error - Undefined name 'stationRepositoryProvider' - lib\features\stations\view\station_specs_view.dart:14:26 - undefined_identifier
+warning - Unnecessary cast - lib\features\stations\view\stations_view.dart:42:28 - unnecessary_cast
+warning - Unnecessary cast - lib\features\stations\view\stations_view.dart:43:25 - unnecessary_cast
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\stations\view\stations_view.dart:321:41 - deprecated_member_use
+

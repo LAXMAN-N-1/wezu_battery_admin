@@ -75,7 +75,7 @@ class AppThemes {
   static ThemeData get light => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+    scaffoldBackgroundColor: Colors.white,
     textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
     colorScheme: const ColorScheme.light(
       primary: Color(0xFF3B82F6),
@@ -107,7 +107,7 @@ class AppThemes {
     extensions: const [
       AppColorsExtension(
         cardBg: Colors.white,
-        scaffoldBg: Color(0xFFF8FAFC),
+        scaffoldBg: Colors.white,
         sidebarBg: Color(0xFFF1F5F9),
         textPrimary: Color(0xFF1E293B),
         textSecondary: Color(0xFF64748B),

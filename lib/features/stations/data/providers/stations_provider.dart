@@ -12,7 +12,7 @@ part 'stations_provider.g.dart';
 @riverpod
 StationRepository stationRepository(Ref ref) {
   final apiClient = ref.read(apiClientProvider);
-  return StationRepository.withClient(apiClient);
+  return StationRepository(apiClient);
 }
 
 @riverpod

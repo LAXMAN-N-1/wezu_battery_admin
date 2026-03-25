@@ -169,9 +169,13 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
 
   Widget _utilizationBar(double pct) {
     Color barColor;
-    if (pct >= 80) barColor = const Color(0xFFEF4444);
-    else if (pct >= 50) barColor = const Color(0xFFF59E0B);
-    else barColor = const Color(0xFF22C55E);
+    if (pct >= 80) {
+      barColor = const Color(0xFFEF4444);
+    } else if (pct >= 50) {
+      barColor = const Color(0xFFF59E0B);
+    } else {
+      barColor = const Color(0xFF22C55E);
+    }
 
     return Row(mainAxisSize: MainAxisSize.min, children: [
       SizedBox(width: 60, height: 8, child: ClipRRect(

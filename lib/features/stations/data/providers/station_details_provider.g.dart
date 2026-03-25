@@ -72,7 +72,7 @@ class StationAlertsProvider
   /// See also [stationAlerts].
   StationAlertsProvider(int stationId)
     : this._internal(
-        (ref) => stationAlerts(ref as StationAlertsRef, stationId),
+        (ref) => stationAlerts(ref as Ref, stationId),
         from: stationAlertsProvider,
         name: r'stationAlertsProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -195,7 +195,7 @@ class ChargingQueueProvider
   /// See also [chargingQueue].
   ChargingQueueProvider(int stationId)
     : this._internal(
-        (ref) => chargingQueue(ref as ChargingQueueRef, stationId),
+        (ref) => chargingQueue(ref as Ref, stationId),
         from: chargingQueueProvider,
         name: r'chargingQueueProvider',
         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')

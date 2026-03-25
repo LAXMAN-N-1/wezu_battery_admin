@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_client.dart';
 import '../data/analytics_repository.dart';
@@ -138,4 +139,33 @@ final topStationsProvider = FutureProvider<TopStationsData>((
   ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getTopPerformingStations();
+});
+
+class TrendMetric {
+  final String label;
+  final String key;
+  final Color color;
+  final bool isStatic;
+  final bool canDelete;
+
+  const TrendMetric({
+    required this.label,
+    required this.key,
+    required this.color,
+    this.isStatic = false,
+    this.canDelete = false,
+  });
+}
+
+final trendAvailableMetricsProvider = StateProvider<List<TrendMetric>>((ref) {
+  return [
+    const TrendMetric(label: 'Revenue', key: 'revenue', color: Color(0xFF06B6D4)),
+    const TrendMetric(label: 'Rentals', key: 'rentals', color: Color(0xFFF472B6)),
+    const TrendMetric(label: 'Users', key: 'users', color: Colors.purpleAccent),
+    const TrendMetric(label: 'Battery Health', key: 'batteryHealth', color: Color(0xFF10B981), isStatic: true),
+  ];
+});
+
+final trendActiveMetricsProvider = StateProvider<Set<String>>((ref) => {
+  'revenue', 'rentals', 'users', 'batteryHealth'
 });

@@ -1,20 +1,24 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'dart:math' as math;
 import '../theme/app_themes.dart';
+
+enum MetricCardType { large, small }
 
 class MetricCard extends StatelessWidget {
   final String title;
   final String value;
   final String subtitle;
   final String trend;
-  final String trendLabel;
+  final String? trendLabel;
   final IconData icon;
   final Color color;
-  final List<double>? sparkData;
   final bool isLoading;
   final double? changeValue;
   final VoidCallback? onTap;
+  final MetricCardType type;
+  final List<double>? sparkline;
 
   const MetricCard({
     super.key,
@@ -22,13 +26,14 @@ class MetricCard extends StatelessWidget {
     required this.value,
     required this.subtitle,
     required this.trend,
-    required this.trendLabel,
+    this.trendLabel,
     required this.icon,
     required this.color,
-    this.sparkData,
     this.isLoading = false,
     this.changeValue,
     this.onTap,
+    this.type = MetricCardType.large,
+    this.sparkline,
   });
 
   @override
@@ -37,168 +42,27 @@ class MetricCard extends StatelessWidget {
     final parsed =
         changeValue ??
         double.tryParse(trend.replaceAll(RegExp('[^0-9.-]'), ''));
-    final bool isPositive = parsed != null && parsed > 0;
-    final bool isNeutral = parsed == null || parsed == 0;
-
+    final bool isPositive = parsed != null && parsed >= 0;
+    
     if (isLoading) {
       return _buildLoading(colors);
     }
 
+    final cardBg = Color.lerp(colors.cardBg, Colors.black, 0.05) ?? colors.cardBg;
+
     Widget content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: EdgeInsets.all(type == MetricCardType.small ? 16 : 20),
       decoration: BoxDecoration(
-        color: colors.cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border(
-          left: BorderSide(color: color, width: 4),
-          top: BorderSide(color: colors.border),
-          right: BorderSide(color: colors.border),
-          bottom: BorderSide(color: colors.border),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.05),
+          width: 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: colors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 13),
-          ),
-          if (sparkData != null && sparkData!.length > 1) ...[
-            const Spacer(),
-            SizedBox(
-              height: 40,
-              child: LineChart(
-                key: ValueKey('sparkline_$title'),
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  lineTouchData: const LineTouchData(enabled: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: sparkData!
-                          .asMap()
-                          .entries
-                          .map((e) => FlSpot(e.key.toDouble(), e.value))
-                          .toList(),
-                      isCurved: true,
-                      curveSmoothness: 0.4,
-                      color: color,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            color.withValues(alpha: 0.3),
-                            color.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ] else
-            const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isNeutral
-                  ? colors.textTertiary.withValues(alpha: 0.12)
-                  : (isPositive ? colors.success : colors.danger).withValues(
-                      alpha: 0.08,
-                    ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isNeutral
-                      ? Icons.horizontal_rule_rounded
-                      : isPositive
-                      ? Icons.trending_up
-                      : Icons.trending_down,
-                  size: 14,
-                  color: isNeutral
-                      ? colors.textTertiary
-                      : (isPositive ? colors.success : colors.danger),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  trend,
-                  style: GoogleFonts.inter(
-                    color: isNeutral
-                        ? colors.textSecondary
-                        : (isPositive ? colors.success : colors.danger),
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    trendLabel,
-                    style: GoogleFonts.inter(
-                      color: (isPositive ? colors.success : colors.danger)
-                          .withValues(alpha: 0.6),
-                      fontSize: 12,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      child: type == MetricCardType.large 
+          ? _buildLargeLayout(colors, isPositive) 
+          : _buildSmallLayout(colors),
     );
 
     if (onTap != null) {
@@ -206,7 +70,7 @@ class MetricCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           child: content,
         ),
       );
@@ -214,57 +78,218 @@ class MetricCard extends StatelessWidget {
     return content;
   }
 
-  Widget _buildLoading(AppColorsExtension colors) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colors.border,
-                  borderRadius: BorderRadius.circular(8),
+  Widget _buildLargeLayout(AppColorsExtension colors, bool isPositive) {
+    return Stack(
+      children: [
+        // Sparkline at the bottom (Bleed)
+        if (sparkline != null && sparkline!.isNotEmpty)
+          Positioned(
+            bottom: -15,
+            left: -20,
+            right: -20,
+            child: SizedBox(
+              height: 50,
+              child: LineChart(
+                LineChartData(
+                  gridData: const FlGridData(show: false),
+                  titlesData: const FlTitlesData(show: false),
+                  borderData: FlBorderData(show: false),
+                  minY: sparkline!.reduce(math.min) * 0.9,
+                  maxY: sparkline!.reduce(math.max) * 1.1,
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: sparkline!
+                          .asMap()
+                          .entries
+                          .map((e) => FlSpot(e.key.toDouble(), e.value))
+                          .toList(),
+                      isCurved: true,
+                      color: color.withValues(alpha: 0.5),
+                      barWidth: 2,
+                      isStrokeCapRound: true,
+                      dotData: const FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            color.withValues(alpha: 0.15),
+                            color.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Container(
-                width: 50,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: colors.border,
-                  borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+
+        // Main Content
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Icon and Trend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: color, size: 20),
+                  ),
+                  if (trend.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (isPositive 
+                            ? const Color(0xFF22C55E)
+                            : colors.danger).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        trend,
+                        style: GoogleFonts.inter(
+                          color: isPositive 
+                              ? const Color(0xFF22C55E)
+                              : colors.danger,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const Spacer(),
+              // Middle: Value
+              Text(
+                value,
+                style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: colors.textPrimary,
+                  letterSpacing: -0.5,
                 ),
+              ),
+              const SizedBox(height: 4),
+              // Bottom: Title
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textTertiary,
+                ),
+              ),
+              const SizedBox(height: 10), // Space for sparkline bleed
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSmallLayout(AppColorsExtension colors) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
+              ),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textTertiary,
+                  height: 1.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Container(
-            width: 100,
-            height: 30,
-            decoration: BoxDecoration(
-              color: colors.border,
-              borderRadius: BorderRadius.circular(4),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoading(AppColorsExtension colors) {
+    // Re-using the same structure but with empty containers
+    if (type == MetricCardType.large) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _shimmerBox(40, 40, colors),
+                _shimmerBox(60, 24, colors),
+              ],
             ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: 80,
-            height: 15,
-            decoration: BoxDecoration(
-              color: colors.border,
-              borderRadius: BorderRadius.circular(4),
+            const Spacer(),
+            _shimmerBox(120, 32, colors),
+            const SizedBox(height: 8),
+            _shimmerBox(80, 16, colors),
+            const SizedBox(height: 10),
+          ],
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            _shimmerBox(40, 40, colors),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _shimmerBox(60, 20, colors),
+                const SizedBox(height: 4),
+                _shimmerBox(40, 12, colors),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _shimmerBox(double w, double h, AppColorsExtension colors) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: colors.border.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }
