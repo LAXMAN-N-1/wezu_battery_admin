@@ -511,63 +511,92 @@ class AdvancedTable extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final colWidth = constraints.maxWidth / columns.length;
+        final double effectiveMaxWidth = constraints.maxWidth == double.infinity 
+            ? MediaQuery.of(context).size.width 
+            : constraints.maxWidth;
+        final totalMinContentWidth = (columns.length * 120.0) + 32.0;
+        final actualWidth = effectiveMaxWidth > totalMinContentWidth ? effectiveMaxWidth : totalMinContentWidth;
+        final colWidth = actualWidth / columns.length;
         
-        return Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: columns.map((col) {
-                  return SizedBox(
-                    width: colWidth - (32 / columns.length), // Adjusting for padding
-                    child: Text(
-                      col.toUpperCase(),
-                      style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Rows
-            ...rows.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final rowWidgets = entry.value;
-              final rowContent = Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  border: idx < rows.length - 1
-                      ? Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04)))
-                      : null,
-                ),
-                child: Row(
-                  children: rowWidgets.map((w) {
-                     return SizedBox(
-                       width: colWidth - (32 / columns.length),
-                       child: w,
-                     );
-                  }).toList(),
+        final header = Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: columns.map((col) {
+              return SizedBox(
+                width: colWidth - (32 / columns.length), // Adjusting for padding
+                child: Text(
+                  col.toUpperCase(),
+                  style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                  overflow: TextOverflow.ellipsis,
                 ),
               );
-              
-              final widget = onRowTap != null
-                  ? InkWell(
-                      onTap: () => onRowTap!(idx),
-                      hoverColor: Colors.white.withOpacity(0.03),
-                      child: rowContent,
-                    )
-                  : rowContent;
-              
-              return widget.animate().fadeIn(duration: 300.ms, delay: (idx * 50).ms).slideX(begin: 0.05);
-            }),
+            }).toList(),
+          ),
+        );
+
+        final rowsList = Column(
+          children: rows.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final rowWidgets = entry.value;
+            final rowContent = Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                border: idx < rows.length - 1
+                    ? Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04)))
+                    : null,
+              ),
+              child: Row(
+                children: rowWidgets.map((w) {
+                   return SizedBox(
+                     width: colWidth - (32 / columns.length),
+                     child: w,
+                   );
+                }).toList(),
+              ),
+            );
+            
+            final widget = onRowTap != null
+                ? InkWell(
+                    onTap: () => onRowTap!(idx),
+                    hoverColor: Colors.white.withOpacity(0.03),
+                    child: rowContent,
+                  )
+                : rowContent;
+            
+            return widget.animate().fadeIn(duration: 300.ms, delay: (idx * 50).ms).slideX(begin: 0.05);
+          }).toList(),
+        );
+
+        final tableContent = Column(
+          children: [
+            header,
+            const SizedBox(height: 8),
+            if (constraints.maxHeight == double.infinity)
+              rowsList
+            else
+              Expanded(
+                child: SingleChildScrollView(
+                  child: rowsList,
+                ),
+              ),
           ],
         );
+
+        if (actualWidth > effectiveMaxWidth) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: actualWidth,
+              child: tableContent,
+            ),
+          );
+        }
+
+        return tableContent;
       }
     );
   }
