@@ -26,32 +26,3 @@ class DealerApplication {
     );
   }
 }
-
-class DealerKycDocument {
-  final int id;
-  final int dealerId;
-  final String businessName;
-  final String documentType;
-  final String fileUrl;
-  final DateTime uploadedAt;
-
-  const DealerKycDocument({
-    required this.id,
-    required this.dealerId,
-    required this.businessName,
-    required this.documentType,
-    required this.fileUrl,
-    required this.uploadedAt,
-  });
-
-  factory DealerKycDocument.fromJson(Map<String, dynamic> json) {
-    return DealerKycDocument(
-      id: json['id'] as int,
-      dealerId: json['dealer_id'] as int,
-      businessName: json['business_name'] ?? 'Unknown',
-      documentType: json['document_type'] ?? '',
-      fileUrl: json['file_url'] ?? '',
-      uploadedAt: json['uploaded_at'] != null ? DateTime.parse(json['uploaded_at']) : DateTime.now(),
-    );
-  }
-}

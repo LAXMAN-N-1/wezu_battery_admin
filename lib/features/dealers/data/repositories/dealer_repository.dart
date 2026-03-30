@@ -101,4 +101,61 @@ class DealerRepository {
       return [];
     }
   }
+
+  Future<Map<String, dynamic>> getCommissionStats() async {
+    try {
+      final response = await _api.get('/api/v1/admin/dealers/commissions/stats');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'total_paid': 0.0, 'total_pending': 0.0, 'active_configs': 0};
+    }
+  }
+
+  Future<bool> createDealer(Map<String, dynamic> data) async {
+    try {
+      await _api.post('/api/v1/admin/dealers/create', data: data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> updateDealer(int dealerId, Map<String, dynamic> data) async {
+    try {
+      await _api.put('/api/v1/admin/dealers/$dealerId', data: data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getDealerDetail(int dealerId) async {
+    try {
+      final response = await _api.get('/api/v1/admin/dealers/$dealerId');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllDocuments({String? search, String? docType}) async {
+    final params = <String, dynamic>{};
+    if (search != null) params['search'] = search;
+    if (docType != null) params['doc_type'] = docType;
+    try {
+      final response = await _api.get('/api/v1/admin/dealers/documents/all', queryParameters: params);
+      return List<Map<String, dynamic>>.from(response.data);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> createCommissionConfig(Map<String, dynamic> data) async {
+    try {
+      await _api.post('/api/v1/admin/dealers/commissions/configs', data: data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

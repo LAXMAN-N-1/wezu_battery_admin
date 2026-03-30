@@ -45,14 +45,41 @@ class Role {
   });
 
   factory Role.fromJson(Map<String, dynamic> json) {
+    // Handle both Map (legacy/mock) and List (real backend) for permissions
+    final permissionsData = json['permissions'];
+    final Map<String, PermissionLevel> modulesMap = {};
+
+    if (permissionsData is List) {
+      for (var p in permissionsData) {
+        if (p is Map<String, dynamic>) {
+          final module = p['module'] as String? ?? 'Other';
+          final action = p['action'] as String? ?? 'view';
+          
+          // Simple logic: if 'manage' or 'all' or 'create' -> full, else view
+          if (['all', 'manage', 'delete', 'create'].contains(action.toLowerCase())) {
+            modulesMap[module] = PermissionLevel.full;
+          } else {
+            modulesMap[module] = PermissionLevel.view;
+          }
+        }
+      }
+    } else if (permissionsData is Map<String, dynamic>) {
+      permissionsData.forEach((key, value) {
+        modulesMap[key] = PermissionLevel.values.firstWhere(
+          (e) => e.name.toLowerCase() == (value as String).toLowerCase().replaceAll('_', ''),
+          orElse: () => PermissionLevel.noAccess,
+        );
+      });
+    }
+
     return Role(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: json['id']?.toString() ?? '',
+      name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? '',
       isSystemRole: json['is_system_role'] as bool? ?? false,
       userCount: json['user_count'] as int? ?? 0,
-      permissions: PermissionMatrix.fromJson(json['permissions'] as Map<String, dynamic>? ?? {}),
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : DateTime.now(),
+      permissions: PermissionMatrix(modules: modulesMap),
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
     );
   }
 

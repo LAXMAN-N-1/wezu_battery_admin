@@ -145,6 +145,8 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
         availableBatteries: widget.station?.availableBatteries ?? 0,
         availableSlots: capacity - (widget.station?.availableBatteries ?? 0),
         contactPhone: phone,
+        openingHours: widget.station?.openingHours,
+        is24x7: widget.station?.is24x7 ?? false,
         createdAt: widget.station?.createdAt ?? DateTime.now(),
       );
 

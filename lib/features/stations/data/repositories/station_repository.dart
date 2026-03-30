@@ -240,7 +240,7 @@ class StationRepository {
       final response = await _api.get('/api/v1/admin/stations/maintenance/stats');
       return MaintenanceStats.fromJson(response.data);
     } catch (e) {
-      return const MaintenanceStats(totalRecords: 0, completed: 0, scheduled: 0, inProgress: 0, totalCost: 0.0, stationsInMaintenance: 0);
+      return const MaintenanceStats(total: 0, completed: 0, scheduled: 0, inProgress: 0, totalCost: 0.0, stationsInMaintenance: 0);
     }
   }
 

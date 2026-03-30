@@ -96,7 +96,9 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
         final listResult = results[0] as Map<String, dynamic>;
         setState(() {
           _batteries = listResult['items'] as List<Battery>;
-          _totalCount = listResult['total_count'] as int;
+          _totalCount = (listResult['total_count'] is num)
+              ? (listResult['total_count'] as num).toInt()
+              : int.tryParse(listResult['total_count']?.toString() ?? '') ?? 0;
           _summary = results[1] as Map<String, dynamic>;
           _isLoading = false;
           _selectedIds.clear();
@@ -462,11 +464,14 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
   // PREMIUM STAT CARDS
   // =========================================================================
   Widget _buildStatsRow() {
-    final total = _summary['total_batteries'] as int? ?? 0;
-    final available = _summary['available_count'] as int? ?? 0;
-    final rented = _summary['rented_count'] as int? ?? 0;
-    final maintenance = _summary['maintenance_count'] as int? ?? 0;
-    final utilization = _summary['utilization_percentage'];
+    int _safeInt(dynamic v) => (v is num) ? v.toInt() : int.tryParse(v?.toString() ?? '') ?? 0;
+    double _safeDbl(dynamic v) => (v is num) ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0.0;
+
+    final total = _safeInt(_summary['total_batteries']);
+    final available = _safeInt(_summary['available_count']);
+    final rented = _safeInt(_summary['rented_count']);
+    final maintenance = _safeInt(_summary['maintenance_count']);
+    final utilization = _safeDbl(_summary['utilization_percentage']);
 
     final pctAvail = total > 0 ? '${(available / total * 100).toStringAsFixed(0)}% of fleet' : '—';
     final pctRent = total > 0 ? '${(rented / total * 100).toStringAsFixed(0)}% of fleet' : '—';

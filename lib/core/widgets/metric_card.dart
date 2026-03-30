@@ -45,156 +45,195 @@ class MetricCard extends StatelessWidget {
     }
 
     Widget content = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: colors.cardBg,
         borderRadius: BorderRadius.circular(24),
-        border: Border(
-          left: BorderSide(color: color, width: 4),
-          top: BorderSide(color: colors.border),
-          right: BorderSide(color: colors.border),
-          bottom: BorderSide(color: colors.border),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    color: colors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-            ],
+        border: Border.all(color: colors.border.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 12,
           ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-              letterSpacing: -0.5,
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: 5,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  bottomLeft: Radius.circular(24),
+                ),
+              ),
             ),
           ),
-          Text(
-            subtitle,
-            style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 13),
-          ),
-          if (sparkData != null && sparkData!.length > 1) ...[
-            const Spacer(),
-            SizedBox(
-              height: 40,
-              child: LineChart(
-                key: ValueKey('sparkline_$title'),
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  lineTouchData: const LineTouchData(enabled: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: sparkData!
-                          .asMap()
-                          .entries
-                          .map((e) => FlSpot(e.key.toDouble(), e.value))
-                          .toList(),
-                      isCurved: true,
-                      curveSmoothness: 0.4,
-                      color: color,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [
-                            color.withValues(alpha: 0.3),
-                            color.withValues(alpha: 0.0),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: constraints.maxWidth,
+                    ),
+                    child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          color: colors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.2),
+                          width: 1,
                         ),
                       ),
+                      child: Icon(icon, color: color, size: 20),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-          ] else
-            const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isNeutral
-                  ? colors.textTertiary.withValues(alpha: 0.12)
-                  : (isPositive ? colors.success : colors.danger).withValues(
-                      alpha: 0.08,
-                    ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isNeutral
-                      ? Icons.horizontal_rule_rounded
-                      : isPositive
-                      ? Icons.trending_up
-                      : Icons.trending_down,
-                  size: 14,
-                  color: isNeutral
-                      ? colors.textTertiary
-                      : (isPositive ? colors.success : colors.danger),
-                ),
-                const SizedBox(width: 6),
+                const SizedBox(height: 8),
                 Text(
-                  trend,
-                  style: GoogleFonts.inter(
-                    color: isNeutral
-                        ? colors.textSecondary
-                        : (isPositive ? colors.success : colors.danger),
-                    fontSize: 13,
+                  value,
+                  style: GoogleFonts.outfit(
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    trendLabel,
-                    style: GoogleFonts.inter(
-                      color: (isPositive ? colors.success : colors.danger)
-                          .withValues(alpha: 0.6),
-                      fontSize: 12,
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (sparkData != null && sparkData!.length > 1) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 40,
+                    child: LineChart(
+                      LineChartData(
+                        gridData: const FlGridData(show: false),
+                        titlesData: const FlTitlesData(show: false),
+                        borderData: FlBorderData(show: false),
+                        lineTouchData: const LineTouchData(enabled: false),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: sparkData!
+                                .asMap()
+                                .entries
+                                .map((e) => FlSpot(e.key.toDouble(), e.value))
+                                .toList(),
+                            isCurved: true,
+                            curveSmoothness: 0.4,
+                            color: color,
+                            barWidth: 3,
+                            isStrokeCapRound: true,
+                            dotData: const FlDotData(show: false),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              gradient: LinearGradient(
+                                colors: [
+                                  color.withValues(alpha: 0.3),
+                                  color.withValues(alpha: 0.0),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 12),
+                ] else
+                  const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isNeutral
+                        ? colors.textTertiary.withValues(alpha: 0.12)
+                        : (isPositive ? colors.success : colors.danger).withValues(
+                            alpha: 0.08,
+                          ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isNeutral
+                            ? Icons.horizontal_rule_rounded
+                            : isPositive
+                            ? Icons.trending_up
+                            : Icons.trending_down,
+                        size: 14,
+                        color: isNeutral
+                            ? colors.textTertiary
+                            : (isPositive ? colors.success : colors.danger),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        trend,
+                        style: GoogleFonts.inter(
+                          color: isNeutral
+                              ? colors.textSecondary
+                              : (isPositive ? colors.success : colors.danger),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          trendLabel,
+                          style: GoogleFonts.inter(
+                            color: (isPositive ? colors.success : colors.danger)
+                                .withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
+            ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -222,49 +261,63 @@ class MetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border),
       ),
-      child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: constraints.maxWidth,
+              ),
+              child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: colors.border,
-                  borderRadius: BorderRadius.circular(8),
+                  color: colors.border.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
               ),
               Container(
-                width: 50,
-                height: 20,
+                width: 60,
+                height: 24,
                 decoration: BoxDecoration(
-                  color: colors.border,
-                  borderRadius: BorderRadius.circular(12),
+                  color: colors.border.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Container(
-            width: 100,
-            height: 30,
+            width: 120,
+            height: 32,
             decoration: BoxDecoration(
-              color: colors.border,
+              color: colors.border.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
           const SizedBox(height: 8),
           Container(
             width: 80,
-            height: 15,
+            height: 16,
             decoration: BoxDecoration(
-              color: colors.border,
+              color: colors.border.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(4),
             ),
           ),
         ],
+      ),
+              ),
+            );
+          },
       ),
     );
   }

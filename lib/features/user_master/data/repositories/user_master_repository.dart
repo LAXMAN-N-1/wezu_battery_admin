@@ -19,7 +19,7 @@ class UserMasterRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/admin/users/',
+        '/api/v1/admin/users/',
         queryParameters: {
           if (search != null && search.isNotEmpty) 'search': search,
           if (role != null && role != 'All') 'role': role,
@@ -36,7 +36,7 @@ class UserMasterRepository {
 
   Future<Map<String, dynamic>> getUserSummary() async {
     try {
-      final response = await _apiClient.get('/admin/users/summary');
+      final response = await _apiClient.get('/api/v1/admin/users/summary');
       return response.data;
     } catch (e) {
       // Return mock summary if endpoint fails
@@ -52,7 +52,7 @@ class UserMasterRepository {
 
   Future<User> createUser(Map<String, dynamic> data) async {
     try {
-      final response = await _apiClient.post('/admin/users/', data: data);
+      final response = await _apiClient.post('/api/v1/admin/users/', data: data);
       return User.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to create user: $e');
@@ -61,7 +61,7 @@ class UserMasterRepository {
 
   Future<User> updateUser(String id, Map<String, dynamic> data) async {
     try {
-      final response = await _apiClient.put('/admin/users/$id', data: data);
+      final response = await _apiClient.put('/api/v1/admin/users/$id', data: data);
       return User.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to update user: $e');
@@ -71,27 +71,44 @@ class UserMasterRepository {
   // --- Roles ---
   Future<List<Role>> getRoles() async {
     try {
-      final response = await _apiClient.get('/admin/roles/');
+      final response = await _apiClient.get('/api/v1/admin/rbac/roles');
       return (response.data as List).map((json) => Role.fromJson(json)).toList();
     } catch (e) {
-      // Mock Data if API not ready
-      return [
-        Role(
-          id: 'admin',
-          name: 'Super Admin',
-          description: 'Full system access',
-          isSystemRole: true,
-          userCount: 3,
-          permissions: const PermissionMatrix(modules: {
-            'dashboard': PermissionLevel.full,
-            'fleet': PermissionLevel.full,
-            'settings': PermissionLevel.full,
-          }),
-          createdAt: DateTime.now(),
-        ),
-      ];
+      throw Exception('Failed to load roles: $e');
     }
   }
+
+  Future<Map<String, dynamic>> createRole(Map<String, dynamic> data) async {
+    try {
+      final response = await _apiClient.post('/api/v1/admin/rbac/roles', data: data);
+      return response.data;
+    } catch (e) {
+      throw Exception('Failed to create role: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateRolePermissions(int roleId, List<String> permissionSlugs, {String mode = 'overwrite'}) async {
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/admin/rbac/roles/$roleId/permissions',
+        data: {'permissions': permissionSlugs, 'mode': mode},
+      );
+      return response.data;
+    } catch (e) {
+      throw Exception('Failed to update role permissions: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPermissionModules() async {
+    try {
+      final response = await _apiClient.get('/api/v1/admin/rbac/permissions');
+      final data = response.data as Map<String, dynamic>;
+      return (data['modules'] as List).map((m) => m as Map<String, dynamic>).toList();
+    } catch (e) {
+      throw Exception('Failed to load permissions: $e');
+    }
+  }
+
 
   // --- Access Logs ---
   Future<List<AccessLog>> getAccessLogs({
@@ -100,7 +117,7 @@ class UserMasterRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/admin/access-logs/',
+        '/api/v1/admin/access-logs/',
         queryParameters: {'skip': skip, 'limit': limit},
       );
       return (response.data as List).map((json) => AccessLog.fromJson(json)).toList();

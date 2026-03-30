@@ -35,23 +35,27 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] as String,
-      fullName: json['full_name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String?,
-      roleId: json['role_id'] as String,
-      roleName: json['role_name'] as String,
-      assignedStationId: json['assigned_station_id'] as String?,
+      id: json['id']?.toString() ?? '',
+      fullName: json['full_name'] as String? ?? 'Unknown',
+      email: json['email'] as String? ?? '',
+      phone: (json['phone_number'] ?? json['phone']) as String?,
+      roleId: (json['role_id'] ?? json['role_name'] ?? 'customer').toString(),
+      roleName: (json['role'] ?? json['role_name'] ?? 'Customer') as String,
+      assignedStationId: json['assigned_station_id']?.toString(),
       assignedStationName: json['assigned_station_name'] as String?,
-      profilePhotoUrl: json['profile_photo_url'] as String?,
+      profilePhotoUrl: (json['profile_picture'] ?? json['profile_photo_url']) as String?,
       status: UserStatus.values.firstWhere(
         (e) => e.name == (json['status'] as String?)?.toLowerCase(),
         orElse: () => UserStatus.pending,
       ),
       twoFactorEnabled: json['two_factor_enabled'] as bool? ?? false,
       notes: json['notes'] as String?,
-      lastLogin: json['last_login'] != null ? DateTime.parse(json['last_login'] as String) : DateTime.now(),
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : DateTime.now(),
+      lastLogin: json['last_login_at'] != null || json['last_login'] != null
+          ? DateTime.parse((json['last_login_at'] ?? json['last_login']) as String)
+          : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
     );
   }
 

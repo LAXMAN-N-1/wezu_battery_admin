@@ -11,13 +11,73 @@ class RolesListTab extends ConsumerWidget {
 
   const RolesListTab({super.key, required this.onEditRole});
 
+  /// Convert snake_case DB role name to Display Name
+  String _displayRoleName(String dbName) {
+    return dbName
+        .split('_')
+        .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+        .join(' ');
+  }
+
+  Color _getRoleColor(String roleName) {
+    switch (roleName.toLowerCase()) {
+      case 'admin': return Colors.redAccent;
+      case 'customer': return Colors.greenAccent;
+      case 'dealer': return Colors.orangeAccent;
+      case 'station_manager': return Colors.blueAccent;
+      case 'finance_manager': return Colors.purpleAccent;
+      case 'technician': return Colors.tealAccent;
+      case 'logistics_manager': return Colors.cyanAccent;
+      case 'support_agent': return Colors.amberAccent;
+      case 'driver': return Colors.lightGreenAccent;
+      case 'warehouse_manager': return Colors.indigoAccent;
+      default: return Colors.blueGrey;
+    }
+  }
+
+  IconData _getRoleIcon(String roleName) {
+    switch (roleName.toLowerCase()) {
+      case 'admin': return Icons.admin_panel_settings;
+      case 'customer': return Icons.person_outline;
+      case 'dealer': return Icons.storefront;
+      case 'station_manager': return Icons.location_city;
+      case 'finance_manager': return Icons.account_balance;
+      case 'technician': return Icons.build;
+      case 'logistics_manager': return Icons.local_shipping;
+      case 'support_agent': return Icons.headset_mic;
+      case 'driver': return Icons.directions_car;
+      case 'warehouse_manager': return Icons.warehouse;
+      case 'inspector': return Icons.search;
+      case 'franchise_owner': return Icons.business;
+      case 'marketing_manager': return Icons.campaign;
+      case 'analyst': return Icons.analytics;
+      default: return Icons.shield_outlined;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rolesAsync = ref.watch(rolesProvider);
 
     return rolesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+      error: (err, _) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text('Error loading roles: $err', style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => ref.invalidate(rolesProvider),
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: const Text('Retry', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+            ),
+          ],
+        ),
+      ),
       data: (roles) {
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -90,19 +150,28 @@ class RolesListTab extends ConsumerWidget {
         crossAxisCount: 3,
         crossAxisSpacing: 20,
         mainAxisSpacing: 20,
-        mainAxisExtent: 220,
+        mainAxisExtent: 230,
       ),
-      itemCount: roles.length,
+      itemCount: roles.length + 1, // +1 for "Create New Role" card
       itemBuilder: (context, index) {
+        // Last card is the "Create New Role" card
+        if (index == roles.length) {
+          return _buildCreateRoleCard();
+        }
+
         final role = roles[index];
+        final displayName = _displayRoleName(role.name);
+        final roleColor = _getRoleColor(role.name);
+        final roleIcon = _getRoleIcon(role.name);
+
         return Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: role.isSystemRole ? Colors.purple.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
+            border: Border.all(color: role.isSystemRole ? roleColor.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
             boxShadow: [
-              if (role.isSystemRole) BoxShadow(color: Colors.purple.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+              if (role.isSystemRole) BoxShadow(color: roleColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
             ],
           ),
           child: Column(
@@ -111,16 +180,29 @@ class RolesListTab extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: role.isSystemRole ? Colors.purple.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      role.isSystemRole ? 'System Role' : 'Custom Role',
-                      style: TextStyle(color: role.isSystemRole ? Colors.purpleAccent : Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: roleColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(roleIcon, color: roleColor, size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: role.isSystemRole ? Colors.purple.withValues(alpha: 0.2) : Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          role.isSystemRole ? 'System' : 'Custom',
+                          style: TextStyle(color: role.isSystemRole ? Colors.purpleAccent : Colors.blueAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.white54, size: 20),
@@ -136,14 +218,20 @@ class RolesListTab extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(role.name, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-              const SizedBox(height: 8),
-              Text(role.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.4)),
-              const Spacer(),
+              const SizedBox(height: 14),
+              Text(displayName, style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 6),
+              Expanded(
+                child: Text(
+                  role.description.isNotEmpty ? role.description : 'System role — ${displayName.toLowerCase()} access level',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.4),
+                ),
+              ),
               const Divider(color: Colors.white10),
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -162,6 +250,41 @@ class RolesListTab extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildCreateRoleCard() {
+    return GestureDetector(
+      onTap: onEditRole,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B).withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3), style: BorderStyle.solid),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add_rounded, color: Colors.blueAccent, size: 32),
+            ),
+            const SizedBox(height: 16),
+            Text('Create New Role', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+            const SizedBox(height: 8),
+            const Text(
+              'Define custom access levels\nfor your team members',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white38, fontSize: 12, height: 1.4),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

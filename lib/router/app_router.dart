@@ -4,27 +4,47 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/provider/auth_provider.dart';
 import '../features/auth/view/login_view.dart';
 import '../features/dashboard/view/dashboard_view.dart';
-import '../features/cms/view/blog_list_view.dart';
-import '../features/cms/view/faq_list_view.dart';
-import '../features/cms/view/legal_list_view.dart';
-import '../features/cms/view/banner_list_view.dart';
+import '../features/bess/view/bess_overview_view.dart';
+import '../features/bess/view/energy_monitoring_view.dart';
+import '../features/bess/view/grid_integration_view.dart';
+import '../features/bess/view/bess_reports_view.dart';
+import '../features/notifications/view/send_push_view.dart';
+import '../features/notifications/view/automated_triggers_view.dart';
+import '../features/notifications/view/notification_logs_view.dart';
+import '../features/notifications/view/sms_email_config_view.dart';
+import '../features/cms/view/blog_management_view.dart';
+import '../features/cms/view/faq_management_view.dart';
+import '../features/cms/view/banner_management_view.dart';
+import '../features/cms/view/legal_docs_view.dart';
 import '../features/cms/view/media_library_view.dart';
+import '../features/audit/view/audit_dashboard_view.dart';
+import '../features/audit/view/audit_logs_view.dart';
+import '../features/audit/view/security_events_view.dart';
+import '../features/audit/view/security_settings_view.dart';
+import '../features/settings/view/general_settings_view.dart';
+import '../features/settings/view/feature_flags_view.dart';
+import '../features/settings/view/api_keys_view.dart';
+import '../features/settings/view/system_health_view.dart';
 import '../features/inventory/view/stock_levels_view.dart';
 import '../features/inventory/view/bulk_import_export_view.dart';
+import '../features/inventory/view/audit_trail_view.dart';
 import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
-import '../features/users/view/users_view.dart';
-import '../features/users/view/roles_permissions_view.dart';
-import '../features/users/view/kyc_verification_view.dart';
-import '../features/users/view/kyc_dashboard_view.dart';
-import '../features/users/view/suspended_accounts_view.dart';
-import '../features/users/view/user_analytics_view.dart';
 import '../features/users/view/fraud_risk_view.dart';
-import '../features/users/view/bulk_operations_view.dart';
-import '../features/users/view/session_activity_view.dart';
 import '../features/finance/view/finance_view.dart';
+import '../features/finance/view/transactions_view.dart';
+import '../features/finance/view/settlements_view.dart';
+import '../features/finance/view/invoices_view.dart';
+import '../features/finance/view/profit_analysis_view.dart';
+import '../features/logistics/view/delivery_orders_view.dart';
+import '../features/logistics/view/live_tracking_view.dart';
+import '../features/logistics/view/drivers_view.dart';
+import '../features/logistics/view/route_planner_view.dart';
+import '../features/logistics/view/returns_view.dart';
 import '../features/inventory/view/batteries_view.dart';
 import '../features/support/view/support_view.dart';
+import '../features/support/view/knowledge_base_view.dart';
+import '../features/support/view/team_performance_view.dart';
 import '../features/dashboard/view/analytics_view.dart';
 import '../features/stations/view/station_map_view.dart';
 import '../features/stations/view/station_performance_view.dart';
@@ -168,7 +188,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/fleet/audit',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Inventory Audit Trail', icon: Icons.history_outlined, description: 'Track all inventory changes — who changed what, when, and why.'),
+              child: AuditTrailView(),
             ),
           ),
           GoRoute(
@@ -285,27 +305,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: 'transactions',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Transactions', icon: Icons.receipt_outlined, description: 'All payment transactions with search, filters, refund status, and export.'),
-                ),
+                pageBuilder: (context, state) => const NoTransitionPage(child: TransactionsView()),
               ),
               GoRoute(
                 path: 'settlements',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Settlements', icon: Icons.account_balance_wallet_outlined, description: 'Dealer payment settlements, schedule tracking, and reconciliation.'),
-                ),
+                pageBuilder: (context, state) => const NoTransitionPage(child: SettlementsView()),
               ),
               GoRoute(
                 path: 'invoices',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Invoices', icon: Icons.description_outlined, description: 'Auto-generated invoices with GST, downloadable PDFs, and email delivery.'),
-                ),
+                pageBuilder: (context, state) => const NoTransitionPage(child: InvoicesView()),
               ),
               GoRoute(
                 path: 'profit',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Profit Analysis', icon: Icons.trending_up_outlined, description: 'Profit margins per station, cost vs revenue trends, and profitability forecast.'),
-                ),
+                pageBuilder: (context, state) => const NoTransitionPage(child: ProfitAnalysisView()),
               ),
             ],
           ),
@@ -315,33 +327,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/logistics/orders',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Delivery Orders', icon: Icons.local_shipping_outlined, description: 'Create and manage delivery orders. Track status from pending to delivered.'),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: DeliveryOrdersView()),
           ),
           GoRoute(
             path: '/logistics/tracking',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Live Tracking', icon: Icons.gps_fixed_outlined, description: 'Real-time GPS map with delivery vehicles, ETA calculations, and delay alerts.'),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: LiveTrackingView()),
           ),
           GoRoute(
             path: '/logistics/drivers',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Drivers', icon: Icons.badge_outlined, description: 'Driver profiles, availability status, performance metrics, and ratings.'),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: DriversView()),
           ),
           GoRoute(
             path: '/logistics/routes',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Route Planner', icon: Icons.route_outlined, description: 'Optimized route calculation, multi-stop planning, and traffic consideration.'),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: RoutePlannerView()),
           ),
           GoRoute(
             path: '/logistics/returns',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Returns', icon: Icons.assignment_return_outlined, description: 'Reverse logistics — return initiations, pickup scheduling, and processing.'),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: ReturnsView()),
           ),
 
           // ==========================================
@@ -378,25 +380,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/bess',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'BESS Overview', icon: Icons.bolt_outlined, description: 'Battery Energy Storage System status, capacity, and utilization overview.'),
+              child: BessOverviewView(),
             ),
             routes: [
               GoRoute(
                 path: 'monitoring',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Energy Monitoring', icon: Icons.electric_meter_outlined, description: 'Real-time charge/discharge monitoring, power flow visualization.'),
+                  child: EnergyMonitoringView(),
                 ),
               ),
               GoRoute(
                 path: 'grid',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Grid Integration', icon: Icons.grid_on_outlined, description: 'Grid connection status, peak shaving schedules, and power management.'),
+                  child: GridIntegrationView(),
                 ),
               ),
               GoRoute(
                 path: 'reports',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'BESS Reports', icon: Icons.summarize_outlined, description: 'Energy stored/discharged reports, efficiency metrics, and ROI analysis.'),
+                  child: BessReportsView(),
                 ),
               ),
             ],
@@ -412,13 +414,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/support/knowledge',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Knowledge Base', icon: Icons.menu_book_outlined, description: 'FAQ articles, categorized guides, and self-service knowledge management.'),
+              child: KnowledgeBaseView(),
             ),
           ),
           GoRoute(
             path: '/support/performance',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Team Performance', icon: Icons.leaderboard_outlined, description: 'Agent resolution times, CSAT scores, ticket volumes, and quality metrics.'),
+              child: TeamPerformanceView(),
             ),
           ),
 
@@ -427,30 +429,32 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/notifications',
-            redirect: (_, __) => '/notifications/send',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: SendPushView(),
+            ),
             routes: [
               GoRoute(
                 path: 'send',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Send Push Notifications', icon: Icons.send_outlined, description: 'Target specific user segments, schedule campaigns, and track open rates.'),
+                  child: SendPushView(),
                 ),
               ),
               GoRoute(
                 path: 'triggers',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Automated Triggers', icon: Icons.auto_awesome_outlined, description: 'Configure behavioral triggers for push/SMS (e.g., in-activity, rental reminders).'),
+                  child: AutomatedTriggersView(),
                 ),
               ),
               GoRoute(
                 path: 'logs',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'Notification Logs', icon: Icons.history_edu_outlined, description: 'Audit trail of every notification sent to users with delivery status.'),
+                  child: NotificationLogsView(),
                 ),
               ),
               GoRoute(
                 path: 'config',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'SMS & Email Config', icon: Icons.settings_suggest_outlined, description: 'Link Twilio, SendGrid, or Firebase credentials for external alerts.'),
+                  child: SmsEmailConfigView(),
                 ),
               ),
             ],
@@ -461,30 +465,32 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/cms',
-            redirect: (_, __) => '/cms/blogs',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: BlogManagementView(),
+            ),
             routes: [
               GoRoute(
                 path: 'blogs',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BlogListView(),
+                  child: BlogManagementView(),
                 ),
               ),
               GoRoute(
                 path: 'faqs',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: FaqListView(),
+                  child: FaqManagementView(),
                 ),
               ),
               GoRoute(
                 path: 'banners',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BannerListView(),
+                  child: BannerManagementView(),
                 ),
               ),
               GoRoute(
                 path: 'legal',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: LegalListView(),
+                  child: LegalDocsView(),
                 ),
               ),
               GoRoute(
@@ -500,9 +506,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           // 13. AUDIT & SECURITY
           // ==========================================
           GoRoute(
+            path: '/audit/dashboard',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: AuditDashboardView(),
+            ),
+          ),
+          GoRoute(
             path: '/audit/logs',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Audit Logs', icon: Icons.manage_search_outlined, description: 'Complete audit trail of all admin actions — who, what, when.'),
+              child: AuditLogsView(),
             ),
           ),
           GoRoute(
@@ -512,9 +524,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/audit/security-events',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: SecurityEventsView(),
+            ),
+          ),
+          GoRoute(
             path: '/audit/security',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'Security Settings', icon: Icons.lock_outlined, description: 'Two-factor authentication, session management, and IP whitelisting.'),
+              child: SecuritySettingsView(),
             ),
           ),
 
@@ -524,19 +542,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/settings',
             pageBuilder: (context, state) => const NoTransitionPage(
-              child: PlaceholderScreen(title: 'General Settings', icon: Icons.settings_outlined, description: 'Platform name, logo, timezone, currency, and branding configuration.'),
+              child: GeneralSettingsView(),
             ),
             routes: [
               GoRoute(
+                path: 'features',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: FeatureFlagsView(),
+                ),
+              ),
+              GoRoute(
                 path: 'api-keys',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'API Keys', icon: Icons.vpn_key_outlined, description: 'Configure Razorpay, Google Maps, Twilio, Firebase, and other integrations.'),
+                  child: ApiKeysView(),
                 ),
               ),
               GoRoute(
                 path: 'health',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: PlaceholderScreen(title: 'System Health', icon: Icons.monitor_heart_outlined, description: 'Server status, database connectivity, Redis, MQTT, and service health checks.'),
+                  child: SystemHealthView(),
                 ),
               ),
             ],
@@ -618,18 +642,27 @@ String _getTitle(String location) {
   if (location == '/support/knowledge') return 'Knowledge Base';
   if (location == '/support/performance') return 'Team Performance';
 
+  // Notifications
+  if (location == '/notifications/send') return 'Send Push';
+  if (location == '/notifications/triggers') return 'Automated Triggers';
+  if (location == '/notifications/logs') return 'Notification Logs';
+  if (location == '/notifications/config') return 'SMS/Email Config';
+
   // CMS
-  if (location == '/cms/notifications') return 'Push Notifications';
-  if (location == '/cms/promotions') return 'Promotions';
+  if (location == '/cms/blogs') return 'Blog Management';
   if (location == '/cms/faqs') return 'FAQ Management';
+  if (location == '/cms/banners') return 'Banner Management';
+  if (location == '/cms/legal') return 'Legal Documents';
 
   // Audit
-  if (location == '/audit/logs') return 'Audit Logs';
-  if (location == '/audit/fraud') return 'Fraud Detection';
+  if (location == '/audit/dashboard') return 'Audit & Security Dashboard';
+  if (location == '/audit/logs') return 'System Audit Logs';
+  if (location == '/audit/security-events') return 'Security Events';
   if (location == '/audit/security') return 'Security Settings';
 
   // Settings
   if (location == '/settings') return 'General Settings';
+  if (location == '/settings/features') return 'Feature Flags';
   if (location == '/settings/api-keys') return 'API Keys';
   if (location == '/settings/health') return 'System Health';
 

@@ -6,6 +6,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_themes.dart';
 import '../providers/dashboard_providers.dart';
 import '../data/dashboard_models.dart';
+import '../../../core/services/csv/csv_service.dart';
 
 class AnalyticsView extends ConsumerStatefulWidget {
   const AnalyticsView({super.key});
@@ -738,7 +739,8 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     ),
                 ],
               ),
-              if (isStation) _buildStationMetricToggle(colors),
+              // Filter toggle removed as requested to keep it "perfect" for revenue focus
+              // if (isStation) _buildStationMetricToggle(colors),
             ],
           ),
           const SizedBox(height: 24),
@@ -759,43 +761,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     );
   }
 
-  Widget _buildStationMetricToggle(AppColorsExtension colors) {
-    final options = {
-      'revenue': 'Revenue',
-      'rentals': 'Rentals',
-      'utilization': 'Utilization',
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: colors.scaffoldBg.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: options.entries.map((entry) {
-          final isSelected = _stationMetric == entry.key;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            child: ChoiceChip(
-              label: Text(entry.value, style: const TextStyle(fontSize: 11)),
-              selected: isSelected,
-              onSelected: (_) => setState(() => _stationMetric = entry.key),
-              selectedColor: colors.accent,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : colors.textSecondary,
-                fontWeight: FontWeight.w700,
-              ),
-              backgroundColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              side: BorderSide(color: colors.border),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+
 
   Widget _buildStationBarChart(
     StationRevenueData data,
@@ -817,8 +783,10 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
 
     final sorted = List<StationRevenue>.from(displayData)
       ..sort((a, b) => metricValue(b).compareTo(metricValue(a)));
-    final maxY =
-        displayData.isEmpty ? 100.0 : math.max(metricValue(sorted.first) * 1.2, 1.0);
+    final rawMaxY = displayData.isEmpty ? 10.0 : math.max(metricValue(sorted.first) * 1.15, 1.0);
+    // Round up to a nice multiple to avoid label collisions at the top
+    final interval = _calculateInterval(rawMaxY);
+    final maxY = ((rawMaxY / interval).ceil() * interval).toDouble();
 
     return BarChart(
       key: const ValueKey('analytics_station_revenue_chart'),
@@ -850,8 +818,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     TextSpan(
                       text:
                           'Avg Session: ${displayData[groupIndex].avgSessionDuration.toStringAsFixed(1)}m',
-                      style: TextStyle(color: colors.textSecondary),
-                    ),
+                  ),
                 ],
               );
             },
@@ -862,26 +829,27 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              reservedSize: 48,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < displayData.length) {
+                if (index >= 0 && index < displayData.length) {
                   final label = displayData[index].stationName;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Transform.rotate(
-                      angle: -0.8,
-                      child: SizedBox(
-                        width: 72,
-                        child: Text(
-                          label,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                          style: TextStyle(
-                            color: colors.textTertiary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  return SideTitleWidget(
+                    meta: meta,
+                    space: 12,
+                    angle: 0,
+                    child: Container(
+                      width: 60,
+                      child: Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          color: colors.textTertiary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
                         ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   );
@@ -893,24 +861,32 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) => Text(
-                _compactNumber(value),
-                style: TextStyle(color: colors.textTertiary, fontSize: 10),
-              ),
+              reservedSize: 45,
+              interval: interval,
+              getTitlesWidget: (value, meta) {
+                if (value > maxY * 0.99) return const SizedBox();
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 8,
+                  child: Text(
+                    _compactNumber(value),
+                    style: GoogleFonts.inter(
+                      color: colors.textTertiary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: math.max(1, maxY / 4),
+          horizontalInterval: interval,
           getDrawingHorizontalLine: (value) => FlLine(
             color: colors.border.withValues(alpha: 0.05),
             strokeWidth: 1,
@@ -918,24 +894,21 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
         ),
         borderData: FlBorderData(show: false),
         barGroups: displayData.asMap().entries.map((e) {
-          final rankIndex = sorted.indexWhere(
-              (element) => element.stationName == e.value.stationName);
-          Color barColor;
-          if (rankIndex <= 2) {
-            barColor = colors.success;
-          } else if (rankIndex >= displayData.length - 3) {
-            barColor = Colors.orange;
-          } else {
-            barColor = colors.accent;
-          }
-
+          final barColor = _getChartColor(e.key, colors);
           return BarChartGroupData(
             x: e.key,
             barRods: [
               BarChartRodData(
                 toY: metricValue(e.value),
-                color: barColor,
-                width: 20,
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    barColor,
+                    barColor.withValues(alpha: 0.7),
+                  ],
+                ),
+                width: 32, // Thicker bars as requested
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(8),
                 ),
@@ -955,11 +928,13 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     // Prefer station-level stacked composition if available
     if (data.stationMix.isNotEmpty) {
       final stations = data.stationMix.take(5).toList();
-      final maxY = stations
+      final rawMaxY = stations
               .map<double>((s) =>
                   s.batteryMix.fold(0, (prev, b) => prev + b.revenue))
               .fold<double>(0, (prev, element) => element > prev ? element : prev) *
-          1.2;
+          1.15;
+      final interval = _calculateInterval(rawMaxY);
+      final maxY = ((rawMaxY / interval).ceil() * interval).toDouble();
 
       return BarChart(
         key: const ValueKey('analytics_battery_revenue_chart'),
@@ -997,19 +972,26 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize: 48,
                 getTitlesWidget: (value, meta) {
                   final index = value.toInt();
-                  if (index < stations.length) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Transform.rotate(
-                        angle: -0.7,
+                  if (index >= 0 && index < stations.length) {
+                    final label = stations[index].stationName;
+                    return SideTitleWidget(
+                      meta: meta,
+                      space: 12,
+                      angle: 0,
+                      child: Container(
+                        width: 60,
                         child: Text(
-                          stations[index].stationName,
-                          style: TextStyle(
+                          label,
+                          style: GoogleFonts.inter(
                             color: colors.textTertiary,
                             fontSize: 10,
+                            fontWeight: FontWeight.w600,
                           ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -1022,21 +1004,29 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (value, meta) => Text(
-                  _compactNumber(value),
-                  style: TextStyle(color: colors.textTertiary, fontSize: 10),
-                ),
+                reservedSize: 45,
+                interval: interval,
+                getTitlesWidget: (value, meta) {
+                   if (value > maxY * 0.99) return const SizedBox();
+                   return Text(
+                    _compactNumber(value),
+                    style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 10, fontWeight: FontWeight.bold),
+                  );
+                },
               ),
             ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: interval,
+            getDrawingHorizontalLine: (value) => FlLine(
+              color: colors.border.withValues(alpha: 0.05),
+              strokeWidth: 1,
             ),
           ),
-          gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           barGroups: stations.asMap().entries.map((entry) {
             final station = entry.value;
@@ -1060,10 +1050,10 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               barRods: [
                 BarChartRodData(
                   toY: running,
-                  width: 32,
+                  width: 40, // Perfected width
                   rodStackItems: stacks,
                   borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12), bottom: Radius.circular(4)),
+                      top: Radius.circular(10), bottom: Radius.circular(4)),
                 ),
               ],
             );
@@ -1074,10 +1064,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
 
     // Fallback: aggregated types
     final displayData = data.types;
-    final maxY = displayData.isEmpty
-        ? 100.0
-        : (displayData.map((e) => e.revenue).reduce((a, b) => a > b ? a : b) *
-              1.2);
+    final maxValue = displayData.isEmpty ? 10000.0 : displayData.map((e) => e.revenue).reduce(math.max);
+    // Align to 10k increments for Y axis
+    final maxY = ((maxValue / 10000).ceil() * 10000).toDouble().clamp(30000.0, 80000.0);
 
     return BarChart(
       key: const ValueKey('analytics_battery_revenue_chart'),
@@ -1095,16 +1084,27 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
+              reservedSize: 48,
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index < displayData.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      displayData[index].type.split(' ').first,
-                      style: TextStyle(
-                        color: colors.textTertiary,
-                        fontSize: 10,
+                if (index >= 0 && index < displayData.length) {
+                  final label = displayData[index].type;
+                  return SideTitleWidget(
+                    meta: meta,
+                    space: 12,
+                    angle: 0,
+                    child: Container(
+                      width: 60,
+                      child: Text(
+                        label,
+                        style: GoogleFonts.inter(
+                          color: colors.textTertiary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   );
@@ -1113,32 +1113,48 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               },
             ),
           ),
-          leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 45,
+              interval: 10000,
+              getTitlesWidget: (value, meta) => Text(
+                _compactNumber(value),
+                style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
           ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: 10000,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: colors.border.withValues(alpha: 0.05),
+            strokeWidth: 1,
           ),
         ),
-        gridData: const FlGridData(show: false),
         borderData: FlBorderData(show: false),
         barGroups: displayData.asMap().entries.map((e) {
+          final barColor = _getChartColor(e.key, colors);
           return BarChartGroupData(
             x: e.key,
             barRods: [
               BarChartRodData(
                 toY: e.value.revenue,
-                color: e.key == 0
-                    ? colors.success
-                    : e.key == 1
-                    ? Colors.orange
-                    : colors.secondary,
-                width: 40,
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    barColor,
+                    barColor.withValues(alpha: 0.7),
+                  ],
+                ),
+                width: 32,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+                  top: Radius.circular(8),
                 ),
               ),
             ],
@@ -1157,8 +1173,42 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
 
   String _compactNumber(double n) {
     if (n >= 100000) return '${(n / 100000).toStringAsFixed(1)}L';
+    if (n >= 10000) return '${(n / 100000).toStringAsFixed(1)}L'; // 20k -> 0.2L
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toInt().toString();
+    // If integer, don't show decimal
+    if (n == n.toInt().toDouble()) return n.toInt().toString();
+    return n.toStringAsFixed(1);
+  }
+
+  double _calculateInterval(double maxY) {
+    if (maxY <= 0) return 1.0;
+    if (maxY <= 10) return 2.0;
+    if (maxY <= 50) return 10.0;
+    if (maxY <= 100) return 20.0;
+    if (maxY <= 1000) return 200.0;
+    if (maxY <= 10000) return 2000.0;
+    
+    // For revenue values in Lakhs (0.2L, 0.5L, 1.0L steps)
+    if (maxY <= 200000) return 20000.0; // 0.2L intervals for 0-2L range
+    if (maxY <= 500000) return 50000.0; // 0.5L intervals for 0-5L range
+    if (maxY <= 1000000) return 100000.0; // 1L intervals for 0-10L range
+    
+    double magnitude = math.pow(10, (math.log(maxY) / math.ln10).floor()).toDouble();
+    double interval = magnitude / 5;
+    if (interval < 1) return 1.0;
+    return interval;
+  }
+
+  Color _getChartColor(int index, AppColorsExtension colors) {
+    final palette = [
+      colors.accent,
+      const Color(0xFFA855F7), // Purple
+      const Color(0xFFF97316), // Orange
+      colors.success,
+      const Color(0xFF06B6D4), // Cyan
+      const Color(0xFFEC4899), // Pink
+    ];
+    return palette[index % palette.length];
   }
 
   void _manualRefreshAll() {
@@ -1176,16 +1226,54 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
   }
 
   Future<void> _handleExport(BuildContext context) async {
-    final repo = ref.read(analyticsRepositoryProvider);
+    final stationData = ref.read(revenueByStationProvider).valueOrNull;
+    
+    if (stationData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No data available to export')),
+      );
+      return;
+    }
+
+    // Prepare CSV rows
+    List<List<dynamic>> rows = [
+      ['Station Name', 'Revenue', 'Rentals', 'Utilization (%)', 'Avg Session (m)', 'Share (%)']
+    ];
+
+    for (var s in stationData.stations) {
+      rows.add([
+        s.stationName,
+        s.revenue,
+        s.rentalCount,
+        '${s.utilization}%',
+        s.avgSessionDuration,
+        '${s.percentage}%',
+      ]);
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final fileName = 'analytics_report_$timestamp';
+
     try {
-      final response = await repo.exportReport();
+      await CsvService.downloadCsv(rows, fileName);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Export successful! Downloaded ${response.data.length} bytes.',
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  'Analytics exported successfully',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
             backgroundColor: context.appColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(20),
+            duration: const Duration(seconds: 3),
           ),
         );
       }

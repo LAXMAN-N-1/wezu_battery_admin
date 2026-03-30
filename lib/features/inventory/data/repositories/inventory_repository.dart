@@ -1,7 +1,7 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'package:dio/dio.dart';
-import '../../../core/api/api_client.dart';
+import '../../../../core/api/api_client.dart';
 import '../models/battery.dart';
 
 class InventoryRepository {
@@ -37,9 +37,13 @@ class InventoryRepository {
     final response = await _api.get(_baseUrl, queryParameters: query);
     final data = response.data;
     final List<dynamic> items = data['items'] ?? [];
+    final rawTotalCount = data['total_count'];
+    final totalCount = (rawTotalCount is num)
+        ? rawTotalCount.toInt()
+        : int.tryParse(rawTotalCount?.toString() ?? '') ?? 0;
     return {
       'items': items.map((json) => Battery.fromJson(json)).toList(),
-      'total_count': data['total_count'] ?? 0,
+      'total_count': totalCount,
     };
   }
 

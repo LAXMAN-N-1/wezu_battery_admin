@@ -1,69 +1,133 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import '../../../../core/api/api_client.dart';
 import '../models/transaction.dart';
 
-final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
-  return FinanceRepository();
-});
-
 class FinanceRepository {
-  Future<Map<String, dynamic>> getFinanceDashboardData() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+  final ApiClient _api;
+  FinanceRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
-    // Mock Monthly Revenue Data (Last 6 Months)
-    final revenueData = [
-      {'month': 'Jan', 'value': 45000.0},
-      {'month': 'Feb', 'value': 52000.0},
-      {'month': 'Mar', 'value': 49000.0},
-      {'month': 'Apr', 'value': 61000.0},
-      {'month': 'May', 'value': 58000.0},
-      {'month': 'Jun', 'value': 75000.0},
-    ];
+  // ─── DASHBOARD ──────────────────────────────────────────────────────────
 
-    final transactions = [
-      Transaction(
-        id: 'TXN_1001',
-        userId: 'USER_882',
-        userName: 'Murari Vama',
-        amount: 250.0,
-        type: 'rental',
-        status: 'success',
-        timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-      ),
-      Transaction(
-        id: 'TXN_1002',
-        userId: 'USER_104',
-        userName: 'Rahul Sharma',
-        amount: 5000.0,
-        type: 'subscription',
-        status: 'success',
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      Transaction(
-        id: 'TXN_1003',
-        userId: 'USER_332',
-        userName: 'Priya Singh',
-        amount: 150.0,
-        type: 'refund',
-        status: 'pending',
-        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      ),
-      Transaction(
-        id: 'TXN_1004',
-        userId: 'USER_445',
-        userName: 'Amit Patel',
-        amount: 350.0,
-        type: 'rental',
-        status: 'failed',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      ),
-    ];
+  Future<Map<String, dynamic>> getFinanceDashboardData({String period = '30d'}) async {
+    try {
+      final response = await _api.get('/api/v1/admin/finance/dashboard', queryParameters: {'period': period});
+      final data = response.data as Map<String, dynamic>;
 
-    return {
-      'totalRevenue': 340000.0,
-      'monthlyGrowth': 12.5,
-      'revenueChart': revenueData,
-      'recentTransactions': transactions,
-    };
+      // Parse recent transactions
+      final txnList = (data['recent_transactions'] as List?)?.map((t) => Transaction(
+        id: t['id']?.toString() ?? '',
+        userId: t['user_id']?.toString() ?? '',
+        userName: t['user_name'] ?? 'Unknown',
+        amount: (t['amount'] as num?)?.toDouble() ?? 0.0,
+        type: t['type'] ?? '',
+        status: t['status'] ?? '',
+        timestamp: DateTime.tryParse(t['timestamp'] ?? '') ?? DateTime.now(),
+      )).toList() ?? [];
+
+      return {
+        'totalRevenue': (data['total_revenue'] as num?)?.toDouble() ?? 0.0,
+        'periodRevenue': (data['period_revenue'] as num?)?.toDouble() ?? 0.0,
+        'monthlyGrowth': (data['monthly_growth'] as num?)?.toDouble() ?? 0.0,
+        'revenueChart': List<Map<String, dynamic>>.from(data['revenue_chart'] ?? []),
+        'revenueByType': List<Map<String, dynamic>>.from(data['revenue_by_type'] ?? []),
+        'recentTransactions': txnList,
+        'totalTransactions': data['total_transactions'] ?? 0,
+        'successRate': (data['success_rate'] as num?)?.toDouble() ?? 0.0,
+      };
+    } catch (e) {
+      return {
+        'totalRevenue': 0.0, 'periodRevenue': 0.0, 'monthlyGrowth': 0.0,
+        'revenueChart': <Map<String, dynamic>>[], 'revenueByType': <Map<String, dynamic>>[],
+        'recentTransactions': <Transaction>[], 'totalTransactions': 0, 'successRate': 0.0,
+      };
+    }
+  }
+
+  // ─── TRANSACTIONS ───────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getTransactions({int skip = 0, int limit = 100, String? type, String? status}) async {
+    try {
+      final params = <String, dynamic>{'skip': skip, 'limit': limit};
+      if (type != null) params['type'] = type;
+      if (status != null) params['status'] = status;
+      final response = await _api.get('/api/v1/admin/finance/transactions', queryParameters: params);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'transactions': [], 'total_count': 0};
+    }
+  }
+
+  Future<Map<String, dynamic>> getTransactionStats() async {
+    try {
+      final response = await _api.get('/api/v1/admin/finance/transactions/stats');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'total_transactions': 0, 'success_count': 0, 'pending_count': 0, 'failed_count': 0, 'total_amount': 0.0, 'today_amount': 0.0};
+    }
+  }
+
+  // ─── SETTLEMENTS ────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getSettlements({int skip = 0, int limit = 50, String? status}) async {
+    try {
+      final params = <String, dynamic>{'skip': skip, 'limit': limit};
+      if (status != null) params['status'] = status;
+      final response = await _api.get('/api/v1/admin/finance/settlements', queryParameters: params);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'settlements': [], 'total_count': 0};
+    }
+  }
+
+  Future<Map<String, dynamic>> getSettlementStats() async {
+    try {
+      final response = await _api.get('/api/v1/admin/finance/settlements/stats');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'total_settlements': 0, 'pending_count': 0, 'paid_count': 0, 'total_payable': 0.0, 'total_paid': 0.0};
+    }
+  }
+
+  Future<bool> approveSettlement(int id) async {
+    try {
+      await _api.put('/api/v1/admin/finance/settlements/$id/approve');
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // ─── INVOICES ───────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getInvoices({int skip = 0, int limit = 50, String? search}) async {
+    try {
+      final params = <String, dynamic>{'skip': skip, 'limit': limit};
+      if (search != null && search.isNotEmpty) params['search'] = search;
+      final response = await _api.get('/api/v1/admin/finance/invoices', queryParameters: params);
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'invoices': [], 'total_count': 0};
+    }
+  }
+
+  Future<Map<String, dynamic>> getInvoiceStats() async {
+    try {
+      final response = await _api.get('/api/v1/admin/finance/invoices/stats');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {'total_invoices': 0, 'total_amount': 0.0, 'total_tax_collected': 0.0};
+    }
+  }
+
+  // ─── PROFIT ANALYSIS ──────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getProfitAnalysis() async {
+    try {
+      final response = await _api.get('/api/v1/admin/finance/profit/analysis');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      return {
+        'total_revenue': 0.0, 'total_commissions': 0.0, 'total_refunds': 0.0,
+        'gross_profit': 0.0, 'net_profit': 0.0, 'profit_margin': 0.0,
+        'monthly_trend': [], 'revenue_by_type': [],
+      };
+    }
   }
 }

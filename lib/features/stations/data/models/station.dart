@@ -1,3 +1,37 @@
+import 'dart:convert';
+
+class StationCamera {
+  final int id;
+  final String name;
+  final String streamUrl;
+  final bool isActive;
+
+  const StationCamera({
+    required this.id,
+    required this.name,
+    required this.streamUrl,
+    required this.isActive,
+  });
+
+  factory StationCamera.fromJson(Map<String, dynamic> json) {
+    return StationCamera(
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? 'Camera',
+      streamUrl: json['stream_url'] as String? ?? '',
+      isActive: json['is_active'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'stream_url': streamUrl,
+      'is_active': isActive,
+    };
+  }
+}
+
 class Station {
   final int id;
   final String name;
@@ -14,13 +48,14 @@ class Station {
   final double rating;
   final int totalReviews;
   final String? contactPhone;
+  final String? contactEmail;
+  final int? capacity;
   final String? openingHours;
   final bool is24x7;
   final String? imageUrl;
   final DateTime? lastHeartbeat;
   final DateTime createdAt;
   final List<StationCamera> cameras;
-  final int? capacity; // Added for backward compatibility with form
 
   const Station({
     required this.id,
@@ -38,47 +73,89 @@ class Station {
     this.rating = 0.0,
     this.totalReviews = 0,
     this.contactPhone,
+    this.contactEmail,
+    this.capacity,
     this.openingHours,
     this.is24x7 = false,
     this.imageUrl,
     this.lastHeartbeat,
     required this.createdAt,
     this.cameras = const [],
-    this.capacity,
   });
 
-  // Alias for backward compatibility
+  // Aliases for compatibility
   int get emptySlots => availableSlots;
   DateTime get lastPing => lastHeartbeat ?? createdAt;
 
   factory Station.fromJson(Map<String, dynamic> json) {
+    // Handle both direct admin API and common API responses
     return Station(
-      id: json['id'] as int,
-      name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'],
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] ?? 'OPERATIONAL',
-      stationType: json['station_type'] ?? 'automated',
-      totalSlots: json['total_slots'] ?? 0,
-      availableBatteries: json['available_batteries'] ?? 0,
-      availableSlots: json['available_slots'] ?? json['empty_slots'] ?? 0,
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      address: json['address'] as String? ?? '',
+      city: json['city'] as String?,
+      latitude: (json['latitude'] as num? ?? 0.0).toDouble(),
+      longitude: (json['longitude'] as num? ?? 0.0).toDouble(),
+      status: json['status'] as String? ?? 'OPERATIONAL',
+      stationType: json['station_type'] as String? ?? 'automated',
+      totalSlots: json['total_slots'] as int? ?? 0,
+      availableBatteries: json['available_batteries'] as int? ?? 0,
+      availableSlots: json['available_slots'] as int? ?? json['empty_slots'] as int? ?? 0,
       powerRatingKw: (json['power_rating_kw'] as num?)?.toDouble(),
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      totalReviews: json['total_reviews'] ?? 0,
-      contactPhone: json['contact_phone'],
-      openingHours: json['operating_hours'] ?? json['opening_hours'],
-      is24x7: json['is_24x7'] ?? false,
-      imageUrl: json['image_url'],
-      lastHeartbeat: json['last_heartbeat'] != null ? DateTime.parse(json['last_heartbeat']) : null,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-      cameras: (json['cameras'] as List?)
-              ?.map((c) => StationCamera.fromJson(Map<String, dynamic>.from(c)))
-              .toList() ??
-          [],
-      capacity: json['capacity'] ?? json['total_slots'],
+      totalReviews: json['total_reviews'] as int? ?? 0,
+      contactPhone: json['contact_phone'] as String?,
+      contactEmail: json['contact_email'] as String?,
+      capacity: json['capacity'] as int? ?? json['total_slots'] as int?,
+      openingHours: json['opening_hours'] != null
+          ? (json['opening_hours'] is String
+              ? json['opening_hours'] as String
+              : jsonEncode(json['opening_hours']))
+          : (json['operating_hours'] != null
+              ? (json['operating_hours'] is String
+                  ? json['operating_hours'] as String
+                  : jsonEncode(json['operating_hours']))
+              : null),
+      is24x7: json['is_24x7'] as bool? ?? false,
+      imageUrl: json['image_url'] as String?,
+      lastHeartbeat: json['last_heartbeat'] != null 
+          ? DateTime.tryParse(json['last_heartbeat'].toString()) 
+          : (json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null),
+      createdAt: json['created_at'] != null 
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      cameras: json['cameras'] != null
+          ? (json['cameras'] as List).map((c) => StationCamera.fromJson(c as Map<String, dynamic>)).toList()
+          : [],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'address': address,
+      'city': city,
+      'latitude': latitude,
+      'longitude': longitude,
+      'status': status,
+      'station_type': stationType,
+      'total_slots': totalSlots,
+      'available_batteries': availableBatteries,
+      'available_slots': availableSlots,
+      'power_rating_kw': powerRatingKw,
+      'rating': rating,
+      'total_reviews': totalReviews,
+      'contact_phone': contactPhone,
+      'contact_email': contactEmail,
+      'capacity': capacity,
+      'opening_hours': openingHours,
+      'is_24x7': is24x7,
+      'image_url': imageUrl,
+      'last_heartbeat': lastHeartbeat?.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+      'cameras': cameras.map((c) => c.toJson()).toList(),
+    };
   }
 
   Station copyWith({
@@ -97,13 +174,14 @@ class Station {
     double? rating,
     int? totalReviews,
     String? contactPhone,
+    String? contactEmail,
+    int? capacity,
     String? openingHours,
     bool? is24x7,
     String? imageUrl,
     DateTime? lastHeartbeat,
     DateTime? createdAt,
     List<StationCamera>? cameras,
-    int? capacity,
   }) {
     return Station(
       id: id ?? this.id,
@@ -121,13 +199,14 @@ class Station {
       rating: rating ?? this.rating,
       totalReviews: totalReviews ?? this.totalReviews,
       contactPhone: contactPhone ?? this.contactPhone,
+      contactEmail: contactEmail ?? this.contactEmail,
+      capacity: capacity ?? this.capacity,
       openingHours: openingHours ?? this.openingHours,
       is24x7: is24x7 ?? this.is24x7,
       imageUrl: imageUrl ?? this.imageUrl,
       lastHeartbeat: lastHeartbeat ?? this.lastHeartbeat,
       createdAt: createdAt ?? this.createdAt,
       cameras: cameras ?? this.cameras,
-      capacity: capacity ?? this.capacity,
     );
   }
 
@@ -183,29 +262,6 @@ class StationPerformanceSummary {
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       totalReviews: json['total_reviews'] ?? 0,
       powerRatingKw: (json['power_rating_kw'] as num?)?.toDouble(),
-    );
-  }
-}
-
-class StationCamera {
-  final String id;
-  final String name;
-  final String streamUrl;
-  final String status;
-
-  const StationCamera({
-    required this.id,
-    required this.name,
-    required this.streamUrl,
-    this.status = 'active',
-  });
-
-  factory StationCamera.fromJson(Map<String, dynamic> json) {
-    return StationCamera(
-      id: json['id']?.toString() ?? '',
-      name: json['name'] ?? 'Camera',
-      streamUrl: json['stream_url'] ?? '',
-      status: json['status'] ?? 'active',
     );
   }
 }

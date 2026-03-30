@@ -41,38 +41,44 @@ class Battery {
 
   factory Battery.fromJson(Map<String, dynamic> json) {
     return Battery(
-      id: json['id'] as String,
-      serialNumber: json['serial_number'] as String,
-      batteryType: json['battery_type'],
-      status: json['status'] ?? 'unknown',
-      healthPercentage: (json['health_percentage'] as num?)?.toDouble() ?? 100.0,
-      locationType: json['location_type'] ?? 'warehouse',
-      locationName: json['location_name'] ?? json['station']?['name'] ?? 'Warehouse',
-      cycleCount: json['cycle_count'] ?? 0,
-      totalCycles: json['total_cycles'] ?? 0,
+      id: json['id'].toString(),
+      serialNumber: (json['serial_number'] ?? '').toString(),
+      batteryType: json['battery_type']?.toString(),
+      status: (json['status'] ?? 'unknown').toString(),
+      healthPercentage: (json['health_percentage'] is num)
+          ? (json['health_percentage'] as num).toDouble()
+          : double.tryParse(json['health_percentage']?.toString() ?? '') ?? 100.0,
+      locationType: (json['location_type'] ?? 'warehouse').toString(),
+      locationName: (json['location_name'] ?? json['station']?['name'] ?? 'Warehouse').toString(),
+      cycleCount: (json['cycle_count'] is num)
+          ? (json['cycle_count'] as num).toInt()
+          : int.tryParse(json['cycle_count']?.toString() ?? '') ?? 0,
+      totalCycles: (json['total_cycles'] is num)
+          ? (json['total_cycles'] as num).toInt()
+          : int.tryParse(json['total_cycles']?.toString() ?? '') ?? 0,
       updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
+          ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      manufacturer: json['manufacturer'],
+      manufacturer: json['manufacturer']?.toString(),
       manufactureDate: json['manufacture_date'] != null
-          ? DateTime.parse(json['manufacture_date'])
+          ? DateTime.tryParse(json['manufacture_date'].toString())
           : null,
       purchaseDate: json['purchase_date'] != null
-          ? DateTime.parse(json['purchase_date'])
+          ? DateTime.tryParse(json['purchase_date'].toString())
           : null,
       warrantyExpiry: json['warranty_expiry'] != null
-          ? DateTime.parse(json['warranty_expiry'])
+          ? DateTime.tryParse(json['warranty_expiry'].toString())
           : null,
       lastChargedAt: json['last_charged_at'] != null
-          ? DateTime.parse(json['last_charged_at'])
+          ? DateTime.tryParse(json['last_charged_at'].toString())
           : null,
       lastInspectedAt: json['last_inspected_at'] != null
-          ? DateTime.parse(json['last_inspected_at'])
+          ? DateTime.tryParse(json['last_inspected_at'].toString())
           : null,
-      notes: json['notes'],
+      notes: json['notes']?.toString(),
     );
   }
 }
@@ -100,13 +106,13 @@ class BatteryAuditLog {
 
   factory BatteryAuditLog.fromJson(Map<String, dynamic> json) {
     return BatteryAuditLog(
-      id: json['id'],
-      batteryId: json['battery_id'] as String,
-      fieldChanged: json['field_changed'],
-      oldValue: json['old_value'],
-      newValue: json['new_value'],
-      reason: json['reason'],
-      timestamp: DateTime.parse(json['timestamp']),
+      id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      batteryId: json['battery_id'].toString(),
+      fieldChanged: (json['field_changed'] ?? '').toString(),
+      oldValue: json['old_value']?.toString(),
+      newValue: json['new_value']?.toString(),
+      reason: json['reason']?.toString(),
+      timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ?? DateTime.now(),
       changedBy: json['changed_by']?.toString(),
     );
   }
@@ -127,10 +133,12 @@ class BatteryHealthHistory {
 
   factory BatteryHealthHistory.fromJson(Map<String, dynamic> json) {
     return BatteryHealthHistory(
-      id: json['id'],
-      batteryId: json['battery_id'] as String,
-      healthPercentage: (json['health_percentage'] as num).toDouble(),
-      recordedAt: DateTime.parse(json['recorded_at']),
+      id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      batteryId: json['battery_id'].toString(),
+      healthPercentage: (json['health_percentage'] is num)
+          ? (json['health_percentage'] as num).toDouble()
+          : double.tryParse(json['health_percentage']?.toString() ?? '') ?? 0.0,
+      recordedAt: DateTime.tryParse(json['recorded_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }

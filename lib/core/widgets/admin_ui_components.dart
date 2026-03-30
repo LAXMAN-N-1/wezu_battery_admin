@@ -447,21 +447,25 @@ class PageHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-              ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.white54),
-              ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.1),
-            ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
+                ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(fontSize: 14, color: Colors.white54),
+                  overflow: TextOverflow.ellipsis,
+                ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.1),
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 16),
           if (searchField != null) ...[
             SizedBox(width: 250, child: searchField),
             const SizedBox(width: 16),
@@ -478,11 +482,13 @@ class PageHeader extends StatelessWidget {
 class AdvancedTable extends StatelessWidget {
   final List<String> columns;
   final List<List<Widget>> rows;
+  final Function(int)? onRowTap;
 
   const AdvancedTable({
     super.key,
     required this.columns,
     required this.rows,
+    this.onRowTap,
   });
 
   @override
@@ -533,7 +539,7 @@ class AdvancedTable extends StatelessWidget {
             ...rows.asMap().entries.map((entry) {
               final idx = entry.key;
               final rowWidgets = entry.value;
-              return Container(
+              final rowContent = Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   border: idx < rows.length - 1
@@ -548,7 +554,17 @@ class AdvancedTable extends StatelessWidget {
                      );
                   }).toList(),
                 ),
-              ).animate().fadeIn(duration: 300.ms, delay: (idx * 50).ms).slideX(begin: 0.05);
+              );
+              
+              final widget = onRowTap != null
+                  ? InkWell(
+                      onTap: () => onRowTap!(idx),
+                      hoverColor: Colors.white.withOpacity(0.03),
+                      child: rowContent,
+                    )
+                  : rowContent;
+              
+              return widget.animate().fadeIn(duration: 300.ms, delay: (idx * 50).ms).slideX(begin: 0.05);
             }),
           ],
         );

@@ -147,8 +147,21 @@ class _KycDashboardViewState extends State<KycDashboardView> {
                               return List.generate(recentDates.length, (i) {
                                 final date = recentDates[i];
                                 final count = (trend[date] as num?) ?? 0;
+                                final barColor = _getChartColor(i);
                                 return BarChartGroupData(x: i, barRods: [
-                                  BarChartRodData(toY: count.toDouble(), color: Colors.blue, width: 20, borderRadius: const BorderRadius.vertical(top: Radius.circular(6))),
+                                  BarChartRodData(
+                                    toY: count.toDouble(),
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        barColor,
+                                        barColor.withValues(alpha: 0.7),
+                                      ],
+                                    ),
+                                    width: 20,
+                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                                  ),
                                 ]);
                               });
                             }(),
@@ -228,6 +241,18 @@ class _KycDashboardViewState extends State<KycDashboardView> {
         ),
       ),
     );
+  }
+
+  Color _getChartColor(int index) {
+    final palette = [
+      Colors.blue,
+      Colors.purple,
+      Colors.orange,
+      Colors.green,
+      Colors.cyan,
+      Colors.pink,
+    ];
+    return palette[index % palette.length];
   }
 
   Widget _buildLegend(String label, Color color) {

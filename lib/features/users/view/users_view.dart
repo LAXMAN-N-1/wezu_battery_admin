@@ -8,7 +8,6 @@ import 'dialogs/create_user_dialog.dart';
 import 'dialogs/edit_user_dialog.dart';
 import 'dialogs/invite_users_dialog.dart';
 import 'dialogs/suspend_user_dialog.dart';
-import 'dialogs/suspension_dialog.dart';
 
 class UsersView extends ConsumerStatefulWidget {
   const UsersView({super.key});

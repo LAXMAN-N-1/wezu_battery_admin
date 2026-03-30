@@ -8,6 +8,10 @@ class Rental {
   final double totalAmount;
   final String status;
   final double? batteryLevel;
+  final int? pickupStationId;
+  final String? battery;
+  final int? startStationId;
+  final double securityDeposit;
 
   const Rental({
     required this.id,
@@ -19,12 +23,11 @@ class Rental {
     required this.totalAmount,
     required this.status,
     this.batteryLevel,
-    this.pickupStationId, // Added for filtering in grids
-    this.battery, // Added for display in grids
+    this.pickupStationId,
+    this.battery,
+    this.startStationId,
+    this.securityDeposit = 0.0,
   });
-
-  final int? pickupStationId;
-  final String? battery;
 
   factory Rental.fromJson(Map<String, dynamic> json) {
     return Rental(
@@ -37,6 +40,9 @@ class Rental {
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? 'active',
       batteryLevel: (json['battery_level'] as num?)?.toDouble(),
+      pickupStationId: json['pickup_station_id'],
+      startStationId: json['start_station_id'] ?? json['pickup_station_id'],
+      securityDeposit: (json['security_deposit'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

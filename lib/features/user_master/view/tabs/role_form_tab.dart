@@ -1,25 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class RoleFormTab extends StatefulWidget {
+import '../../data/providers/user_master_providers.dart';
+
+class RoleFormTab extends ConsumerStatefulWidget {
   final VoidCallback onCancel;
 
   const RoleFormTab({super.key, required this.onCancel});
 
   @override
-  State<RoleFormTab> createState() => _RoleFormTabState();
+  ConsumerState<RoleFormTab> createState() => _RoleFormTabState();
 }
 
-class _RoleFormTabState extends State<RoleFormTab> {
+class _RoleFormTabState extends ConsumerState<RoleFormTab> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
+  bool _isSaving = false;
 
+  // Module permissions: module name -> access level string
   Map<String, String> permissions = {
     'Dashboard': 'View Only',
     'User Management': 'No Access',
     'Fleet & Inventory': 'No Access',
     'Stations': 'No Access',
+    'Dealers': 'No Access',
     'Finance': 'No Access',
+    'Rentals & Orders': 'No Access',
+    'IoT & Telematics': 'No Access',
+    'Reports & Analytics': 'No Access',
+    'System Settings': 'No Access',
   };
 
   @override
@@ -27,6 +37,59 @@ class _RoleFormTabState extends State<RoleFormTab> {
     _nameController.dispose();
     _descController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveRole() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Role name is required'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final repo = ref.read(userMasterRepositoryProvider);
+
+      // Convert display name to snake_case for DB
+      final dbName = name.toLowerCase().replaceAll(' ', '_');
+
+      await repo.createRole({
+        'name': dbName,
+        'description': _descController.text.trim(),
+        'category': 'system',
+        'level': 0,
+        'is_system_role': false,
+        'is_active': true,
+        'permissions': [], // Will be assigned separately via permission matrix
+      });
+
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Role "$name" created successfully!'), backgroundColor: Colors.green),
+        );
+        // Refresh roles list
+        ref.invalidate(rolesProvider);
+        // Clear form
+        _nameController.clear();
+        _descController.clear();
+        setState(() {
+          permissions.updateAll((key, value) => 'No Access');
+        });
+        // Switch back to roles list
+        widget.onCancel();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create role: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -51,10 +114,13 @@ class _RoleFormTabState extends State<RoleFormTab> {
                   children: [
                     TextButton(onPressed: widget.onCancel, child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
                     const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: widget.onCancel, 
+                    ElevatedButton.icon(
+                      onPressed: _isSaving ? null : _saveRole,
+                      icon: _isSaving
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.save_rounded, size: 18, color: Colors.white),
+                      label: Text(_isSaving ? 'Saving...' : 'Save Role', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                      child: const Text('Save Role', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -81,6 +147,11 @@ class _RoleFormTabState extends State<RoleFormTab> {
                         style: const TextStyle(color: Colors.white),
                         decoration: _inputDeco('e.g. Regional Support Agent'),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'DB name: ${_nameController.text.trim().toLowerCase().replaceAll(' ', '_')}',
+                        style: const TextStyle(color: Colors.white24, fontSize: 11, fontFamily: 'monospace'),
+                      ),
                       const SizedBox(height: 20),
                       const Text('Description', style: TextStyle(color: Colors.white70, fontSize: 13)),
                       const SizedBox(height: 8),
@@ -89,6 +160,7 @@ class _RoleFormTabState extends State<RoleFormTab> {
                         maxLines: 4,
                         style: const TextStyle(color: Colors.white),
                         decoration: _inputDeco('What does this role do?'),
+                        onChanged: (_) => setState(() {}),
                       ),
                     ],
                   ),
@@ -118,12 +190,26 @@ class _RoleFormTabState extends State<RoleFormTab> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(module, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            _getModuleIcon(module),
+                                            size: 18,
+                                            color: _getAccessColor(permissions[module]!),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(module, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+                                        ],
+                                      ),
                                       DropdownButtonHideUnderline(
                                         child: DropdownButton<String>(
                                           value: permissions[module],
                                           dropdownColor: const Color(0xFF1E293B),
-                                          style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.w600, fontSize: 13),
+                                          style: TextStyle(
+                                            color: _getAccessColor(permissions[module]!),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13,
+                                          ),
                                           items: ['Full Access', 'View Only', 'Limited', 'No Access'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                                           onChanged: (val) {
                                             setState(() => permissions[module] = val!);
@@ -148,6 +234,31 @@ class _RoleFormTabState extends State<RoleFormTab> {
         ),
       ),
     );
+  }
+
+  Color _getAccessColor(String access) {
+    switch (access) {
+      case 'Full Access': return Colors.greenAccent;
+      case 'View Only': return Colors.blueAccent;
+      case 'Limited': return Colors.orangeAccent;
+      default: return Colors.grey;
+    }
+  }
+
+  IconData _getModuleIcon(String module) {
+    switch (module) {
+      case 'Dashboard': return Icons.dashboard_outlined;
+      case 'User Management': return Icons.people_outline;
+      case 'Fleet & Inventory': return Icons.inventory_2_outlined;
+      case 'Stations': return Icons.location_on_outlined;
+      case 'Dealers': return Icons.storefront_outlined;
+      case 'Finance': return Icons.attach_money;
+      case 'Rentals & Orders': return Icons.receipt_long_outlined;
+      case 'IoT & Telematics': return Icons.sensors_outlined;
+      case 'Reports & Analytics': return Icons.analytics_outlined;
+      case 'System Settings': return Icons.settings_outlined;
+      default: return Icons.extension_outlined;
+    }
   }
 
   InputDecoration _inputDeco(String hint) {

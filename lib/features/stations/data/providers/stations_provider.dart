@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/station.dart';
 import '../repositories/station_repository.dart';
+import '../../../inventory/data/repositories/stock_repository.dart';
 import 'station_status_provider.dart';
 
 part 'stations_provider.g.dart';
@@ -12,7 +13,7 @@ part 'stations_provider.g.dart';
 @riverpod
 StationRepository stationRepository(Ref ref) {
   final apiClient = ref.read(apiClientProvider);
-  return StationRepository.withClient(apiClient);
+  return StationRepository(apiClient);
 }
 
 @riverpod
@@ -42,7 +43,29 @@ class Stations extends _$Stations {
 
   Future<List<Station>> _fetchStations() async {
     final repo = ref.read(stationRepositoryProvider);
-    return await repo.getStations();
+    final stockRepo = ref.read(stockRepositoryProvider);
+    
+    final stations = await repo.getStations();
+    
+    try {
+      // Fetch concurrent stock data for real battery counts
+      final stockData = await stockRepo.getStations();
+      final stockMap = {for (var s in stockData) s.stationId: s};
+      
+      return stations.map((s) {
+        final stock = stockMap[s.id];
+        if (stock != null) {
+          return s.copyWith(
+            availableBatteries: stock.availableCount,
+            totalSlots: stock.totalAssigned, // Sync slot count from stock if available
+          );
+        }
+        return s;
+      }).toList();
+    } catch (e) {
+      // If stock data fails, return stations with original (possibly mock) counts
+      return stations;
+    }
   }
 
   Future<void> addStation(Station station) async {

@@ -69,16 +69,17 @@ class StationHours {
     return json.encode(data);
   }
 
-  StationStatus getStatus() {
+  StationStatus getStatus({bool is24x7 = false}) {
+    if (is24x7) return StationStatus.open;
     final now = DateTime.now();
-    final dayName = DateFormat('EEEE').format(now).toLowerCase();
+    final dayName = DateFormat('EEEE', 'en_US').format(now).toLowerCase();
     final daySchedule = schedule[dayName];
 
     if (daySchedule == null || !daySchedule.isOpen) {
       return StationStatus.closed;
     }
 
-    final nowTime = DateFormat('HH:mm').format(now);
+    final nowTime = DateFormat('HH:mm', 'en_US').format(now);
     
     // Simple string comparison for HH:mm is sufficient
     if (nowTime.compareTo(daySchedule.open) < 0 || nowTime.compareTo(daySchedule.close) >= 0) {
@@ -94,6 +95,18 @@ class StationHours {
     }
 
     return StationStatus.open;
+  }
+
+  bool isOpen(DateTime time, {bool is24x7 = false}) {
+    if (is24x7) return true;
+    final dayName = DateFormat('EEEE', 'en_US').format(time).toLowerCase();
+    final daySchedule = schedule[dayName];
+    if (daySchedule == null || !daySchedule.isOpen) return false;
+
+    final timeStr = DateFormat('HH:mm', 'en_US').format(time);
+    // Standard string comparison works for HH:mm format
+    return timeStr.compareTo(daySchedule.open) >= 0 &&
+        timeStr.compareTo(daySchedule.close) < 0;
   }
 }
 

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/widgets/placeholder_screen.dart';
 import '../data/models/station.dart';
 import '../data/models/station_specs.dart';
-import '../data/repositories/station_repository.dart';
+import '../data/providers/stations_provider.dart';
+import '../../../core/widgets/placeholder_screen.dart';
 
 final stationSpecsProvider = FutureProvider.family<StationSpecs, int>((
   ref,
@@ -73,14 +73,14 @@ class StationSpecsView extends ConsumerWidget {
                       '${specs.minTempC.toStringAsFixed(0)}°C to ${specs.maxTempC.toStringAsFixed(0)}°C',
                 ),
                 const SizedBox(height: 16),
-                const SizedBox(
+                SizedBox(
                   height: 280,
                   child: PlaceholderScreen(
                     title: 'Detailed specification editor',
                     icon: Icons.settings_outlined,
                     description:
                         'Detailed station-spec editing remains disabled until the merged station CRUD flows are fully restored.',
-                    accentColor: Color(0xFF3B82F6),
+                    accentColor: const Color(0xFF3B82F6),
                   ),
                 ),
               ],
@@ -90,15 +90,15 @@ class StationSpecsView extends ConsumerWidget {
             padding: EdgeInsets.all(48),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (_, __) => const Padding(
-            padding: EdgeInsets.all(32),
+          error: (_, __) => Padding(
+            padding: const EdgeInsets.all(32),
             child: SizedBox(
               height: 240,
               child: PlaceholderScreen(
                 title: 'Station specs unavailable',
                 icon: Icons.error_outline,
                 description: 'Specs data could not be loaded for this station.',
-                accentColor: Color(0xFFEF4444),
+                accentColor: const Color(0xFFEF4444),
               ),
             ),
           ),

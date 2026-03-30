@@ -29,7 +29,7 @@ class KpiMetric {
             .toList() ??
         [];
     return KpiMetric(
-      label: json['label'] ?? json['name'] ?? '',
+      label: (json['label'] ?? json['name'] ?? '').toString(),
       value: json['value'] ?? 0,
       changePercent: change,
       isPositive: change >= 0,
@@ -185,7 +185,7 @@ class FunnelStage {
 
   factory FunnelStage.fromJson(Map<String, dynamic> json) {
     return FunnelStage(
-      name: json['stage'] ?? json['name'] ?? '',
+      name: (json['stage'] ?? json['name'] ?? '').toString(),
       count: (json['count'] ?? json['value'] ?? 0).toInt(),
       conversionRate: (json['conversion_rate'] ?? json['conversionRate'] ?? 0)
           .toDouble(),
@@ -225,7 +225,7 @@ class HealthBucket {
 
   factory HealthBucket.fromJson(Map<String, dynamic> json) {
     return HealthBucket(
-      category: json['category'] ?? json['range'] ?? json['label'] ?? '',
+      category: (json['category'] ?? json['range'] ?? json['label'] ?? '').toString(),
       count: (json['count'] ?? json['value'] ?? 0).toInt(),
       percentage: (json['percentage'] ?? json['percent'] ?? 0).toDouble(),
     );
@@ -275,7 +275,7 @@ class SessionBucket {
   const SessionBucket({required this.range, required this.count});
 
   factory SessionBucket.fromJson(Map<String, dynamic> json) => SessionBucket(
-        range: json['range'] ?? json['label'] ?? '',
+        range: (json['range'] ?? json['label'] ?? '').toString(),
         count: (json['count'] ?? json['value'] ?? 0).toInt(),
       );
 }
@@ -343,7 +343,7 @@ class ForecastPoint {
 
   factory ForecastPoint.fromJson(Map<String, dynamic> json) {
     return ForecastPoint(
-      date: json['date'] ?? json['period'] ?? '',
+      date: (json['date'] ?? json['period'] ?? '').toString(),
       predicted: (json['predicted'] ?? json['forecast'] ?? 0).toDouble(),
       actual: json['actual'] != null
           ? (json['actual'] as num).toDouble()
@@ -382,7 +382,7 @@ class RegionRevenue {
 
   factory RegionRevenue.fromJson(Map<String, dynamic> json) {
     return RegionRevenue(
-      region: json['region'] ?? json['name'] ?? json['station'] ?? '',
+      region: (json['region'] ?? json['name'] ?? json['station'] ?? '').toString(),
       revenue: (json['revenue'] ?? json['amount'] ?? 0).toDouble(),
       rentalCount: (json['rental_count'] ?? json['rentals'] ?? 0).toInt(),
     );
@@ -425,7 +425,7 @@ class GrowthPoint {
     final returning = (json['returning_users'] ?? (total - newUsers)).toInt();
 
     return GrowthPoint(
-      period: json['period'] ?? json['date'] ?? json['month'] ?? '',
+      period: (json['period'] ?? json['date'] ?? json['month'] ?? '').toString(),
       totalUsers: total,
       newUsers: newUsers,
       returningUsers: returning < 0 ? 0 : returning,
@@ -469,7 +469,7 @@ class InventoryItem {
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
-      category: json['category'] ?? json['type'] ?? json['name'] ?? '',
+      category: (json['category'] ?? json['type'] ?? json['name'] ?? '').toString(),
       total: (json['total'] ?? 0).toInt(),
       available: (json['available'] ?? json['in_stock'] ?? 0).toInt(),
       rented: (json['rented'] ?? json['in_use'] ?? 0).toInt(),
@@ -525,7 +525,7 @@ class StationRevenue {
 
   factory StationRevenue.fromJson(Map<String, dynamic> json) {
     return StationRevenue(
-      stationName: json['station_name'] ?? json['name'] ?? '',
+      stationName: (json['station_name'] ?? json['name'] ?? '').toString(),
       revenue: (json['revenue'] ?? 0).toDouble(),
       rentalCount: (json['rental_count'] ?? json['rentals'] ?? 0).toInt(),
       percentage: (json['percentage'] ?? 0).toDouble(),
@@ -579,7 +579,7 @@ class BatteryTypeRevenue {
 
   factory BatteryTypeRevenue.fromJson(Map<String, dynamic> json) {
     return BatteryTypeRevenue(
-      type: json['type'] ?? json['category'] ?? '',
+      type: (json['type'] ?? json['category'] ?? '').toString(),
       revenue: (json['revenue'] ?? 0).toDouble(),
       percentage: (json['percentage'] ?? 0).toDouble(),
       rentalCount: (json['rental_count'] ?? 0).toInt(),
@@ -629,13 +629,13 @@ class RecentActivityItem {
 
   factory RecentActivityItem.fromJson(Map<String, dynamic> json) {
     return RecentActivityItem(
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      time: json['time'] ?? '',
-      type: json['type'] ?? 'user',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'user',
       details: (json['details'] is Map) ? json['details'] : const {},
-      entityId: json['entity_id'],
-      severity: json['severity'],
+      entityId: json['entity_id']?.toString(),
+      severity: json['severity']?.toString(),
     );
   }
 }
@@ -688,9 +688,9 @@ class TopStation {
 
   factory TopStation.fromJson(Map<String, dynamic> json) {
     return TopStation(
-      id: json['id'] ?? json['station_id'] ?? '',
-      name: json['name'] ?? '',
-      location: json['location'] ?? '',
+      id: (json['id'] ?? json['station_id'] ?? '').toString(),
+      name: json['name']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
       rentals: (json['rentals'] ?? 0).toInt(),
       revenue: (json['revenue'] ?? 0).toDouble(),
       utilization: (json['utilization'] ?? 0).toDouble(),

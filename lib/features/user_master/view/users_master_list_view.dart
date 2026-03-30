@@ -57,21 +57,19 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
 
   @override
   Widget build(BuildContext context) {
-    final queryParams = {
-      'search': _searchQuery,
-      'role': _roleFilter,
-      'status': _statusFilter,
-      'skip': _currentPage * _rowsPerPage,
-      'limit': _rowsPerPage,
-    };
+    // Use a stable string key to prevent Riverpod from re-creating the provider on every rebuild
+    final statusParam = _statusFilter == 'All' ? '' : _statusFilter.toLowerCase();
+    final roleParam = _roleFilter == 'All' ? '' : _roleFilter;
+    final queryKey = 'search=$_searchQuery&role=$roleParam&status=$statusParam&skip=${_currentPage * _rowsPerPage}&limit=$_rowsPerPage';
 
-    final usersAsync = ref.watch(usersProvider(queryParams));
+    final usersAsync = ref.watch(usersProviderByKey(queryKey));
     final summaryAsync = ref.watch(userSummaryProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: RefreshIndicator(
         onRefresh: () async {
+          ref.invalidate(usersProviderByKey);
           ref.invalidate(usersProvider);
           ref.invalidate(userSummaryProvider);
         },
@@ -431,7 +429,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
                 rows: users.map((user) {
                   return DataRow(
                     cells: [
-                      DataCell(Text(user.id.substring(0, 8).toUpperCase(), style: const TextStyle(color: Colors.white54, fontFamily: 'monospace'))),
+                      DataCell(Text(user.id.padRight(8).substring(0, 8).trim().toUpperCase(), style: const TextStyle(color: Colors.white54, fontFamily: 'monospace'))),
                       DataCell(
                         Row(
                           children: [
