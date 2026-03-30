@@ -19,8 +19,8 @@ class _SendPushViewState extends State<SendPushView> {
     setState(() => _isLoading = true);
     try {
       _campaigns = await _repo.getCampaigns();
-      setState(() => _isLoading = false);
-    } catch (e) { setState(() => _isLoading = false); }
+      if (mounted) setState(() => _isLoading = false);
+    } catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

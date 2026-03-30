@@ -16,8 +16,8 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _configs = await _repo.getConfigs(); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _configs = await _repo.getConfigs(); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

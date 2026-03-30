@@ -16,8 +16,8 @@ class _FaqManagementViewState extends State<FaqManagementView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _faqs = await _repo.getFaqs(category: _filterCategory); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _faqs = await _repo.getFaqs(category: _filterCategory); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

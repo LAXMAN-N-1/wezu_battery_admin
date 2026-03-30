@@ -15,8 +15,8 @@ class _BannerManagementViewState extends State<BannerManagementView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _banners = await _repo.getBanners(); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _banners = await _repo.getBanners(); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

@@ -17,8 +17,8 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _assets = await _repo.getMediaAssets(category: _filterCategory); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _assets = await _repo.getMediaAssets(category: _filterCategory); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

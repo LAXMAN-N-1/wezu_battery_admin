@@ -16,8 +16,8 @@ class _BlogManagementViewState extends State<BlogManagementView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _blogs = await _repo.getBlogs(status: _filterStatus); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _blogs = await _repo.getBlogs(status: _filterStatus); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

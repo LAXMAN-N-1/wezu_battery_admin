@@ -15,8 +15,8 @@ class _LegalDocsViewState extends State<LegalDocsView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _docs = await _repo.getLegalDocs(); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _docs = await _repo.getLegalDocs(); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override

@@ -24,8 +24,12 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
         _repo.getLogs(channel: _filterChannel, status: _filterStatus),
         _repo.getLogStats(),
       ]);
-      setState(() { _logs = results[0] as List<NotificationLog>; _stats = results[1] as Map<String, dynamic>; _isLoading = false; });
-    } catch (e) { setState(() => _isLoading = false); }
+      _logs = results[0] as List<NotificationLog>;
+      _stats = results[1] as Map<String, dynamic>;
+      if (mounted) setState(() => _isLoading = false);
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

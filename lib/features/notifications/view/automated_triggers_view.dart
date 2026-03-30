@@ -16,8 +16,8 @@ class _AutomatedTriggersViewState extends State<AutomatedTriggersView> {
   @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try { _triggers = await _repo.getTriggers(); setState(() => _isLoading = false); }
-    catch (e) { setState(() => _isLoading = false); }
+    try { _triggers = await _repo.getTriggers(); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override
