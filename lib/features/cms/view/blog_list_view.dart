@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/blog.dart';
 import '../data/repositories/blog_repository.dart';
 
-class BlogListView extends ConsumerStatefulWidget {
+class BlogListView extends StatefulWidget {
   const BlogListView({super.key});
 
   @override
-  ConsumerState<BlogListView> createState() => _BlogListViewState();
+  State<BlogListView> createState() => _BlogListViewState();
 }
 
-class _BlogListViewState extends ConsumerState<BlogListView> {
-  late final BlogRepository _repository;
+class _BlogListViewState extends State<BlogListView> {
+  final BlogRepository _repository = BlogRepository();
   List<Blog> _blogs = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -25,7 +22,6 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(blogRepositoryProvider);
     _loadData();
   }
 
@@ -65,22 +61,32 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PageHeader(
-            title: 'Blog Posts',
-            subtitle: 'Manage news, updates, and educational articles.',
-            actionButton: ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Navigate to create view
-              },
-              icon: const Icon(Icons.add, size: 20, color: Colors.white),
-              label: const Text('Create New Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                'Blog Posts',
+                style: GoogleFonts.outfit(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
+              
+              ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Navigate to create view
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Create New Post'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 32),
 
           // Filters
@@ -95,14 +101,10 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
                     hintStyle: const TextStyle(color: Colors.white38),
                     prefixIcon: const Icon(Icons.search, color: Colors.white38),
                     filled: true,
-                    fillColor: Colors.black.withValues(alpha: 0.2),
+                    fillColor: Colors.white.withValues(alpha: 0.05),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
@@ -128,7 +130,7 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
                 }),
               ),
             ],
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
+          ),
           const SizedBox(height: 24),
 
           _isLoading
@@ -146,7 +148,7 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
                       ),
                       itemCount: _filteredBlogs.length,
                       itemBuilder: (context, index) {
-                        return _buildBlogCard(_filteredBlogs[index]).animate().fadeIn(duration: 500.ms, delay: (200 + index * 50).ms).slideY(begin: 0.05);
+                        return _buildBlogCard(_filteredBlogs[index]);
                       },
                     ),
         ],
@@ -184,8 +186,10 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
   }
 
   Widget _buildBlogCard(Blog blog) {
-    return AdvancedCard(
-      padding: EdgeInsets.zero,
+    return Card(
+      color: Colors.white.withValues(alpha: 0.05),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           // TODO: Navigate to detail/edit view
@@ -211,7 +215,7 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
                     children: [
                       _buildBadge(blog.category, Colors.blue),
                       const SizedBox(width: 8),
-                      StatusBadge(status: blog.status),
+                      _buildBadge(blog.status, blog.status == 'published' ? Colors.green : Colors.orange),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -233,12 +237,12 @@ class _BlogListViewState extends ConsumerState<BlogListView> {
                     style: const TextStyle(color: Colors.white54, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Icon(Icons.visibility_outlined, color: Colors.white38, size: 14),
                       const SizedBox(width: 4),
                       Text('${blog.viewsCount}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                      const Spacer(),
+                      
                       Text(
                         DateFormat('MMM d, y').format(blog.createdAt),
                         style: const TextStyle(color: Colors.white38, fontSize: 12),

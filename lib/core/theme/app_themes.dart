@@ -14,48 +14,54 @@ class AppThemes {
   static ThemeData get dark => ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color(0xFF0F172A),
-    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+    scaffoldBackgroundColor: const Color(0xFF0D1117),
+    textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
+      displayLarge: GoogleFonts.inter(fontSize: 48, fontWeight: FontWeight.bold, fontFeatures: const [FontFeature.tabularFigures()]),
+      displayMedium: GoogleFonts.inter(fontSize: 36, fontWeight: FontWeight.bold, fontFeatures: const [FontFeature.tabularFigures()]),
+      titleLarge: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white),
+      titleMedium: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white),
+      labelMedium: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w400, color: const Color(0xFF94A3B8)),
+    ),
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFF3B82F6),
       onPrimary: Colors.white,
       secondary: Color(0xFF8B5CF6),
       onSecondary: Colors.white,
-      surface: Color(0xFF1E293B),
+      surface: Color(0xFF1A2332),
       onSurface: Colors.white,
       error: Color(0xFFEF4444),
       onError: Colors.white,
       outline: Color(0x14FFFFFF), // ~8% white
-      surfaceContainerHighest: Color(0xFF334155),
+      surfaceContainerHighest: Color(0xFF243044), // Hover bg
     ),
     cardTheme: CardThemeData(
-      color: const Color(0xFF1E293B),
+      color: const Color(0xFF1A2332), // Proper semantic card layer
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        side: const BorderSide(color: Color(0x14FFFFFF), width: 1),
       ),
     ),
     dividerColor: const Color(0x14FFFFFF),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1E293B),
+      backgroundColor: Color(0xFF1A2332),
       foregroundColor: Colors.white,
       elevation: 0,
     ),
     iconTheme: const IconThemeData(color: Colors.white54),
     extensions: const [
       AppColorsExtension(
-        cardBg: Color(0xFF1E293B),
-        scaffoldBg: Color(0xFF0F172A),
-        sidebarBg: Color(0xFF1E293B),
+        cardBg: Color(0xFF1A2332),
+        scaffoldBg: Color(0xFF0D1117),
+        sidebarBg: Color(0xFF1A2332),
         textPrimary: Colors.white,
         textSecondary: Colors.white54,
         textTertiary: Colors.white38,
         border: Color(0x14FFFFFF),
-        success: Color(0xFF22C55E),
-        warning: Color(0xFFF59E0B),
-        danger: Color(0xFFEF4444),
-        info: Color(0xFF06B6D4),
+        success: Color(0xFF22C55E), // Emerald Green
+        warning: Color(0xFFF59E0B), // Amber
+        danger: Color(0xFFEF4444),  // Critical Red
+        info: Color(0xFF06B6D4),    // Electric Blue
         accent: Color(0xFF3B82F6),
         secondary: Color(0xFF8B5CF6),
       ),
@@ -69,7 +75,7 @@ class AppThemes {
   static ThemeData get light => ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+    scaffoldBackgroundColor: Colors.white,
     textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
     colorScheme: const ColorScheme.light(
       primary: Color(0xFF3B82F6),
@@ -101,7 +107,7 @@ class AppThemes {
     extensions: const [
       AppColorsExtension(
         cardBg: Colors.white,
-        scaffoldBg: Color(0xFFF8FAFC),
+        scaffoldBg: Colors.white,
         sidebarBg: Color(0xFFF1F5F9),
         textPrimary: Color(0xFF1E293B),
         textSecondary: Color(0xFF64748B),

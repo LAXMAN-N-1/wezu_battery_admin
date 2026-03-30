@@ -9,7 +9,7 @@ class FleetOpsRepository {
 
   Future<IoTStats> getIoTStats() async {
     try {
-      final response = await _apiClient.get('/admin/iot/stats');
+      final response = await _apiClient.get('/api/v1/admin/iot/stats');
       return IoTStats.fromJson(response.data);
     } catch (e) {
       rethrow;
@@ -23,7 +23,7 @@ class FleetOpsRepository {
         'limit': limit,
         if (status != null) 'status': status,
       };
-      final response = await _apiClient.get('/admin/iot/devices', queryParameters: queryParams);
+      final response = await _apiClient.get('/api/v1/admin/iot/devices', queryParameters: queryParams);
       return (response.data as List).map((json) => IoTDevice.fromJson(json)).toList();
     } catch (e) {
       return [];
@@ -32,7 +32,7 @@ class FleetOpsRepository {
 
   Future<bool> sendCommand(int deviceId, String commandType, {String? payload}) async {
     try {
-      await _apiClient.post('/admin/iot/commands', queryParameters: {
+      await _apiClient.post('/api/v1/admin/iot/commands', queryParameters: {
         'device_id': deviceId,
         'command_type': commandType,
         if (payload != null) 'payload': payload,
@@ -49,7 +49,7 @@ class FleetOpsRepository {
         'limit': limit,
         if (deviceId != null) 'device_id': deviceId,
       };
-      final response = await _apiClient.get('/admin/iot/commands/history', queryParameters: queryParams);
+      final response = await _apiClient.get('/api/v1/admin/iot/commands/history', queryParameters: queryParams);
       return (response.data as List).map((json) => DeviceCommandLog.fromJson(json)).toList();
     } catch (e) {
       return [];
@@ -58,7 +58,7 @@ class FleetOpsRepository {
 
   Future<List<Geofence>> getGeofences() async {
     try {
-      final response = await _apiClient.get('/admin/iot/geofences');
+      final response = await _apiClient.get('/api/v1/admin/iot/geofences');
       return (response.data as List).map((json) => Geofence.fromJson(json)).toList();
     } catch (e) {
       return [];
@@ -67,7 +67,7 @@ class FleetOpsRepository {
 
   Future<bool> createGeofence(Geofence geofence) async {
     try {
-      await _apiClient.post('/admin/iot/geofences', data: geofence.toJson());
+      await _apiClient.post('/api/v1/admin/iot/geofences', data: geofence.toJson());
       return true;
     } catch (e) {
       return false;
@@ -80,7 +80,7 @@ class FleetOpsRepository {
         'active_only': activeOnly,
         if (severity != null) 'severity': severity,
       };
-      final response = await _apiClient.get('/admin/iot/alerts', queryParameters: queryParams);
+      final response = await _apiClient.get('/api/v1/admin/iot/alerts', queryParameters: queryParams);
       return (response.data as List).map((json) => FleetAlert.fromJson(json)).toList();
     } catch (e) {
       return [];
@@ -89,7 +89,7 @@ class FleetOpsRepository {
 
   Future<bool> acknowledgeAlert(int alertId) async {
     try {
-      await _apiClient.put('/admin/iot/alerts/$alertId/acknowledge');
+      await _apiClient.put('/api/v1/admin/iot/alerts/$alertId/acknowledge');
       return true;
     } catch (e) {
       return false;
@@ -98,7 +98,7 @@ class FleetOpsRepository {
 
   Future<List<TelemetryData>> getBatteryTelematics(int batteryId, {int hours = 24}) async {
     try {
-      final response = await _apiClient.get('/admin/iot/telematics/$batteryId', queryParameters: {'hours': hours});
+      final response = await _apiClient.get('/api/v1/admin/iot/telematics/$batteryId', queryParameters: {'hours': hours});
       return (response.data as List).map((json) => TelemetryData.fromJson(json)).toList();
     } catch (e) {
       return [];

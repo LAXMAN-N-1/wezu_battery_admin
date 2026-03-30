@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_client.dart';
 import '../data/analytics_repository.dart';
@@ -8,49 +9,23 @@ import '../data/dashboard_models.dart';
 // Repository provider
 // ─────────────────────────────────────────────
 
-final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
-  return AnalyticsRepository(ref.read(apiClientProvider));
-});
+final analyticsRepositoryProvider = Provider<AnalyticsRepository>(
+  (ref) => AnalyticsRepository(ref.read(apiClientProvider)),
+);
 
-// ─────────────────────────────────────────────
-// Auto-refresh mechanism (10-second ticker)
-// ─────────────────────────────────────────────
-
-/// Controls whether auto-refresh is paused.
-final refreshPausedProvider = StateProvider<bool>((ref) => false);
-
-/// Configurable refresh interval in seconds.
-final refreshIntervalProvider = StateProvider<int>((ref) => 10);
-
-/// A ticker that increments every [refreshIntervalProvider] seconds.
-/// All data providers depend on this to auto-refresh.
-final dashboardRefreshProvider = StreamProvider<int>((ref) async* {
-  final isPaused = ref.watch(refreshPausedProvider);
-  final intervalSec = ref.watch(refreshIntervalProvider);
-
-  if (isPaused) {
-    yield 0;
-    return;
-  }
-
-  int count = 0;
-  while (true) {
-    yield count++;
-    await Future.delayed(Duration(seconds: intervalSec));
-  }
-});
+// Manual refresh trigger; increment to refetch all dashboards.
+final dashboardRefreshTriggerProvider = StateProvider<int>((ref) => 0);
 
 /// Tracks the last time data was refreshed successfully.
 final lastRefreshTimeProvider = StateProvider<DateTime?>((ref) => null);
 
 // ─────────────────────────────────────────────
-// Data providers — each auto-refreshes via ticker
+// Data providers — manually refreshed via dashboardRefreshTriggerProvider
 // ─────────────────────────────────────────────
 
-final dashboardOverviewProvider = FutureProvider.autoDispose<DashboardOverview>(
+final dashboardOverviewProvider = FutureProvider<DashboardOverview>(
   (ref) async {
-    // Subscribe to refresh ticker for auto-refresh
-    ref.watch(dashboardRefreshProvider);
+    ref.watch(dashboardRefreshTriggerProvider);
     final repo = ref.read(analyticsRepositoryProvider);
     final data = await repo.getOverview();
     Future.microtask(() {
@@ -64,65 +39,65 @@ final dashboardOverviewProvider = FutureProvider.autoDispose<DashboardOverview>(
 
 final trendPeriodProvider = StateProvider<String>((ref) => 'daily');
 
-final trendDataProvider = FutureProvider.autoDispose<TrendData>((ref) async {
-  ref.watch(dashboardRefreshProvider);
+final trendDataProvider = FutureProvider<TrendData>((ref) async {
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(trendPeriodProvider);
   return repo.getTrends(period: period);
 });
 
-final conversionFunnelProvider = FutureProvider.autoDispose<ConversionFunnel>((
+final conversionFunnelProvider = FutureProvider<ConversionFunnel>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getConversionFunnel();
 });
 
 final batteryHealthProvider =
-    FutureProvider.autoDispose<BatteryHealthDistribution>((ref) async {
-      ref.watch(dashboardRefreshProvider);
+    FutureProvider<BatteryHealthDistribution>((ref) async {
+      ref.watch(dashboardRefreshTriggerProvider);
       final repo = ref.read(analyticsRepositoryProvider);
       return repo.getBatteryHealthDistribution();
     });
 
-final revenueByRegionProvider = FutureProvider.autoDispose<RevenueByRegion>((
+final revenueByRegionProvider = FutureProvider<RevenueByRegion>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getRevenueByRegion();
 });
 
 final userGrowthPeriodProvider = StateProvider<String>((ref) => 'monthly');
 
-final userGrowthProvider = FutureProvider.autoDispose<UserGrowth>((ref) async {
-  ref.watch(dashboardRefreshProvider);
+final userGrowthProvider = FutureProvider<UserGrowth>((ref) async {
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(userGrowthPeriodProvider);
   return repo.getUserGrowth(period: period);
 });
 
-final inventoryStatusProvider = FutureProvider.autoDispose<InventoryStatus>((
+final inventoryStatusProvider = FutureProvider<InventoryStatus>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getInventoryStatus();
 });
 
-final demandForecastProvider = FutureProvider.autoDispose<DemandForecast>((
+final demandForecastProvider = FutureProvider<DemandForecast>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getDemandForecast();
 });
 
-final userBehaviorProvider = FutureProvider.autoDispose<UserBehavior>((
+final userBehaviorProvider = FutureProvider<UserBehavior>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getUserBehavior();
 });
@@ -131,9 +106,9 @@ final analyticsPeriodProvider = StateProvider<String>((ref) => '30d');
 
 final stationSortProvider = StateProvider<String>((ref) => 'Revenue High-Low');
 
-final revenueByStationProvider = FutureProvider.autoDispose<StationRevenueData>(
+final revenueByStationProvider = FutureProvider<StationRevenueData>(
   (ref) async {
-    ref.watch(dashboardRefreshProvider);
+    ref.watch(dashboardRefreshTriggerProvider);
     final repo = ref.read(analyticsRepositoryProvider);
     final period = ref.watch(analyticsPeriodProvider);
     return repo.getRevenueByStation(period: period);
@@ -141,24 +116,56 @@ final revenueByStationProvider = FutureProvider.autoDispose<StationRevenueData>(
 );
 
 final revenueByBatteryTypeProvider =
-    FutureProvider.autoDispose<BatteryTypeRevenueData>((ref) async {
-      ref.watch(dashboardRefreshProvider);
+    FutureProvider<BatteryTypeRevenueData>((ref) async {
+      ref.watch(dashboardRefreshTriggerProvider);
       final repo = ref.read(analyticsRepositoryProvider);
       final period = ref.watch(analyticsPeriodProvider);
       return repo.getRevenueByBatteryType(period: period);
     });
-final recentActivityProvider = FutureProvider.autoDispose<RecentActivityData>((
+final activityFilterProvider = StateProvider<String>((ref) => 'all');
+
+final recentActivityProvider = FutureProvider<RecentActivityData>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
-  return repo.getRecentActivity();
+  final type = ref.watch(activityFilterProvider);
+  return repo.getRecentActivity(type: type == 'all' ? null : type);
 });
 
-final topStationsProvider = FutureProvider.autoDispose<TopStationsData>((
+final topStationsProvider = FutureProvider<TopStationsData>((
   ref,
 ) async {
-  ref.watch(dashboardRefreshProvider);
+  ref.watch(dashboardRefreshTriggerProvider);
   final repo = ref.read(analyticsRepositoryProvider);
   return repo.getTopPerformingStations();
+});
+
+class TrendMetric {
+  final String label;
+  final String key;
+  final Color color;
+  final bool isStatic;
+  final bool canDelete;
+
+  const TrendMetric({
+    required this.label,
+    required this.key,
+    required this.color,
+    this.isStatic = false,
+    this.canDelete = false,
+  });
+}
+
+final trendAvailableMetricsProvider = StateProvider<List<TrendMetric>>((ref) {
+  return [
+    const TrendMetric(label: 'Revenue', key: 'revenue', color: Color(0xFF06B6D4)),
+    const TrendMetric(label: 'Rentals', key: 'rentals', color: Color(0xFFF472B6)),
+    const TrendMetric(label: 'Users', key: 'users', color: Colors.purpleAccent),
+    const TrendMetric(label: 'Battery Health', key: 'batteryHealth', color: Color(0xFF10B981), isStatic: true),
+  ];
+});
+
+final trendActiveMetricsProvider = StateProvider<Set<String>>((ref) => {
+  'revenue', 'rentals', 'users', 'batteryHealth'
 });

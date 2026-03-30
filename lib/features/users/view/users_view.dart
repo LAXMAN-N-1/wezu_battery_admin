@@ -1,920 +1,543 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/user.dart';
-import '../data/repositories/user_repository.dart';
+import '../provider/user_provider.dart';
+import 'dialogs/create_user_dialog.dart';
+import 'dialogs/edit_user_dialog.dart';
+import 'dialogs/invite_users_dialog.dart';
+import 'dialogs/suspend_user_dialog.dart';
+import 'dialogs/suspension_dialog.dart';
 
-class UsersView extends StatefulWidget {
+class UsersView extends ConsumerStatefulWidget {
   const UsersView({super.key});
-
   @override
-  State<UsersView> createState() => _UsersViewState();
+  ConsumerState<UsersView> createState() => _UsersViewState();
 }
 
-class _UsersViewState extends State<UsersView> {
-  final UserRepository _repository = UserRepository();
-  List<User> _users = [];
-  bool _isLoading = true;
-  String _searchQuery = '';
-  String? _filterRole;
-  String? _filterStatus;
-  int _totalCount = 0;
-  Map<String, dynamic> _stats = {};
-
+class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
+  void initState() { super.initState(); _tabController = TabController(length: 3, vsync: this); }
+  @override
+  void dispose() { _tabController.dispose(); super.dispose(); }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try {
-      final results = await Future.wait([
-        _repository.getUsers(
-          search: _searchQuery.isNotEmpty ? _searchQuery : null,
-          userType: _filterRole,
-          status: _filterStatus,
-        ),
-        _repository.getUserStats(),
-      ]);
+  bool _isMobile(BuildContext ctx) => MediaQuery.of(ctx).size.width < 800;
 
-      final usersData = results[0] as Map<String, dynamic>;
-      final statsData = results[1] as Map<String, dynamic>;
-
-      setState(() {
-        _users = usersData['users'] as List<User>;
-        _totalCount = usersData['total_count'] as int;
-        _stats = statsData;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
-
-<<<<<<< HEAD
-  List<User> get _filteredUsers {
-    return _users.where((user) {
-      final matchesSearch =
-          user.fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          user.email.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          user.phoneNumber.contains(_searchQuery);
-      final matchesRole = _filterRole == null || user.role == _filterRole;
-      return matchesSearch && matchesRole;
-    }).toList();
-  }
-
-  int get _pendingKycCount =>
-      _users.where((u) => u.kycStatus == 'pending').length;
-
-=======
->>>>>>> origin/main
   @override
   Widget build(BuildContext context) {
+    final userState = ref.watch(userListProvider);
+    final inviteState = ref.watch(inviteListProvider);
+    final mobile = _isMobile(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          PageHeader(
-            title: 'User Management',
-            subtitle: 'Manage users, roles, KYC status, and monitor activity.',
-            actionButton: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildRefreshButton(),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: () => _showInviteDialog(context),
-                  icon: const Icon(Icons.person_add, size: 18),
-                  label: const Text('Invite User'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
+      padding: EdgeInsets.all(mobile ? 12 : 24),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Header
+        if (mobile) ...[
+          Text('User Management', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(child: _buildActionButton('Invite', Icons.mail_outline, Colors.green, _showInviteDialog)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildActionButton('Create', Icons.person_add, Colors.blue, _showCreateDialog)),
+          ]),
+        ] else
+          Row(children: [
+            Text('User Management', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+            const Spacer(),
+            _buildActionButton('Invite Users', Icons.mail_outline, Colors.green, _showInviteDialog),
+            const SizedBox(width: 12),
+            _buildActionButton('Create User', Icons.person_add, Colors.blue, _showCreateDialog),
+          ]),
+        const SizedBox(height: 20),
+
+        // Stats - 2x2 grid on mobile, 1x4 row on desktop
+        if (mobile)
+          Column(children: [
+            Row(children: [
+              Expanded(child: _buildStatCard('Total Users', userState.totalCount.toString(), Icons.people_outline, Colors.blue, true)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildStatCard('Active', userState.activeUsers.toString(), Icons.check_circle_outline, Colors.green, true)),
+            ]),
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: _buildStatCard('Suspended', userState.suspendedUsers.toString(), Icons.block, Colors.red, true)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildStatCard('Pending KYC', userState.pendingKyc.toString(), Icons.verified_user_outlined, Colors.orange, true)),
+            ]),
+          ])
+        else
+          Row(children: [
+            Expanded(child: _buildStatCard('Total Users', userState.totalCount.toString(), Icons.people_outline, Colors.blue, false)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatCard('Active', userState.activeUsers.toString(), Icons.check_circle_outline, Colors.green, false)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatCard('Suspended', userState.suspendedUsers.toString(), Icons.block, Colors.red, false)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildStatCard('Pending KYC', userState.pendingKyc.toString(), Icons.verified_user_outlined, Colors.orange, false)),
+          ]),
+        const SizedBox(height: 20),
+
+        // Tabs
+        Container(
+          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+          child: TabBar(
+            controller: _tabController,
+            indicator: BoxDecoration(color: Colors.blue.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+            labelColor: Colors.blue, unselectedLabelColor: Colors.white54,
+            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: mobile ? 11 : 13),
+            isScrollable: mobile,
+            tabs: [
+              Tab(text: 'All Users (${userState.totalCount})'),
+              Tab(text: 'Invites (${inviteState.invites.length})'),
+              const Tab(text: 'History'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        SizedBox(
+          height: mobile ? 500 : 600,
+          child: TabBarView(controller: _tabController, children: [
+            _buildUsersTab(userState, mobile),
+            _buildInvitesTab(inviteState, mobile),
+            _buildHistoryTab(),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  // === Users Tab ===
+  Widget _buildUsersTab(UserListState state, bool mobile) {
+    return Column(children: [
+      if (mobile)
+        TextField(
+          style: const TextStyle(color: Colors.white),
+          onChanged: (v) => ref.read(userListProvider.notifier).setSearchQuery(v),
+          decoration: InputDecoration(
+            hintText: 'Search users...', hintStyle: const TextStyle(color: Colors.white38),
+            prefixIcon: const Icon(Icons.search, color: Colors.white38),
+            filled: true, fillColor: Colors.white.withValues(alpha: 0.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          ),
+        )
+      else
+        Row(children: [
+          Expanded(child: TextField(
+            style: const TextStyle(color: Colors.white),
+            onChanged: (v) => ref.read(userListProvider.notifier).setSearchQuery(v),
+            decoration: InputDecoration(
+              hintText: 'Search by name, email, or phone...', hintStyle: const TextStyle(color: Colors.white38),
+              prefixIcon: const Icon(Icons.search, color: Colors.white38),
+              filled: true, fillColor: Colors.white.withValues(alpha: 0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+          )),
+          const SizedBox(width: 12),
+          _buildFilterDropdown(value: state.filterRole, hint: 'Role',
+            items: [null, 'admin', 'supervisor', 'support', 'dealer', 'driver', 'customer'],
+            labels: ['All Roles', 'Admin', 'Supervisor', 'Support', 'Dealer', 'Driver', 'Customer'],
+            onChanged: (v) => ref.read(userListProvider.notifier).setRoleFilter(v)),
+          const SizedBox(width: 12),
+          _buildFilterDropdown(value: state.filterStatus, hint: 'Status',
+            items: [null, 'active', 'inactive', 'suspended'],
+            labels: ['All Status', 'Active', 'Inactive', 'Suspended'],
+            onChanged: (v) => ref.read(userListProvider.notifier).setStatusFilter(v)),
+        ]),
+      const SizedBox(height: 12),
+
+      Expanded(child: state.isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : mobile
+          ? _buildUserCards(state)
+          : _buildUserTable(state),
+      ),
+      
+      // Pagination Controls
+      if (!state.isLoading && state.totalCount > 0)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left, color: Colors.white70),
+                onPressed: state.page > 1 ? () => ref.read(userListProvider.notifier).goToPage(state.page - 1) : null,
+              ),
+              Text(
+                'Page ${state.page} of ${(state.totalCount / state.limit).ceil()}',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, color: Colors.white70),
+                onPressed: state.page < (state.totalCount / state.limit).ceil()
+                    ? () => ref.read(userListProvider.notifier).goToPage(state.page + 1)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+    ]);
+  }
+
+  // Mobile: card list
+  Widget _buildUserCards(UserListState state) {
+    return ListView.builder(
+      itemCount: state.filteredUsers.length,
+      itemBuilder: (_, i) {
+        final user = state.filteredUsers[i];
+        return Card(
+          color: Colors.white.withValues(alpha: 0.05),
+          margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            leading: CircleAvatar(
+              radius: 20,
+              backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
+              child: Text(user.fullName[0].toUpperCase(),
+                style: TextStyle(color: _getRoleColor(user.role), fontWeight: FontWeight.bold)),
+            ),
+            title: Row(children: [
+              Expanded(child: Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14))),
+              _buildRoleBadge(user.role),
+            ]),
+            subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              const SizedBox(height: 4),
+              Row(children: [
+                _buildStatusBadge(user),
+                const SizedBox(width: 8),
+                _buildKycBadge(user.kycStatus),
+                const Spacer(),
+                _buildRiskBadge(user.riskScore, user.riskLevel),
+              ]),
+            ]),
+            trailing: PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 18, color: Colors.white54),
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              itemBuilder: (_) => [
+                _buildPopupItem('edit', Icons.edit_outlined, 'Edit', Colors.blue),
+                _buildPopupItem('toggle', user.isActive ? Icons.toggle_off : Icons.toggle_on,
+                  user.isActive ? 'Deactivate' : 'Activate', Colors.orange),
+                _buildPopupItem(user.suspensionStatus == 'suspended' ? 'reactivate' : 'suspend',
+                  user.suspensionStatus == 'suspended' ? Icons.check_circle : Icons.block,
+                  user.suspensionStatus == 'suspended' ? 'Reactivate' : 'Suspend',
+                  user.suspensionStatus == 'suspended' ? Colors.green : Colors.red),
+                _buildPopupItem('reset', Icons.lock_reset, 'Reset Password', Colors.purple),
+                const PopupMenuDivider(),
+                _buildPopupItem('delete', Icons.delete_outline, 'Delete', Colors.red),
               ],
-            ),
-            searchField: TextField(
-              style: const TextStyle(color: Colors.white),
-              onChanged: (value) {
-                _searchQuery = value;
-                _loadData();
-              },
-              decoration: InputDecoration(
-                hintText: 'Search by name, email, phone...',
-                hintStyle: const TextStyle(color: Colors.white38),
-                prefixIcon: const Icon(Icons.search, color: Colors.white38),
-                filled: true,
-                fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
-                ),
-              ),
-            ),
-          ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
-
-          // Stats Row
-          Row(
-            children: [
-              _buildStatCard('Total Users', (_stats['total_users'] ?? _totalCount).toString(), Icons.people_outline, const Color(0xFF3B82F6)),
-              const SizedBox(width: 16),
-<<<<<<< HEAD
-              DropdownButtonHideUnderline(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: DropdownButton<String>(
-                    value: _filterRole,
-                    hint: const Text(
-                      'All Roles',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    dropdownColor: const Color(0xFF1E293B),
-                    icon: const Icon(Icons.filter_list, color: Colors.white70),
-                    style: GoogleFonts.inter(color: Colors.white),
-                    items: [
-                      const DropdownMenuItem(
-                        value: null,
-                        child: Text('All Roles'),
-                      ),
-                      const DropdownMenuItem(
-                        value: 'customer',
-                        child: Text('Customer'),
-                      ),
-                      const DropdownMenuItem(
-                        value: 'driver',
-                        child: Text('Driver'),
-                      ),
-                      const DropdownMenuItem(
-                        value: 'dealer',
-                        child: Text('Dealer'),
-                      ),
-                      const DropdownMenuItem(
-                        value: 'admin',
-                        child: Text('Admin'),
-                      ),
-                    ],
-                    onChanged: (value) => setState(() => _filterRole = value),
-                  ),
-                ),
-=======
-              _buildStatCard('Active', (_stats['active_users'] ?? 0).toString(), Icons.check_circle_outline, const Color(0xFF22C55E)),
-              const SizedBox(width: 16),
-              _buildStatCard('Suspended', (_stats['suspended_users'] ?? 0).toString(), Icons.block_outlined, const Color(0xFFEF4444)),
-              const SizedBox(width: 16),
-              _buildStatCard('Pending KYC', (_stats['pending_kyc'] ?? 0).toString(), Icons.verified_user_outlined, const Color(0xFFF59E0B)),
-              const Spacer(),
-              // Filter Dropdowns
-              _buildFilterDropdown(
-                value: _filterStatus,
-                hint: 'All Status',
-                items: const [
-                  DropdownMenuItem(value: null, child: Text('All Status')),
-                  DropdownMenuItem(value: 'active', child: Text('Active')),
-                  DropdownMenuItem(value: 'suspended', child: Text('Suspended')),
-                  DropdownMenuItem(value: 'pending_verification', child: Text('Pending')),
-                ],
-                onChanged: (v) { _filterStatus = v; _loadData(); },
-              ),
-              const SizedBox(width: 12),
-              _buildFilterDropdown(
-                value: _filterRole,
-                hint: 'All Types',
-                items: const [
-                  DropdownMenuItem(value: null, child: Text('All Types')),
-                  DropdownMenuItem(value: 'customer', child: Text('Customer')),
-                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                  DropdownMenuItem(value: 'dealer', child: Text('Dealer')),
-                  DropdownMenuItem(value: 'logistics', child: Text('Logistics')),
-                  DropdownMenuItem(value: 'support_agent', child: Text('Support')),
-                ],
-                onChanged: (v) { _filterRole = v; _loadData(); },
->>>>>>> origin/main
-              ),
-            ],
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
-          const SizedBox(height: 24),
-
-          // Data Table
-<<<<<<< HEAD
-          Card(
-            color: Colors.white.withValues(alpha: 0.05),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 200,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : SizedBox(
-                    width: double.infinity,
-                    child: Theme(
-                      data: Theme.of(context).copyWith(
-                        dividerColor: Colors.white.withValues(alpha: 0.1),
-                        iconTheme: const IconThemeData(color: Colors.white70),
-                      ),
-                      child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(
-                          Colors.white.withValues(alpha: 0.05),
-                        ),
-                        dataRowMinHeight: 60,
-                        dataRowMaxHeight: 60,
-                        columns: const [
-                          DataColumn(
-                            label: Text(
-                              'User',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Role',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Status',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'KYC',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Joined',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Actions',
-                              style: TextStyle(color: Colors.white70),
-                            ),
-                          ),
-                        ],
-                        rows: _filteredUsers.map((user) {
-                          return DataRow(
-                            cells: [
-                              DataCell(
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 18,
-                                      backgroundColor: Colors.blue.withValues(alpha: 0.2),
-                                      child: Text(
-                                        user.fullName[0].toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.blue,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            user.fullName,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Text(
-                                            user.email,
-                                            style: const TextStyle(
-                                              color: Colors.white54,
-                                              fontSize: 12,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              DataCell(_buildRoleBadge(user.role)),
-                              DataCell(_buildStatusBadge(user.isActive)),
-                              DataCell(_buildKycBadge(user.kycStatus)),
-                              DataCell(
-                                Text(
-                                  DateFormat('MMM d, y').format(user.joinedAt),
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                              ),
-                              DataCell(
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 18),
-                                      color: Colors.blue,
-                                      onPressed: () {},
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, size: 18),
-                                      color: Colors.redAccent,
-                                      onPressed: () {},
-                                    ),
-                                  ],
-=======
-          AdvancedCard(
-            padding: EdgeInsets.zero,
-            child: _isLoading
-                ? const SizedBox(height: 300, child: Center(child: CircularProgressIndicator()))
-                : Column(
-                    children: [
-                      // Table header info
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            Text(
-                              '$_totalCount users found',
-                              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
-                            ),
-                            const Spacer(),
-                          ],
-                        ),
-                      ),
-                      AdvancedTable(
-                        columns: const ['User', 'Type', 'Status', 'KYC', 'Role', 'Joined', 'Actions'],
-                        rows: _users.map((user) {
-                          return [
-                            // User column
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.2),
-                                  backgroundImage: user.profilePicture != null
-                                      ? NetworkImage(user.profilePicture!)
-                                      : null,
-                                  child: user.profilePicture == null
-                                      ? Text(
-                                          user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
-                                          style: const TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold),
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
-                                      Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 12), overflow: TextOverflow.ellipsis),
-                                    ],
-                                  ),
->>>>>>> origin/main
-                                ),
-                              ],
-                            ),
-                            StatusBadge(status: user.userType),
-                            StatusBadge(status: user.status),
-                            StatusBadge(status: user.kycStatus),
-                            Text(user.role ?? '—', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                            Text(
-                              DateFormat('MMM d, y').format(user.createdAt),
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
-                            ),
-                            // Actions
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildActionMenuButton(user),
-                              ],
-                            ),
-                          ];
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05),
-        ],
-      ),
-    );
-  }
-
-<<<<<<< HEAD
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-=======
-  Widget _buildRefreshButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.refresh, color: Colors.white70, size: 20),
-        onPressed: _loadData,
-        tooltip: 'Refresh',
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return AdvancedCard(
->>>>>>> origin/main
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      width: 180,
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-<<<<<<< HEAD
-              Text(
-                value,
-                style: GoogleFonts.outfit(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                title,
-                style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
-              ),
-=======
-              Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
->>>>>>> origin/main
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-<<<<<<< HEAD
-  Widget _buildRoleBadge(String role) {
-    Color color;
-    switch (role.toLowerCase()) {
-      case 'admin':
-        color = Colors.purple;
-        break;
-      case 'dealer':
-        color = Colors.orange;
-        break;
-      case 'driver':
-        color = Colors.blue;
-        break;
-      default:
-        color = Colors.green;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        role.toUpperCase(),
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8, height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isActive ? Colors.green : Colors.grey,
+              onSelected: (action) => _handleUserAction(action, user),
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            isActive ? 'Active' : 'Inactive',
-            style: TextStyle(
-              color: isActive ? Colors.green : Colors.red,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-=======
-  Widget _buildFilterDropdown({
-    String? value,
-    required String hint,
-    required List<DropdownMenuItem<String?>> items,
-    required Function(String?) onChanged,
-  }) {
-    return DropdownButtonHideUnderline(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-        ),
-        child: DropdownButton<String?>(
-          value: value,
-          hint: Text(hint, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-          dropdownColor: const Color(0xFF1E293B),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 20),
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-          items: items,
-          onChanged: (v) => setState(() => onChanged(v)),
-        ),
->>>>>>> origin/main
-      ),
+        );
+      },
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildKycBadge(String status) {
-    Color color;
-    IconData icon;
-    switch (status) {
-      case 'verified':
-        color = Colors.green;
-        icon = Icons.check_circle;
-        break;
-      case 'pending':
-        color = Colors.orange;
-        icon = Icons.pending;
-        break;
-      case 'rejected':
-        color = Colors.red;
-        icon = Icons.cancel;
-        break;
-      default:
-        color = Colors.grey;
-        icon = Icons.help;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 6),
-        Text(
-          status.replaceAll('_', ' ').capitalize(),
-          style: TextStyle(color: color, fontSize: 12),
-        ),
-=======
-  Widget _buildActionMenuButton(User user) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_horiz, size: 20, color: Colors.white54),
-      color: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onSelected: (action) => _handleAction(action, user),
-      itemBuilder: (context) => [
-        _buildPopupItem('view', Icons.visibility_outlined, 'View Details'),
-        if (user.status != 'suspended')
-          _buildPopupItem('suspend', Icons.block_outlined, 'Suspend Account', color: const Color(0xFFEF4444)),
-        if (user.status == 'suspended')
-          _buildPopupItem('reactivate', Icons.check_circle_outline, 'Reactivate', color: const Color(0xFF22C55E)),
-        _buildPopupItem('toggle', Icons.power_settings_new, user.isActive ? 'Deactivate' : 'Activate'),
->>>>>>> origin/main
-      ],
-    );
-  }
-
-<<<<<<< HEAD
-
-extension StringExtension on String {
-  String capitalize() {
-    if (isEmpty) return this;
-    return "${this[0].toUpperCase()}${substring(1)}";
-=======
-  PopupMenuItem<String> _buildPopupItem(String value, IconData icon, String text, {Color? color}) {
-    return PopupMenuItem(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color ?? Colors.white70),
-          const SizedBox(width: 10),
-          Text(text, style: TextStyle(color: color ?? Colors.white, fontSize: 13)),
-        ],
-      ),
-    );
-  }
-
-  void _handleAction(String action, User user) async {
-    switch (action) {
-      case 'view':
-        _showUserDetailDialog(user);
-        break;
-      case 'suspend':
-        _showSuspendDialog(user);
-        break;
-      case 'reactivate':
-        final success = await _repository.reactivateUser(user.id);
-        if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${user.fullName} reactivated'), backgroundColor: Colors.green),
-          );
-          _loadData();
-        }
-        break;
-      case 'toggle':
-        final success = await _repository.toggleUserActive(user.id);
-        if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${user.fullName} ${user.isActive ? "deactivated" : "activated"}'), backgroundColor: Colors.green),
-          );
-          _loadData();
-        }
-        break;
-    }
-  }
-
-  void _showUserDetailDialog(User user) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.2),
-              child: Text(user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : '?',
-                  style: const TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold, fontSize: 18)),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(user.fullName, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                  Text(user.email, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
-                ],
-              ),
-            ),
+  // Desktop: data table
+  Widget _buildUserTable(UserListState state) {
+    return Card(
+      color: Colors.white.withValues(alpha: 0.05),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(width: double.infinity, child: SingleChildScrollView(child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.white.withValues(alpha: 0.1), iconTheme: const IconThemeData(color: Colors.white70)),
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
+          dataRowMinHeight: 64, dataRowMaxHeight: 64,
+          columns: const [
+            DataColumn(label: Text('User', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Role', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Status', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('KYC', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Risk', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Joined', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+            DataColumn(label: Text('Actions', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
           ],
+          rows: state.filteredUsers.map((user) => DataRow(cells: [
+            DataCell(Row(children: [
+              CircleAvatar(radius: 18, backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
+                child: Text(user.fullName[0].toUpperCase(), style: TextStyle(color: _getRoleColor(user.role), fontWeight: FontWeight.bold))),
+              const SizedBox(width: 12),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+                Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+              ]),
+            ])),
+            DataCell(_buildRoleBadge(user.role)),
+            DataCell(_buildStatusBadge(user)),
+            DataCell(_buildKycBadge(user.kycStatus)),
+            DataCell(_buildRiskBadge(user.riskScore, user.riskLevel)),
+            DataCell(Text(DateFormat('MMM d, y').format(user.joinedAt), style: const TextStyle(color: Colors.white70))),
+            DataCell(PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, size: 20, color: Colors.white54),
+              color: const Color(0xFF1E293B), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              itemBuilder: (_) => [
+                _buildPopupItem('edit', Icons.edit_outlined, 'Edit Profile', Colors.blue),
+                _buildPopupItem('toggle', user.isActive ? Icons.toggle_off : Icons.toggle_on,
+                  user.isActive ? 'Deactivate' : 'Activate', Colors.orange),
+                _buildPopupItem(user.suspensionStatus == 'suspended' ? 'reactivate' : 'suspend',
+                  user.suspensionStatus == 'suspended' ? Icons.check_circle : Icons.block,
+                  user.suspensionStatus == 'suspended' ? 'Reactivate' : 'Suspend',
+                  user.suspensionStatus == 'suspended' ? Colors.green : Colors.red),
+                _buildPopupItem('reset', Icons.lock_reset, 'Reset Password', Colors.purple),
+                const PopupMenuDivider(),
+                _buildPopupItem('delete', Icons.delete_outline, 'Delete', Colors.red),
+              ],
+              onSelected: (action) => _handleUserAction(action, user),
+            )),
+          ])).toList(),
         ),
-        content: SizedBox(
-          width: 450,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _detailRow('Phone', user.phoneNumber),
-              _detailRow('User Type', user.userType.toUpperCase()),
-              _detailRow('Status', user.status.toUpperCase()),
-              _detailRow('KYC Status', user.kycStatus.toUpperCase()),
-              _detailRow('Role', user.role ?? 'No role assigned'),
-              _detailRow('Superuser', user.isSuperuser ? 'Yes' : 'No'),
-              _detailRow('Joined', DateFormat('MMM d, yyyy').format(user.createdAt)),
-              if (user.lastLoginAt != null)
-                _detailRow('Last Login', DateFormat('MMM d, yyyy HH:mm').format(user.lastLoginAt!)),
-              if (user.suspensionReason != null)
-                _detailRow('Suspension Reason', user.suspensionReason!),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close', style: TextStyle(color: Colors.white54)),
-          ),
-        ],
-      ),
+      ))),
     );
   }
 
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
-          ),
-          Expanded(
-            child: Text(value, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSuspendDialog(User user) {
-    final reasonController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Suspend ${user.fullName}', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('This will suspend the user\'s account immediately.', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: reasonController,
-                maxLines: 3,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Reason for suspension *',
-                  labelStyle: const TextStyle(color: Colors.white70),
-                  filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (reasonController.text.isEmpty) return;
-              final success = await _repository.suspendUser(user.id, reasonController.text);
-              if (context.mounted) Navigator.pop(context);
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('${user.fullName} suspended'), backgroundColor: Colors.orange),
+  // === Invites Tab ===
+  Widget _buildInvitesTab(InviteListState state, bool mobile) {
+    if (state.isLoading) return const Center(child: CircularProgressIndicator());
+    return Column(children: [
+      Row(children: [
+        _buildMiniStat('Pending', state.pending.toString(), Colors.orange),
+        const SizedBox(width: 8),
+        _buildMiniStat('Accepted', state.accepted.toString(), Colors.green),
+        const SizedBox(width: 8),
+        _buildMiniStat('Expired', state.expired.toString(), Colors.red),
+      ]),
+      const SizedBox(height: 12),
+      Expanded(
+        child: mobile
+          ? ListView.builder(
+              itemCount: state.invites.length,
+              itemBuilder: (_, i) {
+                final inv = state.invites[i];
+                final status = inv.displayStatus;
+                final sc = {'pending': Colors.orange, 'accepted': Colors.green, 'expired': Colors.red, 'revoked': Colors.grey}[status] ?? Colors.grey;
+                return Card(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  margin: const EdgeInsets.only(bottom: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    dense: true,
+                    title: Text(inv.email, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    subtitle: Row(children: [
+                      _buildRoleBadge(inv.role),
+                      const SizedBox(width: 8),
+                      Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: sc.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                        child: Text(status.toUpperCase(), style: TextStyle(color: sc, fontSize: 9, fontWeight: FontWeight.bold))),
+                    ]),
+                    trailing: status == 'pending' ? Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(icon: const Icon(Icons.refresh, size: 16, color: Colors.blue), onPressed: () {
+                        ref.read(inviteListProvider.notifier).resendInvite(inv.id); _showSnackbar('Resent'); }),
+                      IconButton(icon: const Icon(Icons.cancel_outlined, size: 16, color: Colors.red), onPressed: () {
+                        ref.read(inviteListProvider.notifier).revokeInvite(inv.id); _showSnackbar('Revoked'); }),
+                    ]) : null,
+                  ),
                 );
-                _loadData();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Suspend', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showInviteDialog(BuildContext context) {
-    final emailController = TextEditingController();
-    final nameController = TextEditingController();
-    String selectedRole = 'customer';
-    bool isSubmitting = false;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: Text('Invite New User', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-            content: SizedBox(
-              width: 400,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: emailController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Email Address',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: const Color(0xFF0F172A),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: nameController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Full Name (Optional)',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: const Color(0xFF0F172A),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: selectedRole,
-                    dropdownColor: const Color(0xFF1E293B),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Role',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      filled: true,
-                      fillColor: const Color(0xFF0F172A),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'customer', child: Text('Customer')),
-                      DropdownMenuItem(value: 'driver', child: Text('Driver')),
-                      DropdownMenuItem(value: 'dealer', child: Text('Dealer')),
-                      DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                    ],
-                    onChanged: (value) => setState(() => selectedRole = value!),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-              ),
-              ElevatedButton(
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        if (emailController.text.isEmpty) return;
-                        setState(() => isSubmitting = true);
-                        try {
-                          await _repository.inviteUser(
-                            email: emailController.text,
-                            role: selectedRole,
-                            fullName: nameController.text.isNotEmpty ? nameController.text : null,
-                          );
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('User invited successfully!'), backgroundColor: Colors.green),
-                            );
-                          }
-                        } catch (e) {
-                          setState(() => isSubmitting = false);
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              })
+          : Card(
+              color: Colors.white.withValues(alpha: 0.05),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: SizedBox(width: double.infinity, child: SingleChildScrollView(child: Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.white.withValues(alpha: 0.1)),
+                child: DataTable(
+                  headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
+                  columns: const [
+                    DataColumn(label: Text('Email', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Role', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Status', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Created By', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Expires', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+                    DataColumn(label: Text('Actions', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
+                  ],
+                  rows: state.invites.map((inv) {
+                    final status = inv.displayStatus;
+                    final sc = {'pending': Colors.orange, 'accepted': Colors.green, 'expired': Colors.red, 'revoked': Colors.grey}[status] ?? Colors.grey;
+                    return DataRow(cells: [
+                      DataCell(Text(inv.email, style: const TextStyle(color: Colors.white))),
+                      DataCell(_buildRoleBadge(inv.role)),
+                      DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: sc.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                        child: Text(status.toUpperCase(), style: TextStyle(color: sc, fontSize: 10, fontWeight: FontWeight.bold)))),
+                      DataCell(Text(inv.createdBy, style: const TextStyle(color: Colors.white70))),
+                      DataCell(Text(DateFormat('MMM d, y').format(inv.expiresAt), style: const TextStyle(color: Colors.white70))),
+                      DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
+                        if (status == 'pending') ...[
+                          IconButton(icon: const Icon(Icons.refresh, size: 18, color: Colors.blue), tooltip: 'Resend',
+                            onPressed: () { ref.read(inviteListProvider.notifier).resendInvite(inv.id); _showSnackbar('Resent'); }),
+                          IconButton(icon: const Icon(Icons.cancel_outlined, size: 18, color: Colors.red), tooltip: 'Revoke',
+                            onPressed: () { ref.read(inviteListProvider.notifier).revokeInvite(inv.id); _showSnackbar('Revoked'); }),
+                        ],
+                      ])),
+                    ]);
+                  }).toList(),
                 ),
-                child: isSubmitting
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Send Invite', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          );
-        },
+              ))),
+            ),
       ),
-    );
->>>>>>> origin/main
+    ]);
   }
+
+  // === History Tab ===
+  Widget _buildHistoryTab() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: ref.read(userRepositoryProvider).getCreationHistory(),
+      builder: (ctx, snap) {
+        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        return Card(
+          color: Colors.white.withValues(alpha: 0.05),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ListView.separated(
+            padding: const EdgeInsets.all(12),
+            itemCount: snap.data!.length,
+            separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.1)),
+            itemBuilder: (_, i) {
+              final e = snap.data![i];
+              return ListTile(
+                dense: true,
+                leading: Container(padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.history, color: Colors.blue, size: 18)),
+                title: Text(e['action'] as String, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13)),
+                subtitle: Text('${e['user']} • by ${e['by']}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                trailing: Text(DateFormat('MMM d').format(e['date'] as DateTime), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // === Helpers ===
+  Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return ElevatedButton.icon(
+      onPressed: onTap, icon: Icon(icon, size: 16), label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.15), foregroundColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: color.withValues(alpha: 0.3)))),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color, bool compact) {
+    return Container(
+      padding: EdgeInsets.all(compact ? 14 : 20),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.15))),
+      child: Row(children: [
+        Container(padding: EdgeInsets.all(compact ? 8 : 10),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.2), shape: BoxShape.circle),
+          child: Icon(icon, color: color, size: compact ? 18 : 22)),
+        const SizedBox(width: 12),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(value, style: GoogleFonts.outfit(fontSize: compact ? 20 : 26, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: compact ? 10 : 12)),
+        ]),
+      ]),
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: color.withValues(alpha: 0.2))),
+    child: Row(mainAxisSize: MainAxisSize.min, children: [
+      Text(value, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+      const SizedBox(width: 6),
+      Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+    ]));
+
+  Widget _buildFilterDropdown({String? value, required String hint, required List<String?> items, required List<String> labels, required Function(String?) onChanged}) =>
+    Container(padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+      child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+        value: value, hint: Text(hint, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B), icon: const Icon(Icons.filter_list, color: Colors.white54, size: 18),
+        style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        items: List.generate(items.length, (i) => DropdownMenuItem(value: items[i], child: Text(labels[i]))),
+        onChanged: onChanged)));
+
+  Color _getRoleColor(String role) => {'admin': Colors.purple, 'supervisor': Colors.indigo, 'support': Colors.teal,
+    'dealer': Colors.orange, 'driver': Colors.blue}[role] ?? Colors.green;
+
+  Widget _buildRoleBadge(String role) { final c = _getRoleColor(role); return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withValues(alpha: 0.2))),
+    child: Text(role.toUpperCase(), style: TextStyle(color: c, fontSize: 9, fontWeight: FontWeight.bold))); }
+
+  Widget _buildStatusBadge(User user) {
+    if (user.suspensionStatus == 'suspended') {
+      return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.block, size: 10, color: Colors.red), SizedBox(width: 3),
+          Text('Suspended', style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.w500))]));
+    }
+    final c = user.isActive ? Colors.green : Colors.grey;
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text(user.isActive ? 'Active' : 'Inactive', style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.w500)));
+  }
+
+  Widget _buildKycBadge(String status) {
+    final m = {'verified': (Colors.green, Icons.check_circle), 'pending': (Colors.orange, Icons.pending),
+      'rejected': (Colors.red, Icons.cancel)}; final d = m[status] ?? (Colors.grey, Icons.help);
+    return Row(mainAxisSize: MainAxisSize.min, children: [Icon(d.$2, size: 12, color: d.$1), const SizedBox(width: 3),
+      Text(status[0].toUpperCase() + status.substring(1), style: TextStyle(color: d.$1, fontSize: 10))]);
+  }
+
+  Widget _buildRiskBadge(int score, String level) {
+    final c = {'critical': Colors.red, 'high': Colors.orange, 'medium': Colors.amber}[level] ?? Colors.green;
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(color: c.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+      child: Text('$score', style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.bold)));
+  }
+
+  PopupMenuItem<String> _buildPopupItem(String v, IconData i, String l, Color c) => PopupMenuItem(value: v,
+    child: Row(children: [Icon(i, size: 18, color: c), const SizedBox(width: 12),
+      Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13))]));
+
+  void _showCreateDialog() => showDialog(context: context, builder: (_) => CreateUserDialog(
+    onSubmit: (name, email, phone, password, role) {
+      ref.read(userListProvider.notifier).createUser(fullName: name, email: email, phoneNumber: phone, password: password, role: role);
+      _showSnackbar('User "$name" created');
+    }));
+
+  void _showInviteDialog() => showDialog(context: context, builder: (_) => InviteUsersDialog(
+    onSingleInvite: (email, role) { ref.read(inviteListProvider.notifier).sendInvite(email: email, role: role); _showSnackbar('Invite sent to $email'); },
+    onBulkInvite: (rows) { ref.read(inviteListProvider.notifier).sendBulkInvites(rows); _showSnackbar('${rows.length} invites sent'); }));
+
+  void _handleUserAction(String action, User user) {
+    switch (action) {
+      case 'edit': showDialog(context: context, builder: (_) => EditUserDialog(user: user,
+        onSubmit: (u) { ref.read(userListProvider.notifier).updateUser(u); _showSnackbar('Updated'); })); break;
+      case 'toggle': ref.read(userListProvider.notifier).toggleUserActive(user.id);
+        _showSnackbar(user.isActive ? 'Deactivated' : 'Activated'); break;
+      case 'suspend': showDialog(context: context, builder: (_) => SuspendUserDialog(userName: user.fullName,
+        onSubmit: (r, n, d) { ref.read(userListProvider.notifier).suspendUser(user.id, reason: r, durationDays: d); _showSnackbar('Suspended'); })); break;
+      case 'reactivate': showDialog(context: context, builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B), title: const Text('Reactivate User', style: TextStyle(color: Colors.white)),
+        content: Text('Are you sure you want to reactivate ${user.fullName}?', style: const TextStyle(color: Colors.white70)),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () { ref.read(userListProvider.notifier).reactivateUser(user.id); Navigator.pop(context); _showSnackbar('Reactivated'); },
+            child: const Text('Reactivate', style: TextStyle(color: Colors.green)))])); break;
+      case 'reset': ref.read(userListProvider.notifier).resetPassword(user.id); _showSnackbar('Password reset initiated'); break;
+      case 'delete': showDialog(context: context, builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B), title: const Text('Delete User', style: TextStyle(color: Colors.white)),
+        content: Text('Delete ${user.fullName}?', style: const TextStyle(color: Colors.white70)),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () { ref.read(userListProvider.notifier).deleteUser(user.id); Navigator.pop(context); _showSnackbar('Deleted'); },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)))])); break;
+    }
+  }
+
+  void _showSnackbar(String msg) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg),
+    behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    backgroundColor: const Color(0xFF1E293B)));
 }

@@ -1,3 +1,9 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final supportRepositoryProvider = Provider<SupportRepository>((ref) {
+  return SupportRepository();
+});
+
 class SupportTicket {
   final String id;
   final String title;
@@ -21,12 +27,13 @@ class SupportTicket {
 class SupportRepository {
   Future<List<SupportTicket>> getTickets() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     return [
       SupportTicket(
         id: 'TICKET-101',
         title: 'Battery overheating issue',
-        description: 'Customer reported battery ID 445 getting hot during charging.',
+        description:
+            'Customer reported battery ID 445 getting hot during charging.',
         status: 'todo',
         prioritry: 'high',
         assignedTo: 'Tech Team',

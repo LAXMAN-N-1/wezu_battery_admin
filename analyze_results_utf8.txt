@@ -1,0 +1,12 @@
+﻿Analyzing dashboard...                                          
+
+warning - Dead code - lib\features\dashboard\data\analytics_repository.dart:665:3 - dead_code
+warning - The declaration 'getDashboardAnalytics' isn't referenced - lib\features\dashboard\data\analytics_repository.dart:665:34 - unused_element
+  error - Expected to find '}' - lib\features\dashboard\data\analytics_repository.dart:678:1 - expected_token
+   info - Dangling library doc comment - lib\features\dashboard\data\dashboard_models.dart:1:1 - dangling_library_doc_comments
+   info - The local variable '_extract' starts with an underscore - lib\features\dashboard\data\dashboard_models.dart:77:15 - no_leading_underscores_for_local_identifiers
+  error - The method 'getDashboardAnalytics' isn't defined for the type 'AnalyticsRepository' - lib\features\dashboard\providers\dashboard_providers.dart:152:15 - undefined_method
+warning - The value of the local variable 'dayLabels' isn't used - lib\features\dashboard\view\analytics_view.dart:341:11 - unused_local_variable
+   info - Statements in an if should be enclosed in a block - lib\features\dashboard\view\analytics_view.dart:472:29 - curly_braces_in_flow_control_structures
+   info - Unnecessary braces in a string interpolation - lib\features\dashboard\view\dashboard_view.dart:1297:80 - unnecessary_brace_in_string_interps
+

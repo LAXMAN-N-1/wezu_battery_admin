@@ -123,7 +123,7 @@ class _TelematicsViewState extends State<TelematicsView> {
                               Text('SoC Trend (24h)', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                               const SizedBox(height: 20),
                               Expanded(
-                                child: _history.isEmpty 
+                                child: _history.length < 2 
                                   ? const Center(child: Icon(Icons.show_chart, color: Colors.white10, size: 64))
                                   : LineChart(_buildSoCChart()),
                               ),
@@ -140,7 +140,7 @@ class _TelematicsViewState extends State<TelematicsView> {
                               Text('Speed Analytics', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                               const SizedBox(height: 20),
                               Expanded(
-                                child: _history.isEmpty 
+                                child: _history.length < 2 
                                   ? const Center(child: Icon(Icons.bar_chart, color: Colors.white10, size: 64))
                                   : BarChart(_buildSpeedChart()),
                               ),

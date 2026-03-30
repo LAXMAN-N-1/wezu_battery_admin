@@ -3,20 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_themes.dart';
 import 'core/theme/theme_provider.dart';
 import 'router/app_router.dart';
-import 'core/services/notification_service.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-<<<<<<< HEAD
-  await NotificationService().init();
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
-=======
   runApp(const ProviderScope(child: MyApp()));
->>>>>>> origin/main
 }
 
 class MyApp extends ConsumerWidget {
