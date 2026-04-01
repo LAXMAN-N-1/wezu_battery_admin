@@ -446,13 +446,14 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           Expanded(
             child: growthAsync.when(
               data: (data) {
-                if (data.points.length < 2)
+                if (data.points.length < 2) {
                   return const Center(
                     child: Text(
                       'Not enough growth data',
                       style: TextStyle(color: Colors.white38),
                     ),
                   );
+                }
                 return LineChart(
                   key: const ValueKey('analytics_user_growth_chart'),
                   LineChartData(
@@ -781,10 +782,11 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     StationRevenueData data,
     AppColorsExtension colors,
   ) {
-    if (data.stations.isEmpty)
+    if (data.stations.isEmpty) {
       return const Center(
         child: Text('No station data', style: TextStyle(color: Colors.white38)),
       );
+    }
     final displayData = data.stations.take(8).toList();
 
     double metricValue(StationRevenue r) {
@@ -944,13 +946,14 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     BatteryTypeRevenueData data,
     AppColorsExtension colors,
   ) {
-    if (data.types.isEmpty && data.stationMix.isEmpty)
+    if (data.types.isEmpty && data.stationMix.isEmpty) {
       return const Center(
         child: Text(
           'No battery revenue data',
           style: TextStyle(color: Colors.white38),
         ),
       );
+    }
     // Prefer station-level stacked composition if available
     if (data.stationMix.isNotEmpty) {
       final stations = data.stationMix.take(5).toList();
@@ -1271,16 +1274,8 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
   }
 
   void _manualRefreshAll() {
+    // One trigger update is enough because providers watch this state.
     ref.read(dashboardRefreshTriggerProvider.notifier).state++;
-    ref.invalidate(revenueByStationProvider);
-    ref.invalidate(revenueByBatteryTypeProvider);
-    ref.invalidate(userBehaviorProvider);
-    ref.invalidate(conversionFunnelProvider);
-    ref.invalidate(userGrowthProvider);
-    ref.invalidate(revenueByRegionProvider);
-    ref.invalidate(demandForecastProvider);
-    ref.invalidate(inventoryStatusProvider);
-    ref.invalidate(trendDataProvider);
     ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
   }
 

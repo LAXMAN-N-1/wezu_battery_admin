@@ -10,13 +10,25 @@ class AnalyticsRepository {
 
   static const _base = '/api/v1/admin/analytics';
 
+  Map<String, dynamic> _asMap(
+    dynamic data, {
+    String? listKey,
+    Map<String, dynamic> defaults = const {},
+  }) {
+    if (data is Map) {
+      return {...defaults, ...Map<String, dynamic>.from(data)};
+    }
+    if (listKey != null && data is List) {
+      return {...defaults, listKey: data};
+    }
+    return defaults;
+  }
+
   /// GET /api/v1/admin/analytics/overview
   Future<DashboardOverview> getOverview() async {
     try {
       final response = await _apiClient.get('$_base/overview');
-      return DashboardOverview.fromJson(
-        response.data is Map ? response.data : {},
-      );
+      return DashboardOverview.fromJson(_asMap(response.data));
     } catch (e) {
       return DashboardOverview.fromJson({
         "total_revenue": {
@@ -88,7 +100,9 @@ class AnalyticsRepository {
         '$_base/trends',
         queryParameters: {'period': period},
       );
-      return TrendData.fromJson(response.data is Map ? response.data : {});
+      return TrendData.fromJson(
+        _asMap(response.data, listKey: 'data', defaults: {'period': period}),
+      );
     } catch (e) {
       return TrendData.fromJson({
         "period": period,
@@ -96,12 +110,16 @@ class AnalyticsRepository {
           30,
           (i) => {
             "date": "Day ${i + 1}",
-            "revenue": i == 3 
+            "revenue": i == 3
                 ? 13500.0 // Big peak at Day 4 to match image
-                : (5000.0 + (math.Random().nextDouble() * 2000) + (i < 10 ? (i * 1000) : 0)),
+                : (5000.0 +
+                      (math.Random().nextDouble() * 2000) +
+                      (i < 10 ? (i * 1000) : 0)),
             "rentals": i == 3 ? 0.0 : (40.0 + (i % 5)),
             "users": i == 3 ? 13.0 : (100.0 + (i * 5)),
-            "battery_health": i == 3 ? 0.0 : (90.0 + (i % 2)), // Higher health by default
+            "battery_health": i == 3
+                ? 0.0
+                : (90.0 + (i % 2)), // Higher health by default
           },
         ),
       });
@@ -113,7 +131,7 @@ class AnalyticsRepository {
     try {
       final response = await _apiClient.get('$_base/conversion-funnel');
       return ConversionFunnel.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'stages'),
       );
     } catch (e) {
       return ConversionFunnel.fromJson({
@@ -153,9 +171,7 @@ class AnalyticsRepository {
       final response = await _apiClient.get(
         '$_base/battery-health-distribution',
       );
-      return BatteryHealthDistribution.fromJson(
-        response.data is Map ? response.data : {},
-      );
+      return BatteryHealthDistribution.fromJson(_asMap(response.data));
     } catch (e) {
       return BatteryHealthDistribution.fromJson({
         "total": 1000,
@@ -180,14 +196,17 @@ class AnalyticsRepository {
   Future<UserBehavior> getUserBehavior() async {
     try {
       final response = await _apiClient.get('$_base/user-behavior');
-      return UserBehavior.fromJson(response.data is Map ? response.data : {});
+      return UserBehavior.fromJson(_asMap(response.data));
     } catch (e) {
       return UserBehavior.fromJson({
         "avg_session_duration": 15.5,
         "avg_rentals_per_user": 3.2,
         "peak_hours": {"18:00": 150, "19:00": 200, "08:00": 120},
         "heatmap": List.generate(7, (day) {
-          return List.generate(24, (hour) => (hour >= 8 && hour <= 21) ? (50 + (day * 10) + hour) : 5);
+          return List.generate(
+            24,
+            (hour) => (hour >= 8 && hour <= 21) ? (50 + (day * 10) + hour) : 5,
+          );
         }),
         "session_histogram": [
           {"range": "0-5m", "count": 120},
@@ -205,7 +224,9 @@ class AnalyticsRepository {
   Future<DemandForecast> getDemandForecast() async {
     try {
       final response = await _apiClient.get('$_base/demand-forecast');
-      return DemandForecast.fromJson(response.data is Map ? response.data : {});
+      return DemandForecast.fromJson(
+        _asMap(response.data, listKey: 'forecast'),
+      );
     } catch (e) {
       return DemandForecast.fromJson({
         "forecast": List.generate(
@@ -225,7 +246,7 @@ class AnalyticsRepository {
     try {
       final response = await _apiClient.get('$_base/revenue/by-region');
       return RevenueByRegion.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'regions'),
       );
     } catch (e) {
       return RevenueByRegion.fromJson({
@@ -247,7 +268,9 @@ class AnalyticsRepository {
         '$_base/user-growth',
         queryParameters: {'period': period},
       );
-      return UserGrowth.fromJson(response.data is Map ? response.data : {});
+      return UserGrowth.fromJson(
+        _asMap(response.data, listKey: 'data', defaults: {'period': period}),
+      );
     } catch (e) {
       return UserGrowth.fromJson({
         "period": period,
@@ -268,7 +291,7 @@ class AnalyticsRepository {
     try {
       final response = await _apiClient.get('$_base/inventory-status');
       return InventoryStatus.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'inventory'),
       );
     } catch (e) {
       return InventoryStatus.fromJson({
@@ -311,7 +334,7 @@ class AnalyticsRepository {
         queryParameters: {'period': period},
       );
       return StationRevenueData.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'stations'),
       );
     } catch (e) {
       // Mock data for top 10 stations
@@ -326,10 +349,25 @@ class AnalyticsRepository {
             "utilization": 88,
             "avg_session_duration": 16.2,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 210000, "percentage": 60, "rental_count": 780},
-              {"type": "LFP", "revenue": 110000, "percentage": 31, "rental_count": 340},
-              {"type": "NiMH", "revenue": 30000, "percentage": 9, "rental_count": 80},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 210000,
+                "percentage": 60,
+                "rental_count": 780,
+              },
+              {
+                "type": "LFP",
+                "revenue": 110000,
+                "percentage": 31,
+                "rental_count": 340,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 30000,
+                "percentage": 9,
+                "rental_count": 80,
+              },
+            ],
           },
           {
             "name": "Jubilee Hills Checkpost",
@@ -339,10 +377,25 @@ class AnalyticsRepository {
             "utilization": 84,
             "avg_session_duration": 14.0,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 170000, "percentage": 61, "rental_count": 640},
-              {"type": "LFP", "revenue": 80000, "percentage": 28, "rental_count": 240},
-              {"type": "NiMH", "revenue": 30000, "percentage": 11, "rental_count": 70},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 170000,
+                "percentage": 61,
+                "rental_count": 640,
+              },
+              {
+                "type": "LFP",
+                "revenue": 80000,
+                "percentage": 28,
+                "rental_count": 240,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 30000,
+                "percentage": 11,
+                "rental_count": 70,
+              },
+            ],
           },
           {
             "name": "Gachibowli DLF",
@@ -352,10 +405,25 @@ class AnalyticsRepository {
             "utilization": 82,
             "avg_session_duration": 15.0,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 140000, "percentage": 56, "rental_count": 480},
-              {"type": "LFP", "revenue": 85000, "percentage": 34, "rental_count": 250},
-              {"type": "NiMH", "revenue": 25000, "percentage": 10, "rental_count": 70},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 140000,
+                "percentage": 56,
+                "rental_count": 480,
+              },
+              {
+                "type": "LFP",
+                "revenue": 85000,
+                "percentage": 34,
+                "rental_count": 250,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 25000,
+                "percentage": 10,
+                "rental_count": 70,
+              },
+            ],
           },
           {
             "name": "Madhapur Metro",
@@ -365,10 +433,25 @@ class AnalyticsRepository {
             "utilization": 80,
             "avg_session_duration": 13.5,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 120000, "percentage": 55, "rental_count": 380},
-              {"type": "LFP", "revenue": 80000, "percentage": 36, "rental_count": 260},
-              {"type": "NiMH", "revenue": 20000, "percentage": 9, "rental_count": 60},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 120000,
+                "percentage": 55,
+                "rental_count": 380,
+              },
+              {
+                "type": "LFP",
+                "revenue": 80000,
+                "percentage": 36,
+                "rental_count": 260,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 20000,
+                "percentage": 9,
+                "rental_count": 60,
+              },
+            ],
           },
           {
             "name": "Kukatpally Housing Board",
@@ -378,10 +461,25 @@ class AnalyticsRepository {
             "utilization": 78,
             "avg_session_duration": 12.8,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 100000, "percentage": 53, "rental_count": 320},
-              {"type": "LFP", "revenue": 70000, "percentage": 37, "rental_count": 180},
-              {"type": "NiMH", "revenue": 20000, "percentage": 10, "rental_count": 50},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 100000,
+                "percentage": 53,
+                "rental_count": 320,
+              },
+              {
+                "type": "LFP",
+                "revenue": 70000,
+                "percentage": 37,
+                "rental_count": 180,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 20000,
+                "percentage": 10,
+                "rental_count": 50,
+              },
+            ],
           },
           {
             "name": "Hitech City Hub",
@@ -391,10 +489,25 @@ class AnalyticsRepository {
             "utilization": 76,
             "avg_session_duration": 15.5,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 90000, "percentage": 53, "rental_count": 280},
-              {"type": "LFP", "revenue": 60000, "percentage": 35, "rental_count": 160},
-              {"type": "NiMH", "revenue": 20000, "percentage": 12, "rental_count": 60},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 90000,
+                "percentage": 53,
+                "rental_count": 280,
+              },
+              {
+                "type": "LFP",
+                "revenue": 60000,
+                "percentage": 35,
+                "rental_count": 160,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 20000,
+                "percentage": 12,
+                "rental_count": 60,
+              },
+            ],
           },
           {
             "name": "Kondapur Junction",
@@ -404,10 +517,25 @@ class AnalyticsRepository {
             "utilization": 74,
             "avg_session_duration": 14.4,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 82000, "percentage": 55, "rental_count": 260},
-              {"type": "LFP", "revenue": 52000, "percentage": 35, "rental_count": 150},
-              {"type": "NiMH", "revenue": 16000, "percentage": 10, "rental_count": 40},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 82000,
+                "percentage": 55,
+                "rental_count": 260,
+              },
+              {
+                "type": "LFP",
+                "revenue": 52000,
+                "percentage": 35,
+                "rental_count": 150,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 16000,
+                "percentage": 10,
+                "rental_count": 40,
+              },
+            ],
           },
           {
             "name": "Miyapur Station",
@@ -417,10 +545,25 @@ class AnalyticsRepository {
             "utilization": 70,
             "avg_session_duration": 13.0,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 60000, "percentage": 50, "rental_count": 210},
-              {"type": "LFP", "revenue": 42000, "percentage": 35, "rental_count": 140},
-              {"type": "NiMH", "revenue": 18000, "percentage": 15, "rental_count": 50},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 60000,
+                "percentage": 50,
+                "rental_count": 210,
+              },
+              {
+                "type": "LFP",
+                "revenue": 42000,
+                "percentage": 35,
+                "rental_count": 140,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 18000,
+                "percentage": 15,
+                "rental_count": 50,
+              },
+            ],
           },
           {
             "name": "Ameerpet Interchange",
@@ -430,10 +573,25 @@ class AnalyticsRepository {
             "utilization": 68,
             "avg_session_duration": 12.2,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 48000, "percentage": 53, "rental_count": 170},
-              {"type": "LFP", "revenue": 32000, "percentage": 36, "rental_count": 100},
-              {"type": "NiMH", "revenue": 10000, "percentage": 11, "rental_count": 30},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 48000,
+                "percentage": 53,
+                "rental_count": 170,
+              },
+              {
+                "type": "LFP",
+                "revenue": 32000,
+                "percentage": 36,
+                "rental_count": 100,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 10000,
+                "percentage": 11,
+                "rental_count": 30,
+              },
+            ],
           },
           {
             "name": "Secunderabad East",
@@ -443,10 +601,25 @@ class AnalyticsRepository {
             "utilization": 60,
             "avg_session_duration": 11.0,
             "battery_mix": [
-              {"type": "Li-ion", "revenue": 15000, "percentage": 50, "rental_count": 60},
-              {"type": "LFP", "revenue": 9000, "percentage": 30, "rental_count": 40},
-              {"type": "NiMH", "revenue": 6000, "percentage": 20, "rental_count": 20},
-            ]
+              {
+                "type": "Li-ion",
+                "revenue": 15000,
+                "percentage": 50,
+                "rental_count": 60,
+              },
+              {
+                "type": "LFP",
+                "revenue": 9000,
+                "percentage": 30,
+                "rental_count": 40,
+              },
+              {
+                "type": "NiMH",
+                "revenue": 6000,
+                "percentage": 20,
+                "rental_count": 20,
+              },
+            ],
           },
         ],
       });
@@ -463,7 +636,7 @@ class AnalyticsRepository {
         queryParameters: {'period': period},
       );
       return BatteryTypeRevenueData.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'types'),
       );
     } catch (e) {
       return BatteryTypeRevenueData.fromJson({
@@ -491,28 +664,73 @@ class AnalyticsRepository {
           {
             "station_name": "Banjara Hills Sec A",
             "battery_mix": [
-              {"type": "Lithium-Ion v2 (Fast)", "revenue": 210000, "percentage": 60, "rental_count": 780},
-              {"type": "LFP Standard", "revenue": 110000, "percentage": 31, "rental_count": 340},
-              {"type": "NiMH Legacy", "revenue": 30000, "percentage": 9, "rental_count": 80},
-            ]
+              {
+                "type": "Lithium-Ion v2 (Fast)",
+                "revenue": 210000,
+                "percentage": 60,
+                "rental_count": 780,
+              },
+              {
+                "type": "LFP Standard",
+                "revenue": 110000,
+                "percentage": 31,
+                "rental_count": 340,
+              },
+              {
+                "type": "NiMH Legacy",
+                "revenue": 30000,
+                "percentage": 9,
+                "rental_count": 80,
+              },
+            ],
           },
           {
             "station_name": "Jubilee Hills Checkpost",
             "battery_mix": [
-              {"type": "Lithium-Ion v2 (Fast)", "revenue": 170000, "percentage": 61, "rental_count": 640},
-              {"type": "LFP Standard", "revenue": 80000, "percentage": 28, "rental_count": 240},
-              {"type": "NiMH Legacy", "revenue": 30000, "percentage": 11, "rental_count": 70},
-            ]
+              {
+                "type": "Lithium-Ion v2 (Fast)",
+                "revenue": 170000,
+                "percentage": 61,
+                "rental_count": 640,
+              },
+              {
+                "type": "LFP Standard",
+                "revenue": 80000,
+                "percentage": 28,
+                "rental_count": 240,
+              },
+              {
+                "type": "NiMH Legacy",
+                "revenue": 30000,
+                "percentage": 11,
+                "rental_count": 70,
+              },
+            ],
           },
           {
             "station_name": "Gachibowli DLF",
             "battery_mix": [
-              {"type": "Lithium-Ion v2 (Fast)", "revenue": 140000, "percentage": 56, "rental_count": 480},
-              {"type": "LFP Standard", "revenue": 85000, "percentage": 34, "rental_count": 250},
-              {"type": "NiMH Legacy", "revenue": 25000, "percentage": 10, "rental_count": 70},
-            ]
+              {
+                "type": "Lithium-Ion v2 (Fast)",
+                "revenue": 140000,
+                "percentage": 56,
+                "rental_count": 480,
+              },
+              {
+                "type": "LFP Standard",
+                "revenue": 85000,
+                "percentage": 34,
+                "rental_count": 250,
+              },
+              {
+                "type": "NiMH Legacy",
+                "revenue": 25000,
+                "percentage": 10,
+                "rental_count": 70,
+              },
+            ],
           },
-        ]
+        ],
       });
     }
   }
@@ -532,12 +750,10 @@ class AnalyticsRepository {
     try {
       final response = await _apiClient.get(
         '$_base/recent-activity',
-        queryParameters: {
-          if (type != null) 'type': type,
-        },
+        queryParameters: {if (type != null) 'type': type},
       );
       return RecentActivityData.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'activities'),
       );
     } catch (e) {
       final all = [
@@ -554,7 +770,11 @@ class AnalyticsRepository {
           "description": "Battery #WZ-4821 rented at HYD-01 station",
           "time": "8 min ago",
           "type": "rental",
-          "details": {"battery_id": "WZ-4821", "station": "HYD-01", "user": "USR-1022"},
+          "details": {
+            "battery_id": "WZ-4821",
+            "station": "HYD-01",
+            "user": "USR-1022",
+          },
         },
         {
           "title": "Battery Swap Completed",
@@ -592,7 +812,7 @@ class AnalyticsRepository {
     try {
       final response = await _apiClient.get('$_base/top-stations');
       return TopStationsData.fromJson(
-        response.data is Map ? response.data : {},
+        _asMap(response.data, listKey: 'stations'),
       );
     } catch (e) {
       return TopStationsData.fromJson({

@@ -24,7 +24,7 @@ class FaqRepository {
 
   Future<FAQ> createFaq(FAQ faq) async {
     final response = await _apiClient.post(
-      '/api/v1/admin/faq',
+      '/api/v1/admin/cms/faqs/',
       data: faq.toJson(),
     );
     return FAQ.fromJson(response.data);
@@ -32,13 +32,13 @@ class FaqRepository {
 
   Future<FAQ> updateFaq(int id, Map<String, dynamic> data) async {
     final response = await _apiClient.put(
-      '/api/v1/admin/faq/$id',
+      '/api/v1/admin/cms/faqs/$id',
       data: data,
     );
     return FAQ.fromJson(response.data);
   }
 
   Future<void> deleteFaq(int id) async {
-    await _apiClient.delete('/api/v1/admin/faq/$id');
+    await _apiClient.delete('/api/v1/admin/cms/faqs/$id');
   }
 }
