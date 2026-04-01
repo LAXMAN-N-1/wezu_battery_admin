@@ -23,6 +23,9 @@ class ApiErrorHandler {
         return 'You don\'t have permission to access this resource.';
       case 404:
         return 'The requested resource was not found.';
+      case 307:
+      case 308:
+        return 'API redirect detected. Check trailing slash and base URL settings.';
       case 422:
         return 'Invalid request. Please check your input.';
       case 429:

@@ -6,6 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'dio_adapter_stub.dart'
+    if (dart.library.io) 'dio_adapter_io.dart'
+    if (dart.library.html) 'dio_adapter_web.dart'
+    as dio_adapter;
 import '../utils/token_utils.dart';
 import '../widgets/api_error_handler.dart';
 
@@ -18,6 +22,11 @@ class ApiClient {
   static const accessTokenStorageKey = 'admin_token';
   static const refreshTokenStorageKey = 'admin_refresh_token';
   static const _skipAuthInterceptorKey = 'skipAuthInterceptor';
+  static const _tokenInvalidLiterals = {'null', 'undefined', 'nil'};
+  static const _enforceNoTrailingSlash = bool.fromEnvironment(
+    'API_ENFORCE_NO_TRAILING_SLASH',
+    defaultValue: false,
+  );
 
   late Dio dio;
   late Dio _refreshDio;
@@ -33,14 +42,12 @@ class ApiClient {
       baseUrl: _resolvedApiBaseUrl(),
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: {'Accept': 'application/json'},
     );
 
     dio = Dio(baseOptions);
     _refreshDio = Dio(baseOptions);
+    _configureHttpAdapters();
 
     dio.interceptors.add(AuthInterceptor(this));
 
@@ -67,13 +74,120 @@ class ApiClient {
     return value.replaceAll(RegExp(r'/+$'), '');
   }
 
+  void _configureHttpAdapters() {
+    try {
+      dio.httpClientAdapter = dio_adapter.createAdapter();
+      _refreshDio.httpClientAdapter = dio_adapter.createAdapter();
+    } catch (_) {
+      // Keep Dio defaults on unsupported adapter platforms.
+    }
+  }
+
   void registerSessionExpiredCallback(Future<void> Function()? callback) {
     _sessionExpiredCallback = callback;
   }
 
+  String? sanitizeToken(String? value) {
+    if (value == null) {
+      return null;
+    }
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    if (_tokenInvalidLiterals.contains(normalized.toLowerCase())) {
+      return null;
+    }
+    return normalized;
+  }
+
+  String normalizeRequestPath(String path) {
+    final raw = path.trim();
+    if (raw.isEmpty) {
+      return raw;
+    }
+
+    if (_looksLikeAbsoluteUrl(raw)) {
+      final uri = Uri.parse(raw);
+      return uri.replace(path: _normalizePathForTransport(uri.path)).toString();
+    }
+
+    final queryStart = raw.indexOf('?');
+    final pathOnly = queryStart >= 0 ? raw.substring(0, queryStart) : raw;
+    final queryPart = queryStart >= 0 ? raw.substring(queryStart) : '';
+    return '${_normalizePathForTransport(pathOnly)}$queryPart';
+  }
+
+  void ensureStandardRequestHeaders(RequestOptions options) {
+    final method = options.method.toUpperCase();
+
+    _removeHeaderIgnoreCase(options.headers, 'Accept');
+    options.headers['Accept'] = 'application/json';
+
+    final canHaveBody = const {
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+    }.contains(method);
+    final hasBody = options.data != null;
+    if (canHaveBody && hasBody) {
+      if (!_containsHeaderIgnoreCase(options.headers, 'Content-Type')) {
+        options.headers['Content-Type'] = Headers.jsonContentType;
+      }
+      return;
+    }
+
+    _removeHeaderIgnoreCase(options.headers, 'Content-Type');
+  }
+
+  void setBearerAuthHeader(Map<String, dynamic> headers, String token) {
+    _removeHeaderIgnoreCase(headers, 'Authorization');
+    headers['Authorization'] = 'Bearer $token';
+  }
+
+  void clearAuthHeader(Map<String, dynamic> headers) {
+    _removeHeaderIgnoreCase(headers, 'Authorization');
+  }
+
+  bool _looksLikeAbsoluteUrl(String value) {
+    final lower = value.toLowerCase();
+    return lower.startsWith('http://') || lower.startsWith('https://');
+  }
+
+  String _stripTrailingSlash(String value) {
+    if (value.isEmpty || value == '/') {
+      return value;
+    }
+    return value.replaceAll(RegExp(r'/+$'), '');
+  }
+
+  String _normalizePathForTransport(String value) {
+    final collapsed = value.replaceAll(RegExp(r'/{2,}'), '/');
+    if (_enforceNoTrailingSlash) {
+      return _stripTrailingSlash(collapsed);
+    }
+    return collapsed;
+  }
+
+  bool _containsHeaderIgnoreCase(Map<String, dynamic> headers, String name) {
+    final target = name.toLowerCase();
+    return headers.keys.any((key) => key.toString().toLowerCase() == target);
+  }
+
+  void _removeHeaderIgnoreCase(Map<String, dynamic> headers, String name) {
+    final target = name.toLowerCase();
+    final keys = headers.keys
+        .where((key) => key.toString().toLowerCase() == target)
+        .toList();
+    for (final key in keys) {
+      headers.remove(key);
+    }
+  }
+
   Future<String?> getValidAccessToken({bool allowRefresh = true}) async {
-    final token = await readAuthValue(accessTokenStorageKey);
-    if (!TokenUtils.isExpired(token)) {
+    final token = sanitizeToken(await readAuthValue(accessTokenStorageKey));
+    if (token != null && !TokenUtils.isExpired(token)) {
       return token;
     }
 
@@ -119,8 +233,16 @@ class ApiClient {
     RequestOptions requestOptions,
     String token,
   ) async {
+    final safeToken = sanitizeToken(token);
+    if (safeToken == null) {
+      throw sessionExpiredException(
+        requestOptions,
+        error: 'Missing bearer token',
+      );
+    }
+
     final headers = Map<String, dynamic>.from(requestOptions.headers);
-    headers['Authorization'] = 'Bearer $token';
+    setBearerAuthHeader(headers, safeToken);
 
     final extra = Map<String, dynamic>.from(requestOptions.extra);
     extra[_skipAuthInterceptorKey] = true;
@@ -158,12 +280,18 @@ class ApiClient {
       return true;
     }
 
-    final path = options.path.toLowerCase();
-    return path.contains('/api/v1/auth/login') ||
-        path.contains('/api/v1/auth/admin/login') ||
-        path.contains('/api/v1/auth/refresh') ||
-        path.contains('/api/v1/auth/token/refresh') ||
-        path.contains('/api/v1/auth/refresh-token');
+    final normalizedPath = normalizeRequestPath(options.path);
+    final pathLower = _stripTrailingSlash(
+      _looksLikeAbsoluteUrl(normalizedPath)
+          ? (Uri.tryParse(normalizedPath)?.path ?? normalizedPath)
+          : normalizedPath.split('?').first,
+    ).toLowerCase();
+
+    return pathLower == '/api/v1/auth/login' ||
+        pathLower == '/api/v1/auth/admin/login' ||
+        pathLower == '/api/v1/auth/refresh' ||
+        pathLower == '/api/v1/auth/token/refresh' ||
+        pathLower == '/api/v1/auth/refresh-token';
   }
 
   DioException sessionExpiredException(
@@ -178,13 +306,10 @@ class ApiClient {
   }
 
   Future<String?> _refreshAccessTokenInternal() async {
-    final refreshToken = await readAuthValue(refreshTokenStorageKey);
-    if (TokenUtils.isExpired(refreshToken)) {
-      await clearSession(notifyListeners: true);
-      return null;
-    }
-
-    if (refreshToken == null || refreshToken.isEmpty) {
+    final refreshToken = sanitizeToken(
+      await readAuthValue(refreshTokenStorageKey),
+    );
+    if (refreshToken == null || TokenUtils.isExpired(refreshToken)) {
       await clearSession(notifyListeners: true);
       return null;
     }
@@ -213,18 +338,22 @@ class ApiClient {
           data: attempt.payload,
           options: Options(
             contentType: Headers.jsonContentType,
-            headers: {'Authorization': 'Bearer $refreshToken'},
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $refreshToken',
+            },
             extra: const {_skipAuthInterceptorKey: true},
           ),
         );
 
         final data = _normalizeResponseData(response.data);
-        final newAccessToken = _extractAccessToken(data);
-        if (newAccessToken == null || newAccessToken.isEmpty) {
+        final newAccessToken = sanitizeToken(_extractAccessToken(data));
+        if (newAccessToken == null) {
           continue;
         }
 
-        final newRefreshToken = _extractRefreshToken(data) ?? refreshToken;
+        final newRefreshToken =
+            sanitizeToken(_extractRefreshToken(data)) ?? refreshToken;
 
         await writeAuthValue(accessTokenStorageKey, newAccessToken);
         await writeAuthValue(refreshTokenStorageKey, newRefreshToken);
@@ -274,9 +403,10 @@ class ApiClient {
   }
 
   String? _extractAccessToken(Map<String, dynamic> data) {
-    final direct =
-        data['access_token']?.toString() ?? data['token']?.toString();
-    if (direct != null && direct.isNotEmpty) {
+    final direct = sanitizeToken(
+      data['access_token']?.toString() ?? data['token']?.toString(),
+    );
+    if (direct != null) {
       return direct;
     }
 
@@ -291,8 +421,8 @@ class ApiClient {
   }
 
   String? _extractRefreshToken(Map<String, dynamic> data) {
-    final direct = data['refresh_token']?.toString();
-    if (direct != null && direct.isNotEmpty) {
+    final direct = sanitizeToken(data['refresh_token']?.toString());
+    if (direct != null) {
       return direct;
     }
 
@@ -307,16 +437,17 @@ class ApiClient {
   }
 
   Future<String?> readAuthValue(String key) async {
-    final cached = _readCached(key);
-    if (cached != null && cached.isNotEmpty) {
+    final cached = sanitizeToken(_readCached(key));
+    if (cached != null) {
       return cached;
     }
 
     try {
       final secureValue = await storage.read(key: key);
-      if (secureValue != null && secureValue.isNotEmpty) {
-        _writeCached(key, secureValue);
-        return secureValue;
+      final sanitized = sanitizeToken(secureValue);
+      if (sanitized != null) {
+        _writeCached(key, sanitized);
+        return sanitized;
       }
     } catch (e) {
       debugPrint('[ApiClient] secure read failed for $key: $e');
@@ -325,9 +456,10 @@ class ApiClient {
     try {
       final prefs = await SharedPreferences.getInstance();
       final fallbackValue = prefs.getString(key);
-      if (fallbackValue != null && fallbackValue.isNotEmpty) {
-        _writeCached(key, fallbackValue);
-        return fallbackValue;
+      final sanitized = sanitizeToken(fallbackValue);
+      if (sanitized != null) {
+        _writeCached(key, sanitized);
+        return sanitized;
       }
     } catch (e) {
       debugPrint('[ApiClient] shared prefs read failed for $key: $e');
@@ -337,17 +469,23 @@ class ApiClient {
   }
 
   Future<void> writeAuthValue(String key, String value) async {
-    _writeCached(key, value);
+    final sanitized = sanitizeToken(value);
+    if (sanitized == null) {
+      await deleteAuthValue(key);
+      return;
+    }
+
+    _writeCached(key, sanitized);
 
     try {
-      await storage.write(key: key, value: value);
+      await storage.write(key: key, value: sanitized);
     } catch (e) {
       debugPrint('[ApiClient] secure write failed for $key: $e');
     }
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(key, value);
+      await prefs.setString(key, sanitized);
     } catch (e) {
       debugPrint('[ApiClient] shared prefs write failed for $key: $e');
     }
@@ -480,20 +618,26 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    options.path = _apiClient.normalizeRequestPath(options.path);
+    _apiClient.ensureStandardRequestHeaders(options);
+
     if (_apiClient.shouldSkipAuthInterceptor(options)) {
       handler.next(options);
       return;
     }
 
-    final token = await _apiClient.getValidAccessToken();
+    final token = _apiClient.sanitizeToken(
+      await _apiClient.getValidAccessToken(),
+    );
     if (token == null) {
+      _apiClient.clearAuthHeader(options.headers);
       handler.reject(
         _apiClient.sessionExpiredException(options, error: 'Session expired'),
       );
       return;
     }
 
-    options.headers['Authorization'] = 'Bearer $token';
+    _apiClient.setBearerAuthHeader(options.headers, token);
     handler.next(options);
   }
 
@@ -531,10 +675,10 @@ class AuthInterceptor extends Interceptor {
     }
 
     if (err.type == DioExceptionType.connectionError && err.response == null) {
-      final token = await _apiClient.readAuthValue(
-        ApiClient.accessTokenStorageKey,
+      final token = _apiClient.sanitizeToken(
+        await _apiClient.readAuthValue(ApiClient.accessTokenStorageKey),
       );
-      if (TokenUtils.isExpired(token)) {
+      if (token == null || TokenUtils.isExpired(token)) {
         await _apiClient.clearSession(notifyListeners: true);
         handler.reject(
           _apiClient.sessionExpiredException(
