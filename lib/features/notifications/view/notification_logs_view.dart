@@ -174,7 +174,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
   Widget _tsRow(String label, String? ts) {
     return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
       Expanded(child: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12))),
-      Text(ts == null ? 'Pending' : ts, style: GoogleFonts.robotoMono(color: ts == null ? Colors.amber : Colors.white, fontSize: 12)),
+      Text(ts ?? 'Pending', style: GoogleFonts.robotoMono(color: ts == null ? Colors.amber : Colors.white, fontSize: 12)),
     ]));
   }
 

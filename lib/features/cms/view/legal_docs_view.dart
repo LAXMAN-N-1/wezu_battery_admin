@@ -123,13 +123,13 @@ class _LegalDocsViewState extends State<LegalDocsView> {
             const SizedBox(width: 10),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
               title: Text('Published', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              value: isActive, activeColor: Colors.green, inactiveTrackColor: Colors.white12,
+              value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => isActive = v),
             ))),
             const SizedBox(width: 10),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
               title: Text('Force App Update', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11)),
-              value: forceUpdate, activeColor: Colors.red, inactiveTrackColor: Colors.white12,
+              value: forceUpdate, activeThumbColor: Colors.red, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => forceUpdate = v),
             ))),
           ])

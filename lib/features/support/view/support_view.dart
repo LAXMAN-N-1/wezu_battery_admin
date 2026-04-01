@@ -548,7 +548,7 @@ class _TicketDetailDialogState extends State<_TicketDetailDialog> {
                       Switch(
                         value: _isInternalNote,
                         onChanged: (v) => setState(() => _isInternalNote = v),
-                        activeColor: Colors.amber,
+                        activeThumbColor: Colors.amber,
                       ),
                     ],
                   ),

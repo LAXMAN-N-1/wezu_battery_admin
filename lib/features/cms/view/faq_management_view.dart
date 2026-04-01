@@ -108,7 +108,7 @@ class _FaqManagementViewState extends State<FaqManagementView> {
           const SizedBox(height: 16),
           Row(children: [
             Expanded(child: DropdownButtonFormField<String>(
-              value: category, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
+              initialValue: category, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(labelText: 'Category', labelStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
               items: ['general', 'payment', 'rental', 'technical'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
               onChanged: (v) { if (v != null) setModalState(() => category = v); }
@@ -116,7 +116,7 @@ class _FaqManagementViewState extends State<FaqManagementView> {
             const SizedBox(width: 16),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
               title: Text(isActive ? 'Active' : 'Hidden', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              value: isActive, activeColor: Colors.green, inactiveTrackColor: Colors.white12,
+              value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => isActive = v),
             ))),
           ]),

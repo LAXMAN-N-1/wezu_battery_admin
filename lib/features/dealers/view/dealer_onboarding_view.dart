@@ -259,7 +259,7 @@ class _DealerOnboardingViewState extends State<DealerOnboardingView> {
                 const SizedBox(width: 16),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Advance Application', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text('${app.businessName}', style: const TextStyle(color: Colors.white54)),
+                  Text(app.businessName, style: const TextStyle(color: Colors.white54)),
                 ])),
               ]),
               const SizedBox(height: 24),

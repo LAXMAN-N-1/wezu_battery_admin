@@ -1,7 +1,6 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
+import '../../../../core/services/csv/csv_service.dart';
 import '../models/battery.dart';
 
 class InventoryRepository {
@@ -27,9 +26,15 @@ class InventoryRepository {
       'sort_by': sortBy,
       'sort_order': sortOrder,
     };
-    if (status != null && status != 'All') query['status'] = status.toLowerCase();
-    if (locationType != null && locationType != 'All') query['location_type'] = locationType.toLowerCase();
-    if (batteryType != null && batteryType != 'All') query['battery_type'] = batteryType;
+    if (status != null && status != 'All') {
+      query['status'] = status.toLowerCase();
+    }
+    if (locationType != null && locationType != 'All') {
+      query['location_type'] = locationType.toLowerCase();
+    }
+    if (batteryType != null && batteryType != 'All') {
+      query['battery_type'] = batteryType;
+    }
     if (minHealth != null) query['min_health'] = minHealth;
     if (maxHealth != null) query['max_health'] = maxHealth;
     if (search != null && search.isNotEmpty) query['search'] = search;
@@ -58,8 +63,14 @@ class InventoryRepository {
     return data.map((json) => BatteryAuditLog.fromJson(json)).toList();
   }
 
-  Future<List<BatteryHealthHistory>> getBatteryHealthHistory(String batteryId, {int days = 90}) async {
-    final response = await _api.get('$_baseUrl/$batteryId/health-history', queryParameters: {'days': days});
+  Future<List<BatteryHealthHistory>> getBatteryHealthHistory(
+    String batteryId, {
+    int days = 90,
+  }) async {
+    final response = await _api.get(
+      '$_baseUrl/$batteryId/health-history',
+      queryParameters: {'days': days},
+    );
     final List<dynamic> data = response.data;
     return data.map((json) => BatteryHealthHistory.fromJson(json)).toList();
   }
@@ -75,21 +86,28 @@ class InventoryRepository {
   }
 
   Future<void> deleteBattery(String id, {String? reason}) async {
-    await _api.patch('$_baseUrl/$id', data: {
-      'status': 'retired',
-      'description': reason ?? 'Admin Deletion'
-    });
+    await _api.patch(
+      '$_baseUrl/$id',
+      data: {'status': 'retired', 'description': reason ?? 'Admin Deletion'},
+    );
   }
 
-  Future<Map<String, dynamic>> bulkUpdateBatteries(List<String> batteryIds, String status) async {
-    final response = await _api.post('$_baseUrl/bulk-update', data: {
-      'battery_ids': batteryIds,
-      'status': status,
-    });
+  Future<Map<String, dynamic>> bulkUpdateBatteries(
+    List<String> batteryIds,
+    String status,
+  ) async {
+    final response = await _api.post(
+      '$_baseUrl/bulk-update',
+      data: {'battery_ids': batteryIds, 'status': status},
+    );
     return response.data;
   }
 
-  Future<Map<String, dynamic>> importBatteries(List<int> bytes, String filename, {bool dryRun = false}) async {
+  Future<Map<String, dynamic>> importBatteries(
+    List<int> bytes,
+    String filename, {
+    bool dryRun = false,
+  }) async {
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(bytes, filename: filename),
     });
@@ -101,20 +119,27 @@ class InventoryRepository {
     return response.data;
   }
 
-  Future<void> exportBatteries({String? status, String? locationType, String? batteryType}) async {
+  Future<void> exportBatteries({
+    String? status,
+    String? locationType,
+    String? batteryType,
+  }) async {
     final Map<String, dynamic> query = {};
-    if (status != null && status != 'All') query['status'] = status.toLowerCase();
-    if (locationType != null && locationType != 'All') query['location_type'] = locationType.toLowerCase();
-    if (batteryType != null && batteryType != 'All') query['battery_type'] = batteryType;
+    if (status != null && status != 'All') {
+      query['status'] = status.toLowerCase();
+    }
+    if (locationType != null && locationType != 'All') {
+      query['location_type'] = locationType.toLowerCase();
+    }
+    if (batteryType != null && batteryType != 'All') {
+      query['battery_type'] = batteryType;
+    }
 
     final response = await _api.get('$_baseUrl/export', queryParameters: query);
-    
-    // Trigger browser download
-    final blob = html.Blob([response.data.toString()], 'text/csv');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    html.AnchorElement(href: url)
-      ..setAttribute('download', 'batteries_export.csv')
-      ..click();
-    html.Url.revokeObjectUrl(url);
+
+    await CsvService.downloadCsvString(
+      response.data.toString(),
+      'batteries_export',
+    );
   }
 }

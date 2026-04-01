@@ -63,7 +63,7 @@ class _GeneralSettingsViewState extends State<GeneralSettingsView> {
           Text(title, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
         ]),
         const SizedBox(height: 24),
-        ...configs.map((c) => _configRow(c)).toList(),
+        ...configs.map((c) => _configRow(c)),
       ]));
   }
 
@@ -82,7 +82,7 @@ class _GeneralSettingsViewState extends State<GeneralSettingsView> {
 
   Widget _renderInputForValue(SystemConfigItem config) {
     if (config.value == 'true' || config.value == 'false') {
-      return Align(alignment: Alignment.centerLeft, child: Switch(value: config.value == 'true', activeColor: Colors.blue, onChanged: (val) {
+      return Align(alignment: Alignment.centerLeft, child: Switch(value: config.value == 'true', activeThumbColor: Colors.blue, onChanged: (val) {
         _repo.updateGeneralSetting(config.id, val.toString()); _loadData();
       }));
     }

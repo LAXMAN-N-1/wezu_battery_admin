@@ -68,7 +68,7 @@ class _SuspensionDialogState extends State<SuspensionDialog> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int?>(
-            value: _days,
+            initialValue: _days,
             dropdownColor: const Color(0xFF1E293B),
             decoration: const InputDecoration(
               labelText: 'Duration',

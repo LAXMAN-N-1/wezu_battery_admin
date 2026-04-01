@@ -2,12 +2,14 @@ FROM ghcr.io/cirruslabs/flutter:3.41.0 AS build
 
 WORKDIR /app
 
+ARG API_BASE_URL=https://api1.powerfrill.com
+
 COPY pubspec.yaml pubspec.lock ./
 RUN flutter pub get
 
 COPY . .
 RUN flutter config --enable-web
-RUN flutter build web --release
+RUN flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=${API_BASE_URL}
 
 FROM nginx:1.27-alpine AS runtime
 

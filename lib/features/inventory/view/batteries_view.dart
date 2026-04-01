@@ -93,13 +93,13 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
       ]);
 
       if (mounted) {
-        final listResult = results[0] as Map<String, dynamic>;
+        final listResult = results[0];
         setState(() {
           _batteries = listResult['items'] as List<Battery>;
           _totalCount = (listResult['total_count'] is num)
               ? (listResult['total_count'] as num).toInt()
               : int.tryParse(listResult['total_count']?.toString() ?? '') ?? 0;
-          _summary = results[1] as Map<String, dynamic>;
+          _summary = results[1];
           _isLoading = false;
           _selectedIds.clear();
           _bulkBarController.reverse();
@@ -464,14 +464,14 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
   // PREMIUM STAT CARDS
   // =========================================================================
   Widget _buildStatsRow() {
-    int _safeInt(dynamic v) => (v is num) ? v.toInt() : int.tryParse(v?.toString() ?? '') ?? 0;
-    double _safeDbl(dynamic v) => (v is num) ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0.0;
+    int safeInt(dynamic v) => (v is num) ? v.toInt() : int.tryParse(v?.toString() ?? '') ?? 0;
+    double safeDbl(dynamic v) => (v is num) ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0.0;
 
-    final total = _safeInt(_summary['total_batteries']);
-    final available = _safeInt(_summary['available_count']);
-    final rented = _safeInt(_summary['rented_count']);
-    final maintenance = _safeInt(_summary['maintenance_count']);
-    final utilization = _safeDbl(_summary['utilization_percentage']);
+    final total = safeInt(_summary['total_batteries']);
+    final available = safeInt(_summary['available_count']);
+    final rented = safeInt(_summary['rented_count']);
+    final maintenance = safeInt(_summary['maintenance_count']);
+    final utilization = safeDbl(_summary['utilization_percentage']);
 
     final pctAvail = total > 0 ? '${(available / total * 100).toStringAsFixed(0)}% of fleet' : '—';
     final pctRent = total > 0 ? '${(rented / total * 100).toStringAsFixed(0)}% of fleet' : '—';
@@ -488,7 +488,7 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
         const SizedBox(width: 14),
         Expanded(child: _premiumStatCard('Service Mode', '$maintenance', Icons.build_circle_outlined, const Color(0xFFF59E0B), pctMaint, 'Maintenance', warning: maintWarn)),
         const SizedBox(width: 14),
-        Expanded(child: _premiumStatCard('Utilization', '${utilization}%', Icons.trending_up_rounded, const Color(0xFF14B8A6), null, null)),
+        Expanded(child: _premiumStatCard('Utilization', '$utilization%', Icons.trending_up_rounded, const Color(0xFF14B8A6), null, null)),
       ],
     ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.05);
   }

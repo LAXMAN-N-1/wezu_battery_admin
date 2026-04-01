@@ -166,7 +166,7 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
               DataCell(Row(children: [
                 Icon(isCharging ? Icons.arrow_upward : Icons.arrow_downward, color: isCharging ? Colors.green : Colors.orange, size: 14),
                 const SizedBox(width: 4),
-                Text('${log.powerKw.abs().toStringAsFixed(1)}', style: TextStyle(color: isCharging ? Colors.green : Colors.orange)),
+                Text(log.powerKw.abs().toStringAsFixed(1), style: TextStyle(color: isCharging ? Colors.green : Colors.orange)),
               ])),
               DataCell(Text(log.energyKwh.toStringAsFixed(2), style: const TextStyle(color: Colors.white))),
               DataCell(Text('${log.socStart.toStringAsFixed(1)}%', style: const TextStyle(color: Colors.white54))),

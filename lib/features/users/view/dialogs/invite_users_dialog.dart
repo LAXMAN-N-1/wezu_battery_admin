@@ -20,7 +20,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog> with SingleTicker
   final _emailController = TextEditingController();
   final _bulkCsvController = TextEditingController();
   String _selectedRole = 'customer';
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {

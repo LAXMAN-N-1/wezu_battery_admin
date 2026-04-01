@@ -9,6 +9,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 });
 
 class ApiClient {
+  static const _fallbackApiBaseUrl = 'https://api1.powerfrill.com';
   late Dio dio;
   final storage = const FlutterSecureStorage();
   String? _memoryAdminToken;
@@ -17,8 +18,7 @@ class ApiClient {
   ApiClient() {
     dio = Dio(
       BaseOptions(
-        baseUrl:
-            'https://api1.powerfrill.com',
+        baseUrl: _resolvedApiBaseUrl(),
         connectTimeout: const Duration(seconds: 60),
         receiveTimeout: const Duration(seconds: 60),
         headers: {
@@ -47,8 +47,22 @@ class ApiClient {
       ),
     );
 
-    // Add logging in debug mode
-    dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(requestBody: true, responseBody: true),
+      );
+    }
+  }
+
+  static String _resolvedApiBaseUrl() {
+    final value = const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: _fallbackApiBaseUrl,
+    ).trim();
+    if (value.isEmpty) {
+      return _fallbackApiBaseUrl;
+    }
+    return value.replaceAll(RegExp(r'/+$'), '');
   }
 
   Future<String?> readAuthValue(String key) async {

@@ -165,7 +165,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView> with Single
                       await _repository.updateRole(role.copyWith(isActive: v));
                       _loadData();
                     },
-                    activeColor: Colors.blue,
+                    activeThumbColor: Colors.blue,
                   ),
                   const SizedBox(width: 8),
                   IconButton(

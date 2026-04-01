@@ -349,7 +349,7 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 dropdownColor: const Color(0xFF1E293B),
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
@@ -389,7 +389,7 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
               const SizedBox(height: 16),
               SwitchListTile(
                 title: const Text('Published (Active)', style: TextStyle(color: Colors.white)),
-                activeColor: const Color(0xFF3B82F6),
+                activeThumbColor: const Color(0xFF3B82F6),
                 value: _isActive,
                 onChanged: (v) => setState(() => _isActive = v),
                 contentPadding: EdgeInsets.zero,

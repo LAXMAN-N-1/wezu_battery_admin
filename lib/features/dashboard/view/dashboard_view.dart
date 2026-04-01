@@ -629,7 +629,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               ),
             ),
           );
-        }).toList(),
+        }),
         // Add Button
         Material(
           color: Colors.transparent,
@@ -767,8 +767,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   Widget _buildTrendGraph(TrendData data, AppColorsExtension colors) {
-    if (data.points.isEmpty)
+    if (data.points.isEmpty) {
       return const Center(child: Text('No data available'));
+    }
 
     final activeSet = ref.watch(trendActiveMetricsProvider);
     final availableMetrics = ref.watch(trendAvailableMetricsProvider);
@@ -845,7 +846,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               interval: horizontalInterval,
               reservedSize: 32,
               getTitlesWidget: (value, meta) {
-                if (value == 0)
+                if (value == 0) {
                   return Text(
                     '0',
                     style: GoogleFonts.inter(
@@ -854,6 +855,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                       fontWeight: FontWeight.w600,
                     ),
                   );
+                }
                 if (value % 4000 == 0) {
                   return Text(
                     '${(value / 1000).toInt()}k',
@@ -1486,7 +1488,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${percentAvailable.toStringAsFixed(1)}% available • ${inUse} in use',
+                          '${percentAvailable.toStringAsFixed(1)}% available • $inUse in use',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             color: colors.textTertiary,
@@ -1602,8 +1604,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 final idx = value.toInt();
-                if (idx < 0 || idx >= data.points.length)
+                if (idx < 0 || idx >= data.points.length) {
                   return const SizedBox();
+                }
                 final label = data.points[idx].date.split('-').last;
                 return Padding(
                   padding: const EdgeInsets.only(top: 6.0),
@@ -1909,7 +1912,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               meta: meta,
               space: 12,
               angle: 0, // No rotation as requested
-              child: Container(
+              child: SizedBox(
                 width: 60,
                 child: Text(
                   label,

@@ -45,7 +45,9 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
       if (_statusFilter != 'all' && r.status != _statusFilter) return false;
       if (_searchQuery.isNotEmpty &&
           !r.description.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-          !r.maintenanceType.toLowerCase().contains(_searchQuery.toLowerCase())) return false;
+          !r.maintenanceType.toLowerCase().contains(_searchQuery.toLowerCase())) {
+        return false;
+      }
       return true;
     }).toList();
   }

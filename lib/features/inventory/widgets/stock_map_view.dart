@@ -12,14 +12,10 @@ class StockMapView extends ConsumerStatefulWidget {
 }
 
 class _StockMapViewState extends ConsumerState<StockMapView> {
-  GoogleMapController? _mapController;
-  // Default centered roughly around New York/Global center if no stations
-  final LatLng _defaultCenter = const LatLng(40.7128, -74.0060); 
-
   @override
   Widget build(BuildContext context) {
     final stationsAsync = ref.watch(stockStationsProvider);
-    
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
@@ -30,42 +26,65 @@ class _StockMapViewState extends ConsumerState<StockMapView> {
       child: stationsAsync.when(
         data: (stations) {
           if (stations.isEmpty) {
-            return const Center(child: Text('No stations to display on map', style: TextStyle(color: Colors.white54)));
+            return const Center(
+              child: Text(
+                'No stations to display on map',
+                style: TextStyle(color: Colors.white54),
+              ),
+            );
           }
-          
+
           final markers = stations.map((s) {
             final isCritical = s.isLowStock;
             final isWarning = s.utilizationPercentage > 85 && !isCritical;
-            final hue = isCritical ? BitmapDescriptor.hueRed : (isWarning ? BitmapDescriptor.hueOrange : BitmapDescriptor.hueGreen);
-            
+            final hue = isCritical
+                ? BitmapDescriptor.hueRed
+                : (isWarning
+                      ? BitmapDescriptor.hueOrange
+                      : BitmapDescriptor.hueGreen);
+
             return Marker(
               markerId: MarkerId(s.stationId.toString()),
               position: LatLng(s.latitude, s.longitude),
               icon: BitmapDescriptor.defaultMarkerWithHue(hue),
               infoWindow: InfoWindow(
                 title: s.stationName,
-                snippet: 'Available: ${s.availableCount} | Rented: ${s.rentedCount}',
+                snippet:
+                    'Available: ${s.availableCount} | Rented: ${s.rentedCount}',
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => StationStockDetailView(stationId: s.stationId)));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          StationStockDetailView(stationId: s.stationId),
+                    ),
+                  );
                 },
               ),
             );
           }).toSet();
-          
+
           // Determine bounds to fit all stations if possible, or just use first station as center
-          final center = LatLng(stations.first.latitude, stations.first.longitude);
+          final center = LatLng(
+            stations.first.latitude,
+            stations.first.longitude,
+          );
 
           return GoogleMap(
             initialCameraPosition: CameraPosition(target: center, zoom: 11),
             markers: markers,
-            onMapCreated: (controller) => _mapController = controller,
             myLocationEnabled: false,
             mapType: MapType.normal,
             // Custom map style can be added here
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error rendering map: $err', style: const TextStyle(color: Colors.red))),
+        error: (err, _) => Center(
+          child: Text(
+            'Error rendering map: $err',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
       ),
     );
   }

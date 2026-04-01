@@ -137,7 +137,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Publish Status', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: status, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
+                    initialValue: status, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
                     items: ['draft', 'published', 'scheduled'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
                     onChanged: (v) { if (v != null) setModalState(() => status = v); }
@@ -147,7 +147,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Content Category', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: category, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
+                    initialValue: category, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
                     items: ['general', 'news', 'educational', 'update'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
                     onChanged: (v) { if (v != null) setModalState(() => category = v); }

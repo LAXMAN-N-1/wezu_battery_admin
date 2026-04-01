@@ -57,7 +57,7 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
           ])),
           Column(children: [
             IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 18), onPressed: () => _showEditDialog(c)),
-            Switch(value: c.isActive, activeColor: Colors.green,
+            Switch(value: c.isActive, activeThumbColor: Colors.green,
               onChanged: (val) async { await _repo.updateConfig(c.id, {'is_active': val}); _loadData(); }),
             Text(c.isActive ? 'Active' : 'Inactive', style: GoogleFonts.inter(color: c.isActive ? Colors.green : Colors.white38, fontSize: 11)),
           ]),
@@ -107,7 +107,7 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
           const SizedBox(height: 16),
           Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
             title: Text('Account Integration Active', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-            value: isActive, activeColor: Colors.green, inactiveTrackColor: Colors.white12,
+            value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
             onChanged: (v) => setModalState(() => isActive = v),
           )),
         ])),

@@ -68,7 +68,7 @@ class _BannerManagementViewState extends State<BannerManagementView> {
               _infoPill(Icons.link, banner['deep_link']),
             ],
             const Spacer(),
-            Switch(value: isActive, activeColor: Colors.green, onChanged: (val) async {
+            Switch(value: isActive, activeThumbColor: Colors.green, onChanged: (val) async {
               await _repo.updateBanner(banner['id'], {'is_active': val}); _loadData();
             }),
             IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 18), onPressed: () => _showEditDialog(banner)),
@@ -109,7 +109,7 @@ class _BannerManagementViewState extends State<BannerManagementView> {
             const SizedBox(width: 16),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
               title: Text(isActive ? 'Active' : 'Hidden', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              value: isActive, activeColor: Colors.green, inactiveTrackColor: Colors.white12,
+              value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => isActive = v),
             ))),
           ])

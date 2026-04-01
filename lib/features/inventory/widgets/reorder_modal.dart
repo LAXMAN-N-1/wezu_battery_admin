@@ -200,7 +200,7 @@ class _ReorderModalState extends ConsumerState<ReorderModal> {
                   const Text('Urgency', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: widget.station.isLowStock ? 'Urgent' : 'Normal',
+                    initialValue: widget.station.isLowStock ? 'Urgent' : 'Normal',
                     dropdownColor: const Color(0xFF0F172A),
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
