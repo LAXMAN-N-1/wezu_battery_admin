@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api/api_client.dart';
+import '../../../core/widgets/api_error_handler.dart';
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
@@ -41,7 +42,8 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._apiClient) : super(AuthState()) {
+  AuthNotifier(this._apiClient) : super(AuthState(isLoading: true)) {
+    _apiClient.registerSessionExpiredCallback(_onSessionExpired);
     _checkStatus();
   }
 
@@ -50,15 +52,45 @@ class AuthNotifier extends StateNotifier<AuthState> {
   static const _adminRoles = <String>{'admin', 'super_admin', 'superadmin'};
 
   Future<void> _checkStatus() async {
-    state = state.copyWith(isLoading: true);
-    final token = await _apiClient.readAuthValue('admin_token');
+    final token = await _apiClient.getValidAccessToken();
 
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       state = state.copyWith(isLoading: false, isAuthenticated: true);
       return;
     }
 
-    state = state.copyWith(isLoading: false, isAuthenticated: false);
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+    );
+  }
+
+  Future<void> _onSessionExpired() async {
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+      error: 'Your session has expired. Please log in again.',
+    );
+  }
+
+  Future<String?> getValidAccessToken() async {
+    return _apiClient.getValidAccessToken();
+  }
+
+  Future<String?> refreshAccessToken() async {
+    return _apiClient.refreshAccessToken();
+  }
+
+  Future<void> clearSessionAndRedirect() async {
+    await _apiClient.clearSession(notifyListeners: false);
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+      error: 'Your session has expired. Please log in again.',
+    );
   }
 
   Future<void> login(String credential, String password) async {
@@ -115,10 +147,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _apiClient.deleteAuthValue('admin_token');
-    await _apiClient.deleteAuthValue('admin_refresh_token');
-
-    state = state.copyWith(isAuthenticated: false, error: null, user: null);
+    await _apiClient.clearSession(notifyListeners: false);
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      error: null,
+      user: null,
+    );
   }
 
   Future<_AuthResult> _authenticate(String credential, String password) async {
@@ -273,8 +308,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _persistSession(_AuthResult result) async {
-    await _apiClient.writeAuthValue('admin_token', result.accessToken);
-    await _apiClient.writeAuthValue('admin_refresh_token', result.refreshToken);
+    await _apiClient.writeAuthValue(
+      ApiClient.accessTokenStorageKey,
+      result.accessToken,
+    );
+    await _apiClient.writeAuthValue(
+      ApiClient.refreshTokenStorageKey,
+      result.refreshToken,
+    );
   }
 
   bool _shouldTryNextEndpoint(DioException error) {
@@ -291,42 +332,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   String _extractErrorMessage(DioException error) {
-    final statusCode = error.response?.statusCode;
-    final detail = _extractServerDetail(error.response?.data);
-
-    if (statusCode == 400) {
-      return detail ?? 'Incorrect credentials or inactive account.';
-    }
-
-    if (statusCode == 403) {
-      return detail ?? 'You do not have admin privileges.';
-    }
-
-    if (statusCode == 422) {
-      return detail ?? 'Invalid login request format.';
-    }
-
-    if (statusCode == 500) {
-      return 'Unable to sign in right now. Please try again.';
-    }
-
-    return detail ?? 'Unable to sign in right now. Please try again.';
-  }
-
-  String? _extractServerDetail(dynamic responseData) {
-    if (responseData is Map<String, dynamic>) {
-      return responseData['detail']?.toString() ??
-          responseData['message']?.toString() ??
-          responseData['error']?.toString();
-    }
-
-    if (responseData is Map) {
-      return responseData['detail']?.toString() ??
-          responseData['message']?.toString() ??
-          responseData['error']?.toString();
-    }
-
-    return null;
+    return ApiErrorHandler.getReadableMessage(error);
   }
 
   void _logLoginFailure(DioException error, {required String endpoint}) {

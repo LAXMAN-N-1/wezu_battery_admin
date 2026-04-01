@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_themes.dart';
 import 'core/theme/theme_provider.dart';
+import 'core/widgets/app_scaffold_keys.dart';
 import 'router/app_router.dart';
 
 void main() {
@@ -20,6 +21,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'PowerFill Admin',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       theme: AppThemes.light,
       darkTheme: AppThemes.dark,
       themeMode: themeMode,

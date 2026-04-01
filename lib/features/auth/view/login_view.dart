@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -303,9 +304,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           isLoading: authState.isLoading,
                           onPressed: () async {
                             FocusScope.of(context).unfocus();
-                            TextInput.finishAutofillContext(shouldSave: true);
-                            await Future<void>.delayed(
-                              const Duration(milliseconds: 50),
+                            TextInput.finishAutofillContext(
+                              shouldSave: !kIsWeb,
                             );
 
                             final credential =
