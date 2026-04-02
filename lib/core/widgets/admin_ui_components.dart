@@ -180,28 +180,42 @@ class StatCard extends StatelessWidget {
 
 class AdminTextField extends StatefulWidget {
   final TextEditingController controller;
+  final FocusNode? focusNode;
   final String label;
   final String hint;
   final IconData icon;
   final bool obscureText;
   final VoidCallback? onToggleObscure;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onFieldSubmitted;
+  final String? Function(String?)? validator;
   final TextInputType? keyboardType;
   final Iterable<String>? autofillHints;
   final TextInputAction? textInputAction;
+  final bool enabled;
+  final bool autocorrect;
+  final bool enableSuggestions;
+  final TextCapitalization textCapitalization;
 
   const AdminTextField({
     super.key,
     required this.controller,
+    this.focusNode,
     required this.label,
     required this.hint,
     required this.icon,
     this.obscureText = false,
     this.onToggleObscure,
     this.onChanged,
+    this.onFieldSubmitted,
+    this.validator,
     this.keyboardType,
     this.autofillHints,
     this.textInputAction,
+    this.enabled = true,
+    this.autocorrect = false,
+    this.enableSuggestions = true,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -241,13 +255,20 @@ class _AdminTextFieldState extends State<AdminTextField> {
                     ]
                   : [],
             ),
-            child: TextField(
+            child: TextFormField(
               controller: widget.controller,
+              focusNode: widget.focusNode,
+              enabled: widget.enabled,
               obscureText: widget.obscureText,
               onChanged: widget.onChanged,
+              onFieldSubmitted: widget.onFieldSubmitted,
+              validator: widget.validator,
               keyboardType: widget.keyboardType,
               autofillHints: widget.autofillHints,
               textInputAction: widget.textInputAction,
+              autocorrect: widget.autocorrect,
+              enableSuggestions: widget.enableSuggestions,
+              textCapitalization: widget.textCapitalization,
               style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
               decoration: InputDecoration(
                 hintText: widget.hint,
@@ -259,6 +280,9 @@ class _AdminTextFieldState extends State<AdminTextField> {
                 ),
                 suffixIcon: widget.onToggleObscure != null
                     ? IconButton(
+                        tooltip: widget.obscureText
+                            ? 'Show password'
+                            : 'Hide password',
                         icon: Icon(
                           widget.obscureText
                               ? Icons.visibility_outlined
@@ -289,6 +313,18 @@ class _AdminTextFieldState extends State<AdminTextField> {
                     color: Color(0xFF3B82F6),
                     width: 1.5,
                   ),
+                ),
+                errorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.redAccent),
+                ),
+                focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.redAccent),
+                ),
+                errorStyle: GoogleFonts.inter(
+                  color: Colors.redAccent,
+                  fontSize: 11,
                 ),
               ),
             ),

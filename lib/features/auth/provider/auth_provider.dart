@@ -93,6 +93,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  void clearError() {
+    if (state.error != null) {
+      state = state.copyWith(error: null);
+    }
+  }
+
   Future<void> login(String credential, String password) async {
     state = state.copyWith(isLoading: true, error: null);
 
