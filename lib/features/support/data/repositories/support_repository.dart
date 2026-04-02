@@ -230,10 +230,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/tickets/stats');
       return response.data;
     } catch (e) {
-      return {
-        "total_tickets": 0, "open": 0, "in_progress": 0, "resolved": 0, "closed": 0, "overdue": 0, "today_new": 0,
-        "avg_resolution_hours": 0.0, "priority_breakdown": {}, "category_breakdown": {}, "source_breakdown": {}
-      };
+      rethrow;
     }
   }
 
@@ -250,7 +247,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/tickets', queryParameters: queryParams);
       return (response.data['tickets'] as List).map((json) => SupportTicket.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -259,7 +256,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/tickets/$ticketId');
       return TicketDetail.fromJson(response.data);
     } catch (e) {
-      return null;
+      rethrow;
     }
   }
 
@@ -268,7 +265,7 @@ class SupportRepository {
       await _apiClient.put('/api/v1/admin/support/tickets/$ticketId/status', queryParameters: {'new_status': newStatus});
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -277,7 +274,7 @@ class SupportRepository {
       await _apiClient.put('/api/v1/admin/support/tickets/$ticketId/priority', queryParameters: {'priority': priority});
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -286,7 +283,7 @@ class SupportRepository {
       await _apiClient.put('/api/v1/admin/support/tickets/$ticketId/assign', queryParameters: {'agent_id': agentId});
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -301,7 +298,7 @@ class SupportRepository {
       );
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -311,9 +308,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/knowledge-base/stats');
       return response.data;
     } catch (e) {
-      return {
-        "total_articles": 0, "active_articles": 0, "total_helpful": 0, "total_not_helpful": 0, "satisfaction_rate": 0.0, "categories": {}
-      };
+      rethrow;
     }
   }
 
@@ -326,7 +321,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/knowledge-base', queryParameters: queryParams);
       return (response.data['articles'] as List).map((json) => KnowledgeBaseArticle.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -343,7 +338,7 @@ class SupportRepository {
       );
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -360,7 +355,7 @@ class SupportRepository {
       );
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -369,7 +364,7 @@ class SupportRepository {
       await _apiClient.delete('/api/v1/admin/support/knowledge-base/$id');
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -379,10 +374,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/team/performance');
       return response.data;
     } catch (e) {
-      return {
-        "agents": [],
-        "sla_metrics": {"critical_breach_4h": 0, "general_breach_24h": 0, "avg_first_response_minutes": 0},
-      };
+      rethrow;
     }
   }
 
@@ -391,7 +383,7 @@ class SupportRepository {
       final response = await _apiClient.get('/api/v1/admin/support/team/overview');
       return (response.data['daily_trends'] as List).map((j) => DailyTrend.fromJson(j)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 }

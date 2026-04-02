@@ -17,6 +17,7 @@ class _DealerDocumentsViewState extends State<DealerDocumentsView> {
   List<Map<String, dynamic>> _documents = [];
   List<Map<String, dynamic>> _filtered = [];
   bool _isLoading = true;
+  String? _error;
   String _searchQuery = '';
   String _typeFilter = 'all';
 
@@ -36,13 +37,23 @@ class _DealerDocumentsViewState extends State<DealerDocumentsView> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    final docs = await _repository.getAllDocuments(search: _searchQuery.isNotEmpty ? _searchQuery : null);
     setState(() {
-      _documents = docs;
-      _applyFilters();
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final docs = await _repository.getAllDocuments(search: _searchQuery.isNotEmpty ? _searchQuery : null);
+      setState(() {
+        _documents = docs;
+        _applyFilters();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Dealer documents are unavailable: $e';
+      });
+    }
   }
 
   void _applyFilters() {
@@ -54,6 +65,14 @@ class _DealerDocumentsViewState extends State<DealerDocumentsView> {
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+        ),
+      );
+    }
     final docTypes = _documents.map((d) => d['document_type'] as String).toSet().toList();
     final verified = _filtered.where((d) => d['is_verified'] == true).length;
     final pending = _filtered.where((d) => d['is_verified'] == false).length;

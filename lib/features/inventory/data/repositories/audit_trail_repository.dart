@@ -24,8 +24,7 @@ class AuditTrailRepository {
       final entries = (data['entries'] as List).map((e) => AuditTrailEntry.fromJson(e)).toList();
       return {'entries': entries, 'total_count': data['total_count'] ?? 0};
     } catch (e) {
-      print('Error fetching audit trails: $e');
-      return {'entries': <AuditTrailEntry>[], 'total_count': 0};
+      throw Exception('Failed to fetch audit trails: $e');
     }
   }
 
@@ -34,8 +33,7 @@ class AuditTrailRepository {
       final response = await _api.get('/api/v1/admin/audit-trails/stats');
       return AuditTrailStats.fromJson(response.data);
     } catch (e) {
-      print('Error fetching audit stats: $e');
-      return AuditTrailStats(totalEntries: 0, todayCount: 0, weekCount: 0, transfers: 0, disposals: 0, statusChanges: 0, manualEntries: 0);
+      throw Exception('Failed to fetch audit trail stats: $e');
     }
   }
 }

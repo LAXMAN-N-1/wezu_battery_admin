@@ -26,7 +26,7 @@ class FleetOpsRepository {
       final response = await _apiClient.get('/api/v1/admin/iot/devices', queryParameters: queryParams);
       return (response.data as List).map((json) => IoTDevice.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -39,7 +39,7 @@ class FleetOpsRepository {
       });
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -52,7 +52,7 @@ class FleetOpsRepository {
       final response = await _apiClient.get('/api/v1/admin/iot/commands/history', queryParameters: queryParams);
       return (response.data as List).map((json) => DeviceCommandLog.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -61,7 +61,7 @@ class FleetOpsRepository {
       final response = await _apiClient.get('/api/v1/admin/iot/geofences');
       return (response.data as List).map((json) => Geofence.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -70,7 +70,7 @@ class FleetOpsRepository {
       await _apiClient.post('/api/v1/admin/iot/geofences', data: geofence.toJson());
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -83,7 +83,7 @@ class FleetOpsRepository {
       final response = await _apiClient.get('/api/v1/admin/iot/alerts', queryParameters: queryParams);
       return (response.data as List).map((json) => FleetAlert.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -92,7 +92,7 @@ class FleetOpsRepository {
       await _apiClient.put('/api/v1/admin/iot/alerts/$alertId/acknowledge');
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -101,7 +101,7 @@ class FleetOpsRepository {
       final response = await _apiClient.get('/api/v1/admin/iot/telematics/$batteryId', queryParameters: {'hours': hours});
       return (response.data as List).map((json) => TelemetryData.fromJson(json)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 }

@@ -95,8 +95,7 @@ class UserRepository {
             : limit,
       );
     } catch (e) {
-      print('Error fetching users: $e');
-      return PaginatedUsers(users: [], totalCount: 0, page: page, limit: limit);
+      rethrow;
     }
   }
 
@@ -105,8 +104,7 @@ class UserRepository {
       final response = await _api.get('/api/v1/admin/users/$id');
       return User.fromJson(response.data);
     } catch (e) {
-      print("Error fetching user $id: $e");
-      return null;
+      rethrow;
     }
   }
 
@@ -150,74 +148,59 @@ class UserRepository {
         'full_name': fullName.trim(),
     };
 
-    try {
-      final response = await _api.post(
-        '/api/v1/admin/users/invite',
-        data: payload,
-      );
-      return response.data as Map<String, dynamic>;
-    } on Exception {
-      return createUser(
-        fullName: fullName?.trim().isNotEmpty == true
-            ? fullName!.trim()
-            : email.trim(),
-        email: email.trim(),
-        phoneNumber: '',
-        password: 'Welcome@123',
-        roleName: roleName.trim(),
-      );
-    }
+    final response = await _api.post(
+      '/api/v1/admin/users/invite',
+      data: payload,
+    );
+    return response.data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> adminBulkInvite(
     List<Map<String, dynamic>> invites,
   ) async {
-    try {
-      final response = await _api.post(
-        '/api/v1/admin/users/bulk-invite',
-        data: {'invites': invites},
-      );
-      return response.data as Map<String, dynamic>;
-    } on Exception {
-      var success = 0;
-      var failed = 0;
-      for (final invite in invites) {
-        try {
-          await inviteUser(
-            email: invite['email']?.toString() ?? '',
-            roleName: invite['role_name']?.toString() ?? 'customer',
-            fullName: invite['full_name']?.toString(),
-          );
-          success += 1;
-        } catch (_) {
-          failed += 1;
-        }
-      }
-      return {
-        'status': 'partial',
-        'message': 'Processed invites via fallback flow',
-        'success_count': success,
-        'failed_count': failed,
-      };
-    }
+    final response = await _api.post(
+      '/api/v1/admin/users/bulk-invite',
+      data: {'invites': invites},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  Future<List<Map<String, dynamic>>> listInvites() async {
+    final response = await _api.get('/api/v1/admin/users/invites');
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    return items
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  }
+
+  Future<Map<String, dynamic>> resendInvite(int inviteId) async {
+    final response = await _api.post('/api/v1/admin/users/$inviteId/invite/resend');
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<Map<String, dynamic>> revokeInvite(int inviteId) async {
+    final response = await _api.post('/api/v1/admin/users/$inviteId/invite/revoke');
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<User> updateUser(User user) async {
-    try {
-      final response = await _api.put(
-        '/api/v1/admin/users/${user.id}',
-        data: {
-          'full_name': user.fullName,
-          'email': user.email,
-          'phone_number': user.phoneNumber,
-        },
-      );
-      return User.fromJson(response.data);
-    } catch (_) {
-      final refreshed = await getUserById(user.id);
-      if (refreshed != null) return refreshed;
-      rethrow;
-    }
+    final response = await _api.put(
+      '/api/v1/admin/users/${user.id}',
+      data: {
+        'full_name': user.fullName,
+        'email': user.email,
+        'phone_number': user.phoneNumber,
+      },
+    );
+    return User.fromJson(response.data);
   }
 
   Future<void> deleteUser(int userId) async {
@@ -231,18 +214,10 @@ class UserRepository {
   Future<User> toggleUserActive(int userId) async {
     await _api.put('/api/v1/admin/users/$userId/toggle-active');
     final result = await getUserById(userId);
-    return result ??
-        User(
-          id: userId,
-          fullName: 'Unknown',
-          email: '',
-          phoneNumber: '',
-          role: 'customer',
-          kycStatus: 'pending',
-          isActive: true,
-          joinedAt: DateTime.now(),
-          lastActive: DateTime.now(),
-        );
+    if (result == null) {
+      throw StateError('Backend updated user $userId but did not return a refreshable record.');
+    }
+    return result;
   }
 
   Future<User> suspendUser(
@@ -256,20 +231,10 @@ class UserRepository {
     );
 
     final result = await getUserById(userId);
-    return result ??
-        User(
-          id: userId,
-          fullName: 'Unknown',
-          email: '',
-          phoneNumber: '',
-          role: 'customer',
-          kycStatus: 'pending',
-          isActive: false,
-          joinedAt: DateTime.now(),
-          lastActive: DateTime.now(),
-          suspensionReason: reason,
-          suspendedAt: DateTime.now(),
-        );
+    if (result == null) {
+      throw StateError('Backend suspended user $userId but did not return a refreshable record.');
+    }
+    return result;
   }
 
   Future<void> updateKycStatus(int userId, String status) async {
@@ -282,18 +247,10 @@ class UserRepository {
   Future<User> reactivateUser(int userId) async {
     await _api.put('/api/v1/admin/users/$userId/reactivate');
     final result = await getUserById(userId);
-    return result ??
-        User(
-          id: userId,
-          fullName: 'Unknown',
-          email: '',
-          phoneNumber: '',
-          role: 'customer',
-          kycStatus: 'pending',
-          isActive: true,
-          joinedAt: DateTime.now(),
-          lastActive: DateTime.now(),
-        );
+    if (result == null) {
+      throw StateError('Backend reactivated user $userId but did not return a refreshable record.');
+    }
+    return result;
   }
 
   Future<void> changePassword(
@@ -371,61 +328,57 @@ class UserRepository {
   }
 
   Future<dynamic> getSuspensionHistory(int userId) async {
-    try {
-      final response = await _api.get(
-        '/api/v1/admin/users/$userId/suspension-history',
-      );
-      return response.data;
-    } catch (e) {
-      print("Error fetching suspension history for user $userId: $e");
-      return null;
-    }
+    final response = await _api.get(
+      '/api/v1/admin/users/$userId/suspension-history',
+    );
+    return response.data;
   }
 
   Future<dynamic> getUserAuditLog(int userId) async {
-    try {
-      final response = await _api.get('/api/v1/admin/audit/users/$userId');
-      return response.data;
-    } catch (e) {
-      print("Error fetching audit log for user $userId: $e");
-      return null;
-    }
+    final response = await _api.get(
+      '/api/v1/admin/security/audit-logs',
+      queryParameters: {'user_id': userId, 'skip': 0, 'limit': 100},
+    );
+    return response.data;
   }
 
   Future<double?> getUserRiskScore(int userId) async {
-    try {
-      final response = await _api.get(
-        '/api/v1/admin/fraud/users/$userId/risk-score',
-      );
-      return response.data['risk_score']?.toDouble();
-    } catch (e) {
-      print("Error fetching risk score for user $userId: $e");
-      return null;
-    }
+    final response = await _api.get(
+      '/api/v1/fraud/users/$userId/risk-score',
+    );
+    return response.data['risk_score']?.toDouble();
   }
 
   Future<List<Map<String, dynamic>>> getCreationHistory() async {
-    // Mocked for the UI since there is no direct endpoint in the provided list
-    await Future.delayed(const Duration(milliseconds: 500));
-    return [
-      {
-        'action': 'User Created',
-        'user': 'John Doe',
-        'by': 'Admin',
-        'date': DateTime.now().subtract(const Duration(days: 1)),
-      },
-      {
-        'action': 'User Invited',
-        'user': 'jane@example.com',
-        'by': 'Admin',
-        'date': DateTime.now().subtract(const Duration(days: 2)),
-      },
-      {
-        'action': 'User Suspended',
-        'user': 'Bob Smith',
-        'by': 'System',
-        'date': DateTime.now().subtract(const Duration(days: 3)),
-      },
-    ];
+    final response = await _api.get(
+      '/api/v1/admin/security/audit-logs',
+      queryParameters: {'days': 30, 'skip': 0, 'limit': 200},
+    );
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+
+    final relevant = items.whereType<Map>().where((raw) {
+      final action = raw['action']?.toString();
+      return action == 'USER_CREATION' || action == 'USER_INVITE' || action == 'ACCOUNT_STATUS_CHANGE';
+    }).toList();
+
+    return relevant.map((raw) {
+      final item = Map<String, dynamic>.from(raw);
+      final action = item['action']?.toString() ?? 'EVENT';
+      final label = switch (action) {
+        'USER_CREATION' => 'User Created',
+        'USER_INVITE' => 'User Invited',
+        'ACCOUNT_STATUS_CHANGE' => 'User Status Changed',
+        _ => action,
+      };
+      return {
+        'action': label,
+        'user': item['details']?.toString() ?? item['resource_id']?.toString() ?? 'User',
+        'by': item['user_id'] != null ? 'User #${item['user_id']}' : 'System',
+        'date': DateTime.tryParse(item['timestamp']?.toString() ?? '') ?? DateTime.now(),
+      };
+    }).toList();
   }
 }

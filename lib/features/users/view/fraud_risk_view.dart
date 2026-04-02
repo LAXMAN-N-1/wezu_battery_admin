@@ -16,6 +16,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
   List<FraudRisk> _risks = [];
   FraudRisk? _selectedRisk;
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -24,16 +25,36 @@ class _FraudRiskViewState extends State<FraudRiskView> {
   }
 
   Future<void> _loadData() async {
-    final risks = await _repository.getFraudRisks();
     setState(() {
-      _risks = risks;
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final risks = await _repository.getFraudRisks();
+      setState(() {
+        _risks = risks;
+        _selectedRisk = risks.isNotEmpty ? risks.first : null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Fraud risk data is unavailable: $e';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),

@@ -34,11 +34,7 @@ class FinanceRepository {
         'successRate': (data['success_rate'] as num?)?.toDouble() ?? 0.0,
       };
     } catch (e) {
-      return {
-        'totalRevenue': 0.0, 'periodRevenue': 0.0, 'monthlyGrowth': 0.0,
-        'revenueChart': <Map<String, dynamic>>[], 'revenueByType': <Map<String, dynamic>>[],
-        'recentTransactions': <Transaction>[], 'totalTransactions': 0, 'successRate': 0.0,
-      };
+      rethrow;
     }
   }
 
@@ -52,7 +48,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/transactions', queryParameters: params);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'transactions': [], 'total_count': 0};
+      rethrow;
     }
   }
 
@@ -61,7 +57,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/transactions/stats');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'total_transactions': 0, 'success_count': 0, 'pending_count': 0, 'failed_count': 0, 'total_amount': 0.0, 'today_amount': 0.0};
+      rethrow;
     }
   }
 
@@ -74,7 +70,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/settlements', queryParameters: params);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'settlements': [], 'total_count': 0};
+      rethrow;
     }
   }
 
@@ -83,7 +79,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/settlements/stats');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'total_settlements': 0, 'pending_count': 0, 'paid_count': 0, 'total_payable': 0.0, 'total_paid': 0.0};
+      rethrow;
     }
   }
 
@@ -91,7 +87,7 @@ class FinanceRepository {
     try {
       await _api.put('/api/v1/admin/finance/settlements/$id/approve');
       return true;
-    } catch (e) { return false; }
+    } catch (e) { rethrow; }
   }
 
   // ─── INVOICES ───────────────────────────────────────────────────────────
@@ -103,7 +99,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/invoices', queryParameters: params);
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'invoices': [], 'total_count': 0};
+      rethrow;
     }
   }
 
@@ -112,7 +108,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/invoices/stats');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'total_invoices': 0, 'total_amount': 0.0, 'total_tax_collected': 0.0};
+      rethrow;
     }
   }
 
@@ -123,11 +119,7 @@ class FinanceRepository {
       final response = await _api.get('/api/v1/admin/finance/profit/analysis');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {
-        'total_revenue': 0.0, 'total_commissions': 0.0, 'total_refunds': 0.0,
-        'gross_profit': 0.0, 'net_profit': 0.0, 'profit_margin': 0.0,
-        'monthly_trend': [], 'revenue_by_type': [],
-      };
+      rethrow;
     }
   }
 }

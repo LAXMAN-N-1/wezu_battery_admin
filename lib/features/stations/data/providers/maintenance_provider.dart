@@ -17,11 +17,16 @@ class MaintenanceNotifier extends _$MaintenanceNotifier {
     try {
       final client = ref.read(apiClientProvider);
       // Fixed path to match verified backend endpoint
-      final response = await client.get('maintenance/history');
+      final response = await client.get('/api/v1/admin/stations/maintenance/all');
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        // Map MaintenanceRecord (Backend) to MaintenanceEvent (Frontend)
-        return data.map((json) {
+        final payload = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : Map<String, dynamic>.from(response.data as Map);
+        final List<dynamic> data = payload['records'] is List
+            ? payload['records'] as List<dynamic>
+            : const <dynamic>[];
+        return data.whereType<Map>().map((raw) {
+          final json = Map<String, dynamic>.from(raw);
           final performedAtStr = json['performed_at'];
           final performedAt = performedAtStr != null 
               ? DateTime.parse(performedAtStr) 
@@ -42,10 +47,11 @@ class MaintenanceNotifier extends _$MaintenanceNotifier {
           );
         }).toList();
       }
+      throw Exception('Unexpected maintenance response: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error fetching maintenance events: $e');
+      throw Exception('Failed to fetch maintenance events: $e');
     }
-    return []; 
   }
 
   MaintenanceStatus _mapBackendStatus(String? status) {
@@ -99,14 +105,13 @@ class MaintenanceNotifier extends _$MaintenanceNotifier {
     try {
       final client = ref.read(apiClientProvider);
       // Corrected path and payload to match MaintenanceRecordCreate
-      await client.post('maintenance/record', data: {
+      await client.post('/api/v1/admin/stations/maintenance/create', data: {
         'entity_type': 'station',
         'entity_id': event.stationId,
         'maintenance_type': event.type.name,
         'description': event.title.isNotEmpty ? event.title : 'Maintenance',
         'status': event.status.name,
         'cost': 0.0,
-        'performed_at': event.startTime.toIso8601String(), // Send the intended date
       });
       
       _log('Added maintenance event: ${event.title} for ${event.stationName}');
@@ -122,22 +127,20 @@ class MaintenanceNotifier extends _$MaintenanceNotifier {
     }
     state = const AsyncValue.loading();
     try {
-      // NOTE: Backend currently only supports creating/listing records. 
-      // Update endpoint is not yet defined in the official spec.
-      // Re-creating the record as a workaround or showing a message.
-      throw Exception('Updating maintenance status is not yet supported by the backend.');
-      
-      /*
+      if (int.tryParse(event.id) == null) {
+        throw Exception('Maintenance event ${event.id} cannot be updated because the backend record id is invalid.');
+      }
       final client = ref.read(apiClientProvider);
-      await client.put('admin/stations/${event.stationId}/maintenance/${event.id}', 
-        queryParameters: {'status': event.status.name},
+      await client.put(
+        '/api/v1/admin/stations/maintenance/${event.id}/status',
+        queryParameters: {'new_status': event.status.name == 'inProgress' ? 'in_progress' : event.status.name},
       );
-      
+
       _log('Updated maintenance event status: ${event.title}');
       ref.invalidateSelf();
-      */
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 

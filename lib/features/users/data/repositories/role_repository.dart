@@ -1,99 +1,88 @@
+import 'dart:math';
+
 import '../../../../core/api/api_client.dart';
 import '../models/role.dart';
-import 'dart:math';
 
 class RoleRepository {
   final ApiClient _api = ApiClient();
 
-  // Cache permissions locally for synchronous utility methods
   List<Permission> _cachedPermissions = [];
   final Map<int, String> _permissionIdToSlug = {};
 
   Future<List<Role>> getRoles() async {
-    try {
-      final response = await _api.get('/api/v1/admin/rbac/roles');
-      final data = response.data as List;
-      for (final roleEntry in data.whereType<Map>()) {
-        final roleMap = Map<String, dynamic>.from(roleEntry);
-        final permissions = roleMap['permissions'];
-        if (permissions is! List) continue;
-        for (final permissionEntry in permissions.whereType<Map>()) {
-          final permissionMap = Map<String, dynamic>.from(permissionEntry);
-          final id = permissionMap['id'];
-          final slug = permissionMap['slug']?.toString();
-          if (id is int && slug != null && slug.isNotEmpty) {
-            _permissionIdToSlug[id] = slug;
-          }
+    final response = await _api.get('/api/v1/admin/rbac/roles');
+    final data = response.data as List;
+    for (final roleEntry in data.whereType<Map>()) {
+      final roleMap = Map<String, dynamic>.from(roleEntry);
+      final permissions = roleMap['permissions'];
+      if (permissions is! List) continue;
+      for (final permissionEntry in permissions.whereType<Map>()) {
+        final permissionMap = Map<String, dynamic>.from(permissionEntry);
+        final id = permissionMap['id'];
+        final slug = permissionMap['slug']?.toString();
+        if (id is int && slug != null && slug.isNotEmpty) {
+          _permissionIdToSlug[id] = slug;
         }
       }
-      return data.map((json) => Role.fromJson(json)).toList();
-    } catch (e) {
-      print("Error fetching roles: $e");
-      return [];
     }
+    return data.map((json) => Role.fromJson(json)).toList();
   }
 
   Future<List<Permission>> getPermissions() async {
-    try {
-      final response = await _api.get('/api/v1/admin/rbac/permissions');
-      final payload = response.data;
+    final response = await _api.get('/api/v1/admin/rbac/permissions');
+    final payload = response.data;
 
-      final modules = payload is Map<String, dynamic>
-          ? payload['modules'] as List<dynamic>?
-          : payload is Map
-          ? (payload['modules'] as List<dynamic>?)
-          : null;
+    final modules = payload is Map<String, dynamic>
+        ? payload['modules'] as List<dynamic>?
+        : payload is Map
+            ? (payload['modules'] as List<dynamic>?)
+            : null;
 
-      if (modules == null) {
-        _cachedPermissions = [];
-        return [];
-      }
-
-      final permissions = <Permission>[];
-      final slugToId = <String, int>{};
-      for (final entry in _permissionIdToSlug.entries) {
-        slugToId[entry.value] = entry.key;
-      }
-      var generatedId = _permissionIdToSlug.keys.isEmpty
-          ? 1
-          : _permissionIdToSlug.keys.reduce(max) + 1;
-      for (final moduleEntry in modules) {
-        if (moduleEntry is! Map) continue;
-        final moduleMap = Map<String, dynamic>.from(moduleEntry);
-        final moduleName =
-            moduleMap['module']?.toString() ??
-            moduleMap['label']?.toString() ??
-            'general';
-        final modulePermissions = moduleMap['permissions'];
-        if (modulePermissions is! List) continue;
-
-        for (final permissionEntry in modulePermissions) {
-          if (permissionEntry is! Map) continue;
-          final permissionMap = Map<String, dynamic>.from(permissionEntry);
-          final slug = permissionMap['id']?.toString() ?? '';
-          if (slug.isEmpty) continue;
-          final id = slugToId[slug] ?? generatedId++;
-          slugToId[slug] = id;
-
-          final permission = Permission(
-            id: id,
-            slug: slug,
-            module: permissionMap['resource']?.toString() ?? moduleName,
-            action: permissionMap['action']?.toString() ?? '',
-            description: permissionMap['description']?.toString() ?? '',
-          );
-
-          _permissionIdToSlug[id] = slug;
-          permissions.add(permission);
-        }
-      }
-
-      _cachedPermissions = permissions;
-      return _cachedPermissions;
-    } catch (e) {
-      print("Error fetching permissions: $e");
-      return [];
+    if (modules == null) {
+      throw const FormatException('Permissions payload did not contain modules');
     }
+
+    final permissions = <Permission>[];
+    final slugToId = <String, int>{};
+    for (final entry in _permissionIdToSlug.entries) {
+      slugToId[entry.value] = entry.key;
+    }
+    var generatedId = _permissionIdToSlug.keys.isEmpty
+        ? 1
+        : _permissionIdToSlug.keys.reduce(max) + 1;
+    for (final moduleEntry in modules) {
+      if (moduleEntry is! Map) continue;
+      final moduleMap = Map<String, dynamic>.from(moduleEntry);
+      final moduleName =
+          moduleMap['module']?.toString() ??
+          moduleMap['label']?.toString() ??
+          'general';
+      final modulePermissions = moduleMap['permissions'];
+      if (modulePermissions is! List) continue;
+
+      for (final permissionEntry in modulePermissions) {
+        if (permissionEntry is! Map) continue;
+        final permissionMap = Map<String, dynamic>.from(permissionEntry);
+        final slug = permissionMap['id']?.toString() ?? '';
+        if (slug.isEmpty) continue;
+        final id = slugToId[slug] ?? generatedId++;
+        slugToId[slug] = id;
+
+        final permission = Permission(
+          id: id,
+          slug: slug,
+          module: permissionMap['resource']?.toString() ?? moduleName,
+          action: permissionMap['action']?.toString() ?? '',
+          description: permissionMap['description']?.toString() ?? '',
+        );
+
+        _permissionIdToSlug[id] = slug;
+        permissions.add(permission);
+      }
+    }
+
+    _cachedPermissions = permissions;
+    return _cachedPermissions;
   }
 
   Future<Role> createRole({
@@ -195,7 +184,6 @@ class RoleRepository {
     return ids.toList();
   }
 
-  /// Get permission categories for grouped display
   List<String> getPermissionCategories() {
     return _cachedPermissions.map((p) => p.category).toSet().toList();
   }

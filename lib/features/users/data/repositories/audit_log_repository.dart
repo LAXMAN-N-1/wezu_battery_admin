@@ -1,20 +1,59 @@
+import 'dart:convert';
+
+import '../../../../core/api/api_client.dart';
 import '../models/audit_log.dart';
 
 class AuditLogRepository {
-  static final List<AuditLog> _logs = [
-    AuditLog(id: 1, userId: 1, userName: 'Murari Varma', action: 'login', module: 'auth', details: 'Admin login successful', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(minutes: 5))),
-    AuditLog(id: 2, userId: 1, userName: 'Murari Varma', action: 'update', module: 'users', details: 'Updated user profile for Rahul Sharma', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(minutes: 15)), beforeValue: 'role: driver', afterValue: 'role: driver'),
-    AuditLog(id: 3, userId: 7, userName: 'Deepak Verma', action: 'kyc_reject', module: 'kyc', details: 'Rejected KYC for Suresh Kumar — blurry document', ipAddress: '103.55.90.12', userAgent: 'Firefox 121 / Mac', timestamp: DateTime.now().subtract(const Duration(hours: 2))),
-    AuditLog(id: 4, userId: 1, userName: 'Murari Varma', action: 'suspend', module: 'users', details: 'Suspended Kavita Reddy — fraud suspected', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(hours: 5))),
-    AuditLog(id: 5, userId: 1, userName: 'Murari Varma', action: 'permission_change', module: 'roles', details: 'Removed finance.manage from Supervisor role', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(hours: 8)), beforeValue: 'finance.manage: true', afterValue: 'finance.manage: false'),
-    AuditLog(id: 6, userId: 8, userName: 'Neha Gupta', action: 'login', module: 'auth', details: 'Support staff login', ipAddress: '172.20.10.5', userAgent: 'Edge 120 / Windows', timestamp: DateTime.now().subtract(const Duration(hours: 10))),
-    AuditLog(id: 7, userId: 7, userName: 'Deepak Verma', action: 'kyc_approve', module: 'kyc', details: 'Approved KYC for Amit Patel', ipAddress: '103.55.90.12', userAgent: 'Firefox 121 / Mac', timestamp: DateTime.now().subtract(const Duration(days: 1))),
-    AuditLog(id: 8, userId: 1, userName: 'Murari Varma', action: 'create', module: 'users', details: 'Created new user account for Vikram Malhotra', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3))),
-    AuditLog(id: 9, userId: 1, userName: 'Murari Varma', action: 'update', module: 'settings', details: 'Updated platform timezone to IST', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 2))),
-    AuditLog(id: 10, userId: 7, userName: 'Deepak Verma', action: 'reactivate', module: 'users', details: 'Reactivated account for Suresh Kumar', ipAddress: '103.55.90.12', userAgent: 'Firefox 121 / Mac', timestamp: DateTime.now().subtract(const Duration(days: 3))),
-    AuditLog(id: 11, userId: 1, userName: 'Murari Varma', action: 'delete', module: 'users', details: 'Deleted inactive test account', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 4))),
-    AuditLog(id: 12, userId: 8, userName: 'Neha Gupta', action: 'logout', module: 'auth', details: 'Support staff logout', ipAddress: '172.20.10.5', userAgent: 'Edge 120 / Windows', timestamp: DateTime.now().subtract(const Duration(days: 4, hours: 6))),
-  ];
+  final ApiClient _api;
+
+  AuditLogRepository([ApiClient? apiClient]) : _api = apiClient ?? ApiClient();
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  String _normalizeAction(String action) {
+    switch (action) {
+      case 'AUTH_LOGIN':
+        return 'login';
+      case 'AUTH_LOGOUT':
+        return 'logout';
+      case 'USER_CREATION':
+        return 'create';
+      case 'USER_INVITE':
+        return 'create';
+      case 'ACCOUNT_STATUS_CHANGE':
+        return 'suspend';
+      case 'PERMISSION_CHANGE':
+        return 'permission_change';
+      case 'PASSWORD_RESET':
+        return 'update';
+      case 'DATA_MODIFICATION':
+        return 'update';
+      default:
+        return action.toLowerCase();
+    }
+  }
+
+  String _moduleFromResource(String resourceType) {
+    switch (resourceType.toUpperCase()) {
+      case 'AUTH':
+        return 'auth';
+      case 'USER':
+        return 'users';
+      case 'ROLE':
+      case 'RBAC':
+        return 'roles';
+      case 'SETTINGS':
+        return 'settings';
+      case 'KYC':
+        return 'kyc';
+      default:
+        return resourceType.toLowerCase();
+    }
+  }
 
   Future<List<AuditLog>> getLogs({
     String? action,
@@ -23,34 +62,63 @@ class AuditLogRepository {
     DateTime? fromDate,
     DateTime? toDate,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    var filtered = List<AuditLog>.from(_logs);
+    final response = await _api.get(
+      '/api/v1/admin/security/audit-logs',
+      queryParameters: {'days': 30, 'skip': 0, 'limit': 500},
+    );
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+
+    var logs = items.whereType<Map>().map((raw) {
+      final item = Map<String, dynamic>.from(raw);
+      final normalizedAction = _normalizeAction(item['action']?.toString() ?? 'unknown');
+      final moduleName = _moduleFromResource(item['resource_type']?.toString() ?? 'general');
+      return AuditLog(
+        id: _asInt(item['id']),
+        userId: _asInt(item['user_id']),
+        userName: _asInt(item['user_id']) > 0 ? 'User #${_asInt(item['user_id'])}' : 'System',
+        action: normalizedAction,
+        module: moduleName,
+        details: item['details']?.toString() ?? '${item['action']} ${item['resource_type']}',
+        ipAddress: item['ip_address']?.toString(),
+        userAgent: item['user_agent']?.toString(),
+        timestamp: DateTime.tryParse(item['timestamp']?.toString() ?? '') ?? DateTime.now(),
+        beforeValue: item['old_value'] != null ? jsonEncode(item['old_value']) : null,
+        afterValue: item['new_value'] != null ? jsonEncode(item['new_value']) : null,
+      );
+    }).toList();
 
     if (action != null && action != 'all') {
-      filtered = filtered.where((l) => l.action == action).toList();
+      logs = logs.where((log) => log.action == action).toList();
     }
     if (module != null && module != 'all') {
-      filtered = filtered.where((l) => l.module == module).toList();
+      logs = logs.where((log) => log.module == module).toList();
     }
     if (userId != null) {
-      filtered = filtered.where((l) => l.userId == userId).toList();
+      logs = logs.where((log) => log.userId == userId).toList();
     }
     if (fromDate != null) {
-      filtered = filtered.where((l) => l.timestamp.isAfter(fromDate)).toList();
+      logs = logs.where((log) => !log.timestamp.isBefore(fromDate)).toList();
     }
     if (toDate != null) {
-      filtered = filtered.where((l) => l.timestamp.isBefore(toDate)).toList();
+      logs = logs.where((log) => !log.timestamp.isAfter(toDate)).toList();
     }
 
-    filtered.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    return filtered;
+    logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return logs;
   }
 
   Future<List<String>> getActionTypes() async {
-    return ['all', 'login', 'logout', 'create', 'update', 'delete', 'suspend', 'reactivate', 'kyc_approve', 'kyc_reject', 'permission_change'];
+    final logs = await getLogs();
+    final actions = logs.map((log) => log.action).toSet().toList()..sort();
+    return ['all', ...actions];
   }
 
   Future<List<String>> getModules() async {
-    return ['all', 'auth', 'users', 'kyc', 'roles', 'settings', 'fleet', 'finance'];
+    final logs = await getLogs();
+    final modules = logs.map((log) => log.module).toSet().toList()..sort();
+    return ['all', ...modules];
   }
 }

@@ -634,7 +634,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => _showAddSeriesDialog(colors),
+            onTap: () => _showAddSeriesDisabledMessage(colors),
             borderRadius: BorderRadius.circular(4),
             child: Container(
               padding: const EdgeInsets.all(4),
@@ -2935,146 +2935,15 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       case 'batteryHealth':
         return p.batteryHealth;
       default:
-        // Deterministic mock data for custom series
-        // Use hash of key + date to get a stable value between 1000 and 7000
-        final combined = '$key${p.date}';
-        final hash = combined
-            .split('')
-            .fold<int>(0, (prev, char) => prev + char.codeUnitAt(0));
-        return 1000.0 + (hash % 6000).toDouble();
+        throw UnsupportedError('Dashboard metric $key is not exposed by the backend.');
     }
   }
 
-  void _showAddSeriesDialog(AppColorsExtension colors) {
-    String seriesName = '';
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1E283F),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Add Data Series',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              TextField(
-                onChanged: (val) => seriesName = val,
-                style: GoogleFonts.inter(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Series Name (e.g., Station Load)',
-                  hintStyle: GoogleFonts.inter(
-                    color: Colors.white38,
-                    fontSize: 14,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF3B82F6),
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.inter(
-                        color: Colors.white60,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (seriesName.trim().isEmpty) return;
-
-                      final newKey = seriesName.toLowerCase().replaceAll(
-                        ' ',
-                        '_',
-                      );
-                      final randomColor =
-                          Colors.primaries[seriesName.length %
-                              Colors.primaries.length];
-
-                      ref.read(trendAvailableMetricsProvider.notifier).update((
-                        state,
-                      ) {
-                        return [
-                          ...state,
-                          TrendMetric(
-                            label: seriesName,
-                            key: newKey,
-                            color: randomColor,
-                            canDelete: true,
-                          ),
-                        ];
-                      });
-
-                      ref.read(trendActiveMetricsProvider.notifier).update((
-                        state,
-                      ) {
-                        return {...state, newKey};
-                      });
-
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Add Series',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+  void _showAddSeriesDisabledMessage(AppColorsExtension colors) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Custom trend series are disabled until the backend exposes those metrics.'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

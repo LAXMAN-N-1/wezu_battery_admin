@@ -182,110 +182,85 @@ final userListProvider = StateNotifierProvider<UserListNotifier, UserListState>(
 });
 
 
-class UserInvite {
-  final int id;
-  final String email;
-  final String role;
-  final DateTime expiresAt;
-  final String createdBy;
-  final DateTime? acceptedAt;
-  final bool revoked;
-
-  UserInvite({
-    required this.id,
-    required this.email,
-    required this.role,
-    required this.expiresAt,
-    required this.createdBy,
-    this.acceptedAt,
-    this.revoked = false,
-  });
-
-  String get displayStatus {
-    if (revoked) return 'revoked';
-    if (acceptedAt != null) return 'accepted';
-    if (expiresAt.isBefore(DateTime.now())) return 'expired';
-    return 'pending';
-  }
-}
-
 class InviteListState {
-  final List<UserInvite> invites;
+  final List<Map<String, dynamic>> invites;
   final bool isLoading;
 
-  InviteListState({this.invites = const [], this.isLoading = false});
+  InviteListState({this.invites = const <Map<String, dynamic>>[], this.isLoading = false});
 
-  InviteListState copyWith({List<UserInvite>? invites, bool? isLoading}) {
+  InviteListState copyWith({List<Map<String, dynamic>>? invites, bool? isLoading}) {
     return InviteListState(invites: invites ?? this.invites, isLoading: isLoading ?? this.isLoading);
   }
 
-  int get pending => invites.where((i) => i.displayStatus == 'pending').length;
-  int get accepted => invites.where((i) => i.displayStatus == 'accepted').length;
-  int get expired => invites.where((i) => i.displayStatus == 'expired').length;
+  int get pending => invites.where((invite) => (invite['status']?.toString() ?? '').toLowerCase() == 'pending').length;
+  int get accepted => invites.where((invite) => (invite['status']?.toString() ?? '').toLowerCase() == 'accepted').length;
+  int get expired => invites.where((invite) => (invite['status']?.toString() ?? '').toLowerCase() == 'expired').length;
 }
 
 class InviteListNotifier extends StateNotifier<InviteListState> {
   final UserRepository _repository;
 
-  InviteListNotifier(this._repository) : super(InviteListState());
+  InviteListNotifier(this._repository) : super(InviteListState()) {
+    loadInvites();
+  }
 
-  Future<void> sendInvite({required String email, required String role, String? fullName}) async {
+  Future<void> loadInvites() async {
     state = state.copyWith(isLoading: true);
     try {
-      await _repository.inviteUser(email: email, roleName: role, fullName: fullName);
-      // Add to local list for immediate UI feedback
-      final newInvite = UserInvite(
-        id: DateTime.now().millisecondsSinceEpoch,
-        email: email, role: role,
-        expiresAt: DateTime.now().add(const Duration(days: 7)),
-        createdBy: 'Admin',
-      );
-      state = state.copyWith(isLoading: false, invites: [newInvite, ...state.invites]);
+      final invites = await _repository.listInvites();
+      state = state.copyWith(invites: invites, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false);
       rethrow;
     }
   }
 
-  void resendInvite(int id) {
-    final updated = state.invites.map((i) {
-      if (i.id == id) {
-        return UserInvite(id: i.id, email: i.email, role: i.role, expiresAt: DateTime.now().add(const Duration(days: 7)), createdBy: i.createdBy);
-      }
-      return i;
-    }).toList();
-    state = state.copyWith(invites: updated);
+  Future<void> sendInvite({required String email, required String role, String? fullName}) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _repository.inviteUser(email: email, roleName: role, fullName: fullName);
+      final invites = await _repository.listInvites();
+      state = state.copyWith(invites: invites, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
+  }
+
+  Future<void> resendInvite(int id) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _repository.resendInvite(id);
+      final invites = await _repository.listInvites();
+      state = state.copyWith(invites: invites, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
   }
 
   Future<void> sendBulkInvites(List<Map<String, String>> invites) async {
     state = state.copyWith(isLoading: true);
     try {
       await _repository.adminBulkInvite(invites.cast<Map<String, dynamic>>());
-      // Refresh or add to list if needed. For simplicity, we'll just reload if possible,
-      // but the repository doesn't have a clear "getInvites" yet that matches perfectly.
-      // We'll just add them locally for now.
-      final newInvites = invites.map((inv) => UserInvite(
-        id: DateTime.now().millisecondsSinceEpoch + invites.indexOf(inv),
-        email: inv['email']!,
-        role: inv['role_name']!,
-        expiresAt: DateTime.now().add(const Duration(days: 7)),
-        createdBy: 'Admin',
-      )).toList();
-      state = state.copyWith(isLoading: false, invites: [...newInvites, ...state.invites]);
+      final refreshed = await _repository.listInvites();
+      state = state.copyWith(invites: refreshed, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false);
       rethrow;
     }
   }
 
-  void revokeInvite(int id) {
-    final updated = state.invites.map((i) {
-      if (i.id == id) {
-        return UserInvite(id: i.id, email: i.email, role: i.role, expiresAt: i.expiresAt, createdBy: i.createdBy, revoked: true);
-      }
-      return i;
-    }).toList();
-    state = state.copyWith(invites: updated);
+  Future<void> revokeInvite(int id) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _repository.revokeInvite(id);
+      final invites = await _repository.listInvites();
+      state = state.copyWith(invites: invites, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      rethrow;
+    }
   }
 }
 

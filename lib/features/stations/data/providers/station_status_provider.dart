@@ -95,16 +95,26 @@ class MaintenanceNotifier extends StateNotifier<Map<int, MaintenanceSchedule>> {
   Future<void> _load() async {
     try {
       // Updated to verified path for maintenance history
-      final response = await _apiClient.get('maintenance/history');
+      final response = await _apiClient.get('/api/v1/admin/stations/maintenance/all');
       if (response.statusCode == 200) {
-        final List<dynamic> list = response.data;
+        final payload = response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : Map<String, dynamic>.from(response.data as Map);
+        final List<dynamic> list = payload['records'] is List ? payload['records'] as List : const <dynamic>[];
         final map = <int, MaintenanceSchedule>{};
         for (final item in list) {
           // Note: MaintenanceRecord from backend might need mapping to MaintenanceSchedule
           // For now, assuming direct compatibility or providing a mapper
           try {
-            final ms = MaintenanceSchedule.fromJson(item as Map<String, dynamic>);
-            map[ms.stationId] = ms;
+            final record = Map<String, dynamic>.from(item as Map);
+            final stationId = (record['entity_id'] as num?)?.toInt();
+            if (stationId == null || stationId <= 0) continue;
+            map[stationId] = MaintenanceSchedule(
+              id: (record['id'] as num?)?.toInt() ?? 0,
+              stationId: stationId,
+              startTime: DateTime.tryParse(record['performed_at']?.toString() ?? '') ?? DateTime.now(),
+              endTime: (DateTime.tryParse(record['performed_at']?.toString() ?? '') ?? DateTime.now()).add(const Duration(hours: 1)),
+              notes: record['description']?.toString() ?? '',
+              maintenanceType: record['maintenance_type']?.toString() ?? 'Routine',
+            );
           } catch (_) {
             // Handle mapping errors
           }
@@ -118,15 +128,13 @@ class MaintenanceNotifier extends StateNotifier<Map<int, MaintenanceSchedule>> {
     try {
       // Updated to verified path for recording maintenance
       final response = await _apiClient.post(
-        'maintenance/record',
+        '/api/v1/admin/stations/maintenance/create',
         data: {
           'entity_type': 'station',
           'entity_id': ms.stationId,
-          'technician_id': 1, // Placeholder
-          'maintenance_type': ms.maintenanceType,
+                    'maintenance_type': ms.maintenanceType,
           'description': ms.notes,
-          'status': 'completed', // For now, mapping schedule as a record
-          'performed_at': DateTime.now().toIso8601String(),
+          'status': 'scheduled',
         },
       );
       if (response.statusCode == 200 || response.statusCode == 201) {

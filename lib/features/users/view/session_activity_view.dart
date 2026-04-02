@@ -15,6 +15,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
   final AuditLogRepository _repository = AuditLogRepository();
   List<AuditLog> _logs = [];
   bool _isLoading = true;
+  String? _error;
   String _actionFilter = 'all';
   String _moduleFilter = 'all';
   List<String> _actionTypes = [];
@@ -27,23 +28,41 @@ class _SessionActivityViewState extends State<SessionActivityView> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    final logs = await _repository.getLogs(
-      action: _actionFilter == 'all' ? null : _actionFilter,
-      module: _moduleFilter == 'all' ? null : _moduleFilter,
-    );
-    final actions = await _repository.getActionTypes();
-    final modules = await _repository.getModules();
     setState(() {
-      _logs = logs;
-      _actionTypes = actions;
-      _modules = modules;
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final logs = await _repository.getLogs(
+        action: _actionFilter == 'all' ? null : _actionFilter,
+        module: _moduleFilter == 'all' ? null : _moduleFilter,
+      );
+      final actions = await _repository.getActionTypes();
+      final modules = await _repository.getModules();
+      setState(() {
+        _logs = logs;
+        _actionTypes = actions;
+        _modules = modules;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Session activity is unavailable: $e';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+        ),
+      );
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(

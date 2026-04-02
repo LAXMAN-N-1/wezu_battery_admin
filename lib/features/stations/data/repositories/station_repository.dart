@@ -24,9 +24,9 @@ class StationRepository {
             .map((json) => Station.fromJson(json))
             .toList();
       }
-      return [];
+      throw const FormatException('Unexpected stations payload');
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -59,9 +59,9 @@ class StationRepository {
           'total_count': data['total_count'] ?? 0,
         };
       }
-      return {'stations': <Station>[], 'total_count': 0};
+      throw const FormatException('Unexpected paginated stations payload');
     } catch (e) {
-      return {'stations': <Station>[], 'total_count': 0};
+      rethrow;
     }
   }
 
@@ -70,14 +70,7 @@ class StationRepository {
       final response = await _api.get('/api/v1/admin/stations/stats');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {
-        'total_stations': 0,
-        'operational': 0,
-        'maintenance': 0,
-        'offline': 0,
-        'total_slots': 0,
-        'avg_rating': 0.0,
-      };
+      rethrow;
     }
   }
 
@@ -127,7 +120,7 @@ class StationRepository {
       );
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -151,7 +144,7 @@ class StationRepository {
       await _api.put('/api/v1/admin/stations/$id', data: data);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -164,7 +157,7 @@ class StationRepository {
       await _api.delete('/api/v1/admin/stations/$id');
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -189,7 +182,7 @@ class StationRepository {
       }
       return {'stations': <StationPerformanceSummary>[], 'summary': {}};
     } catch (e) {
-      return {'stations': <StationPerformanceSummary>[], 'summary': {}};
+      rethrow;
     }
   }
 
@@ -232,7 +225,7 @@ class StationRepository {
       }
       return StationPerformance.defaults(stationId);
     } catch (e) {
-      return StationPerformance.defaults(stationId);
+      rethrow;
     }
   }
 
@@ -275,7 +268,7 @@ class StationRepository {
         );
       }).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -288,7 +281,7 @@ class StationRepository {
       if (data is List) {
         return data.map((json) => BackendStationAlert.fromJson(json)).toList();
       }
-      return [];
+      throw const FormatException('Unexpected station alerts payload');
     } catch (e) {
       // Fallback: generic IoT alerts endpoint in current backend build.
       try {
@@ -324,7 +317,7 @@ class StationRepository {
       } catch (_) {
         // Ignore fallback failures.
       }
-      return [];
+      throw Exception('Station alerts are unavailable from the backend.');
     }
   }
 
@@ -335,11 +328,7 @@ class StationRepository {
       );
       return ChargingQueueResponse.fromJson(response.data);
     } catch (e) {
-      return ChargingQueueResponse(
-        stationId: stationId.toString(),
-        capacity: 0,
-        currentQueue: [],
-      );
+      rethrow;
     }
   }
 
@@ -363,7 +352,7 @@ class StationRepository {
       }
       return {'records': <MaintenanceRecord>[], 'total_count': 0};
     } catch (e) {
-      return {'records': <MaintenanceRecord>[], 'total_count': 0};
+      rethrow;
     }
   }
 
@@ -374,14 +363,7 @@ class StationRepository {
       );
       return MaintenanceStats.fromJson(response.data);
     } catch (e) {
-      return const MaintenanceStats(
-        total: 0,
-        completed: 0,
-        scheduled: 0,
-        inProgress: 0,
-        totalCost: 0.0,
-        stationsInMaintenance: 0,
-      );
+      rethrow;
     }
   }
 
@@ -406,7 +388,7 @@ class StationRepository {
       );
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -418,7 +400,7 @@ class StationRepository {
       );
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -431,7 +413,7 @@ class StationRepository {
       );
       return StationSpecs.fromJson(response.data);
     } catch (e) {
-      return StationSpecs.defaults(stationId);
+      rethrow;
     }
   }
 
@@ -440,7 +422,7 @@ class StationRepository {
       await _api.put('/api/v1/admin/stations/$stationId', data: specs.toJson());
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 }

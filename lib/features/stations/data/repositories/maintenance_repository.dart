@@ -16,10 +16,9 @@ class MaintenanceRepository {
       if (data is List) {
         return data.map((e) => MaintenanceRecord.fromJson(e)).toList();
       }
-      return [];
+      throw const FormatException('Unexpected maintenance records payload');
     } catch (e) {
-      print('Error fetching maintenance records: $e');
-      return [];
+      throw Exception('Failed to fetch maintenance records: $e');
     }
   }
 
@@ -57,8 +56,7 @@ class MaintenanceRepository {
       );
       return true;
     } catch (e) {
-      print('Error creating maintenance record: $e');
-      return false;
+      throw Exception('Failed to create maintenance record: $e');
     }
   }
 
@@ -70,8 +68,7 @@ class MaintenanceRepository {
       );
       return true;
     } catch (e) {
-      print('Error updating maintenance status: $e');
-      return false;
+      throw Exception('Failed to update maintenance status: $e');
     }
   }
 }

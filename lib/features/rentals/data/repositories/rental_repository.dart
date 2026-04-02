@@ -12,7 +12,7 @@ class RentalRepository {
       final response = await _api.get('/api/v1/admin/rentals/stats');
       return RentalStats.fromJson(response.data);
     } catch (e) {
-      return const RentalStats(activeRentals: 0, overdueRentals: 0, totalSwapsCompleted: 0, todayRevenue: 0.0);
+      rethrow;
     }
   }
 
@@ -21,7 +21,7 @@ class RentalRepository {
       final response = await _api.get('/api/v1/admin/rentals/active', queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((r) => Rental.fromJson(r)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -32,7 +32,7 @@ class RentalRepository {
       final response = await _api.get('/api/v1/admin/rentals/history', queryParameters: params);
       return (response.data as List).map((r) => Rental.fromJson(r)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -41,7 +41,7 @@ class RentalRepository {
       final response = await _api.get('/api/v1/admin/rentals/swaps', queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((s) => SwapSession.fromJson(s)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -50,7 +50,7 @@ class RentalRepository {
       final response = await _api.get('/api/v1/admin/rentals/purchases', queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((p) => PurchaseOrder.fromJson(p)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -59,7 +59,7 @@ class RentalRepository {
       final response = await _api.get('/api/v1/admin/rentals/late-fees');
       return (response.data as List).map((l) => LateFee.fromJson(l)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -72,7 +72,7 @@ class RentalRepository {
       await _api.put('/api/v1/admin/rentals/late-fees/waivers/$waiverId/review', data: data);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -81,7 +81,7 @@ class RentalRepository {
       await _api.put('/api/v1/admin/rentals/$rentalId/terminate', queryParameters: {'reason': reason});
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 }

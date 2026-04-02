@@ -79,7 +79,7 @@ class MaintenanceComplianceView extends ConsumerWidget {
           const SizedBox(height: 32),
           Text('Compliance Trends', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
-          _buildTrendChart(),
+          _buildTrendChart(events),
           const SizedBox(height: 32),
           Text('Critical Alerts', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
@@ -125,7 +125,23 @@ class MaintenanceComplianceView extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrendChart() {
+  Widget _buildTrendChart(List<MaintenanceEvent> events) {
+    final today = DateTime.now();
+    final baseDay = DateTime(today.year, today.month, today.day);
+    final chartDays = List.generate(7, (index) => baseDay.subtract(Duration(days: 6 - index)));
+    final labels = chartDays.map((day) {
+      const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return names[day.weekday - 1];
+    }).toList();
+    final spots = chartDays.asMap().entries.map((entry) {
+      final day = entry.value;
+      final nextDay = day.add(const Duration(days: 1));
+      final dayEvents = events.where((event) => !event.startTime.isBefore(day) && event.startTime.isBefore(nextDay)).toList();
+      final completed = dayEvents.where((event) => event.status == MaintenanceStatus.completed).length;
+      final rate = dayEvents.isEmpty ? 0.0 : (completed / dayEvents.length) * 100;
+      return FlSpot(entry.key.toDouble(), rate);
+    }).toList();
+
     return Container(
       height: 200,
       padding: const EdgeInsets.all(20),
@@ -136,6 +152,8 @@ class MaintenanceComplianceView extends ConsumerWidget {
       ),
       child: LineChart(
         LineChartData(
+          minY: 0,
+          maxY: 100,
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
@@ -151,9 +169,9 @@ class MaintenanceComplianceView extends ConsumerWidget {
                 reservedSize: 22,
                 interval: 1,
                 getTitlesWidget: (value, meta) {
-                  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                  if (value.toInt() >= 0 && value.toInt() < days.length) {
-                    return Text(days[value.toInt()], style: const TextStyle(color: Colors.white38, fontSize: 10));
+                  final index = value.toInt();
+                  if (index >= 0 && index < labels.length) {
+                    return Text(labels[index], style: const TextStyle(color: Colors.white38, fontSize: 10));
                   }
                   return const Text('');
                 },
@@ -175,7 +193,7 @@ class MaintenanceComplianceView extends ConsumerWidget {
               getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
                 return touchedBarSpots.map((barSpot) {
                   return LineTooltipItem(
-                    '${barSpot.y}% Compliance',
+                    '${barSpot.y.toStringAsFixed(1)}% Compliance',
                     const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   );
                 }).toList();
@@ -184,15 +202,7 @@ class MaintenanceComplianceView extends ConsumerWidget {
           ),
           lineBarsData: [
             LineChartBarData(
-              spots: const [
-                FlSpot(0, 65),
-                FlSpot(1, 72),
-                FlSpot(2, 68),
-                FlSpot(3, 85),
-                FlSpot(4, 80),
-                FlSpot(5, 92),
-                FlSpot(6, 88),
-              ],
+              spots: spots,
               isCurved: true,
               color: Colors.blue,
               barWidth: 3,

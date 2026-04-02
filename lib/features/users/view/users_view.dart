@@ -299,87 +299,129 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
   // === Invites Tab ===
   Widget _buildInvitesTab(InviteListState state, bool mobile) {
     if (state.isLoading) return const Center(child: CircularProgressIndicator());
-    return Column(children: [
-      Row(children: [
-        _buildMiniStat('Pending', state.pending.toString(), Colors.orange),
-        const SizedBox(width: 8),
-        _buildMiniStat('Accepted', state.accepted.toString(), Colors.green),
-        const SizedBox(width: 8),
-        _buildMiniStat('Expired', state.expired.toString(), Colors.red),
-      ]),
-      const SizedBox(height: 12),
-      Expanded(
-        child: mobile
-          ? ListView.builder(
-              itemCount: state.invites.length,
-              itemBuilder: (_, i) {
-                final inv = state.invites[i];
-                final status = inv.displayStatus;
-                final sc = {'pending': Colors.orange, 'accepted': Colors.green, 'expired': Colors.red, 'revoked': Colors.grey}[status] ?? Colors.grey;
-                return Card(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  margin: const EdgeInsets.only(bottom: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    dense: true,
-                    title: Text(inv.email, style: const TextStyle(color: Colors.white, fontSize: 13)),
-                    subtitle: Row(children: [
-                      _buildRoleBadge(inv.role),
-                      const SizedBox(width: 8),
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: sc.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                        child: Text(status.toUpperCase(), style: TextStyle(color: sc, fontSize: 9, fontWeight: FontWeight.bold))),
-                    ]),
-                    trailing: status == 'pending' ? Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(icon: const Icon(Icons.refresh, size: 16, color: Colors.blue), onPressed: () {
-                        ref.read(inviteListProvider.notifier).resendInvite(inv.id); _showSnackbar('Resent'); }),
-                      IconButton(icon: const Icon(Icons.cancel_outlined, size: 16, color: Colors.red), onPressed: () {
-                        ref.read(inviteListProvider.notifier).revokeInvite(inv.id); _showSnackbar('Revoked'); }),
-                    ]) : null,
+    return Column(
+      children: [
+        Row(children: [
+          _buildMiniStat('Pending', state.pending.toString(), Colors.orange),
+          const SizedBox(width: 8),
+          _buildMiniStat('Accepted', state.accepted.toString(), Colors.green),
+          const SizedBox(width: 8),
+          _buildMiniStat('Expired', state.expired.toString(), Colors.red),
+        ]),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Card(
+            color: Colors.white.withValues(alpha: 0.05),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: state.invites.isEmpty
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'No invite records have been generated yet.',
+                        style: TextStyle(color: Colors.white70),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: state.invites.length,
+                    separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.08)),
+                    itemBuilder: (_, i) {
+                      final invite = state.invites[i];
+                      final inviteId = int.tryParse(invite['id']?.toString() ?? '') ?? 0;
+                      final inviteStatus = (invite['status']?.toString() ?? 'pending').toLowerCase();
+                      final sentAt = DateTime.tryParse(invite['sent_at']?.toString() ?? '');
+                      final expiresAt = DateTime.tryParse(invite['expires_at']?.toString() ?? '');
+                      final role = invite['role']?.toString() ?? 'customer';
+
+                      Color statusColor;
+                      switch (inviteStatus) {
+                        case 'accepted':
+                          statusColor = Colors.green;
+                          break;
+                        case 'expired':
+                          statusColor = Colors.redAccent;
+                          break;
+                        case 'revoked':
+                          statusColor = Colors.grey;
+                          break;
+                        default:
+                          statusColor = Colors.orange;
+                      }
+
+                      return ListTile(
+                        dense: mobile,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.mail_outline, color: statusColor, size: 18),
+                        ),
+                        title: Text(
+                          invite['email']?.toString() ?? 'Unknown email',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              '$role • Sent ${sentAt != null ? DateFormat('MMM d, y • HH:mm').format(sentAt) : 'Unknown'}',
+                              style: const TextStyle(color: Colors.white54, fontSize: 11),
+                            ),
+                            if (expiresAt != null)
+                              Text(
+                                'Expires ${DateFormat('MMM d, y • HH:mm').format(expiresAt)}',
+                                style: const TextStyle(color: Colors.white38, fontSize: 11),
+                              ),
+                          ],
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                inviteStatus[0].toUpperCase() + inviteStatus.substring(1),
+                                style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            if (inviteId > 0 && inviteStatus != 'accepted')
+                              IconButton(
+                                tooltip: 'Resend invite',
+                                onPressed: () async {
+                                  await ref.read(inviteListProvider.notifier).resendInvite(inviteId);
+                                  _showSnackbar('Invite resent to ${invite['email']}');
+                                },
+                                icon: const Icon(Icons.refresh, color: Colors.blueAccent, size: 18),
+                              ),
+                            if (inviteId > 0 && inviteStatus == 'pending')
+                              IconButton(
+                                tooltip: 'Revoke invite',
+                                onPressed: () async {
+                                  await ref.read(inviteListProvider.notifier).revokeInvite(inviteId);
+                                  _showSnackbar('Invite revoked for ${invite['email']}');
+                                },
+                                icon: const Icon(Icons.block, color: Colors.redAccent, size: 18),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              })
-          : Card(
-              color: Colors.white.withValues(alpha: 0.05),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: SizedBox(width: double.infinity, child: SingleChildScrollView(child: Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.white.withValues(alpha: 0.1)),
-                child: DataTable(
-                  headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
-                  columns: const [
-                    DataColumn(label: Text('Email', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
-                    DataColumn(label: Text('Role', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
-                    DataColumn(label: Text('Status', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
-                    DataColumn(label: Text('Created By', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
-                    DataColumn(label: Text('Expires', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
-                    DataColumn(label: Text('Actions', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
-                  ],
-                  rows: state.invites.map((inv) {
-                    final status = inv.displayStatus;
-                    final sc = {'pending': Colors.orange, 'accepted': Colors.green, 'expired': Colors.red, 'revoked': Colors.grey}[status] ?? Colors.grey;
-                    return DataRow(cells: [
-                      DataCell(Text(inv.email, style: const TextStyle(color: Colors.white))),
-                      DataCell(_buildRoleBadge(inv.role)),
-                      DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: sc.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                        child: Text(status.toUpperCase(), style: TextStyle(color: sc, fontSize: 10, fontWeight: FontWeight.bold)))),
-                      DataCell(Text(inv.createdBy, style: const TextStyle(color: Colors.white70))),
-                      DataCell(Text(DateFormat('MMM d, y').format(inv.expiresAt), style: const TextStyle(color: Colors.white70))),
-                      DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
-                        if (status == 'pending') ...[
-                          IconButton(icon: const Icon(Icons.refresh, size: 18, color: Colors.blue), tooltip: 'Resend',
-                            onPressed: () { ref.read(inviteListProvider.notifier).resendInvite(inv.id); _showSnackbar('Resent'); }),
-                          IconButton(icon: const Icon(Icons.cancel_outlined, size: 18, color: Colors.red), tooltip: 'Revoke',
-                            onPressed: () { ref.read(inviteListProvider.notifier).revokeInvite(inv.id); _showSnackbar('Revoked'); }),
-                        ],
-                      ])),
-                    ]);
-                  }).toList(),
-                ),
-              ))),
-            ),
-      ),
-    ]);
+          ),
+        ),
+      ],
+    );
   }
 
   // === History Tab ===
@@ -387,16 +429,35 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: ref.read(userRepositoryProvider).getCreationHistory(),
       builder: (ctx, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return Card(
+            color: Colors.white.withValues(alpha: 0.05),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Creation history is unavailable: ${snap.error}',
+                  style: const TextStyle(color: Colors.redAccent),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          );
+        }
+        final data = snap.data ?? const <Map<String, dynamic>>[];
         return Card(
           color: Colors.white.withValues(alpha: 0.05),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ListView.separated(
             padding: const EdgeInsets.all(12),
-            itemCount: snap.data!.length,
+            itemCount: data.length,
             separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.1)),
             itemBuilder: (_, i) {
-              final e = snap.data![i];
+              final e = data[i];
               return ListTile(
                 dense: true,
                 leading: Container(padding: const EdgeInsets.all(8),
@@ -509,8 +570,14 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
     }));
 
   void _showInviteDialog() => showDialog(context: context, builder: (_) => InviteUsersDialog(
-    onSingleInvite: (email, role) { ref.read(inviteListProvider.notifier).sendInvite(email: email, role: role); _showSnackbar('Invite sent to $email'); },
-    onBulkInvite: (rows) { ref.read(inviteListProvider.notifier).sendBulkInvites(rows); _showSnackbar('${rows.length} invites sent'); }));
+    onSingleInvite: (email, role) async {
+      await ref.read(inviteListProvider.notifier).sendInvite(email: email, role: role);
+      _showSnackbar('Invite sent to $email');
+    },
+    onBulkInvite: (rows) async {
+      await ref.read(inviteListProvider.notifier).sendBulkInvites(rows);
+      _showSnackbar('${rows.length} invites sent');
+    }));
 
   void _handleUserAction(String action, User user) {
     switch (action) {

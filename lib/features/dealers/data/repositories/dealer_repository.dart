@@ -21,7 +21,7 @@ class DealerRepository {
         'total_count': response.data['total_count']
       };
     } catch (e) {
-      return {'dealers': <DealerProfile>[], 'total_count': 0};
+      rethrow;
     }
   }
 
@@ -30,7 +30,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/stats');
       return DealerStats.fromJson(response.data);
     } catch (e) {
-      return const DealerStats(totalActiveDealers: 0, pendingOnboardings: 0, totalCommissionsPaid: 0.0);
+      rethrow;
     }
   }
 
@@ -40,7 +40,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/applications', queryParameters: params);
       return (response.data as List).map((a) => DealerApplication.fromJson(a)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -49,7 +49,7 @@ class DealerRepository {
       await _api.put('/api/v1/admin/dealers/applications/$appId/stage', data: {'stage': stage, 'notes': notes});
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -58,7 +58,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/kyc');
       return (response.data as List).map((d) => DealerKycDocument.fromJson(d)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -67,7 +67,7 @@ class DealerRepository {
       await _api.put('/api/v1/admin/dealers/documents/$docId/verify', queryParameters: {'is_verified': isVerified});
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -76,7 +76,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/commissions/configs');
       return (response.data as List).map((c) => CommissionConfig.fromJson(c)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -85,7 +85,7 @@ class DealerRepository {
       await _api.put('/api/v1/admin/dealers/commissions/configs/$configId', data: data);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -98,7 +98,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/commissions/logs', queryParameters: params);
       return (response.data as List).map((l) => CommissionLog.fromJson(l)).toList();
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -107,7 +107,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/commissions/stats');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return {'total_paid': 0.0, 'total_pending': 0.0, 'active_configs': 0};
+      rethrow;
     }
   }
 
@@ -116,7 +116,7 @@ class DealerRepository {
       await _api.post('/api/v1/admin/dealers/create', data: data);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -125,7 +125,7 @@ class DealerRepository {
       await _api.put('/api/v1/admin/dealers/$dealerId', data: data);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 
@@ -134,7 +134,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/$dealerId');
       return response.data as Map<String, dynamic>;
     } catch (e) {
-      return null;
+      rethrow;
     }
   }
 
@@ -146,7 +146,7 @@ class DealerRepository {
       final response = await _api.get('/api/v1/admin/dealers/documents/all', queryParameters: params);
       return List<Map<String, dynamic>>.from(response.data);
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 
@@ -155,7 +155,7 @@ class DealerRepository {
       await _api.post('/api/v1/admin/dealers/commissions/configs', data: data);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 }

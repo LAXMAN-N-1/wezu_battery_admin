@@ -1,65 +1,45 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../models/maintenance_checklist.dart';
 import '../../../../core/api/api_client.dart';
+import '../models/maintenance_checklist.dart';
 
 part 'checklist_provider.g.dart';
 
 @riverpod
 class ChecklistTemplateNotifier extends _$ChecklistTemplateNotifier {
-  @override
-  FutureOr<List<ChecklistTemplate>> build() async {
-    try {
-      final client = ref.read(apiClientProvider);
-      final response = await client.get('maintenance/templates');
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        final templates = data.map((json) => ChecklistTemplate.fromJson(json)).toList();
-        if (templates.isNotEmpty) return templates;
-      }
-    } catch (e) {
-      debugPrint('Error fetching templates: $e');
-    }
-
-    // Default mock templates if none found on server
-    return [
-      ChecklistTemplate(
-        id: '1',
-        name: 'Standard Station Inspection',
-        description: 'Monthly routine check for battery swap stations.',
-        stationType: 'Standard',
-        maintenanceType: 'routine',
-        version: 1,
-        createdAt: DateTime.now(),
-        tasks: [
-          const ChecklistTask(id: 't1', title: 'Exterior Cleaning', description: 'Clean the station exterior and display.'),
-          const ChecklistTask(id: 't2', title: 'Slot Calibration', description: 'Verify all battery slots are correctly aligned.'),
-          const ChecklistTask(id: 't3', title: 'Power System Test', description: 'Check backup power and main circuit health.'),
-        ],
-      ),
-      ChecklistTemplate(
-        id: '2',
-        name: 'Rapid Charger Overhaul',
-        description: 'Quarterly deep maintenance for high-voltage chargers.',
-        stationType: 'Rapid',
-        maintenanceType: 'repair',
-        version: 1,
-        createdAt: DateTime.now(),
-        tasks: [
-          const ChecklistTask(id: 'r1', title: 'Cooling System Check', description: 'Check coolant levels and fan operation.'),
-          const ChecklistTask(id: 'r2', title: 'Cable Inspection', description: 'Inspect charging cables for wear or damage.'),
-          const ChecklistTask(id: 'r3', title: 'Software Update', description: 'Ensure the latest firmware is installed.'),
-        ],
-      ),
-    ];
+  Future<List<ChecklistTemplate>> _fetchTemplates() async {
+    final client = ref.read(apiClientProvider);
+    final response = await client.get('/api/v1/admin/stations/maintenance/checklists/templates');
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    return items
+        .whereType<Map>()
+        .map((raw) => ChecklistTemplate.fromJson(Map<String, dynamic>.from(raw)))
+        .toList();
   }
+
+  @override
+  FutureOr<List<ChecklistTemplate>> build() async => _fetchTemplates();
 
   Future<void> addTemplate(ChecklistTemplate template) async {
     state = const AsyncValue.loading();
     try {
       final client = ref.read(apiClientProvider);
-      await client.post('maintenance/templates', data: template.toJson());
-      ref.invalidateSelf();
+      await client.post(
+        '/api/v1/admin/stations/maintenance/checklists/templates',
+        data: {
+          'name': template.name,
+          'description': template.description,
+          'station_type': template.stationType,
+          'maintenance_type': template.maintenanceType,
+          'tasks': template.tasks.map((task) => task.toJson()).toList(),
+          'version': template.version,
+          'is_active': true,
+        },
+      );
+      state = AsyncValue.data(await _fetchTemplates());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -69,8 +49,19 @@ class ChecklistTemplateNotifier extends _$ChecklistTemplateNotifier {
     state = const AsyncValue.loading();
     try {
       final client = ref.read(apiClientProvider);
-      await client.put('maintenance/templates/${template.id}', data: template.toJson());
-      ref.invalidateSelf();
+      await client.put(
+        '/api/v1/admin/stations/maintenance/checklists/templates/${template.id}',
+        data: {
+          'name': template.name,
+          'description': template.description,
+          'station_type': template.stationType,
+          'maintenance_type': template.maintenanceType,
+          'tasks': template.tasks.map((task) => task.toJson()).toList(),
+          'version': template.version,
+          'is_active': true,
+        },
+      );
+      state = AsyncValue.data(await _fetchTemplates());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -80,8 +71,8 @@ class ChecklistTemplateNotifier extends _$ChecklistTemplateNotifier {
     state = const AsyncValue.loading();
     try {
       final client = ref.read(apiClientProvider);
-      await client.delete('maintenance/templates/$id');
-      ref.invalidateSelf();
+      await client.delete('/api/v1/admin/stations/maintenance/checklists/templates/$id');
+      state = AsyncValue.data(await _fetchTemplates());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -90,42 +81,38 @@ class ChecklistTemplateNotifier extends _$ChecklistTemplateNotifier {
 
 @riverpod
 class ChecklistSubmissionNotifier extends _$ChecklistSubmissionNotifier {
-  @override
-  FutureOr<List<ChecklistSubmission>> build() async {
-    try {
-      final client = ref.read(apiClientProvider);
-      final response = await client.get('maintenance/submissions');
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => ChecklistSubmission.fromJson(json)).toList();
-      }
-    } catch (e) {
-      debugPrint('Error fetching submissions: $e');
-    }
-    return [];
+  Future<List<ChecklistSubmission>> _fetchSubmissions() async {
+    final client = ref.read(apiClientProvider);
+    final response = await client.get('/api/v1/admin/stations/maintenance/checklists/submissions');
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    return items
+        .whereType<Map>()
+        .map((raw) => ChecklistSubmission.fromJson(Map<String, dynamic>.from(raw)))
+        .toList();
   }
+
+  @override
+  FutureOr<List<ChecklistSubmission>> build() async => _fetchSubmissions();
 
   Future<void> submitChecklist(ChecklistSubmission submission) async {
     state = const AsyncValue.loading();
     try {
       final client = ref.read(apiClientProvider);
-      await client.post('maintenance/submissions', data: submission.toJson());
-      
-      // Refresh local state
-      ref.invalidateSelf();
+      await client.post(
+        '/api/v1/admin/stations/maintenance/checklists/submissions',
+        data: submission.toJson(),
+      );
+      state = AsyncValue.data(await _fetchSubmissions());
     } catch (e, st) {
       state = AsyncValue.error(e, st);
+      rethrow;
     }
   }
 
   void saveDraft(ChecklistSubmission submission) {
-    state = state.whenData((submissions) {
-      final exists = submissions.any((s) => s.id == submission.id);
-      if (exists) {
-        return submissions.map((s) => s.id == submission.id ? submission : s).toList();
-      } else {
-        return [...submissions, submission];
-      }
-    });
+    debugPrint('Checklist drafts are not persisted by the backend.');
   }
 }

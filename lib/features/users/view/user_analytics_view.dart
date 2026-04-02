@@ -16,6 +16,7 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
   List<Map<String, dynamic>> _rentalFrequency = [];
   Map<String, int> _deviceBreakdown = {};
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -24,20 +25,39 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
   }
 
   Future<void> _loadData() async {
-    final logins = await _repository.getLoginHistory();
-    final rentals = await _repository.getRentalFrequency();
-    final devices = await _repository.getDeviceBreakdown();
     setState(() {
-      _loginHistory = logins;
-      _rentalFrequency = rentals;
-      _deviceBreakdown = devices;
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final logins = await _repository.getLoginHistory();
+      final rentals = await _repository.getRentalFrequency();
+      final devices = await _repository.getDeviceBreakdown();
+      setState(() {
+        _loginHistory = logins;
+        _rentalFrequency = rentals;
+        _deviceBreakdown = devices;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'User analytics is unavailable: $e';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -52,13 +72,13 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
           // Summary cards
           Row(
             children: [
-              _buildSummaryCard('Daily Logins', '142', '+12%', Colors.blue, Icons.login),
+              _buildSummaryCard('Daily Logins', _loginHistory.isNotEmpty ? (_loginHistory.last['logins']?.toString() ?? '0') : '0', '', Colors.blue, Icons.login),
               const SizedBox(width: 16),
-              _buildSummaryCard('Active Users', '89', '+5%', Colors.green, Icons.people),
+              _buildSummaryCard('Data Points', _deviceBreakdown.values.fold<int>(0, (sum, value) => sum + value).toString(), '', Colors.green, Icons.people),
               const SizedBox(width: 16),
-              _buildSummaryCard('Avg Session', '24m', '+3m', Colors.purple, Icons.timer),
+              _buildSummaryCard('Tracked Months', _rentalFrequency.length.toString(), '', Colors.purple, Icons.timer),
               const SizedBox(width: 16),
-              _buildSummaryCard('Retention', '76%', '+2%', Colors.amber, Icons.replay),
+              _buildSummaryCard('Device Types', _deviceBreakdown.length.toString(), '', Colors.amber, Icons.replay),
             ],
           ),
           const SizedBox(height: 24),

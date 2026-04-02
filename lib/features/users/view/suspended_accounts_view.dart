@@ -19,6 +19,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
   List<User> _suspendedUsers = [];
   List<SuspensionRecord> _history = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -27,20 +28,38 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    final response = await _userRepo.getUsers(status: 'suspended');
-    final users = response.users;
-    final history = await _analyticsRepo.getSuspensionHistory();
     setState(() {
-      _suspendedUsers = users;
-      _history = history;
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+    try {
+      final response = await _userRepo.getUsers(status: 'suspended');
+      final users = response.users;
+      final history = await _analyticsRepo.getSuspensionHistory();
+      setState(() {
+        _suspendedUsers = users;
+        _history = history;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Suspension data is unavailable: $e';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),

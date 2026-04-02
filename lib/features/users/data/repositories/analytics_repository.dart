@@ -1,163 +1,268 @@
+import '../../../../core/api/api_client.dart';
 import '../models/fraud_risk.dart';
 import '../models/suspension_record.dart';
 import '../models/invite_link.dart';
 
 class AnalyticsRepository {
+  final ApiClient _api;
+
+  AnalyticsRepository([ApiClient? apiClient]) : _api = apiClient ?? ApiClient();
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  DateTime _asDateTime(dynamic value, {DateTime? fallback}) {
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value?.toString() ?? '') ?? fallback ?? DateTime.now();
+  }
+
+  Future<Map<int, String>> _resolveUserNames(Iterable<int> userIds) async {
+    final ids = userIds.where((id) => id > 0).toSet();
+    final names = <int, String>{};
+    for (final userId in ids) {
+      try {
+        final response = await _api.get('/api/v1/admin/users/$userId');
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final fullName = data['full_name']?.toString();
+          final email = data['email']?.toString();
+          names[userId] = (fullName != null && fullName.trim().isNotEmpty)
+              ? fullName
+              : (email != null && email.trim().isNotEmpty)
+                    ? email
+                    : 'User #$userId';
+        } else if (data is Map) {
+          final map = Map<String, dynamic>.from(data);
+          final fullName = map['full_name']?.toString();
+          final email = map['email']?.toString();
+          names[userId] = (fullName != null && fullName.trim().isNotEmpty)
+              ? fullName
+              : (email != null && email.trim().isNotEmpty)
+                    ? email
+                    : 'User #$userId';
+        }
+      } catch (_) {
+        names[userId] = 'User #$userId';
+      }
+    }
+    return names;
+  }
+
+  String _riskLevelFromScore(int score) {
+    if (score >= 75) return 'critical';
+    if (score >= 50) return 'high';
+    if (score >= 25) return 'medium';
+    return 'low';
+  }
+
+  String _severityFromContribution(int contribution) {
+    if (contribution >= 50) return 'high';
+    if (contribution >= 20) return 'medium';
+    return 'low';
+  }
+
   Future<List<FraudRisk>> getFraudRisks() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return [
-      FraudRisk(
-        userId: 10, userName: 'Kavita Reddy', score: 78, level: 'critical',
-        lastUpdated: DateTime.now().subtract(const Duration(hours: 2)),
-        factors: const [
-          FraudFactor(name: 'Spending Spike', description: '340% increase in spending over 7 days', contribution: 35, severity: 'high'),
-          FraudFactor(name: 'Geographic Jump', description: 'Logged in from 3 cities in one day', contribution: 25, severity: 'high'),
-          FraudFactor(name: 'Device Changes', description: '4 new devices in last week', contribution: 18, severity: 'medium'),
-        ],
+    final response = await _api.get('/api/v1/admin/fraud/high-risk-users');
+    final data = response.data;
+    final items = data is List ? data : const <dynamic>[];
+    final ids = items
+        .whereType<Map>()
+        .map((item) => _asInt(item['user_id']))
+        .where((id) => id > 0);
+    final userNames = await _resolveUserNames(ids);
+
+    return items.whereType<Map>().map((raw) {
+      final item = Map<String, dynamic>.from(raw);
+      final score = _asInt(item['risk_score']);
+      final userId = _asInt(item['user_id']);
+      final breakdown = item['breakdown'];
+      final factors = <FraudFactor>[];
+      if (breakdown is Map) {
+        for (final entry in breakdown.entries) {
+          final contribution = _asInt(entry.value);
+          factors.add(
+            FraudFactor(
+              name: entry.key.toString().replaceAll('_', ' '),
+              description: 'Backend fraud signal: ${entry.key}',
+              contribution: contribution,
+              severity: _severityFromContribution(contribution),
+            ),
+          );
+        }
+      }
+
+      return FraudRisk(
+        userId: userId,
+        userName: userNames[userId] ?? item['email']?.toString() ?? 'User #$userId',
+        score: score,
+        level: _riskLevelFromScore(score),
+        factors: factors,
+        lastUpdated: _asDateTime(item['last_updated']),
         history: [
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 30)), score: 15),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 25)), score: 20),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 20)), score: 28),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 15)), score: 45),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 10)), score: 62),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 5)), score: 72),
-          FraudScoreHistory(date: DateTime.now(), score: 78),
+          FraudScoreHistory(
+            date: _asDateTime(item['last_updated']),
+            score: score,
+          ),
         ],
-      ),
-      FraudRisk(
-        userId: 5, userName: 'Suresh Kumar', score: 62, level: 'high',
-        lastUpdated: DateTime.now().subtract(const Duration(hours: 6)),
-        factors: const [
-          FraudFactor(name: 'Non-Compliance', description: 'Multiple policy violations in 30 days', contribution: 30, severity: 'high'),
-          FraudFactor(name: 'Rental Anomaly', description: 'Unusual rental pattern detected', contribution: 20, severity: 'medium'),
-          FraudFactor(name: 'Late Returns', description: '5 consecutive late battery returns', contribution: 12, severity: 'medium'),
-        ],
-        history: [
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 30)), score: 30),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 20)), score: 42),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 10)), score: 55),
-          FraudScoreHistory(date: DateTime.now(), score: 62),
-        ],
-      ),
-      FraudRisk(
-        userId: 9, userName: 'Vikram Malhotra', score: 45, level: 'medium',
-        lastUpdated: DateTime.now().subtract(const Duration(hours: 12)),
-        factors: const [
-          FraudFactor(name: 'Spending Pattern', description: 'Irregular spending pattern detected', contribution: 25, severity: 'medium'),
-          FraudFactor(name: 'Multiple Accounts', description: 'Possible duplicate account detected', contribution: 20, severity: 'medium'),
-        ],
-        history: [
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 20)), score: 22),
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 10)), score: 35),
-          FraudScoreHistory(date: DateTime.now(), score: 45),
-        ],
-      ),
-      FraudRisk(
-        userId: 4, userName: 'Priya Singh', score: 22, level: 'low',
-        lastUpdated: DateTime.now().subtract(const Duration(days: 1)),
-        factors: const [
-          FraudFactor(name: 'New User', description: 'Account less than 30 days old', contribution: 12, severity: 'low'),
-          FraudFactor(name: 'KYC Pending', description: 'KYC not yet submitted', contribution: 10, severity: 'low'),
-        ],
-        history: [
-          FraudScoreHistory(date: DateTime.now().subtract(const Duration(days: 10)), score: 18),
-          FraudScoreHistory(date: DateTime.now(), score: 22),
-        ],
-      ),
-    ];
+      );
+    }).toList();
   }
 
   Future<List<SuspensionRecord>> getSuspensionHistory() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return [
-      SuspensionRecord(
-        id: 1, userId: 5, userName: 'Suresh Kumar', reason: 'non_compliance',
-        notes: 'Repeated policy violations regarding battery handling',
-        suspendedBy: 'Murari Varma', suspendedAt: DateTime(2025, 2, 28),
-        reactivateAt: DateTime(2025, 3, 14), isActive: true,
-      ),
-      SuspensionRecord(
-        id: 2, userId: 10, userName: 'Kavita Reddy', reason: 'fraud',
-        notes: 'Suspicious financial activity detected — under investigation',
-        suspendedBy: 'Murari Varma', suspendedAt: DateTime(2025, 2, 25),
-        isActive: true,
-      ),
-      SuspensionRecord(
-        id: 3, userId: 4, userName: 'Priya Singh', reason: 'user_request',
-        notes: 'User requested temporary account deactivation',
-        suspendedBy: 'Deepak Verma', suspendedAt: DateTime(2025, 2, 10),
-        reactivateAt: DateTime(2025, 2, 20),
-        reactivatedAt: DateTime(2025, 2, 20), reactivatedBy: 'Deepak Verma',
-        isActive: false,
-      ),
-    ];
+    final usersResponse = await _api.get(
+      '/api/v1/admin/users/',
+      queryParameters: {'skip': 0, 'limit': 200},
+    );
+    final payload = usersResponse.data is Map<String, dynamic>
+        ? usersResponse.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(usersResponse.data as Map);
+    final rawUsers = payload['items'] ?? payload['users'] ?? const <dynamic>[];
+    final users = rawUsers is List ? rawUsers : const <dynamic>[];
+
+    final userNames = <int, String>{};
+    final history = <SuspensionRecord>[];
+    for (final rawUser in users.whereType<Map>()) {
+      final user = Map<String, dynamic>.from(rawUser);
+      final userId = _asInt(user['id']);
+      if (userId <= 0) continue;
+      userNames[userId] = user['full_name']?.toString() ?? user['email']?.toString() ?? 'User #$userId';
+
+      final response = await _api.get('/api/v1/admin/users/$userId/suspension-history');
+      final entries = response.data is List ? response.data as List : const <dynamic>[];
+      for (final rawEntry in entries.whereType<Map>()) {
+        final entry = Map<String, dynamic>.from(rawEntry);
+        final action = entry['action_type']?.toString() ?? 'suspension';
+        final lowerAction = action.toLowerCase();
+        final suspended = lowerAction.contains('suspension');
+        final reactivated = lowerAction.contains('reactivation');
+
+        history.add(
+          SuspensionRecord(
+            id: _asInt(entry['id']),
+            userId: userId,
+            userName: userNames[userId] ?? 'User #$userId',
+            reason: entry['reason']?.toString() ?? 'other',
+            notes: entry['new_value']?.toString() ?? entry['old_value']?.toString(),
+            suspendedBy: entry['actor_name']?.toString() ?? 'Unknown',
+            suspendedAt: _asDateTime(entry['created_at']),
+            reactivatedAt: reactivated ? _asDateTime(entry['created_at']) : null,
+            reactivatedBy: reactivated ? entry['actor_name']?.toString() : null,
+            isActive: suspended,
+          ),
+        );
+      }
+    }
+
+    history.sort((a, b) => b.suspendedAt.compareTo(a.suspendedAt));
+    return history;
   }
 
   Future<List<InviteLink>> getInviteLinks() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return [
-      InviteLink(
-        id: 1, token: 'inv-a1b2c3d4', email: 'newdriver@gmail.com', role: 'driver',
-        createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        expiresAt: DateTime.now().add(const Duration(days: 5)),
-        createdBy: 'Murari Varma',
-      ),
-      InviteLink(
-        id: 2, token: 'inv-e5f6g7h8', email: 'partner@energyco.in', role: 'dealer',
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        expiresAt: DateTime.now().add(const Duration(days: 2)),
-        createdBy: 'Murari Varma',
-      ),
-      InviteLink(
-        id: 3, token: 'inv-i9j0k1l2', email: 'oldinvite@test.com', role: 'customer',
-        createdAt: DateTime.now().subtract(const Duration(days: 10)),
-        expiresAt: DateTime.now().subtract(const Duration(days: 3)),
-        createdBy: 'Deepak Verma',
-      ),
-      InviteLink(
-        id: 4, token: 'inv-m3n4o5p6', email: 'usedinvite@test.com', role: 'driver',
-        createdAt: DateTime.now().subtract(const Duration(days: 8)),
-        expiresAt: DateTime.now().subtract(const Duration(days: 1)),
-        createdBy: 'Murari Varma',
-        usedAt: DateTime.now().subtract(const Duration(days: 6)),
-        isUsed: true,
-      ),
-    ];
+    final response = await _api.get('/api/v1/admin/users/invites');
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    return items.whereType<Map>().map((raw) {
+      final item = Map<String, dynamic>.from(raw);
+      return InviteLink(
+        id: _asInt(item['id']),
+        token: item['token']?.toString() ?? '',
+        email: item['email']?.toString() ?? '',
+        role: item['role']?.toString() ?? 'customer',
+        createdAt: _asDateTime(item['sent_at']),
+        expiresAt: _asDateTime(item['expires_at']),
+        createdBy: item['created_by']?.toString() ?? 'System',
+        usedAt: item['used_at'] != null ? _asDateTime(item['used_at']) : null,
+        isUsed: item['is_used'] == true || (item['status']?.toString().toLowerCase() == 'accepted'),
+      );
+    }).toList();
   }
 
-  /// Login history data for charts
   Future<List<Map<String, dynamic>>> getLoginHistory() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.generate(30, (i) {
-      final date = DateTime.now().subtract(Duration(days: 29 - i));
-      return {
-        'date': date,
-        'logins': 50 + (i * 3) + (i % 7 == 0 ? -20 : i % 5 == 0 ? 15 : 0),
-      };
-    });
+    final response = await _api.get(
+      '/api/v1/admin/security/audit-logs',
+      queryParameters: {'days': 30, 'skip': 0, 'limit': 500},
+    );
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    final counts = <String, int>{};
+
+    for (final raw in items.whereType<Map>()) {
+      final item = Map<String, dynamic>.from(raw);
+      if (item['action']?.toString() != 'AUTH_LOGIN') {
+        continue;
+      }
+      final timestamp = _asDateTime(item['timestamp']);
+      final key = '${timestamp.year.toString().padLeft(4, '0')}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+
+    final entries = counts.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    return entries
+        .map(
+          (entry) => {
+            'date': DateTime.parse(entry.key),
+            'logins': entry.value,
+          },
+        )
+        .toList();
   }
 
-  /// Rental frequency data for charts
   Future<List<Map<String, dynamic>>> getRentalFrequency() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      {'month': 'Sep', 'rentals': 120},
-      {'month': 'Oct', 'rentals': 185},
-      {'month': 'Nov', 'rentals': 210},
-      {'month': 'Dec', 'rentals': 168},
-      {'month': 'Jan', 'rentals': 245},
-      {'month': 'Feb', 'rentals': 290},
-    ];
+    final response = await _api.get(
+      '/api/v1/admin/rentals/history',
+      queryParameters: {'skip': 0, 'limit': 500},
+    );
+    final items = response.data is List ? response.data as List : const <dynamic>[];
+    final counts = <String, int>{};
+    const monthLabels = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    for (final raw in items.whereType<Map>()) {
+      final item = Map<String, dynamic>.from(raw);
+      final startTime = _asDateTime(item['start_time']);
+      final key = '${startTime.year}-${startTime.month.toString().padLeft(2, '0')}';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+
+    final entries = counts.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    final recent = entries.length > 6 ? entries.sublist(entries.length - 6) : entries;
+
+    return recent.map((entry) {
+      final parts = entry.key.split('-');
+      final month = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 1;
+      return {
+        'month': monthLabels[month],
+        'rentals': entry.value,
+      };
+    }).toList();
   }
 
-  /// Device breakdown for pie chart
   Future<Map<String, int>> getDeviceBreakdown() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return {
-      'Android App': 58,
-      'iOS App': 24,
-      'Web Browser': 12,
-      'Other': 6,
-    };
+    final response = await _api.get(
+      '/api/v1/admin/fraud/device-fingerprints',
+      queryParameters: {'limit': 500},
+    );
+    final items = response.data is List ? response.data as List : const <dynamic>[];
+    final counts = <String, int>{};
+
+    for (final raw in items.whereType<Map>()) {
+      final item = Map<String, dynamic>.from(raw);
+      final type = item['device_type']?.toString().toUpperCase() ?? 'UNKNOWN';
+      final label = switch (type) {
+        'ANDROID' => 'Android App',
+        'IOS' => 'iOS App',
+        'WEB' => 'Web Browser',
+        _ => 'Other',
+      };
+      counts[label] = (counts[label] ?? 0) + 1;
+    }
+
+    return counts;
   }
 }
