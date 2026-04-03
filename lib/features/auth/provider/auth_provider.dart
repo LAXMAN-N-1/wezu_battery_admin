@@ -54,16 +54,52 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _checkStatus() async {
     final token = await _apiClient.getValidAccessToken();
 
-    if (token != null && token.isNotEmpty) {
-      state = state.copyWith(isLoading: false, isAuthenticated: true);
+    if (token == null || token.isEmpty) {
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        error: null,
+        user: null,
+      );
       return;
     }
 
-    state = state.copyWith(
-      isLoading: false,
-      isAuthenticated: false,
-      user: null,
-    );
+    try {
+      final currentUser = await _fetchCurrentAdminUser();
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: true,
+        error: null,
+        user: currentUser,
+      );
+    } on _AuthFailure {
+      await _apiClient.clearSession(notifyListeners: false);
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        error: null,
+        user: null,
+      );
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        await _apiClient.clearSession(notifyListeners: false);
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        error: null,
+        user: null,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        error: null,
+        user: null,
+      );
+    }
   }
 
   Future<void> _onSessionExpired() async {
@@ -122,11 +158,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       await _persistSession(result);
 
+      Map<String, dynamic>? currentUser = result.user;
+      try {
+        currentUser = await _fetchCurrentAdminUser();
+      } on _AuthFailure {
+        await _apiClient.clearSession(notifyListeners: false);
+        rethrow;
+      } on DioException catch (e) {
+        final statusCode = e.response?.statusCode;
+        if (statusCode == 401 || statusCode == 403) {
+          await _apiClient.clearSession(notifyListeners: false);
+          rethrow;
+        }
+      }
+
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
         error: null,
-        user: result.user,
+        user: currentUser,
       );
     } on _AuthFailure catch (e) {
       state = state.copyWith(
@@ -375,6 +425,52 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return null;
   }
 
+  Future<Map<String, dynamic>> _fetchCurrentAdminUser() async {
+    final response = await _apiClient.get('/api/v1/users/me');
+    final data = _normalizeResponseData(response.data);
+    _ensureCurrentSessionHasAdminAccess(data);
+    return data;
+  }
+
+  void _ensureCurrentSessionHasAdminAccess(Map<String, dynamic> data) {
+    final currentRole = _extractCurrentRole(data);
+    final roles = _extractRoles(data);
+    final userType = _extractUserType(data);
+
+    if (_isSuperuser(data) ||
+        (currentRole != null && _isAdminRole(currentRole)) ||
+        (userType != null && _isAdminRole(userType)) ||
+        roles.any(_isAdminRole)) {
+      return;
+    }
+
+    throw const _AuthFailure('This account does not have admin access.');
+  }
+
+  String? _extractUserType(Map<String, dynamic> data) {
+    final userType = data['user_type'];
+    if (userType is String && userType.trim().isNotEmpty) {
+      return userType.trim();
+    }
+
+    final user = _extractUser(data);
+    final nestedUserType = user?['user_type'];
+    if (nestedUserType is String && nestedUserType.trim().isNotEmpty) {
+      return nestedUserType.trim();
+    }
+
+    return null;
+  }
+
+  bool _isSuperuser(Map<String, dynamic> data) {
+    if (data['is_superuser'] == true || data['isSuperuser'] == true) {
+      return true;
+    }
+
+    final user = _extractUser(data);
+    return user?['is_superuser'] == true || user?['isSuperuser'] == true;
+  }
+
   List<String> _extractRoles(Map<String, dynamic> data) {
     final roles = <String>{};
 
@@ -387,6 +483,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (value is Map) {
         addRole(value['name']);
         addRole(value['role']);
+        addRole(value['current_role']);
         addRole(value['user_type']);
         return;
       }
@@ -399,12 +496,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     addRole(data['role']);
+    addRole(data['current_role']);
     addRole(data['available_roles']);
 
-    final user = data['user'];
-    if (user is Map) {
+    final user = _extractUser(data);
+    if (user != null) {
       addRole(user['role']);
       addRole(user['roles']);
+      addRole(user['current_role']);
       addRole(user['user_type']);
     }
 
@@ -422,13 +521,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   String? _extractCurrentRole(Map<String, dynamic> data) {
+    final currentRole = data['current_role'];
+    if (currentRole is String && currentRole.trim().isNotEmpty) {
+      return currentRole.trim();
+    }
+
     final role = data['role'];
     if (role is String && role.trim().isNotEmpty) {
       return role.trim();
     }
 
-    final user = data['user'];
-    if (user is Map) {
+    final user = _extractUser(data);
+    if (user != null) {
+      final userCurrentRole = user['current_role'];
+      if (userCurrentRole is String && userCurrentRole.trim().isNotEmpty) {
+        return userCurrentRole.trim();
+      }
+
       final userRole = user['role'];
       if (userRole is String && userRole.trim().isNotEmpty) {
         return userRole.trim();

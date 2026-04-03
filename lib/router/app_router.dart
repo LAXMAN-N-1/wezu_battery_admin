@@ -76,7 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: '/login',
     debugLogDiagnostics: kDebugMode,
     redirect: (context, state) {
       final isLoggingIn = state.matchedLocation == '/login';
