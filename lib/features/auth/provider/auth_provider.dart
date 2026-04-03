@@ -51,6 +51,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   static const _adminRoles = <String>{'admin', 'super_admin', 'superadmin'};
 
+  bool _isSessionInvalidError(DioException error) {
+    return _apiClient.isLikelyAuthFailure(error);
+  }
+
   Future<void> _checkStatus() async {
     final token = await _apiClient.getValidAccessToken();
 
@@ -63,6 +67,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       return;
     }
+
+    // Optimistic auth when token exists. We only drop session on explicit
+    // token/auth failures; transient backend/network failures should not log
+    // out an otherwise valid user.
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: true,
+      error: null,
+    );
 
     try {
       final currentUser = await _fetchCurrentAdminUser();
@@ -81,23 +94,27 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: null,
       );
     } on DioException catch (e) {
-      final statusCode = e.response?.statusCode;
-      if (statusCode == 401 || statusCode == 403) {
+      if (_isSessionInvalidError(e)) {
         await _apiClient.clearSession(notifyListeners: false);
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: false,
+          error: null,
+          user: null,
+        );
+        return;
       }
 
       state = state.copyWith(
         isLoading: false,
-        isAuthenticated: false,
+        isAuthenticated: true,
         error: null,
-        user: null,
       );
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
-        isAuthenticated: false,
+        isAuthenticated: true,
         error: null,
-        user: null,
       );
     }
   }
@@ -165,11 +182,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         await _apiClient.clearSession(notifyListeners: false);
         rethrow;
       } on DioException catch (e) {
-        final statusCode = e.response?.statusCode;
-        if (statusCode == 401 || statusCode == 403) {
+        if (_isSessionInvalidError(e)) {
           await _apiClient.clearSession(notifyListeners: false);
           rethrow;
         }
+
+        // Continue login flow with parsed user payload if current-user probe
+        // fails due transient connectivity/server issues.
+        debugPrint('[Auth] /users/me check skipped after login: $e');
       }
 
       state = state.copyWith(

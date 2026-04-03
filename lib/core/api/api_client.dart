@@ -23,6 +23,21 @@ class ApiClient {
   static const refreshTokenStorageKey = 'admin_refresh_token';
   static const _skipAuthInterceptorKey = 'skipAuthInterceptor';
   static const _tokenInvalidLiterals = {'null', 'undefined', 'nil'};
+  static const _tokenFailureKeywords = {
+    'token',
+    'jwt',
+    'bearer',
+    'expired',
+    'invalid',
+    'signature',
+    'unauthorized',
+    'unauthenticated',
+    'not authenticated',
+    'not authorized',
+    'credentials',
+    'forbidden',
+    'authentication',
+  };
   static const _enforceNoTrailingSlash = bool.fromEnvironment(
     'API_ENFORCE_NO_TRAILING_SLASH',
     defaultValue: false,
@@ -195,7 +210,15 @@ class ApiClient {
       return null;
     }
 
-    return refreshAccessToken();
+    final refreshed = await refreshAccessToken();
+
+    // If refresh fails transiently, keep using the previous token and let the
+    // server be the source of truth instead of forcing an immediate logout.
+    if (refreshed == null) {
+      return token;
+    }
+
+    return refreshed;
   }
 
   Future<String?> refreshAccessToken() async {
@@ -305,6 +328,25 @@ class ApiClient {
     );
   }
 
+  bool isLikelyAuthFailure(DioException error, {bool includeForbidden = true}) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode == 401) {
+      return true;
+    }
+    if (includeForbidden && statusCode == 403) {
+      return _responseMentionsTokenFailure(error.response?.data);
+    }
+    return false;
+  }
+
+  bool _responseMentionsTokenFailure(dynamic data) {
+    if (data == null) {
+      return false;
+    }
+    final text = data.toString().toLowerCase();
+    return _tokenFailureKeywords.any(text.contains);
+  }
+
   Future<String?> _refreshAccessTokenInternal() async {
     final refreshToken = sanitizeToken(
       await readAuthValue(refreshTokenStorageKey),
@@ -362,19 +404,45 @@ class ApiClient {
       } on DioException catch (e) {
         final statusCode = e.response?.statusCode;
         final shouldContinue =
-            statusCode == 404 ||
-            statusCode == 405 ||
-            statusCode == 415 ||
-            statusCode == 422;
+            statusCode == 404 || statusCode == 405 || statusCode == 415;
 
-        if (!shouldContinue) {
-          debugPrint('[ApiClient] token refresh failed: $e');
-          break;
+        if (shouldContinue) {
+          continue;
         }
+
+        // 422 can be endpoint contract mismatch or invalid refresh token payload.
+        if (statusCode == 422) {
+          if (_responseMentionsTokenFailure(e.response?.data)) {
+            await clearSession(notifyListeners: true);
+            return null;
+          }
+          continue;
+        }
+
+        // Explicit auth failures mean session is invalid and must be cleared.
+        if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
+          await clearSession(notifyListeners: true);
+          return null;
+        }
+
+        // Do not clear session on transient server/network issues.
+        if (statusCode != null && statusCode >= 500) {
+          debugPrint('[ApiClient] token refresh failed: $e');
+          return null;
+        }
+
+        if (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout) {
+          debugPrint('[ApiClient] token refresh transient failure: $e');
+          return null;
+        }
+
+        debugPrint('[ApiClient] token refresh failed: $e');
+        return null;
       }
     }
-
-    await clearSession(notifyListeners: true);
     return null;
   }
 
@@ -649,7 +717,7 @@ class AuthInterceptor extends Interceptor {
     }
 
     final statusCode = err.response?.statusCode;
-    if (statusCode == 401 || statusCode == 403) {
+    if (_apiClient.isLikelyAuthFailure(err)) {
       try {
         final newToken = await _apiClient.refreshAccessToken();
         if (newToken != null) {
@@ -674,21 +742,7 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    if (err.type == DioExceptionType.connectionError && err.response == null) {
-      final token = _apiClient.sanitizeToken(
-        await _apiClient.readAuthValue(ApiClient.accessTokenStorageKey),
-      );
-      if (token == null || TokenUtils.isExpired(token)) {
-        await _apiClient.clearSession(notifyListeners: true);
-        handler.reject(
-          _apiClient.sessionExpiredException(
-            err.requestOptions,
-            error: 'Session expired',
-          ),
-        );
-        return;
-      }
-    }
+    // Never invalidate session on network/CORS-like transport failures.
 
     final isServerError = statusCode != null && statusCode >= 500;
     final isConnectionIssue =
