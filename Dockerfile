@@ -1,15 +1,25 @@
+# syntax=docker/dockerfile:1.7
+
 FROM ghcr.io/cirruslabs/flutter:3.41.0 AS build
 
 WORKDIR /app
 
 ARG API_BASE_URL=https://api1.powerfrill.com
 
+ENV PUB_CACHE=/root/.pub-cache \
+    CI=true \
+    FLUTTER_SUPPRESS_ANALYTICS=true
+
+RUN flutter config --enable-web
+
 COPY pubspec.yaml pubspec.lock ./
-RUN flutter pub get
+RUN --mount=type=cache,target=/root/.pub-cache \
+    flutter pub get
 
 COPY . .
-RUN flutter config --enable-web
-RUN flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=${API_BASE_URL}
+RUN --mount=type=cache,target=/root/.pub-cache \
+    --mount=type=cache,target=/app/.dart_tool \
+    flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=${API_BASE_URL}
 
 FROM nginx:1.27-alpine AS runtime
 

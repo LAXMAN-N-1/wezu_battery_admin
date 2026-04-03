@@ -5,6 +5,7 @@
 .vscode
 build
 coverage
+test
 android
 ios
 linux
@@ -15,3 +16,8 @@ windows
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata
+README.md
+openapi.json
+fix_methods.dart
+refactor.py
+revert_script.dart
