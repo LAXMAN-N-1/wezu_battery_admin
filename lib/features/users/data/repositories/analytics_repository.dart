@@ -16,7 +16,9 @@ class AnalyticsRepository {
 
   DateTime _asDateTime(dynamic value, {DateTime? fallback}) {
     if (value is DateTime) return value;
-    return DateTime.tryParse(value?.toString() ?? '') ?? fallback ?? DateTime.now();
+    return DateTime.tryParse(value?.toString() ?? '') ??
+        fallback ??
+        DateTime.now();
   }
 
   Future<Map<int, String>> _resolveUserNames(Iterable<int> userIds) async {
@@ -32,8 +34,8 @@ class AnalyticsRepository {
           names[userId] = (fullName != null && fullName.trim().isNotEmpty)
               ? fullName
               : (email != null && email.trim().isNotEmpty)
-                    ? email
-                    : 'User #$userId';
+              ? email
+              : 'User #$userId';
         } else if (data is Map) {
           final map = Map<String, dynamic>.from(data);
           final fullName = map['full_name']?.toString();
@@ -41,8 +43,8 @@ class AnalyticsRepository {
           names[userId] = (fullName != null && fullName.trim().isNotEmpty)
               ? fullName
               : (email != null && email.trim().isNotEmpty)
-                    ? email
-                    : 'User #$userId';
+              ? email
+              : 'User #$userId';
         }
       } catch (_) {
         names[userId] = 'User #$userId';
@@ -96,7 +98,8 @@ class AnalyticsRepository {
 
       return FraudRisk(
         userId: userId,
-        userName: userNames[userId] ?? item['email']?.toString() ?? 'User #$userId',
+        userName:
+            userNames[userId] ?? item['email']?.toString() ?? 'User #$userId',
         score: score,
         level: _riskLevelFromScore(score),
         factors: factors,
@@ -113,7 +116,7 @@ class AnalyticsRepository {
 
   Future<List<SuspensionRecord>> getSuspensionHistory() async {
     final usersResponse = await _api.get(
-      '/api/v1/admin/users/',
+      '/api/v1/admin/users',
       queryParameters: {'skip': 0, 'limit': 200},
     );
     final payload = usersResponse.data is Map<String, dynamic>
@@ -128,10 +131,17 @@ class AnalyticsRepository {
       final user = Map<String, dynamic>.from(rawUser);
       final userId = _asInt(user['id']);
       if (userId <= 0) continue;
-      userNames[userId] = user['full_name']?.toString() ?? user['email']?.toString() ?? 'User #$userId';
+      userNames[userId] =
+          user['full_name']?.toString() ??
+          user['email']?.toString() ??
+          'User #$userId';
 
-      final response = await _api.get('/api/v1/admin/users/$userId/suspension-history');
-      final entries = response.data is List ? response.data as List : const <dynamic>[];
+      final response = await _api.get(
+        '/api/v1/admin/users/$userId/suspension-history',
+      );
+      final entries = response.data is List
+          ? response.data as List
+          : const <dynamic>[];
       for (final rawEntry in entries.whereType<Map>()) {
         final entry = Map<String, dynamic>.from(rawEntry);
         final action = entry['action_type']?.toString() ?? 'suspension';
@@ -145,10 +155,14 @@ class AnalyticsRepository {
             userId: userId,
             userName: userNames[userId] ?? 'User #$userId',
             reason: entry['reason']?.toString() ?? 'other',
-            notes: entry['new_value']?.toString() ?? entry['old_value']?.toString(),
+            notes:
+                entry['new_value']?.toString() ??
+                entry['old_value']?.toString(),
             suspendedBy: entry['actor_name']?.toString() ?? 'Unknown',
             suspendedAt: _asDateTime(entry['created_at']),
-            reactivatedAt: reactivated ? _asDateTime(entry['created_at']) : null,
+            reactivatedAt: reactivated
+                ? _asDateTime(entry['created_at'])
+                : null,
             reactivatedBy: reactivated ? entry['actor_name']?.toString() : null,
             isActive: suspended,
           ),
@@ -165,7 +179,9 @@ class AnalyticsRepository {
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
-    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    final items = payload['items'] is List
+        ? payload['items'] as List
+        : const <dynamic>[];
     return items.whereType<Map>().map((raw) {
       final item = Map<String, dynamic>.from(raw);
       return InviteLink(
@@ -177,7 +193,9 @@ class AnalyticsRepository {
         expiresAt: _asDateTime(item['expires_at']),
         createdBy: item['created_by']?.toString() ?? 'System',
         usedAt: item['used_at'] != null ? _asDateTime(item['used_at']) : null,
-        isUsed: item['is_used'] == true || (item['status']?.toString().toLowerCase() == 'accepted'),
+        isUsed:
+            item['is_used'] == true ||
+            (item['status']?.toString().toLowerCase() == 'accepted'),
       );
     }).toList();
   }
@@ -190,7 +208,9 @@ class AnalyticsRepository {
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
-    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    final items = payload['items'] is List
+        ? payload['items'] as List
+        : const <dynamic>[];
     final counts = <String, int>{};
 
     for (final raw in items.whereType<Map>()) {
@@ -199,17 +219,16 @@ class AnalyticsRepository {
         continue;
       }
       final timestamp = _asDateTime(item['timestamp']);
-      final key = '${timestamp.year.toString().padLeft(4, '0')}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}';
+      final key =
+          '${timestamp.year.toString().padLeft(4, '0')}-${timestamp.month.toString().padLeft(2, '0')}-${timestamp.day.toString().padLeft(2, '0')}';
       counts[key] = (counts[key] ?? 0) + 1;
     }
 
-    final entries = counts.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
+    final entries = counts.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
     return entries
         .map(
-          (entry) => {
-            'date': DateTime.parse(entry.key),
-            'logins': entry.value,
-          },
+          (entry) => {'date': DateTime.parse(entry.key), 'logins': entry.value},
         )
         .toList();
   }
@@ -219,27 +238,44 @@ class AnalyticsRepository {
       '/api/v1/admin/rentals/history',
       queryParameters: {'skip': 0, 'limit': 500},
     );
-    final items = response.data is List ? response.data as List : const <dynamic>[];
+    final items = response.data is List
+        ? response.data as List
+        : const <dynamic>[];
     final counts = <String, int>{};
-    const monthLabels = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthLabels = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
     for (final raw in items.whereType<Map>()) {
       final item = Map<String, dynamic>.from(raw);
       final startTime = _asDateTime(item['start_time']);
-      final key = '${startTime.year}-${startTime.month.toString().padLeft(2, '0')}';
+      final key =
+          '${startTime.year}-${startTime.month.toString().padLeft(2, '0')}';
       counts[key] = (counts[key] ?? 0) + 1;
     }
 
-    final entries = counts.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
-    final recent = entries.length > 6 ? entries.sublist(entries.length - 6) : entries;
+    final entries = counts.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final recent = entries.length > 6
+        ? entries.sublist(entries.length - 6)
+        : entries;
 
     return recent.map((entry) {
       final parts = entry.key.split('-');
       final month = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 1;
-      return {
-        'month': monthLabels[month],
-        'rentals': entry.value,
-      };
+      return {'month': monthLabels[month], 'rentals': entry.value};
     }).toList();
   }
 
@@ -248,7 +284,9 @@ class AnalyticsRepository {
       '/api/v1/admin/fraud/device-fingerprints',
       queryParameters: {'limit': 500},
     );
-    final items = response.data is List ? response.data as List : const <dynamic>[];
+    final items = response.data is List
+        ? response.data as List
+        : const <dynamic>[];
     final counts = <String, int>{};
 
     for (final raw in items.whereType<Map>()) {

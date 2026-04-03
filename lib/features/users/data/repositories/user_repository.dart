@@ -73,7 +73,7 @@ class UserRepository {
       if (userType != null) queryParams['user_type'] = userType;
 
       final response = await _api.get(
-        '/api/v1/admin/users/',
+        '/api/v1/admin/users',
         queryParameters: queryParams,
       );
       final raw = response.data;
@@ -125,7 +125,7 @@ class UserRepository {
     };
 
     try {
-      final response = await _api.post('/api/v1/admin/users/', data: payload);
+      final response = await _api.post('/api/v1/admin/users', data: payload);
       return response.data as Map<String, dynamic>;
     } on Exception {
       final response = await _api.post(
@@ -170,7 +170,9 @@ class UserRepository {
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
-    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    final items = payload['items'] is List
+        ? payload['items'] as List
+        : const <dynamic>[];
     return items
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
@@ -178,14 +180,18 @@ class UserRepository {
   }
 
   Future<Map<String, dynamic>> resendInvite(int inviteId) async {
-    final response = await _api.post('/api/v1/admin/users/$inviteId/invite/resend');
+    final response = await _api.post(
+      '/api/v1/admin/users/$inviteId/invite/resend',
+    );
     return response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<Map<String, dynamic>> revokeInvite(int inviteId) async {
-    final response = await _api.post('/api/v1/admin/users/$inviteId/invite/revoke');
+    final response = await _api.post(
+      '/api/v1/admin/users/$inviteId/invite/revoke',
+    );
     return response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
@@ -215,7 +221,9 @@ class UserRepository {
     await _api.put('/api/v1/admin/users/$userId/toggle-active');
     final result = await getUserById(userId);
     if (result == null) {
-      throw StateError('Backend updated user $userId but did not return a refreshable record.');
+      throw StateError(
+        'Backend updated user $userId but did not return a refreshable record.',
+      );
     }
     return result;
   }
@@ -232,7 +240,9 @@ class UserRepository {
 
     final result = await getUserById(userId);
     if (result == null) {
-      throw StateError('Backend suspended user $userId but did not return a refreshable record.');
+      throw StateError(
+        'Backend suspended user $userId but did not return a refreshable record.',
+      );
     }
     return result;
   }
@@ -248,7 +258,9 @@ class UserRepository {
     await _api.put('/api/v1/admin/users/$userId/reactivate');
     final result = await getUserById(userId);
     if (result == null) {
-      throw StateError('Backend reactivated user $userId but did not return a refreshable record.');
+      throw StateError(
+        'Backend reactivated user $userId but did not return a refreshable record.',
+      );
     }
     return result;
   }
@@ -343,9 +355,7 @@ class UserRepository {
   }
 
   Future<double?> getUserRiskScore(int userId) async {
-    final response = await _api.get(
-      '/api/v1/fraud/users/$userId/risk-score',
-    );
+    final response = await _api.get('/api/v1/fraud/users/$userId/risk-score');
     return response.data['risk_score']?.toDouble();
   }
 
@@ -357,11 +367,15 @@ class UserRepository {
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
-    final items = payload['items'] is List ? payload['items'] as List : const <dynamic>[];
+    final items = payload['items'] is List
+        ? payload['items'] as List
+        : const <dynamic>[];
 
     final relevant = items.whereType<Map>().where((raw) {
       final action = raw['action']?.toString();
-      return action == 'USER_CREATION' || action == 'USER_INVITE' || action == 'ACCOUNT_STATUS_CHANGE';
+      return action == 'USER_CREATION' ||
+          action == 'USER_INVITE' ||
+          action == 'ACCOUNT_STATUS_CHANGE';
     }).toList();
 
     return relevant.map((raw) {
@@ -375,9 +389,14 @@ class UserRepository {
       };
       return {
         'action': label,
-        'user': item['details']?.toString() ?? item['resource_id']?.toString() ?? 'User',
+        'user':
+            item['details']?.toString() ??
+            item['resource_id']?.toString() ??
+            'User',
         'by': item['user_id'] != null ? 'User #${item['user_id']}' : 'System',
-        'date': DateTime.tryParse(item['timestamp']?.toString() ?? '') ?? DateTime.now(),
+        'date':
+            DateTime.tryParse(item['timestamp']?.toString() ?? '') ??
+            DateTime.now(),
       };
     }).toList();
   }

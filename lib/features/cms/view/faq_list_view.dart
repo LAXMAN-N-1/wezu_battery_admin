@@ -38,9 +38,9 @@ class _FaqListViewState extends State<FaqListView> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading FAQs: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading FAQs: $e')));
       }
     }
   }
@@ -52,7 +52,11 @@ class _FaqListViewState extends State<FaqListView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'FAQ Management',
@@ -62,7 +66,7 @@ class _FaqListViewState extends State<FaqListView> {
                   color: Colors.white,
                 ),
               ),
-              
+
               ElevatedButton.icon(
                 onPressed: () {
                   // TODO: Navigate to create view
@@ -72,8 +76,13 @@ class _FaqListViewState extends State<FaqListView> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
@@ -120,16 +129,17 @@ class _FaqListViewState extends State<FaqListView> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _faqs.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _faqs.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        return _buildFaqTile(_faqs[index]);
-                      },
-                    ),
+              ? _buildEmptyState()
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _faqs.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _buildFaqTile(_faqs[index]);
+                  },
+                ),
         ],
       ),
     );
@@ -156,7 +166,9 @@ class _FaqListViewState extends State<FaqListView> {
           style: const TextStyle(color: Colors.white),
           items: [
             DropdownMenuItem(value: null, child: Text('All $hint')),
-            ...items.map((e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase()))),
+            ...items.map(
+              (e) => DropdownMenuItem(value: e, child: Text(e.toUpperCase())),
+            ),
           ],
           onChanged: onChanged,
         ),
@@ -169,7 +181,9 @@ class _FaqListViewState extends State<FaqListView> {
       backgroundColor: Colors.white.withValues(alpha: 0.03),
       collapsedBackgroundColor: Colors.white.withValues(alpha: 0.03),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      collapsedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       title: Row(
         children: [
           _buildCategoryBadge(faq.category),
@@ -193,14 +207,23 @@ class _FaqListViewState extends State<FaqListView> {
             onChanged: (val) {
               // TODO: Update status
             },
-            activeColor: Colors.green,
+            activeThumbColor: Colors.green,
+            activeTrackColor: Colors.green.withValues(alpha: 0.45),
           ),
           IconButton(
-            icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.white38),
+            icon: const Icon(
+              Icons.edit_outlined,
+              size: 20,
+              color: Colors.white38,
+            ),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: Colors.redAccent,
+            ),
             onPressed: () {},
           ),
         ],
@@ -218,12 +241,24 @@ class _FaqListViewState extends State<FaqListView> {
                 style: const TextStyle(color: Colors.white70, height: 1.5),
               ),
               const SizedBox(height: 16),
-              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _buildStat(Icons.thumb_up_alt_outlined, Colors.green, faq.helpfulCount.toString()),
+                  _buildStat(
+                    Icons.thumb_up_alt_outlined,
+                    Colors.green,
+                    faq.helpfulCount.toString(),
+                  ),
                   const SizedBox(width: 16),
-                  _buildStat(Icons.thumb_down_alt_outlined, Colors.red, faq.notHelpfulCount.toString()),
-                  
+                  _buildStat(
+                    Icons.thumb_down_alt_outlined,
+                    Colors.red,
+                    faq.notHelpfulCount.toString(),
+                  ),
+
                   Text(
                     'Last updated: ${DateFormat('MMM d, y').format(faq.updatedAt)}',
                     style: const TextStyle(color: Colors.white24, fontSize: 11),
@@ -247,7 +282,11 @@ class _FaqListViewState extends State<FaqListView> {
       ),
       child: Text(
         category.toUpperCase(),
-        style: const TextStyle(color: Colors.blue, fontSize: 9, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: Colors.blue,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -268,7 +307,11 @@ class _FaqListViewState extends State<FaqListView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 100),
-          Icon(Icons.quiz_outlined, size: 80, color: Colors.white.withValues(alpha: 0.1)),
+          Icon(
+            Icons.quiz_outlined,
+            size: 80,
+            color: Colors.white.withValues(alpha: 0.1),
+          ),
           const SizedBox(height: 24),
           Text(
             'No FAQs found',

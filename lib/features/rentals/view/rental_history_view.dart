@@ -43,8 +43,9 @@ class _RentalHistoryViewState extends State<RentalHistoryView> {
   void _applyFilters() {
     _filtered = _history.where((r) {
       if (_statusFilter != 'all' &&
-          r.status.toLowerCase() != _statusFilter.toLowerCase())
+          r.status.toLowerCase() != _statusFilter.toLowerCase()) {
         return false;
+      }
       return true;
     }).toList();
   }

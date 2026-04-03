@@ -494,8 +494,9 @@ class StockLevelsView extends ConsumerWidget {
                     ),
                   ],
                   onChanged: (val) {
-                    if (val != null)
+                    if (val != null) {
                       ref.read(stockSortProvider.notifier).state = val;
+                    }
                   },
                 ),
               ),

@@ -29,18 +29,28 @@ class ApiClient {
     'bearer',
     'expired',
     'invalid',
+    'invalid token',
+    'invalid_token',
     'signature',
     'unauthorized',
     'unauthenticated',
     'not authenticated',
-    'not authorized',
-    'credentials',
-    'forbidden',
     'authentication',
+  };
+  static const _forbiddenTokenFailureKeywords = {
+    'token',
+    'jwt',
+    'bearer',
+    'expired',
+    'invalid token',
+    'invalid_token',
+    'signature',
+    'not authenticated',
+    'authentication credentials',
   };
   static const _enforceNoTrailingSlash = bool.fromEnvironment(
     'API_ENFORCE_NO_TRAILING_SLASH',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   late Dio dio;
@@ -252,6 +262,13 @@ class ApiClient {
     }
   }
 
+  Future<bool> hasActiveRefreshToken() async {
+    final refreshToken = sanitizeToken(
+      await readAuthValue(refreshTokenStorageKey),
+    );
+    return refreshToken != null && !TokenUtils.isExpired(refreshToken);
+  }
+
   Future<Response<dynamic>> retryRequest(
     RequestOptions requestOptions,
     String token,
@@ -333,18 +350,32 @@ class ApiClient {
     if (statusCode == 401) {
       return true;
     }
+
+    if (statusCode == 400) {
+      return _responseMentionsTokenFailure(
+        error.response?.data,
+        keywords: _tokenFailureKeywords,
+      );
+    }
+
     if (includeForbidden && statusCode == 403) {
-      return _responseMentionsTokenFailure(error.response?.data);
+      return _responseMentionsTokenFailure(
+        error.response?.data,
+        keywords: _forbiddenTokenFailureKeywords,
+      );
     }
     return false;
   }
 
-  bool _responseMentionsTokenFailure(dynamic data) {
+  bool _responseMentionsTokenFailure(
+    dynamic data, {
+    Set<String> keywords = _tokenFailureKeywords,
+  }) {
     if (data == null) {
       return false;
     }
     final text = data.toString().toLowerCase();
-    return _tokenFailureKeywords.any(text.contains);
+    return keywords.any(text.contains);
   }
 
   Future<String?> _refreshAccessTokenInternal() async {
@@ -730,6 +761,15 @@ class AuthInterceptor extends Interceptor {
         }
       } catch (_) {
         // Fall through and invalidate session.
+      }
+
+      // If refresh token is still present, treat this as a transient auth-path
+      // failure (for example CORS-masked refresh/network issues) and avoid
+      // hard logout loops.
+      if (statusCode == 401 && await _apiClient.hasActiveRefreshToken()) {
+        ApiErrorHandler.showGlobalError(err);
+        handler.next(err);
+        return;
       }
 
       await _apiClient.clearSession(notifyListeners: true);

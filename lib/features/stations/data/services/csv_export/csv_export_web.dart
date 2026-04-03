@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use, avoid_web_libraries_in_flutter
+
 import 'package:csv/csv.dart';
 import 'dart:html' as html;
 import 'dart:convert';
@@ -8,7 +10,17 @@ class CsvExportService {
     if (events.isEmpty) return;
 
     List<List<dynamic>> rows = [
-      ['ID', 'Station', 'Title', 'Type', 'Status', 'Crew', 'Start Time', 'End Time', 'Description']
+      [
+        'ID',
+        'Station',
+        'Title',
+        'Type',
+        'Status',
+        'Crew',
+        'Start Time',
+        'End Time',
+        'Description',
+      ],
     ];
 
     for (var event in events) {
@@ -30,7 +42,10 @@ class CsvExportService {
     final blob = html.Blob([bytes], 'text/csv');
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)
-      ..setAttribute("download", "maintenance_records_${DateTime.now().millisecondsSinceEpoch}.csv")
+      ..setAttribute(
+        "download",
+        "maintenance_records_${DateTime.now().millisecondsSinceEpoch}.csv",
+      )
       ..click();
     html.Url.revokeObjectUrl(url);
   }

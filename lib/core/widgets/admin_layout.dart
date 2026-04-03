@@ -209,11 +209,7 @@ class AdminLayout extends ConsumerWidget {
   final Widget child;
   final String title;
 
-  const AdminLayout({
-    super.key,
-    required this.child,
-    required this.title,
-  });
+  const AdminLayout({super.key, required this.child, required this.title});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -249,7 +245,9 @@ class AdminLayout extends ConsumerWidget {
       width: 270,
       decoration: BoxDecoration(
         color: colors.sidebarBg,
-        border: Border(right: BorderSide(color: colors.border.withValues(alpha: 0.1))),
+        border: Border(
+          right: BorderSide(color: colors.border.withValues(alpha: 0.1)),
+        ),
       ),
       child: Column(
         children: [
@@ -266,7 +264,11 @@ class AdminLayout extends ConsumerWidget {
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
-                      BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                      BoxShadow(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
                     ],
                   ),
                   child: const Icon(Icons.bolt, color: Colors.white, size: 22),
@@ -305,7 +307,13 @@ class AdminLayout extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               children: [
                 for (final section in _menuSections) ...[
-                  _buildSection(ref, section, currentRoute, expandedSections, context),
+                  _buildSection(
+                    ref,
+                    section,
+                    currentRoute,
+                    expandedSections,
+                    context,
+                  ),
                 ],
               ],
             ),
@@ -318,13 +326,23 @@ class AdminLayout extends ConsumerWidget {
             child: ListTile(
               onTap: () => ref.read(authProvider.notifier).logout(),
               dense: true,
-              leading: Icon(Icons.logout_outlined, color: Colors.red.shade300, size: 18),
+              leading: Icon(
+                Icons.logout_outlined,
+                color: Colors.red.shade300,
+                size: 18,
+              ),
               title: Text(
                 'Sign Out',
-                style: GoogleFonts.inter(color: Colors.red.shade300, fontWeight: FontWeight.w500, fontSize: 13),
+                style: GoogleFonts.inter(
+                  color: Colors.red.shade300,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              hoverColor: Colors.red.withOpacity(0.05),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              hoverColor: Colors.red.withValues(alpha: 0.05),
             ),
           ),
         ],
@@ -332,9 +350,16 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(WidgetRef ref, MenuSection section, String currentRoute, Set<String> expandedSections, BuildContext context) {
+  Widget _buildSection(
+    WidgetRef ref,
+    MenuSection section,
+    String currentRoute,
+    Set<String> expandedSections,
+    BuildContext context,
+  ) {
     final bool isExpanded = expandedSections.contains(section.id);
-    final bool isSectionActive = currentRoute.startsWith('/${section.id}') ||
+    final bool isSectionActive =
+        currentRoute.startsWith('/${section.id}') ||
         section.children.any((c) => currentRoute == c.route) ||
         (section.route != null && currentRoute == section.route);
 
@@ -344,10 +369,22 @@ class AdminLayout extends ConsumerWidget {
       return _buildSectionTile(ref, section, isDashActive, isExpanded, context);
     }
 
-    return _buildSectionTile(ref, section, isSectionActive, isExpanded, context);
+    return _buildSectionTile(
+      ref,
+      section,
+      isSectionActive,
+      isExpanded,
+      context,
+    );
   }
 
-  Widget _buildSectionTile(WidgetRef ref, MenuSection section, bool isActive, bool isExpanded, BuildContext context) {
+  Widget _buildSectionTile(
+    WidgetRef ref,
+    MenuSection section,
+    bool isActive,
+    bool isExpanded,
+    BuildContext context,
+  ) {
     final colors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,9 +429,13 @@ class AdminLayout extends ConsumerWidget {
                     size: 18,
                   )
                 : null,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            tileColor: isActive && !isExpanded ? Colors.blue.withOpacity(0.08) : Colors.transparent,
-            hoverColor: Colors.white.withOpacity(0.03),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            tileColor: isActive && !isExpanded
+                ? Colors.blue.withValues(alpha: 0.08)
+                : Colors.transparent,
+            hoverColor: Colors.white.withValues(alpha: 0.03),
           ),
         ),
 
@@ -404,7 +445,8 @@ class AdminLayout extends ConsumerWidget {
             padding: const EdgeInsets.only(left: 20, bottom: 4),
             child: Column(
               children: section.children.map((item) {
-                final isChildActive = ref.watch(selectedRouteProvider) == item.route;
+                final isChildActive =
+                    ref.watch(selectedRouteProvider) == item.route;
                 return _buildChildItem(ref, item, isChildActive, context);
               }).toList(),
             ),
@@ -413,7 +455,12 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildChildItem(WidgetRef ref, MenuItem item, bool isActive, BuildContext context) {
+  Widget _buildChildItem(
+    WidgetRef ref,
+    MenuItem item,
+    bool isActive,
+    BuildContext context,
+  ) {
     final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0.5),
@@ -442,20 +489,29 @@ class AdminLayout extends ConsumerWidget {
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: isActive ? Colors.blue.withOpacity(0.06) : Colors.transparent,
-        hoverColor: Colors.white.withOpacity(0.03),
+        tileColor: isActive
+            ? Colors.blue.withValues(alpha: 0.06)
+            : Colors.transparent,
+        hoverColor: Colors.white.withValues(alpha: 0.03),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref, String title, bool isDesktop) {
+  Widget _buildHeader(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    bool isDesktop,
+  ) {
     final colors = context.appColors;
     return Container(
       height: 72,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
       decoration: BoxDecoration(
         color: colors.sidebarBg,
-        border: Border(bottom: BorderSide(color: colors.border.withValues(alpha: 0.1))),
+        border: Border(
+          bottom: BorderSide(color: colors.border.withValues(alpha: 0.1)),
+        ),
       ),
       child: Row(
         children: [
@@ -491,24 +547,52 @@ class AdminLayout extends ConsumerWidget {
           const SizedBox(width: 4),
           IconButton(
             onPressed: () {},
-            icon: Icon(Icons.notifications_none, color: colors.textSecondary, size: 20),
+            icon: Icon(
+              Icons.notifications_none,
+              color: colors.textSecondary,
+              size: 20,
+            ),
             tooltip: 'Notifications',
           ),
           const SizedBox(width: 16),
-          Container(height: 28, width: 1, color: colors.border.withValues(alpha: 0.1)),
+          Container(
+            height: 28,
+            width: 1,
+            color: colors.border.withValues(alpha: 0.1),
+          ),
           const SizedBox(width: 16),
           CircleAvatar(
             radius: 16,
             backgroundColor: Colors.blue.shade600,
-            child: const Text("L", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            child: const Text(
+              "L",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Laxman", style: GoogleFonts.inter(color: colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
-              Text("Super Admin", style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 11)),
+              Text(
+                "Laxman",
+                style: GoogleFonts.inter(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              Text(
+                "Super Admin",
+                style: GoogleFonts.inter(
+                  color: colors.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
             ],
           ),
         ],

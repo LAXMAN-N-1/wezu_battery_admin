@@ -914,8 +914,9 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
       if (val < 0) val = 0;
       spots.add(FlSpot(i.toDouble(), val));
 
-      if (reorderDay == null && val <= threshold && val > 0)
+      if (reorderDay == null && val <= threshold && val > 0) {
         reorderDay = i.toDouble();
+      }
       if (stockoutDay == null && val <= 0.1) stockoutDay = i.toDouble();
     }
 

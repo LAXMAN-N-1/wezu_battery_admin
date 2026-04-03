@@ -17,14 +17,20 @@ final healthOverviewProvider = FutureProvider<HealthOverview>((ref) {
   return ref.watch(healthRepositoryProvider).getOverview();
 });
 
-final healthBatteriesProvider = FutureProvider.family<List<HealthBattery>, Map<String, dynamic>>((ref, params) {
-  return ref.watch(healthRepositoryProvider).getBatteries(
-    healthRange: params['health_range'],
-    sortBy: params['sort_by'] ?? 'health_desc',
-    needsAttention: params['needs_attention'],
-    search: params['search'],
-  );
-});
+final healthBatteriesProvider =
+    FutureProvider.family<List<HealthBattery>, Map<String, dynamic>>((
+      ref,
+      params,
+    ) {
+      return ref
+          .watch(healthRepositoryProvider)
+          .getBatteries(
+            healthRange: params['health_range'],
+            sortBy: params['sort_by'] ?? 'health_desc',
+            needsAttention: params['needs_attention'],
+            search: params['search'],
+          );
+    });
 
 final healthAlertsProvider = FutureProvider<List<HealthAlert>>((ref) {
   return ref.watch(healthRepositoryProvider).getAlerts();
@@ -94,7 +100,8 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 overview.when(
                   data: (data) => _buildSummaryCards(data),
                   loading: () => _buildLoadingCards(),
-                  error: (e, _) => _buildErrorWidget('Failed to load overview: $e'),
+                  error: (e, _) =>
+                      _buildErrorWidget('Failed to load overview: $e'),
                 ),
                 const SizedBox(height: 24),
 
@@ -113,8 +120,11 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 // Battery Table
                 batteries.when(
                   data: (list) => _buildBatteryTable(list),
-                  loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
-                  error: (e, _) => _buildErrorWidget('Failed to load batteries: $e'),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                  ),
+                  error: (e, _) =>
+                      _buildErrorWidget('Failed to load batteries: $e'),
                 ),
                 const SizedBox(height: 40),
               ],
@@ -153,20 +163,29 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFFEF4444).withOpacity(0.15), const Color(0xFFEF4444).withOpacity(0.05)],
+                colors: [
+                  const Color(0xFFEF4444).withValues(alpha: 0.15),
+                  const Color(0xFFEF4444).withValues(alpha: 0.05),
+                ],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)),
+              border: Border.all(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withOpacity(0.2),
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.warning_rounded, color: Color(0xFFEF4444), size: 18),
+                  child: const Icon(
+                    Icons.warning_rounded,
+                    color: Color(0xFFEF4444),
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -175,12 +194,22 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                     children: [
                       Text(
                         'CRITICAL: ${critical.length} ${critical.length == 1 ? 'battery' : 'batteries'} require immediate attention',
-                        style: GoogleFonts.inter(color: const Color(0xFFEF4444), fontWeight: FontWeight.w700, fontSize: 13),
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFEF4444),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        critical.map((a) => a.batterySerial ?? 'Unknown').take(3).join(', '),
-                        style: GoogleFonts.inter(color: Colors.white60, fontSize: 12),
+                        critical
+                            .map((a) => a.batterySerial ?? 'Unknown')
+                            .take(3)
+                            .join(', '),
+                        style: GoogleFonts.inter(
+                          color: Colors.white60,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -189,7 +218,14 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                   onPressed: () => setState(() {
                     _selectedHealthRange = 'critical';
                   }),
-                  child: Text('View Batteries →', style: GoogleFonts.inter(color: const Color(0xFFEF4444), fontWeight: FontWeight.w600, fontSize: 12)),
+                  child: Text(
+                    'View Batteries →',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFEF4444),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -201,31 +237,53 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [const Color(0xFFF59E0B).withOpacity(0.12), const Color(0xFFF59E0B).withOpacity(0.04)],
+                colors: [
+                  const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                  const Color(0xFFF59E0B).withValues(alpha: 0.04),
+                ],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.25)),
+              border: Border.all(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+              ),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withOpacity(0.2),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.error_outline_rounded, color: Color(0xFFF59E0B), size: 18),
+                  child: const Icon(
+                    Icons.error_outline_rounded,
+                    color: Color(0xFFF59E0B),
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     '⚠ WARNING: ${warnings.length} ${warnings.length == 1 ? 'battery' : 'batteries'} showing rapid degradation',
-                    style: GoogleFonts.inter(color: const Color(0xFFF59E0B), fontWeight: FontWeight.w600, fontSize: 13),
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFF59E0B),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 TextButton(
-                  onPressed: () => setState(() { _needsAttention = true; }),
-                  child: Text('Review Now →', style: GoogleFonts.inter(color: const Color(0xFFF59E0B), fontWeight: FontWeight.w600, fontSize: 12)),
+                  onPressed: () => setState(() {
+                    _needsAttention = true;
+                  }),
+                  child: Text(
+                    'Review Now →',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFF59E0B),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -246,25 +304,54 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             children: [
               Row(
                 children: [
-                  Text('Battery Health Monitor', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Battery Health Monitor',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 6),
-                        Text('Live', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w600)),
+                        Text(
+                          'Live',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF10B981),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text('Track degradation, schedule maintenance, and predict end-of-life',
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
+              Text(
+                'Track degradation, schedule maintenance, and predict end-of-life',
+                style: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+              ),
             ],
           ),
         ),
@@ -275,29 +362,60 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _buildOutlinedButton(Icons.bar_chart_rounded, 'Health Report', const Color(0xFF8B5CF6), () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Health Report generated and saved to PDF.', style: GoogleFonts.inter(color: Colors.white)),
-                    backgroundColor: const Color(0xFF10B981),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }),
-              _buildOutlinedButton(Icons.build_rounded, 'Schedule Maintenance', const Color(0xFFF59E0B), () {
-                showDialog(context: context, builder: (_) => ScheduleMaintenanceModal(onSuccess: _refresh));
-              }),
+              _buildOutlinedButton(
+                Icons.bar_chart_rounded,
+                'Health Report',
+                const Color(0xFF8B5CF6),
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Health Report generated and saved to PDF.',
+                        style: GoogleFonts.inter(color: Colors.white),
+                      ),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+              _buildOutlinedButton(
+                Icons.build_rounded,
+                'Schedule Maintenance',
+                const Color(0xFFF59E0B),
+                () {
+                  showDialog(
+                    context: context,
+                    builder: (_) =>
+                        ScheduleMaintenanceModal(onSuccess: _refresh),
+                  );
+                },
+              ),
               ElevatedButton.icon(
                 onPressed: () {
-                  showDialog(context: context, builder: (_) => RecordReadingModal(onSuccess: _refresh));
+                  showDialog(
+                    context: context,
+                    builder: (_) => RecordReadingModal(onSuccess: _refresh),
+                  );
                 },
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text('Record Reading', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
+                label: Text(
+                  'Record Reading',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3B82F6),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -307,13 +425,25 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     );
   }
 
-  Widget _buildOutlinedButton(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _buildOutlinedButton(
+    IconData icon,
+    String label,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 16, color: color),
-      label: Text(label, style: GoogleFonts.inter(color: color, fontWeight: FontWeight.w600, fontSize: 12)),
+      label: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      ),
       style: OutlinedButton.styleFrom(
-        side: BorderSide(color: color.withOpacity(0.3)),
+        side: BorderSide(color: color.withValues(alpha: 0.3)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -325,30 +455,110 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
   // ==================================================================
   Widget _buildSummaryCards(HealthOverview data) {
     return Row(
-      children: [
-        _buildSummaryCard('Fleet Avg Health', '${data.fleetAvgHealth.toStringAsFixed(1)}%', 'Fleet average score', const Color(0xFF3B82F6), Icons.favorite_rounded, null, showArc: true, arcValue: data.fleetAvgHealth),
-        _buildSummaryCard('Good Health', '${data.goodCount}', '> 80% • ${data.totalBatteries > 0 ? (data.goodCount / data.totalBatteries * 100).toStringAsFixed(0) : 0}% of fleet', const Color(0xFF10B981), Icons.check_circle_rounded, 'good'),
-        _buildSummaryCard('Fair Health', '${data.fairCount}', '50-80% • Monitor closely', const Color(0xFFF59E0B), Icons.remove_circle_rounded, 'fair'),
-        _buildSummaryCard('Poor / Critical', '${data.poorCount + data.criticalCount}', '< 50% • Attention required', const Color(0xFFEF4444), Icons.cancel_rounded, 'poor', pulse: data.poorCount + data.criticalCount > 0),
-        _buildSummaryCard('Scheduled Service', '${data.scheduledMaintenanceCount}', 'Next 7 days', const Color(0xFF8B5CF6), Icons.calendar_month_rounded, null),
-        _buildSummaryCard('Degradation Rate', '${data.avgDegradationRate}%/mo', 'Avg monthly drop', const Color(0xFF06B6D4), Icons.trending_down_rounded, null),
-      ].map((card) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: card))).toList(),
+      children:
+          [
+                _buildSummaryCard(
+                  'Fleet Avg Health',
+                  '${data.fleetAvgHealth.toStringAsFixed(1)}%',
+                  'Fleet average score',
+                  const Color(0xFF3B82F6),
+                  Icons.favorite_rounded,
+                  null,
+                  showArc: true,
+                  arcValue: data.fleetAvgHealth,
+                ),
+                _buildSummaryCard(
+                  'Good Health',
+                  '${data.goodCount}',
+                  '> 80% • ${data.totalBatteries > 0 ? (data.goodCount / data.totalBatteries * 100).toStringAsFixed(0) : 0}% of fleet',
+                  const Color(0xFF10B981),
+                  Icons.check_circle_rounded,
+                  'good',
+                ),
+                _buildSummaryCard(
+                  'Fair Health',
+                  '${data.fairCount}',
+                  '50-80% • Monitor closely',
+                  const Color(0xFFF59E0B),
+                  Icons.remove_circle_rounded,
+                  'fair',
+                ),
+                _buildSummaryCard(
+                  'Poor / Critical',
+                  '${data.poorCount + data.criticalCount}',
+                  '< 50% • Attention required',
+                  const Color(0xFFEF4444),
+                  Icons.cancel_rounded,
+                  'poor',
+                  pulse: data.poorCount + data.criticalCount > 0,
+                ),
+                _buildSummaryCard(
+                  'Scheduled Service',
+                  '${data.scheduledMaintenanceCount}',
+                  'Next 7 days',
+                  const Color(0xFF8B5CF6),
+                  Icons.calendar_month_rounded,
+                  null,
+                ),
+                _buildSummaryCard(
+                  'Degradation Rate',
+                  '${data.avgDegradationRate}%/mo',
+                  'Avg monthly drop',
+                  const Color(0xFF06B6D4),
+                  Icons.trending_down_rounded,
+                  null,
+                ),
+              ]
+              .map(
+                (card) => Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: card,
+                  ),
+                ),
+              )
+              .toList(),
     );
   }
 
-  Widget _buildSummaryCard(String title, String value, String subtitle, Color color, IconData icon, String? filterValue, {bool pulse = false, bool showArc = false, double arcValue = 0}) {
+  Widget _buildSummaryCard(
+    String title,
+    String value,
+    String subtitle,
+    Color color,
+    IconData icon,
+    String? filterValue, {
+    bool pulse = false,
+    bool showArc = false,
+    double arcValue = 0,
+  }) {
     return MouseRegion(
-      cursor: filterValue != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      cursor: filterValue != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       child: GestureDetector(
-        onTap: filterValue != null ? () => setState(() { _selectedHealthRange = _selectedHealthRange == filterValue ? null : filterValue; }) : null,
+        onTap: filterValue != null
+            ? () => setState(() {
+                _selectedHealthRange = _selectedHealthRange == filterValue
+                    ? null
+                    : filterValue;
+              })
+            : null,
         child: AnimatedContainer(
           duration: 200.ms,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: (_selectedHealthRange == filterValue && filterValue != null) ? color.withOpacity(0.12) : const Color(0xFF1E293B),
+            color: (_selectedHealthRange == filterValue && filterValue != null)
+                ? color.withValues(alpha: 0.12)
+                : const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: (_selectedHealthRange == filterValue && filterValue != null) ? color.withOpacity(0.5) : (pulse ? color.withOpacity(0.4) : Colors.white.withOpacity(0.04)),
+              color:
+                  (_selectedHealthRange == filterValue && filterValue != null)
+                  ? color.withValues(alpha: 0.5)
+                  : (pulse
+                        ? color.withValues(alpha: 0.4)
+                        : Colors.white.withValues(alpha: 0.04)),
               width: pulse ? 1.5 : 1,
             ),
           ),
@@ -359,28 +569,49 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Icon(icon, color: color, size: 16),
                   ),
                   const Spacer(),
                   if (showArc)
                     SizedBox(
-                      width: 32, height: 32,
+                      width: 32,
+                      height: 32,
                       child: CircularProgressIndicator(
                         value: arcValue / 100,
                         strokeWidth: 3,
-                        backgroundColor: color.withOpacity(0.1),
+                        backgroundColor: color.withValues(alpha: 0.1),
                         valueColor: AlwaysStoppedAnimation(color),
                       ),
                     ),
                 ],
               ),
               const SizedBox(height: 12),
-              Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+              Text(
+                value,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(title, style: GoogleFonts.inter(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w500)),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: Colors.white60,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(subtitle, style: GoogleFonts.inter(color: Colors.white30, fontSize: 11)),
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(color: Colors.white30, fontSize: 11),
+              ),
             ],
           ),
         ),
@@ -401,12 +632,19 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.04)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Health Distribution', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(
+                  'Health Distribution',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 SizedBox(
                   height: 200,
@@ -417,7 +655,9 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                           PieChartData(
                             sectionsSpace: 3,
                             centerSpaceRadius: 50,
-                            sections: _buildDonutSections(data.healthDistribution),
+                            sections: _buildDonutSections(
+                              data.healthDistribution,
+                            ),
                           ),
                         ),
                       ),
@@ -426,13 +666,29 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLegendItem('Good (>80%)', data.healthDistribution['good'] ?? 0, const Color(0xFF10B981)),
+                          _buildLegendItem(
+                            'Good (>80%)',
+                            data.healthDistribution['good'] ?? 0,
+                            const Color(0xFF10B981),
+                          ),
                           const SizedBox(height: 10),
-                          _buildLegendItem('Fair (50-80%)', data.healthDistribution['fair'] ?? 0, const Color(0xFFF59E0B)),
+                          _buildLegendItem(
+                            'Fair (50-80%)',
+                            data.healthDistribution['fair'] ?? 0,
+                            const Color(0xFFF59E0B),
+                          ),
                           const SizedBox(height: 10),
-                          _buildLegendItem('Poor (30-50%)', data.healthDistribution['poor'] ?? 0, const Color(0xFFEF4444)),
+                          _buildLegendItem(
+                            'Poor (30-50%)',
+                            data.healthDistribution['poor'] ?? 0,
+                            const Color(0xFFEF4444),
+                          ),
                           const SizedBox(height: 10),
-                          _buildLegendItem('Critical (<30%)', data.healthDistribution['critical'] ?? 0, const Color(0xFF7F1D1D)),
+                          _buildLegendItem(
+                            'Critical (<30%)',
+                            data.healthDistribution['critical'] ?? 0,
+                            const Color(0xFF7F1D1D),
+                          ),
                         ],
                       ),
                     ],
@@ -451,14 +707,21 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             decoration: BoxDecoration(
               color: const Color(0xFF1E293B),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.04)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Text('Fleet Health Trend — 90 Days', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Fleet Health Trend — 90 Days',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const Spacer(),
                     _buildChartRangeChip('30D'),
                     _buildChartRangeChip('60D'),
@@ -483,10 +746,26 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     if (total == 0) return [];
 
     final items = [
-      {'key': 'good', 'color': const Color(0xFF10B981), 'value': dist['good'] ?? 0},
-      {'key': 'fair', 'color': const Color(0xFFF59E0B), 'value': dist['fair'] ?? 0},
-      {'key': 'poor', 'color': const Color(0xFFEF4444), 'value': dist['poor'] ?? 0},
-      {'key': 'critical', 'color': const Color(0xFF7F1D1D), 'value': dist['critical'] ?? 0},
+      {
+        'key': 'good',
+        'color': const Color(0xFF10B981),
+        'value': dist['good'] ?? 0,
+      },
+      {
+        'key': 'fair',
+        'color': const Color(0xFFF59E0B),
+        'value': dist['fair'] ?? 0,
+      },
+      {
+        'key': 'poor',
+        'color': const Color(0xFFEF4444),
+        'value': dist['poor'] ?? 0,
+      },
+      {
+        'key': 'critical',
+        'color': const Color(0xFF7F1D1D),
+        'value': dist['critical'] ?? 0,
+      },
     ];
 
     return items.where((i) => (i['value'] as int) > 0).map((i) {
@@ -496,7 +775,11 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         title: '$val',
         color: i['color'] as Color,
         radius: 35,
-        titleStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+        titleStyle: GoogleFonts.inter(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
         titlePositionPercentageOffset: 0.55,
       );
     }).toList();
@@ -505,21 +788,49 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
   Widget _buildLegendItem(String label, int count, Color color) {
     return Row(
       children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
         const SizedBox(width: 8),
-        Text('$label: $count', style: GoogleFonts.inter(color: Colors.white60, fontSize: 12)),
+        Text(
+          '$label: $count',
+          style: GoogleFonts.inter(color: Colors.white60, fontSize: 12),
+        ),
       ],
     );
   }
 
   Widget _buildFleetTrendChart(List<FleetHealthTrendPoint> trend) {
-    if (trend.isEmpty) return const Center(child: Text('No trend data', style: TextStyle(color: Colors.white38)));
+    if (trend.isEmpty) {
+      return const Center(
+        child: Text('No trend data', style: TextStyle(color: Colors.white38)),
+      );
+    }
 
     final validTrend = trend.where((t) => t.avgHealth > 0).toList();
-    if (validTrend.length < 2) return const Center(child: Text('Not enough trend data', style: TextStyle(color: Colors.white38)));
+    if (validTrend.length < 2) {
+      return const Center(
+        child: Text(
+          'Not enough trend data',
+          style: TextStyle(color: Colors.white38),
+        ),
+      );
+    }
 
-    final spots = validTrend.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value.avgHealth)).toList();
-    final minY = (validTrend.map((t) => t.avgHealth).reduce((a, b) => a < b ? a : b) - 5).clamp(0, 100).toDouble();
+    final spots = validTrend
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value.avgHealth))
+        .toList();
+    final minY =
+        (validTrend.map((t) => t.avgHealth).reduce((a, b) => a < b ? a : b) - 5)
+            .clamp(0, 100)
+            .toDouble();
 
     return LineChart(
       LineChartData(
@@ -529,7 +840,10 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: 10,
-          getDrawingHorizontalLine: (v) => FlLine(color: Colors.white.withOpacity(0.04), strokeWidth: 1),
+          getDrawingHorizontalLine: (v) => FlLine(
+            color: Colors.white.withValues(alpha: 0.04),
+            strokeWidth: 1,
+          ),
         ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(
@@ -537,7 +851,10 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               showTitles: true,
               reservedSize: 40,
               interval: 10,
-              getTitlesWidget: (v, _) => Text('${v.toInt()}%', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
+              getTitlesWidget: (v, _) => Text(
+                '${v.toInt()}%',
+                style: GoogleFonts.inter(color: Colors.white24, fontSize: 10),
+              ),
             ),
           ),
           bottomTitles: AxisTitles(
@@ -546,23 +863,45 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               interval: 2,
               getTitlesWidget: (v, _) {
                 final idx = v.toInt();
-                if (idx < 0 || idx >= validTrend.length) return const SizedBox.shrink();
+                if (idx < 0 || idx >= validTrend.length) {
+                  return const SizedBox.shrink();
+                }
                 final d = validTrend[idx].date;
                 return Padding(
                   padding: const EdgeInsets.only(top: 8),
-                  child: Text(d.substring(5), style: GoogleFonts.inter(color: Colors.white24, fontSize: 9)),
+                  child: Text(
+                    d.substring(5),
+                    style: GoogleFonts.inter(
+                      color: Colors.white24,
+                      fontSize: 9,
+                    ),
+                  ),
                 );
               },
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         borderData: FlBorderData(show: false),
         extraLinesData: ExtraLinesData(
           horizontalLines: [
-            HorizontalLine(y: 80, color: const Color(0xFFF59E0B).withOpacity(0.3), strokeWidth: 1, dashArray: [5, 5]),
-            HorizontalLine(y: 50, color: const Color(0xFFEF4444).withOpacity(0.3), strokeWidth: 1, dashArray: [5, 5]),
+            HorizontalLine(
+              y: 80,
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+              strokeWidth: 1,
+              dashArray: [5, 5],
+            ),
+            HorizontalLine(
+              y: 50,
+              color: const Color(0xFFEF4444).withValues(alpha: 0.3),
+              strokeWidth: 1,
+              dashArray: [5, 5],
+            ),
           ],
         ),
         lineTouchData: LineTouchData(
@@ -570,7 +909,11 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             getTooltipItems: (spots) => spots.map((s) {
               return LineTooltipItem(
                 '${s.y.toStringAsFixed(1)}%',
-                GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+                GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
               );
             }).toList(),
           ),
@@ -583,12 +926,19 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             barWidth: 2.5,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(radius: 3, color: const Color(0xFF3B82F6), strokeWidth: 0),
+              getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                radius: 3,
+                color: const Color(0xFF3B82F6),
+                strokeWidth: 0,
+              ),
             ),
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
-                colors: [const Color(0xFF3B82F6).withOpacity(0.15), const Color(0xFF3B82F6).withOpacity(0.0)],
+                colors: [
+                  const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                  const Color(0xFF3B82F6).withValues(alpha: 0.0),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -605,11 +955,24 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.transparent,
+          color: selected
+              ? const Color(0xFF3B82F6).withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: selected ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.white10),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF3B82F6).withValues(alpha: 0.3)
+                : Colors.white10,
+          ),
         ),
-        child: Text(label, style: GoogleFonts.inter(color: selected ? const Color(0xFF3B82F6) : Colors.white38, fontSize: 11, fontWeight: FontWeight.w600)),
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            color: selected ? const Color(0xFF3B82F6) : Colors.white38,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
@@ -639,13 +1002,27 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             final isSelected = _selectedHealthRange == f['value'];
             return FilterChip(
               selected: isSelected,
-              label: Text(f['label'] as String, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500)),
-              selectedColor: const Color(0xFF3B82F6).withOpacity(0.15),
+              label: Text(
+                f['label'] as String,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              selectedColor: const Color(0xFF3B82F6).withValues(alpha: 0.15),
               backgroundColor: const Color(0xFF1E293B),
               checkmarkColor: const Color(0xFF3B82F6),
-              labelStyle: TextStyle(color: isSelected ? const Color(0xFF3B82F6) : Colors.white54),
-              side: BorderSide(color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.white.withOpacity(0.06)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              labelStyle: TextStyle(
+                color: isSelected ? const Color(0xFF3B82F6) : Colors.white54,
+              ),
+              side: BorderSide(
+                color: isSelected
+                    ? const Color(0xFF3B82F6).withValues(alpha: 0.3)
+                    : Colors.white.withValues(alpha: 0.06),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               onSelected: (_) => setState(() {
                 _selectedHealthRange = isSelected ? null : f['value'];
               }),
@@ -663,12 +1040,29 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             decoration: InputDecoration(
               hintText: 'Search serial...',
               hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
-              prefixIcon: const Icon(Icons.search, color: Colors.white24, size: 18),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: Colors.white24,
+                size: 18,
+              ),
               filled: true,
               fillColor: const Color(0xFF1E293B),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.white.withOpacity(0.06))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF3B82F6))),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.06),
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.06),
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFF3B82F6)),
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             ),
           ),
@@ -680,19 +1074,35 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           decoration: BoxDecoration(
             color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.06)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _sortBy,
               dropdownColor: const Color(0xFF1E293B),
               style: GoogleFonts.inter(color: Colors.white60, fontSize: 12),
-              icon: const Icon(Icons.unfold_more, color: Colors.white38, size: 16),
+              icon: const Icon(
+                Icons.unfold_more,
+                color: Colors.white38,
+                size: 16,
+              ),
               items: const [
-                DropdownMenuItem(value: 'health_desc', child: Text('Health High→Low')),
-                DropdownMenuItem(value: 'health_asc', child: Text('Health Low→High')),
-                DropdownMenuItem(value: 'degradation_rate', child: Text('Worst Degradation')),
-                DropdownMenuItem(value: 'last_service', child: Text('Last Service Date')),
+                DropdownMenuItem(
+                  value: 'health_desc',
+                  child: Text('Health High→Low'),
+                ),
+                DropdownMenuItem(
+                  value: 'health_asc',
+                  child: Text('Health Low→High'),
+                ),
+                DropdownMenuItem(
+                  value: 'degradation_rate',
+                  child: Text('Worst Degradation'),
+                ),
+                DropdownMenuItem(
+                  value: 'last_service',
+                  child: Text('Last Service Date'),
+                ),
               ],
               onChanged: (v) => setState(() => _sortBy = v ?? 'health_desc'),
             ),
@@ -703,7 +1113,10 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Needs Attention', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+            Text(
+              'Needs Attention',
+              style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+            ),
             const SizedBox(width: 6),
             Switch(
               value: _needsAttention,
@@ -727,18 +1140,35 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         decoration: BoxDecoration(
           color: const Color(0xFF1E293B),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.04)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
         ),
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.battery_unknown_rounded, color: Colors.white12, size: 48),
+              Icon(
+                Icons.battery_unknown_rounded,
+                color: Colors.white12,
+                size: 48,
+              ),
               const SizedBox(height: 12),
-              Text('No batteries match this health filter', style: GoogleFonts.inter(color: Colors.white38, fontSize: 14)),
+              Text(
+                'No batteries match this health filter',
+                style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+              ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => setState(() { _selectedHealthRange = null; _needsAttention = false; _searchQuery = ''; }),
-                child: Text('Clear Filters', style: GoogleFonts.inter(color: const Color(0xFF3B82F6), fontWeight: FontWeight.w600)),
+                onPressed: () => setState(() {
+                  _selectedHealthRange = null;
+                  _needsAttention = false;
+                  _searchQuery = '';
+                }),
+                child: Text(
+                  'Clear Filters',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF3B82F6),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -750,7 +1180,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.04)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -781,14 +1211,19 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  TextStyle _headerStyle() => GoogleFonts.inter(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5);
+  TextStyle _headerStyle() => GoogleFonts.inter(
+    color: Colors.white38,
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.5,
+  );
 
   DataRow _buildBatteryRow(HealthBattery b) {
     final healthColor = b.healthPercentage > 80
         ? const Color(0xFF10B981)
         : b.healthPercentage > 50
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFFEF4444);
+        ? const Color(0xFFF59E0B)
+        : const Color(0xFFEF4444);
 
     final isCritical = b.healthPercentage <= 30;
     final isDegrading = b.degradationRate > 3;
@@ -796,10 +1231,10 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     return DataRow(
       color: WidgetStateProperty.all(
         isCritical
-            ? const Color(0xFFEF4444).withOpacity(0.04)
+            ? const Color(0xFFEF4444).withValues(alpha: 0.04)
             : isDegrading
-                ? const Color(0xFFF59E0B).withOpacity(0.03)
-                : Colors.transparent,
+            ? const Color(0xFFF59E0B).withValues(alpha: 0.03)
+            : Colors.transparent,
       ),
       cells: [
         // Serial
@@ -812,15 +1247,32 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.qr_code_rounded, color: Colors.white24, size: 14),
+                    Icon(
+                      Icons.qr_code_rounded,
+                      color: Colors.white24,
+                      size: 14,
+                    ),
                     const SizedBox(width: 6),
-                    Text(b.serialNumber, style: GoogleFonts.jetBrainsMono(color: const Color(0xFF3B82F6), fontSize: 13, fontWeight: FontWeight.w500)),
+                    Text(
+                      b.serialNumber,
+                      style: GoogleFonts.jetBrainsMono(
+                        color: const Color(0xFF3B82F6),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
                 if (b.manufacturer != null)
                   Padding(
                     padding: const EdgeInsets.only(left: 20),
-                    child: Text(b.manufacturer!, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
+                    child: Text(
+                      b.manufacturer!,
+                      style: GoogleFonts.inter(
+                        color: Colors.white24,
+                        fontSize: 11,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -832,22 +1284,37 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           Row(
             children: [
               SizedBox(
-                width: 36, height: 36,
+                width: 36,
+                height: 36,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     CircularProgressIndicator(
                       value: b.healthPercentage / 100,
                       strokeWidth: 3,
-                      backgroundColor: healthColor.withOpacity(0.1),
+                      backgroundColor: healthColor.withValues(alpha: 0.1),
                       valueColor: AlwaysStoppedAnimation(healthColor),
                     ),
-                    Text('${b.healthPercentage.toInt()}', style: GoogleFonts.inter(color: healthColor, fontSize: 9, fontWeight: FontWeight.bold)),
+                    Text(
+                      '${b.healthPercentage.toInt()}',
+                      style: GoogleFonts.inter(
+                        color: healthColor,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Text('${b.healthPercentage.toStringAsFixed(1)}%', style: GoogleFonts.outfit(color: healthColor, fontSize: 15, fontWeight: FontWeight.bold)),
+              Text(
+                '${b.healthPercentage.toStringAsFixed(1)}%',
+                style: GoogleFonts.outfit(
+                  color: healthColor,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
         ),
@@ -864,7 +1331,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                   child: LinearProgressIndicator(
                     value: b.healthPercentage / 100,
                     minHeight: 8,
-                    backgroundColor: Colors.white.withOpacity(0.06),
+                    backgroundColor: Colors.white.withValues(alpha: 0.06),
                     valueColor: AlwaysStoppedAnimation(healthColor),
                   ),
                 ),
@@ -878,16 +1345,27 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           Row(
             children: [
               Icon(
-                b.degradationRate > 0 ? Icons.trending_down_rounded : Icons.trending_flat_rounded,
-                color: b.degradationRate > 3 ? const Color(0xFFEF4444) : b.degradationRate > 1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                b.degradationRate > 0
+                    ? Icons.trending_down_rounded
+                    : Icons.trending_flat_rounded,
+                color: b.degradationRate > 3
+                    ? const Color(0xFFEF4444)
+                    : b.degradationRate > 1
+                    ? const Color(0xFFF59E0B)
+                    : const Color(0xFF10B981),
                 size: 16,
               ),
               const SizedBox(width: 4),
               Text(
                 b.degradationRate > 0 ? '${b.degradationRate}%/mo' : 'Stable',
                 style: GoogleFonts.inter(
-                  color: b.degradationRate > 3 ? const Color(0xFFEF4444) : b.degradationRate > 1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
-                  fontSize: 12, fontWeight: FontWeight.w600,
+                  color: b.degradationRate > 3
+                      ? const Color(0xFFEF4444)
+                      : b.degradationRate > 1
+                      ? const Color(0xFFF59E0B)
+                      : const Color(0xFF10B981),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -897,9 +1375,13 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         // Last Reading
         DataCell(
           Text(
-            b.lastReadingAt != null ? _formatRelativeDate(b.lastReadingAt!) : 'No readings',
+            b.lastReadingAt != null
+                ? _formatRelativeDate(b.lastReadingAt!)
+                : 'No readings',
             style: GoogleFonts.inter(
-              color: b.lastReadingAt == null ? const Color(0xFFEF4444).withOpacity(0.7) : Colors.white54,
+              color: b.lastReadingAt == null
+                  ? const Color(0xFFEF4444).withValues(alpha: 0.7)
+                  : Colors.white54,
               fontSize: 12,
             ),
           ),
@@ -913,18 +1395,45 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.bolt_rounded, color: Colors.amber.withOpacity(0.6), size: 13),
+                  Icon(
+                    Icons.bolt_rounded,
+                    color: Colors.amber.withValues(alpha: 0.6),
+                    size: 13,
+                  ),
                   const SizedBox(width: 3),
-                  Text(b.voltage != null ? '${b.voltage!.toStringAsFixed(1)}V' : '--', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                  Text(
+                    b.voltage != null
+                        ? '${b.voltage!.toStringAsFixed(1)}V'
+                        : '--',
+                    style: GoogleFonts.inter(
+                      color: Colors.white54,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 2),
               Row(
                 children: [
-                  Icon(Icons.thermostat_rounded, color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.cyan.withOpacity(0.6), size: 13),
+                  Icon(
+                    Icons.thermostat_rounded,
+                    color: (b.temperature ?? 0) > 45
+                        ? const Color(0xFFEF4444)
+                        : Colors.cyan.withValues(alpha: 0.6),
+                    size: 13,
+                  ),
                   const SizedBox(width: 3),
-                  Text(b.temperature != null ? '${b.temperature!.toStringAsFixed(1)}°C' : '--',
-                    style: GoogleFonts.inter(color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.white54, fontSize: 11)),
+                  Text(
+                    b.temperature != null
+                        ? '${b.temperature!.toStringAsFixed(1)}°C'
+                        : '--',
+                    style: GoogleFonts.inter(
+                      color: (b.temperature ?? 0) > 45
+                          ? const Color(0xFFEF4444)
+                          : Colors.white54,
+                      fontSize: 11,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -936,17 +1445,23 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: healthColor.withOpacity(0.12),
+              color: healthColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(b.healthStatus.toUpperCase(), style: GoogleFonts.inter(color: healthColor, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+            child: Text(
+              b.healthStatus.toUpperCase(),
+              style: GoogleFonts.inter(
+                color: healthColor,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
           ),
         ),
 
         // Maintenance
-        DataCell(
-          _buildMaintenanceCell(b),
-        ),
+        DataCell(_buildMaintenanceCell(b)),
 
         // Actions
         DataCell(
@@ -960,7 +1475,14 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               ),
               IconButton(
                 onPressed: () {
-                  showDialog(context: context, builder: (_) => ScheduleMaintenanceModal(batteryId: b.id, batterySerial: b.serialNumber, onSuccess: _refresh));
+                  showDialog(
+                    context: context,
+                    builder: (_) => ScheduleMaintenanceModal(
+                      batteryId: b.id,
+                      batterySerial: b.serialNumber,
+                      onSuccess: _refresh,
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.calendar_month_rounded, size: 18),
                 color: Colors.white38,
@@ -968,7 +1490,14 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               ),
               IconButton(
                 onPressed: () {
-                  showDialog(context: context, builder: (_) => RecordReadingModal(batteryId: b.id, batterySerial: b.serialNumber, onSuccess: _refresh));
+                  showDialog(
+                    context: context,
+                    builder: (_) => RecordReadingModal(
+                      batteryId: b.id,
+                      batterySerial: b.serialNumber,
+                      onSuccess: _refresh,
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.bar_chart_rounded, size: 18),
                 color: Colors.white38,
@@ -987,7 +1516,10 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         children: [
           Icon(Icons.help_outline_rounded, color: Colors.white24, size: 14),
           const SizedBox(width: 4),
-          Text('No record', style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
+          Text(
+            'No record',
+            style: GoogleFonts.inter(color: Colors.white24, fontSize: 11),
+          ),
         ],
       );
     }
@@ -998,23 +1530,52 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         children: [
           Icon(Icons.error_rounded, color: const Color(0xFFEF4444), size: 14),
           const SizedBox(width: 4),
-          Text('Overdue', style: GoogleFonts.inter(color: const Color(0xFFEF4444), fontSize: 11, fontWeight: FontWeight.w600)),
+          Text(
+            'Overdue',
+            style: GoogleFonts.inter(
+              color: const Color(0xFFEF4444),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       );
     } else if (days > 25) {
       return Row(
         children: [
-          Icon(Icons.schedule_rounded, color: const Color(0xFFF59E0B), size: 14),
+          Icon(
+            Icons.schedule_rounded,
+            color: const Color(0xFFF59E0B),
+            size: 14,
+          ),
           const SizedBox(width: 4),
-          Text('Due soon', style: GoogleFonts.inter(color: const Color(0xFFF59E0B), fontSize: 11, fontWeight: FontWeight.w600)),
+          Text(
+            'Due soon',
+            style: GoogleFonts.inter(
+              color: const Color(0xFFF59E0B),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       );
     } else {
       return Row(
         children: [
-          Icon(Icons.check_circle_rounded, color: const Color(0xFF10B981), size: 14),
+          Icon(
+            Icons.check_circle_rounded,
+            color: const Color(0xFF10B981),
+            size: 14,
+          ),
           const SizedBox(width: 4),
-          Text('Up to date', style: GoogleFonts.inter(color: const Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.w600)),
+          Text(
+            'Up to date',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF10B981),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       );
     }
@@ -1045,19 +1606,27 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
   // ==================================================================
   Widget _buildLoadingCards() {
     return Row(
-      children: List.generate(6, (_) => Expanded(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Container(
-            height: 130,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(14),
+      children: List.generate(
+        6,
+        (_) => Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Container(
+              height: 130,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF3B82F6),
+                  strokeWidth: 2,
+                ),
+              ),
             ),
-            child: const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6), strokeWidth: 2)),
           ),
         ),
-      )),
+      ),
     );
   }
 
@@ -1065,16 +1634,32 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFEF4444).withOpacity(0.08),
+        color: const Color(0xFFEF4444).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.2)),
+        border: Border.all(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
           const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 20),
           const SizedBox(width: 12),
-          Expanded(child: Text(message, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13))),
-          TextButton(onPressed: _refresh, child: Text('Retry', style: GoogleFonts.inter(color: const Color(0xFF3B82F6), fontWeight: FontWeight.w600))),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+            ),
+          ),
+          TextButton(
+            onPressed: _refresh,
+            child: Text(
+              'Retry',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF3B82F6),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );

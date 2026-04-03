@@ -54,7 +54,7 @@ class UserMasterRepository {
     final normalizedStatus = _normalizeStatus(status);
     final userType = _mapRoleToUserType(role);
     final response = await _apiClient.get(
-      '/api/v1/admin/users/',
+      '/api/v1/admin/users',
       queryParameters: {
         if (search != null && search.isNotEmpty) 'search': search,
         if (userType != null) 'user_type': userType,
@@ -83,12 +83,15 @@ class UserMasterRepository {
   }
 
   Future<User> createUser(Map<String, dynamic> data) async {
-    final response = await _apiClient.post('/api/v1/admin/users/', data: data);
+    final response = await _apiClient.post('/api/v1/admin/users', data: data);
     return User.fromJson(response.data);
   }
 
   Future<User> updateUser(String id, Map<String, dynamic> data) async {
-    final response = await _apiClient.put('/api/v1/admin/users/$id', data: data);
+    final response = await _apiClient.put(
+      '/api/v1/admin/users/$id',
+      data: data,
+    );
     return User.fromJson(response.data);
   }
 
@@ -98,7 +101,10 @@ class UserMasterRepository {
   }
 
   Future<Map<String, dynamic>> createRole(Map<String, dynamic> data) async {
-    final response = await _apiClient.post('/api/v1/admin/rbac/roles', data: data);
+    final response = await _apiClient.post(
+      '/api/v1/admin/rbac/roles',
+      data: data,
+    );
     return response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
@@ -124,7 +130,10 @@ class UserMasterRepository {
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
     final modules = data['modules'] as List? ?? const <dynamic>[];
-    return modules.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList();
+    return modules
+        .whereType<Map>()
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
   }
 
   Future<List<AccessLog>> getAccessLogs({int skip = 0, int limit = 50}) async {
@@ -141,9 +150,13 @@ class UserMasterRepository {
       final json = Map<String, dynamic>.from(entry);
       return AccessLog(
         id: json['id']?.toString() ?? '',
-        timestamp: DateTime.tryParse(json['timestamp']?.toString() ?? '') ?? DateTime.now(),
+        timestamp:
+            DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+            DateTime.now(),
         userId: json['user_id']?.toString() ?? '',
-        userName: json['user_id'] != null ? 'User #${json['user_id']}' : 'System',
+        userName: json['user_id'] != null
+            ? 'User #${json['user_id']}'
+            : 'System',
         roleName: '',
         actionType: json['action']?.toString() ?? 'unknown',
         moduleAffected: json['resource_type']?.toString() ?? '',

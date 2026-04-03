@@ -13,10 +13,17 @@ class KYCDocumentsView extends StatefulWidget {
   State<KYCDocumentsView> createState() => _KYCDocumentsViewState();
 }
 
-class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerProviderStateMixin {
+class _KYCDocumentsViewState extends State<KYCDocumentsView>
+    with SingleTickerProviderStateMixin {
   final KYCRepository _repository = KYCRepository();
   List<KYCDocument> _documents = [];
-  KYCStats _stats = const KYCStats(totalDocuments: 0, totalPending: 0, totalVerified: 0, totalRejected: 0, pendingUsers: 0);
+  KYCStats _stats = const KYCStats(
+    totalDocuments: 0,
+    totalPending: 0,
+    totalVerified: 0,
+    totalRejected: 0,
+    pendingUsers: 0,
+  );
   bool _isLoading = true;
   String _statusFilter = 'all';
   late TabController _tabController;
@@ -54,7 +61,9 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     try {
       final results = await Future.wait([
         _repository.getStats(),
-        _repository.getDocuments(status: _statusFilter == 'all' ? null : _statusFilter),
+        _repository.getDocuments(
+          status: _statusFilter == 'all' ? null : _statusFilter,
+        ),
       ]);
       setState(() {
         _stats = results[0] as KYCStats;
@@ -92,24 +101,53 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
           // Header
           PageHeader(
             title: 'KYC Documents',
-            subtitle: 'Review, approve, and reject user identity verification documents.',
+            subtitle:
+                'Review, approve, and reject user identity verification documents.',
             actionButton: _buildRefreshButton(),
           ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
           // Stats Row
           Row(
-            children: [
-              _buildStatCard('Total Docs', _stats.totalDocuments.toString(), Icons.description_outlined, const Color(0xFF3B82F6)),
-              const SizedBox(width: 16),
-              _buildStatCard('Pending', _stats.totalPending.toString(), Icons.hourglass_empty, const Color(0xFFF59E0B)),
-              const SizedBox(width: 16),
-              _buildStatCard('Verified', _stats.totalVerified.toString(), Icons.check_circle_outline, const Color(0xFF22C55E)),
-              const SizedBox(width: 16),
-              _buildStatCard('Rejected', _stats.totalRejected.toString(), Icons.cancel_outlined, const Color(0xFFEF4444)),
-              const SizedBox(width: 16),
-              _buildStatCard('Users Waiting', _stats.pendingUsers.toString(), Icons.people_outline, const Color(0xFF8B5CF6)),
-            ],
-          ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
+                children: [
+                  _buildStatCard(
+                    'Total Docs',
+                    _stats.totalDocuments.toString(),
+                    Icons.description_outlined,
+                    const Color(0xFF3B82F6),
+                  ),
+                  const SizedBox(width: 16),
+                  _buildStatCard(
+                    'Pending',
+                    _stats.totalPending.toString(),
+                    Icons.hourglass_empty,
+                    const Color(0xFFF59E0B),
+                  ),
+                  const SizedBox(width: 16),
+                  _buildStatCard(
+                    'Verified',
+                    _stats.totalVerified.toString(),
+                    Icons.check_circle_outline,
+                    const Color(0xFF22C55E),
+                  ),
+                  const SizedBox(width: 16),
+                  _buildStatCard(
+                    'Rejected',
+                    _stats.totalRejected.toString(),
+                    Icons.cancel_outlined,
+                    const Color(0xFFEF4444),
+                  ),
+                  const SizedBox(width: 16),
+                  _buildStatCard(
+                    'Users Waiting',
+                    _stats.pendingUsers.toString(),
+                    Icons.people_outline,
+                    const Color(0xFF8B5CF6),
+                  ),
+                ],
+              )
+              .animate()
+              .fadeIn(duration: 400.ms, delay: 100.ms)
+              .slideX(begin: -0.05),
           const SizedBox(height: 24),
 
           // Tab Bar
@@ -122,60 +160,98 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
               indicatorWeight: 3,
               labelColor: const Color(0xFF3B82F6),
               unselectedLabelColor: Colors.white54,
-              labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
-              unselectedLabelStyle: GoogleFonts.inter(fontWeight: FontWeight.w400, fontSize: 13),
-              tabs: _tabs.map((t) => Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(t.icon, size: 16),
-                    const SizedBox(width: 6),
-                    Text(t.label),
-                    if (t.key == 'pending' && _stats.totalPending > 0) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _stats.totalPending.toString(),
-                          style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFFF59E0B), fontWeight: FontWeight.bold),
-                        ),
+              labelStyle: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              unselectedLabelStyle: GoogleFonts.inter(
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+              ),
+              tabs: _tabs
+                  .map(
+                    (t) => Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(t.icon, size: 16),
+                          const SizedBox(width: 6),
+                          Text(t.label),
+                          if (t.key == 'pending' &&
+                              _stats.totalPending > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFF59E0B,
+                                ).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                _stats.totalPending.toString(),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  color: const Color(0xFFF59E0B),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
-                  ],
-                ),
-              )).toList(),
+                    ),
+                  )
+                  .toList(),
             ),
           ).animate().fadeIn(duration: 400.ms, delay: 150.ms),
           const SizedBox(height: 16),
 
           // Data Table
           AdvancedCard(
-            padding: EdgeInsets.zero,
-            child: _isLoading
-                ? const SizedBox(height: 300, child: Center(child: CircularProgressIndicator()))
-                : _documents.isEmpty
+                padding: EdgeInsets.zero,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 300,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : _documents.isEmpty
                     ? SizedBox(
                         height: 200,
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.inbox_outlined, size: 48, color: Colors.white.withValues(alpha: 0.2)),
+                              Icon(
+                                Icons.inbox_outlined,
+                                size: 48,
+                                color: Colors.white.withValues(alpha: 0.2),
+                              ),
                               const SizedBox(height: 12),
                               Text(
-                                _statusFilter == 'all' ? 'No KYC documents found' : 'No $_statusFilter documents',
-                                style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                                _statusFilter == 'all'
+                                    ? 'No KYC documents found'
+                                    : 'No $_statusFilter documents',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white54,
+                                  fontSize: 14,
+                                ),
                               ),
                             ],
                           ),
                         ),
                       )
                     : AdvancedTable(
-                        columns: const ['User', 'Document Type', 'Status', 'Uploaded', 'Actions'],
+                        columns: const [
+                          'User',
+                          'Document Type',
+                          'Status',
+                          'Uploaded',
+                          'Actions',
+                        ],
                         rows: _documents.map((doc) {
                           return [
                             // User
@@ -183,19 +259,43 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
                               children: [
                                 CircleAvatar(
                                   radius: 16,
-                                  backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                                  backgroundColor: const Color(
+                                    0xFF8B5CF6,
+                                  ).withValues(alpha: 0.2),
                                   child: Text(
-                                    doc.userName.isNotEmpty ? doc.userName[0].toUpperCase() : '?',
-                                    style: const TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold, fontSize: 12),
+                                    doc.userName.isNotEmpty
+                                        ? doc.userName[0].toUpperCase()
+                                        : '?',
+                                    style: const TextStyle(
+                                      color: Color(0xFF8B5CF6),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(doc.userName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13), overflow: TextOverflow.ellipsis),
-                                      Text(doc.userEmail, style: const TextStyle(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
+                                      Text(
+                                        doc.userName,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        doc.userEmail,
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 11,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -205,12 +305,19 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(_getDocTypeIcon(doc.documentType), size: 16, color: Colors.white54),
+                                Icon(
+                                  _getDocTypeIcon(doc.documentType),
+                                  size: 16,
+                                  color: Colors.white54,
+                                ),
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
                                     doc.documentTypeDisplay,
-                                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -220,25 +327,50 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
                             StatusBadge(status: doc.status),
                             // Uploaded
                             Text(
-                              doc.uploadedAt != null ? DateFormat('MMM d, y').format(doc.uploadedAt!) : '—',
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
+                              doc.uploadedAt != null
+                                  ? DateFormat(
+                                      'MMM d, y',
+                                    ).format(doc.uploadedAt!)
+                                  : '—',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
                             ),
                             // Actions
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 if (doc.status == 'pending') ...[
-                                  _actionIconButton(Icons.check_circle, const Color(0xFF22C55E), 'Approve', () => _approveDocument(doc)),
+                                  _actionIconButton(
+                                    Icons.check_circle,
+                                    const Color(0xFF22C55E),
+                                    'Approve',
+                                    () => _approveDocument(doc),
+                                  ),
                                   const SizedBox(width: 4),
-                                  _actionIconButton(Icons.cancel, const Color(0xFFEF4444), 'Reject', () => _showRejectDialog(doc)),
+                                  _actionIconButton(
+                                    Icons.cancel,
+                                    const Color(0xFFEF4444),
+                                    'Reject',
+                                    () => _showRejectDialog(doc),
+                                  ),
                                 ],
-                                _actionIconButton(Icons.visibility_outlined, Colors.white54, 'View', () => _showDocumentDetail(doc)),
+                                _actionIconButton(
+                                  Icons.visibility_outlined,
+                                  Colors.white54,
+                                  'View',
+                                  () => _showDocumentDetail(doc),
+                                ),
                               ],
                             ),
                           ];
                         }).toList(),
                       ),
-          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05),
+              )
+              .animate()
+              .fadeIn(duration: 500.ms, delay: 200.ms)
+              .slideY(begin: 0.05),
         ],
       ),
     );
@@ -259,7 +391,12 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Expanded(
       child: AdvancedCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -278,8 +415,18 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(value, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 11),
+                ),
               ],
             ),
           ],
@@ -288,7 +435,12 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     );
   }
 
-  Widget _actionIconButton(IconData icon, Color color, String tooltip, VoidCallback onPressed) {
+  Widget _actionIconButton(
+    IconData icon,
+    Color color,
+    String tooltip,
+    VoidCallback onPressed,
+  ) {
     return Tooltip(
       message: tooltip,
       child: InkWell(
@@ -304,11 +456,16 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
 
   IconData _getDocTypeIcon(String type) {
     switch (type) {
-      case 'aadhaar': return Icons.credit_card;
-      case 'pan': return Icons.badge;
-      case 'driving_license': return Icons.directions_car;
-      case 'passport': return Icons.flight;
-      default: return Icons.description;
+      case 'aadhaar':
+        return Icons.credit_card;
+      case 'pan':
+        return Icons.badge;
+      case 'driving_license':
+        return Icons.directions_car;
+      case 'passport':
+        return Icons.flight;
+      default:
+        return Icons.description;
     }
   }
 
@@ -316,7 +473,10 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     final success = await _repository.approveDocument(doc.id);
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Document #${doc.id} approved'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text('Document #${doc.id} approved'),
+          backgroundColor: Colors.green,
+        ),
       );
       _loadData();
     }
@@ -329,7 +489,13 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Reject Document', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(
+          'Reject Document',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         content: SizedBox(
           width: 400,
           child: Column(
@@ -349,10 +515,15 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
                   labelText: 'Rejection reason *',
                   labelStyle: const TextStyle(color: Colors.white70),
                   hintText: 'e.g., Document is blurry, information mismatch...',
-                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ],
@@ -361,23 +532,37 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
               if (reasonController.text.isEmpty) return;
-              final success = await _repository.rejectDocument(doc.id, reasonController.text);
-              if (context.mounted) Navigator.pop(context);
-              if (success && mounted) {
+              final success = await _repository.rejectDocument(
+                doc.id,
+                reasonController.text,
+              );
+              if (!context.mounted || !mounted) {
+                return;
+              }
+              if (success) {
+                Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Document #${doc.id} rejected'), backgroundColor: Colors.orange),
+                  SnackBar(
+                    content: Text('Document #${doc.id} rejected'),
+                    backgroundColor: Colors.orange,
+                  ),
                 );
                 _loadData();
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Reject', style: TextStyle(color: Colors.white)),
           ),
@@ -394,10 +579,20 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(_getDocTypeIcon(doc.documentType), color: const Color(0xFF3B82F6), size: 24),
+            Icon(
+              _getDocTypeIcon(doc.documentType),
+              color: const Color(0xFF3B82F6),
+              size: 24,
+            ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(doc.documentTypeDisplay, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(
+                doc.documentTypeDisplay,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             StatusBadge(status: doc.status),
           ],
@@ -410,11 +605,22 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
               _detailRow('User', doc.userName),
               _detailRow('Email', doc.userEmail),
               _detailRow('Phone', doc.userPhone),
-              _detailRow('Document Number', doc.documentNumber ?? 'Not provided'),
+              _detailRow(
+                'Document Number',
+                doc.documentNumber ?? 'Not provided',
+              ),
               _detailRow('Status', doc.status.toUpperCase()),
-              _detailRow('Uploaded', doc.uploadedAt != null ? DateFormat('MMM d, yyyy HH:mm').format(doc.uploadedAt!) : '—'),
+              _detailRow(
+                'Uploaded',
+                doc.uploadedAt != null
+                    ? DateFormat('MMM d, yyyy HH:mm').format(doc.uploadedAt!)
+                    : '—',
+              ),
               if (doc.verifiedAt != null)
-                _detailRow('Verified At', DateFormat('MMM d, yyyy HH:mm').format(doc.verifiedAt!)),
+                _detailRow(
+                  'Verified At',
+                  DateFormat('MMM d, yyyy HH:mm').format(doc.verifiedAt!),
+                ),
               if (doc.rejectionReason != null)
                 _detailRow('Rejection Reason', doc.rejectionReason!),
               const SizedBox(height: 16),
@@ -425,20 +631,35 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
                 decoration: BoxDecoration(
                   color: const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.06),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.image_outlined, size: 32, color: Colors.white38),
+                    const Icon(
+                      Icons.image_outlined,
+                      size: 32,
+                      color: Colors.white38,
+                    ),
                     const SizedBox(height: 8),
-                    Text('Document Preview', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+                    Text(
+                      'Document Preview',
+                      style: GoogleFonts.inter(
+                        color: Colors.white38,
+                        fontSize: 12,
+                      ),
+                    ),
                     if (doc.fileUrl.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           doc.fileUrl,
-                          style: GoogleFonts.inter(color: const Color(0xFF3B82F6), fontSize: 11),
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF3B82F6),
+                            fontSize: 11,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -460,7 +681,9 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF22C55E),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
             ElevatedButton.icon(
@@ -473,7 +696,9 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
@@ -494,10 +719,20 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
         children: [
           SizedBox(
             width: 140,
-            child: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+            child: Text(
+              label,
+              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+            ),
           ),
           Expanded(
-            child: Text(value, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
         ],
       ),

@@ -45,7 +45,9 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
       if (_statusFilter != 'all' && r.status != _statusFilter) return false;
       if (_searchQuery.isNotEmpty &&
           !r.description.toLowerCase().contains(_searchQuery.toLowerCase()) &&
-          !r.maintenanceType.toLowerCase().contains(_searchQuery.toLowerCase())) {
+          !r.maintenanceType.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          )) {
         return false;
       }
       return true;
@@ -61,7 +63,8 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
         children: [
           PageHeader(
             title: 'Maintenance Schedules',
-            subtitle: 'Manage station maintenance records, schedule new tasks, and track costs.',
+            subtitle:
+                'Manage station maintenance records, schedule new tasks, and track costs.',
             actionButton: ElevatedButton.icon(
               onPressed: _showCreateDialog,
               icon: const Icon(Icons.add, size: 18),
@@ -69,8 +72,13 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
@@ -80,15 +88,40 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
           if (_stats != null)
             Row(
               children: [
-                _buildStatCard('Total Records', '${_stats!.total}', Icons.build_outlined, const Color(0xFF3B82F6)),
+                _buildStatCard(
+                  'Total Records',
+                  '${_stats!.total}',
+                  Icons.build_outlined,
+                  const Color(0xFF3B82F6),
+                ),
                 const SizedBox(width: 16),
-                _buildStatCard('Completed', '${_stats!.completed}', Icons.check_circle_outline, const Color(0xFF22C55E)),
+                _buildStatCard(
+                  'Completed',
+                  '${_stats!.completed}',
+                  Icons.check_circle_outline,
+                  const Color(0xFF22C55E),
+                ),
                 const SizedBox(width: 16),
-                _buildStatCard('Scheduled', '${_stats!.scheduled}', Icons.schedule_outlined, const Color(0xFFF59E0B)),
+                _buildStatCard(
+                  'Scheduled',
+                  '${_stats!.scheduled}',
+                  Icons.schedule_outlined,
+                  const Color(0xFFF59E0B),
+                ),
                 const SizedBox(width: 16),
-                _buildStatCard('In Progress', '${_stats!.inProgress}', Icons.engineering_outlined, const Color(0xFF8B5CF6)),
+                _buildStatCard(
+                  'In Progress',
+                  '${_stats!.inProgress}',
+                  Icons.engineering_outlined,
+                  const Color(0xFF8B5CF6),
+                ),
                 const SizedBox(width: 16),
-                _buildStatCard('Total Cost', '₹${NumberFormat('#,##0').format(_stats!.totalCost)}', Icons.currency_rupee_outlined, const Color(0xFFEF4444)),
+                _buildStatCard(
+                  'Total Cost',
+                  '₹${NumberFormat('#,##0').format(_stats!.totalCost)}',
+                  Icons.currency_rupee_outlined,
+                  const Color(0xFFEF4444),
+                ),
               ],
             ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
           const SizedBox(height: 24),
@@ -100,30 +133,51 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
                 flex: 2,
                 child: TextField(
                   style: const TextStyle(color: Colors.white),
-                  onChanged: (v) => setState(() { _searchQuery = v; _applyFilters(); }),
+                  onChanged: (v) => setState(() {
+                    _searchQuery = v;
+                    _applyFilters();
+                  }),
                   decoration: InputDecoration(
                     hintText: 'Search by description or type...',
                     hintStyle: const TextStyle(color: Colors.white38),
                     prefixIcon: const Icon(Icons.search, color: Colors.white38),
                     filled: true,
                     fillColor: const Color(0xFF1E293B),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 16),
-              ...['all', 'scheduled', 'in_progress', 'completed'].map((s) =>
-                Padding(
+              ...['all', 'scheduled', 'in_progress', 'completed'].map(
+                (s) => Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     selected: _statusFilter == s,
-                    label: Text(s == 'all' ? 'All' : s == 'in_progress' ? 'In Progress' : s[0].toUpperCase() + s.substring(1)),
-                    labelStyle: TextStyle(color: _statusFilter == s ? Colors.white : Colors.white54, fontSize: 13),
+                    label: Text(
+                      s == 'all'
+                          ? 'All'
+                          : s == 'in_progress'
+                          ? 'In Progress'
+                          : s[0].toUpperCase() + s.substring(1),
+                    ),
+                    labelStyle: TextStyle(
+                      color: _statusFilter == s ? Colors.white : Colors.white54,
+                      fontSize: 13,
+                    ),
                     selectedColor: const Color(0xFF3B82F6),
                     backgroundColor: const Color(0xFF1E293B),
                     checkmarkColor: Colors.white,
-                    onSelected: (_) => setState(() { _statusFilter = s; _applyFilters(); }),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: Colors.transparent)),
+                    onSelected: (_) => setState(() {
+                      _statusFilter = s;
+                      _applyFilters();
+                    }),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: const BorderSide(color: Colors.transparent),
+                    ),
                   ),
                 ),
               ),
@@ -133,38 +187,113 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
 
           // Table
           AdvancedCard(
-            padding: EdgeInsets.zero,
-            child: _isLoading
-              ? const SizedBox(height: 400, child: Center(child: CircularProgressIndicator()))
-              : _filteredRecords.isEmpty
-                ? const SizedBox(height: 300, child: Center(child: Text('No maintenance records found.', style: TextStyle(color: Colors.white54))))
-                : AdvancedTable(
-                    columns: const ['ID', 'Station', 'Type', 'Description', 'Cost', 'Status', 'Date', 'Actions'],
-                    rows: _filteredRecords.map((r) => [
-                      Text('#${r.id}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                      Text('Station #${r.entityId}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: r.maintenanceType == 'preventive' ? const Color(0xFF22C55E).withValues(alpha: 0.1) : const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          r.maintenanceType.toUpperCase(),
-                          style: TextStyle(
-                            color: r.maintenanceType == 'preventive' ? const Color(0xFF22C55E) : const Color(0xFFF59E0B),
-                            fontSize: 10, fontWeight: FontWeight.bold,
+                padding: EdgeInsets.zero,
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 400,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : _filteredRecords.isEmpty
+                    ? const SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: Text(
+                            'No maintenance records found.',
+                            style: TextStyle(color: Colors.white54),
                           ),
                         ),
+                      )
+                    : AdvancedTable(
+                        columns: const [
+                          'ID',
+                          'Station',
+                          'Type',
+                          'Description',
+                          'Cost',
+                          'Status',
+                          'Date',
+                          'Actions',
+                        ],
+                        rows: _filteredRecords
+                            .map(
+                              (r) => [
+                                Text(
+                                  '#${r.id}',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  'Station #${r.entityId}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: r.maintenanceType == 'preventive'
+                                        ? const Color(
+                                            0xFF22C55E,
+                                          ).withValues(alpha: 0.1)
+                                        : const Color(
+                                            0xFFF59E0B,
+                                          ).withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    r.maintenanceType.toUpperCase(),
+                                    style: TextStyle(
+                                      color: r.maintenanceType == 'preventive'
+                                          ? const Color(0xFF22C55E)
+                                          : const Color(0xFFF59E0B),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 180,
+                                  child: Text(
+                                    r.description,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '₹${NumberFormat('#,##0').format(r.cost)}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                _buildStatusBadge(r.status),
+                                Text(
+                                  DateFormat(
+                                    'MMM dd, yyyy',
+                                  ).format(r.performedAt),
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                _buildActions(r),
+                              ],
+                            )
+                            .toList(),
                       ),
-                      SizedBox(width: 180, child: Text(r.description, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis)),
-                      Text('₹${NumberFormat('#,##0').format(r.cost)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                      _buildStatusBadge(r.status),
-                      Text(DateFormat('MMM dd, yyyy').format(r.performedAt), style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                      _buildActions(r),
-                    ]).toList(),
-                  ),
-          ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05),
+              )
+              .animate()
+              .fadeIn(duration: 500.ms, delay: 200.ms)
+              .slideY(begin: 0.05),
         ],
       ),
     );
@@ -179,13 +308,27 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
     final (color, label) = map[status] ?? (Colors.grey, status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
           const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -205,32 +348,63 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
       itemBuilder: (_) {
         final items = <PopupMenuEntry<String>>[];
         if (r.status == 'scheduled') {
-          items.add(const PopupMenuItem(value: 'in_progress', child: Text('Start Work', style: TextStyle(color: Colors.white))));
+          items.add(
+            const PopupMenuItem(
+              value: 'in_progress',
+              child: Text('Start Work', style: TextStyle(color: Colors.white)),
+            ),
+          );
         }
         if (r.status == 'in_progress') {
-          items.add(const PopupMenuItem(value: 'completed', child: Text('Mark Completed', style: TextStyle(color: Colors.white))));
+          items.add(
+            const PopupMenuItem(
+              value: 'completed',
+              child: Text(
+                'Mark Completed',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          );
         }
         return items;
       },
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Expanded(
       child: AdvancedCard(
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                ),
               ],
             ),
           ],
@@ -257,22 +431,49 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Schedule Maintenance', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(
+                'Schedule Maintenance',
+                style: GoogleFonts.outfit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
               const SizedBox(height: 8),
-              const Text('Create a new maintenance task for a station.', style: TextStyle(color: Colors.white54)),
+              const Text(
+                'Create a new maintenance task for a station.',
+                style: TextStyle(color: Colors.white54),
+              ),
               const SizedBox(height: 24),
-              _dialogField('Station ID', stationCtrl, type: TextInputType.number),
+              _dialogField(
+                'Station ID',
+                stationCtrl,
+                type: TextInputType.number,
+              ),
               const SizedBox(height: 16),
-              _dialogDropdown('Maintenance Type', typeCtrl, ['preventive', 'corrective']),
+              _dialogDropdown('Maintenance Type', typeCtrl, [
+                'preventive',
+                'corrective',
+              ]),
               const SizedBox(height: 16),
               _dialogField('Description', descCtrl, maxLines: 2),
               const SizedBox(height: 16),
-              _dialogField('Estimated Cost (₹)', costCtrl, type: TextInputType.number),
+              _dialogField(
+                'Estimated Cost (₹)',
+                costCtrl,
+                type: TextInputType.number,
+              ),
               const SizedBox(height: 28),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () async {
@@ -282,17 +483,30 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
                         description: descCtrl.text,
                         cost: double.tryParse(costCtrl.text) ?? 0,
                       );
-                      if (success && mounted) {
+                      if (!ctx.mounted || !mounted) {
+                        return;
+                      }
+                      if (success) {
                         Navigator.pop(ctx);
                         _loadData();
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Maintenance scheduled!'), backgroundColor: Color(0xFF22C55E)));
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(
+                            content: Text('Maintenance scheduled!'),
+                            backgroundColor: Color(0xFF22C55E),
+                          ),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Schedule'),
                   ),
@@ -305,11 +519,19 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
     );
   }
 
-  Widget _dialogField(String label, TextEditingController ctrl, {TextInputType? type, int maxLines = 1}) {
+  Widget _dialogField(
+    String label,
+    TextEditingController ctrl, {
+    TextInputType? type,
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
@@ -319,28 +541,51 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
           decoration: InputDecoration(
             filled: true,
             fillColor: const Color(0xFF1E293B),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _dialogDropdown(String label, TextEditingController ctrl, List<String> options) {
+  Widget _dialogDropdown(
+    String label,
+    TextEditingController ctrl,
+    List<String> options,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E293B),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: ctrl.text,
               isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
-              items: options.map((o) => DropdownMenuItem(value: o, child: Text(o[0].toUpperCase() + o.substring(1), style: const TextStyle(color: Colors.white)))).toList(),
+              items: options
+                  .map(
+                    (o) => DropdownMenuItem(
+                      value: o,
+                      child: Text(
+                        o[0].toUpperCase() + o.substring(1),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  )
+                  .toList(),
               onChanged: (v) => ctrl.text = v ?? '',
             ),
           ),

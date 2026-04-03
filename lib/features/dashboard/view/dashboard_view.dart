@@ -19,31 +19,52 @@ class DashboardView extends ConsumerStatefulWidget {
   ConsumerState<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends ConsumerState<DashboardView> {
-  static const Duration _autoRefreshInterval = Duration(seconds: 60);
+class _DashboardViewState extends ConsumerState<DashboardView>
+    with WidgetsBindingObserver {
+  // Tiered refresh to avoid bursty load and keep critical widgets fresher.
+  static const Duration _lightAutoRefreshInterval = Duration(minutes: 1);
+  static const Duration _heavyAutoRefreshInterval = Duration(minutes: 8);
+  static const double _jitterMin = 0.85;
+  static const double _jitterMax = 1.15;
 
   String _revenueSort = 'Revenue High-Low';
   int? _expandedActivity;
   final Set<int> _readActivities = {};
   String _topStationSort = 'rentals_desc';
-  Timer? _refreshTimer;
+  final math.Random _jitter = math.Random();
+  Timer? _lightRefreshTimer;
+  Timer? _heavyRefreshTimer;
+  bool _autoRefreshPaused = false;
   String _revenueView = 'Stations';
 
   @override
   void initState() {
     super.initState();
-    // Auto-refresh at a safer interval to avoid backend request spikes.
-    _refreshTimer = Timer.periodic(_autoRefreshInterval, (timer) {
-      if (mounted) {
-        _manualRefreshAll();
-      }
-    });
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleLightRefresh();
+    _scheduleHeavyRefresh();
   }
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _cancelRefreshTimers();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final shouldPause = state != AppLifecycleState.resumed;
+    if (shouldPause == _autoRefreshPaused) {
+      return;
+    }
+    _autoRefreshPaused = shouldPause;
+    if (_autoRefreshPaused) {
+      _cancelRefreshTimers();
+      return;
+    }
+    _scheduleLightRefresh();
+    _scheduleHeavyRefresh();
   }
 
   @override
@@ -167,9 +188,79 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   void _manualRefreshAll() {
-    // One trigger update is enough because all dashboard providers watch it.
+    // Full refresh for all dashboard providers.
     ref.read(dashboardRefreshTriggerProvider.notifier).state++;
     ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
+  }
+
+  void _triggerLightRefresh() {
+    if (_isAnyLightLoadInFlight()) {
+      return;
+    }
+    ref.read(dashboardLightRefreshTriggerProvider.notifier).state++;
+    ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
+  }
+
+  void _triggerHeavyRefresh() {
+    if (_isAnyHeavyLoadInFlight()) {
+      return;
+    }
+    ref.read(dashboardHeavyRefreshTriggerProvider.notifier).state++;
+  }
+
+  bool _isAnyLightLoadInFlight() {
+    return ref.read(dashboardOverviewProvider).isLoading ||
+        ref.read(inventoryStatusProvider).isLoading ||
+        ref.read(recentActivityProvider).isLoading ||
+        ref.read(topStationsProvider).isLoading;
+  }
+
+  bool _isAnyHeavyLoadInFlight() {
+    return ref.read(trendDataProvider).isLoading ||
+        ref.read(conversionFunnelProvider).isLoading ||
+        ref.read(batteryHealthProvider).isLoading ||
+        ref.read(revenueByRegionProvider).isLoading ||
+        ref.read(userGrowthProvider).isLoading ||
+        ref.read(demandForecastProvider).isLoading ||
+        ref.read(userBehaviorProvider).isLoading ||
+        ref.read(revenueByStationProvider).isLoading ||
+        ref.read(revenueByBatteryTypeProvider).isLoading;
+  }
+
+  void _cancelRefreshTimers() {
+    _lightRefreshTimer?.cancel();
+    _heavyRefreshTimer?.cancel();
+    _lightRefreshTimer = null;
+    _heavyRefreshTimer = null;
+  }
+
+  Duration _withJitter(Duration base) {
+    final factor =
+        _jitterMin + (_jitter.nextDouble() * (_jitterMax - _jitterMin));
+    final millis = (base.inMilliseconds * factor).round();
+    return Duration(milliseconds: millis.clamp(1000, 2147483647));
+  }
+
+  void _scheduleLightRefresh() {
+    _lightRefreshTimer?.cancel();
+    _lightRefreshTimer = Timer(_withJitter(_lightAutoRefreshInterval), () {
+      if (!mounted || _autoRefreshPaused) {
+        return;
+      }
+      _triggerLightRefresh();
+      _scheduleLightRefresh();
+    });
+  }
+
+  void _scheduleHeavyRefresh() {
+    _heavyRefreshTimer?.cancel();
+    _heavyRefreshTimer = Timer(_withJitter(_heavyAutoRefreshInterval), () {
+      if (!mounted || _autoRefreshPaused) {
+        return;
+      }
+      _triggerHeavyRefresh();
+      _scheduleHeavyRefresh();
+    });
   }
 
   Widget _buildDashboardContent(
@@ -2935,14 +3026,18 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       case 'batteryHealth':
         return p.batteryHealth;
       default:
-        throw UnsupportedError('Dashboard metric $key is not exposed by the backend.');
+        throw UnsupportedError(
+          'Dashboard metric $key is not exposed by the backend.',
+        );
     }
   }
 
   void _showAddSeriesDisabledMessage(AppColorsExtension colors) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Custom trend series are disabled until the backend exposes those metrics.'),
+        content: Text(
+          'Custom trend series are disabled until the backend exposes those metrics.',
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );

@@ -42,8 +42,9 @@ class StationRepository {
     if (search != null && search.isNotEmpty) params['search'] = search;
     if (status != null && status.isNotEmpty) params['status'] = status;
     if (city != null && city.isNotEmpty) params['city'] = city;
-    if (stationType != null && stationType.isNotEmpty)
+    if (stationType != null && stationType.isNotEmpty) {
       params['station_type'] = stationType;
+    }
 
     try {
       final response = await _api.get(
