@@ -156,9 +156,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
 
     final normalizedCredential = credential.trim();
-    final normalizedPassword = password.trim();
+    final rawPassword = password;
 
-    if (normalizedCredential.isEmpty || normalizedPassword.isEmpty) {
+    if (normalizedCredential.isEmpty || rawPassword.isEmpty) {
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: false,
@@ -169,10 +169,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     try {
-      final result = await _authenticate(
-        normalizedCredential,
-        normalizedPassword,
-      );
+      final result = await _authenticate(normalizedCredential, rawPassword);
       await _persistSession(result);
 
       Map<String, dynamic>? currentUser = result.user;

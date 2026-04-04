@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -116,7 +117,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
     FocusScope.of(context).unfocus();
 
     final credential = _credentialController.text.trim();
-    final password = _passwordController.text.trim();
+    final password = _passwordController.text;
 
     await ref.read(authProvider.notifier).login(credential, password);
     if (!mounted) {
@@ -127,6 +128,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
     if (latestAuthState.isAuthenticated) {
       await _syncRememberedCredential(credential);
       TextInput.finishAutofillContext(shouldSave: true);
+      if (mounted) {
+        context.go('/dashboard');
+      }
     }
   }
 
