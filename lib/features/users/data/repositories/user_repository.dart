@@ -55,49 +55,92 @@ class UserRepository {
   }
 
   Future<PaginatedUsers> getUsers({
-    int page = 1,
-    int limit = 20,
-    String? sortBy,
-    String? sortOrder,
-    String? role,
+    int skip = 0,
+    int limit = 100,
+    String? search,
     String? status,
+    String? userType,
+    String? kycStatus,
   }) async {
     try {
-      final skip = page > 1 ? (page - 1) * limit : 0;
-      final queryParams = <String, dynamic>{'skip': skip, 'limit': limit};
-      if (sortBy != null) queryParams['sort_by'] = sortBy;
-      if (sortOrder != null) queryParams['sort_order'] = sortOrder;
+      final queryParams = <String, dynamic>{
+        'skip': skip,
+        'limit': limit,
+      };
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
       final normalizedStatus = _normalizeStatus(status);
       if (normalizedStatus != null) queryParams['status'] = normalizedStatus;
-      final userType = _normalizeUserType(role);
-      if (userType != null) queryParams['user_type'] = userType;
+      final normalizedRole = _normalizeUserType(userType);
+      if (normalizedRole != null) queryParams['user_type'] = normalizedRole;
+      if (kycStatus != null && kycStatus.isNotEmpty) queryParams['kyc_status'] = kycStatus;
 
       final response = await _api.get(
         '/api/v1/admin/users/',
         queryParameters: queryParams,
       );
+      
       final raw = response.data;
       final data = raw is Map<String, dynamic>
           ? (raw['items'] ?? raw['users'] ?? const <dynamic>[]) as List
           : raw is Map
           ? ((raw['items'] ?? raw['users'] ?? const <dynamic>[]) as List)
+          : raw is List 
+          ? raw
           : const <dynamic>[];
+
       final users = data.map((json) => User.fromJson(json)).toList();
+
+      int totalCount;
+      if (raw is Map && raw['total_count'] != null) {
+        totalCount = raw['total_count'] as int;
+      } else {
+        totalCount = users.length;
+      }
 
       return PaginatedUsers(
         users: users,
-        totalCount: (raw is Map && raw['total_count'] != null)
-            ? raw['total_count'] as int
-            : users.length,
-        page: (raw is Map && raw['page'] != null) ? raw['page'] as int : page,
-        limit: (raw is Map && (raw['page_size'] ?? raw['limit']) != null)
-            ? (raw['page_size'] ?? raw['limit']) as int
-            : limit,
+        totalCount: totalCount,
+        page: (skip / limit).floor() + 1,
+        limit: limit,
       );
     } catch (e) {
       print('Error fetching users: $e');
-      return PaginatedUsers(users: [], totalCount: 0, page: page, limit: limit);
+      return PaginatedUsers(users: [], totalCount: 0, page: 1, limit: limit);
     }
+  }
+
+  Future<dynamic> getUsersSummary() async {
+    final response = await _api.get('/api/v1/admin/users/summary');
+    return response.data;
+  }
+
+  Future<PaginatedUsers> getSuspendedUsers({
+    int skip = 0,
+    int limit = 100,
+    String? search,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'skip': skip,
+      'limit': limit,
+    };
+    if (search != null && search.isNotEmpty) queryParams['search'] = search;
+
+    final response = await _api.get('/api/v1/admin/users/suspended', queryParameters: queryParams);
+    
+    List data;
+    if (response.data is List) {
+      data = response.data;
+    } else {
+      data = response.data['users'] ?? [];
+    }
+    
+    final users = data.map((json) => User.fromJson(json)).toList();
+    return PaginatedUsers(
+      users: users,
+      totalCount: users.length, // Suspended list might not return total_count explicitly
+      page: (skip / limit).floor() + 1,
+      limit: limit,
+    );
   }
 
   Future<User?> getUserById(int id) async {
@@ -115,15 +158,18 @@ class UserRepository {
     required String email,
     required String phoneNumber,
     required String password,
-    String? roleName,
+    String roleName = 'customer',
+    String userType = 'customer',
+    String status = 'active',
   }) async {
     final payload = {
       'full_name': fullName.trim(),
       'email': email.trim(),
       if (phoneNumber.trim().isNotEmpty) 'phone_number': phoneNumber.trim(),
       'password': password,
-      if (roleName != null && roleName.trim().isNotEmpty)
-        'role_name': roleName.trim(),
+      if (roleName.trim().isNotEmpty) 'role_name': roleName.trim(),
+      'user_type': userType,
+      'status': status,
     };
 
     try {
@@ -252,7 +298,10 @@ class UserRepository {
   }) async {
     await _api.put(
       '/api/v1/admin/users/$userId/suspend',
-      data: {'reason': reason, 'duration_days': durationDays},
+      data: {
+        'reason': reason,
+        if (durationDays != null) 'duration_days': durationDays,
+      },
     );
 
     final result = await getUserById(userId);
@@ -279,8 +328,10 @@ class UserRepository {
     );
   }
 
-  Future<User> reactivateUser(int userId) async {
-    await _api.put('/api/v1/admin/users/$userId/reactivate');
+  Future<User> reactivateUser(int userId, {String? notes}) async {
+    await _api.put('/api/v1/admin/users/$userId/reactivate', data: {
+      'notes': notes ?? '',
+    });
     final result = await getUserById(userId);
     return result ??
         User(
@@ -294,6 +345,36 @@ class UserRepository {
           joinedAt: DateTime.now(),
           lastActive: DateTime.now(),
         );
+  }
+
+  Future<void> adminResetPassword(int userId, String newPassword) async {
+    await _api.post('/api/v1/admin/users/$userId/reset-password', data: {
+      'new_password': newPassword,
+    });
+  }
+
+  Future<void> forceLogoutUser(int userId) async {
+    await _api.post('/api/v1/admin/users/$userId/force-logout');
+  }
+
+  Future<void> banUser(int userId, {String reason = 'Violation of terms'}) async {
+    await _api.post('/api/v1/admin/users/$userId/ban', queryParameters: {
+      'reason': reason,
+    });
+  }
+
+  Future<void> unbanUser(int userId) async {
+    await _api.post('/api/v1/admin/users/$userId/unban');
+  }
+
+  Future<void> forcePasswordChange(int userId) async {
+    await _api.post('/api/v1/admin/users/$userId/force-password-change');
+  }
+
+  Future<void> transitionUserState(int userId, String newStatus) async {
+    await _api.post('/api/v1/admin/users/$userId/transition', data: {
+      'new_status': newStatus,
+    });
   }
 
   Future<void> changePassword(

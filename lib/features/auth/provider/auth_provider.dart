@@ -163,37 +163,48 @@ class AuthNotifier extends StateNotifier<AuthState> {
             String path,
             Map<String, dynamic> payload,
             bool allowAdminRoleRetry,
+            bool isFormEncoded,
           })
         >[
           (
             path: '/api/v1/auth/admin/login',
             payload: {'username': credential, 'password': password},
             allowAdminRoleRetry: false,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/token',
+            payload: {
+              'username': credential,
+              'password': password,
+              'grant_type': 'password',
+            },
+            allowAdminRoleRetry: false,
+            isFormEncoded: true,
           ),
           (
             path: '/api/v1/auth/admin/login',
             payload: {'email': credential, 'password': password},
             allowAdminRoleRetry: false,
-          ),
-          (
-            path: '/api/v1/auth/admin/login',
-            payload: {'credential': credential, 'password': password},
-            allowAdminRoleRetry: false,
+            isFormEncoded: false,
           ),
           (
             path: '/api/v1/auth/login',
             payload: {'credential': credential, 'password': password},
             allowAdminRoleRetry: true,
+            isFormEncoded: false,
           ),
           (
             path: '/api/v1/auth/login',
             payload: {'username': credential, 'password': password},
             allowAdminRoleRetry: true,
+            isFormEncoded: false,
           ),
           (
             path: '/api/v1/auth/login',
             payload: {'email': credential, 'password': password},
             allowAdminRoleRetry: true,
+            isFormEncoded: false,
           ),
         ];
 
@@ -201,6 +212,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     for (final attempt in attempts) {
       try {
+        if (attempt.isFormEncoded) {
+          return await _loginWithForm(
+            path: attempt.path,
+            payload: attempt.payload,
+          );
+        }
         return await _loginWithJson(
           path: attempt.path,
           payload: attempt.payload,
@@ -221,6 +238,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     throw const _AuthFailure('Unable to sign in right now. Please try again.');
+  }
+
+  Future<_AuthResult> _loginWithForm({
+    required String path,
+    required Map<String, dynamic> payload,
+  }) async {
+    final response = await _apiClient.post(
+      path,
+      data: payload,
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
+
+    return _parseAuthResponse(
+      response: response,
+      path: path,
+      payload: payload,
+      allowAdminRoleRetry: false,
+    );
   }
 
   Future<_AuthResult> _loginWithJson({

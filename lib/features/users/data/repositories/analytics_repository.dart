@@ -1,8 +1,123 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/api/api_client.dart';
 import '../models/fraud_risk.dart';
 import '../models/suspension_record.dart';
 import '../models/invite_link.dart';
 
+final analyticsRepositoryProvider = Provider<AnalyticsRepository>((ref) {
+  return AnalyticsRepository(ref.watch(apiClientProvider));
+});
+
 class AnalyticsRepository {
+  final ApiClient _api;
+
+  AnalyticsRepository(this._api);
+
+  // ─── Analytics Endpoints ───────────────────────────────────────────
+
+  /// Platform KPIs: active users, total rentals, revenue today
+  Future<Map<String, dynamic>> getOverview() async {
+    final response = await _api.get('/api/v1/admin/analytics/overview');
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  /// Daily/weekly/monthly trend data for rentals and revenue
+  Future<dynamic> getTrends({String period = '30d'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/trends',
+      queryParameters: {'period': period},
+    );
+    return response.data;
+  }
+
+  /// Conversion funnel: installs → registrations → first rental
+  Future<dynamic> getConversionFunnel() async {
+    final response = await _api.get('/api/v1/admin/analytics/conversion-funnel');
+    return response.data;
+  }
+
+  /// Aggregated user behavior metrics
+  Future<dynamic> getUserBehavior() async {
+    final response = await _api.get('/api/v1/admin/analytics/user-behavior');
+    return response.data;
+  }
+
+  /// Distribution of all batteries by health % range
+  Future<dynamic> getBatteryHealthDistribution() async {
+    final response = await _api.get('/api/v1/admin/analytics/battery-health-distribution');
+    return response.data;
+  }
+
+  /// 30-day demand forecast per station
+  Future<dynamic> getDemandForecast() async {
+    final response = await _api.get('/api/v1/admin/analytics/demand-forecast');
+    return response.data;
+  }
+
+  /// Recent activities
+  Future<dynamic> getRecentActivity() async {
+    final response = await _api.get('/api/v1/admin/analytics/recent-activity');
+    return response.data;
+  }
+
+  /// Top stations dashboard data
+  Future<dynamic> getTopStations() async {
+    final response = await _api.get('/api/v1/admin/analytics/top-stations');
+    return response.data;
+  }
+
+  /// Revenue distribution by station
+  Future<dynamic> getRevenueByStation({String period = '30d'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/revenue/by-station',
+      queryParameters: {'period': period},
+    );
+    return response.data;
+  }
+
+  /// Revenue split by battery chemistry/model
+  Future<dynamic> getRevenueByBatteryType({String period = '30d'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/revenue/by-battery-type',
+      queryParameters: {'period': period},
+    );
+    return response.data;
+  }
+
+  /// Revenue breakdown by city/region
+  Future<dynamic> getRevenueByRegion() async {
+    final response = await _api.get('/api/v1/admin/analytics/revenue/by-region');
+    return response.data;
+  }
+
+  /// User acquisition and retention trends
+  Future<dynamic> getUserGrowth({String period = 'monthly'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/user-growth',
+      queryParameters: {'period': period},
+    );
+    return response.data;
+  }
+
+  /// Health of fleet and hardware utilization summary
+  Future<dynamic> getInventoryStatus() async {
+    final response = await _api.get('/api/v1/admin/analytics/inventory-status');
+    return response.data;
+  }
+
+  /// Export analytics report as CSV
+  Future<dynamic> exportReport({String reportType = 'overview'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/export',
+      queryParameters: {'report_type': reportType},
+    );
+    return response.data;
+  }
+
+  // ─── Legacy methods kept for other views ───────────────────────────
+
   Future<List<FraudRisk>> getFraudRisks() async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
@@ -123,41 +238,5 @@ class AnalyticsRepository {
         isUsed: true,
       ),
     ];
-  }
-
-  /// Login history data for charts
-  Future<List<Map<String, dynamic>>> getLoginHistory() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.generate(30, (i) {
-      final date = DateTime.now().subtract(Duration(days: 29 - i));
-      return {
-        'date': date,
-        'logins': 50 + (i * 3) + (i % 7 == 0 ? -20 : i % 5 == 0 ? 15 : 0),
-      };
-    });
-  }
-
-  /// Rental frequency data for charts
-  Future<List<Map<String, dynamic>>> getRentalFrequency() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      {'month': 'Sep', 'rentals': 120},
-      {'month': 'Oct', 'rentals': 185},
-      {'month': 'Nov', 'rentals': 210},
-      {'month': 'Dec', 'rentals': 168},
-      {'month': 'Jan', 'rentals': 245},
-      {'month': 'Feb', 'rentals': 290},
-    ];
-  }
-
-  /// Device breakdown for pie chart
-  Future<Map<String, int>> getDeviceBreakdown() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return {
-      'Android App': 58,
-      'iOS App': 24,
-      'Web Browser': 12,
-      'Other': 6,
-    };
   }
 }

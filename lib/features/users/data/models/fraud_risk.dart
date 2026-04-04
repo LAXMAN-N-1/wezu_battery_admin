@@ -17,6 +17,39 @@ class FraudRisk {
     this.history = const [],
   });
 
+  factory FraudRisk.fromJson(Map<String, dynamic> json) {
+    var rawScore = (json['score'] ?? json['risk_score'] ?? 0) as num;
+    var score = rawScore.toInt();
+    
+    return FraudRisk(
+      userId: json['id'] ?? json['user_id'] ?? 0,
+      userName: json['full_name'] ?? json['user_name'] ?? 'Unknown User',
+      score: score,
+      level: levelFromScore(score),
+      factors: (json['factors'] as List? ?? [])
+          .map((f) => FraudFactor.fromJson(f))
+          .toList(),
+      lastUpdated: json['last_updated'] != null 
+          ? DateTime.parse(json['last_updated']) 
+          : DateTime.now(),
+      history: (json['history'] as List? ?? [])
+          .map((h) => FraudScoreHistory.fromJson(h))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'user_name': userName,
+      'score': score,
+      'level': level,
+      'factors': factors.map((e) => e.toJson()).toList(),
+      'last_updated': lastUpdated.toIso8601String(),
+      'history': history.map((e) => e.toJson()).toList(),
+    };
+  }
+
   static String levelFromScore(int score) {
     if (score >= 75) return 'critical';
     if (score >= 50) return 'high';
@@ -37,6 +70,24 @@ class FraudFactor {
     required this.contribution,
     required this.severity,
   });
+
+  factory FraudFactor.fromJson(Map<String, dynamic> json) {
+    return FraudFactor(
+      name: json['name'] ?? 'Unknown Factor',
+      description: json['description'] ?? '',
+      contribution: (json['contribution'] ?? 0) as int,
+      severity: json['severity'] ?? 'low',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'description': description,
+      'contribution': contribution,
+      'severity': severity,
+    };
+  }
 }
 
 class FraudScoreHistory {
@@ -47,4 +98,18 @@ class FraudScoreHistory {
     required this.date,
     required this.score,
   });
+
+  factory FraudScoreHistory.fromJson(Map<String, dynamic> json) {
+    return FraudScoreHistory(
+      date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+      score: (json['score'] ?? 0) as int,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'date': date.toIso8601String(),
+      'score': score,
+    };
+  }
 }

@@ -1,5 +1,5 @@
 import '../../../../core/api/api_client.dart';
-import '../models/role_model.dart';
+import '../models/role.dart';
 import 'dart:math';
 
 class RBACRepository {
@@ -133,7 +133,7 @@ class RBACRepository {
               slug: slug,
               module: permissionMap['resource']?.toString() ?? moduleName,
               action: permissionMap['action']?.toString() ?? '',
-              description: permissionMap['description']?.toString(),
+              description: permissionMap['description']?.toString() ?? '',
             ),
           );
           _permissionIdToSlug[id] = slug;

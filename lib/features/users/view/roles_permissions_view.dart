@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import '../provider/audit_provider.dart';
+
+// Mock/Data types for Role and Permission (assuming they are defined elsewhere or need to be defined)
+// Let's check where Role and RoleRepository are defined.
+// Based on previous files, they should be in lib/features/users/data/models/role.dart and repositories/role_repository.dart
 import '../data/models/role.dart';
 import '../data/repositories/role_repository.dart';
 
-class RolesPermissionsView extends StatefulWidget {
+class RolesPermissionsView extends ConsumerStatefulWidget {
   const RolesPermissionsView({super.key});
 
   @override
-  State<RolesPermissionsView> createState() => _RolesPermissionsViewState();
+  ConsumerState<RolesPermissionsView> createState() => _RolesPermissionsViewState();
 }
 
-class _RolesPermissionsViewState extends State<RolesPermissionsView> with SingleTickerProviderStateMixin {
+class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> with SingleTickerProviderStateMixin {
   final RoleRepository _repository = RoleRepository();
   List<Role> _roles = [];
   bool _isLoading = true;
@@ -31,8 +38,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView> with Single
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final roles = await _repository.getRoles();
-    // Permissions are accessed via repository methods in the permission matrix tab
+    final roles = await _repository.getRoles(includePermissions: true);
     await _repository.getPermissions();
     setState(() {
       _roles = roles;
@@ -255,6 +261,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView> with Single
                           for (var p in role.permissions) {
                             if (p is int && p == perm.id) hasPermission = true;
                             if (p is Map && p['id'] == perm.id) hasPermission = true;
+                            if (p is String && p == perm.slug) hasPermission = true;
+                            if (p is Map && p['slug'] == perm.slug) hasPermission = true;
                           }
                           return DataCell(
                             Center(
@@ -283,51 +291,115 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView> with Single
   }
 
   Widget _buildAuditLogTab() {
-    final auditEntries = [
-      {'admin': 'Murari Varma', 'action': 'Removed finance.manage from Supervisor', 'time': '8 hours ago', 'icon': Icons.remove_circle_outline, 'color': Colors.red},
-      {'admin': 'Murari Varma', 'action': 'Added kyc.approve to Support role', 'time': '2 days ago', 'icon': Icons.add_circle_outline, 'color': Colors.green},
-      {'admin': 'System', 'action': 'Created custom role "Auditor"', 'time': '5 days ago', 'icon': Icons.add, 'color': Colors.blue},
-      {'admin': 'Deepak Verma', 'action': 'Toggled users.suspend for Supervisor role', 'time': '1 week ago', 'icon': Icons.swap_horiz, 'color': Colors.amber},
-    ];
+    final auditState = ref.watch(auditProvider);
+    
+    // Initial load for roles module
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (auditState.logs.isEmpty && !auditState.isLoading && auditState.error == null) {
+        ref.read(auditProvider.notifier).loadLogs(module: 'roles');
+      }
+    });
+
+    if (auditState.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (auditState.error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 40),
+            const SizedBox(height: 12),
+            Text('Error loading logs: ${auditState.error}', style: GoogleFonts.inter(color: Colors.white54)),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.read(auditProvider.notifier).loadLogs(module: 'roles'),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (auditState.logs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.history, color: Colors.white.withValues(alpha: 0.1), size: 64),
+            const SizedBox(height: 16),
+            Text('No audit logs found for roles', style: GoogleFonts.inter(color: Colors.white38)),
+          ],
+        ),
+      );
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: auditEntries.length,
+      itemCount: auditState.logs.length,
       itemBuilder: (context, index) {
-        final entry = auditEntries[index];
+        final entry = auditState.logs[index];
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: (entry['color'] as Color).withValues(alpha: 0.15),
+                  color: _getAuditActionColor(entry.action).withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(entry['icon'] as IconData, color: entry['color'] as Color, size: 16),
+                child: Icon(_getAuditActionIcon(entry.action), color: _getAuditActionColor(entry.action), size: 16),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(entry['action'] as String, style: GoogleFonts.inter(color: Colors.white, fontSize: 13)),
-                    Text('by ${entry['admin']}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+                    Text(entry.details, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+                    Text(
+                      'by User #${entry.userId} ${entry.ipAddress != null ? "• ${entry.ipAddress}" : ""}', 
+                      style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)
+                    ),
                   ],
                 ),
               ),
-              Text(entry['time'] as String, style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+              Text(
+                DateFormat('MMM d, HH:mm').format(entry.timestamp), 
+                style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)
+              ),
             ],
           ),
         );
       },
     );
+  }
+
+  Color _getAuditActionColor(String action) {
+    switch (action.toLowerCase()) {
+      case 'create': return Colors.green;
+      case 'update': return Colors.amber;
+      case 'delete': return Colors.red;
+      case 'permission_change': return Colors.purple;
+      default: return Colors.blue;
+    }
+  }
+
+  IconData _getAuditActionIcon(String action) {
+    switch (action.toLowerCase()) {
+      case 'create': return Icons.add_circle_outline;
+      case 'update': return Icons.edit_outlined;
+      case 'delete': return Icons.delete_outline;
+      case 'permission_change': return Icons.admin_panel_settings;
+      default: return Icons.info_outline;
+    }
   }
 
   void _showCreateRoleDialog() {
@@ -380,7 +452,12 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView> with Single
                   Expanded(child: ElevatedButton(
                     onPressed: () async {
                       if (nameController.text.isEmpty) return;
-                      await _repository.createRole(name: nameController.text, description: descController.text, permissionIds: []);
+                      await _repository.createRole(
+                        name: nameController.text,
+                        description: descController.text,
+                        category: 'custom',
+                        permissionIds: [],
+                      );
                       _loadData();
                       if (mounted) Navigator.pop(context);
                     },

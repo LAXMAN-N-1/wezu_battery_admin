@@ -30,7 +30,15 @@ import '../features/inventory/view/bulk_import_export_view.dart';
 import '../features/inventory/view/audit_trail_view.dart';
 import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
+import '../features/users/view/users_view.dart';
+import '../features/users/view/kyc_verification_view.dart';
+import '../features/users/view/kyc_dashboard_view.dart';
+import '../features/users/view/roles_permissions_view.dart';
+import '../features/users/view/suspended_accounts_view.dart';
+import '../features/users/view/user_analytics_view.dart';
 import '../features/users/view/fraud_risk_view.dart';
+import '../features/users/view/bulk_operations_view.dart';
+import '../features/users/view/session_activity_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/finance/view/transactions_view.dart';
 import '../features/finance/view/settlements_view.dart';
@@ -122,7 +130,66 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 2. USER MASTER
+          // 2. USERS (RAMA Legacy)
+          // ==========================================
+          GoRoute(
+            path: '/users',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: UsersView()),
+            routes: [
+              GoRoute(
+                path: 'kyc',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: KycVerificationView(),
+                ),
+              ),
+              GoRoute(
+                path: 'kyc-dashboard',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: KycDashboardView(),
+                ),
+              ),
+              GoRoute(
+                path: 'roles',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: RolesPermissionsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'suspended',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: SuspendedAccountsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'analytics',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: UserAnalyticsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'fraud',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: FraudRiskView(),
+                ),
+              ),
+              GoRoute(
+                path: 'bulk',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: BulkOperationsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'activity',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: SessionActivityView(),
+                ),
+              ),
+            ],
+          ),
+
+          // ==========================================
+          // 2.5 USER MASTER (MAIN)
           // ==========================================
           GoRoute(
             path: '/user-master',

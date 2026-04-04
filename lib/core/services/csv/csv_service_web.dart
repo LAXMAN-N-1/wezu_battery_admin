@@ -7,7 +7,7 @@ class CsvService {
     List<List<dynamic>> rows,
     String fileName,
   ) async {
-    final csvData = Csv().encode(rows);
+    final csvData = const ListToCsvConverter().convert(rows);
     await downloadCsvString(csvData, fileName);
   }
 
