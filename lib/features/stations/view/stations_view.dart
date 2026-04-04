@@ -1,353 +1,604 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/station.dart';
-import '../data/repositories/station_repository.dart';
+import '../data/models/station_hours.dart';
+import '../data/providers/stations_provider.dart';
+import '../widgets/camera_player.dart';
+import '../widgets/active_rentals_grid.dart';
+import 'station_form_view.dart';
+import 'operating_hours_settings_view.dart';
+import 'station_specs_view.dart';
 
-class StationsView extends StatefulWidget {
+class StationsView extends ConsumerStatefulWidget {
   const StationsView({super.key});
 
   @override
-  State<StationsView> createState() => _StationsViewState();
+  ConsumerState<StationsView> createState() => _StationsViewState();
 }
 
-class _StationsViewState extends State<StationsView> {
-  final StationRepository _repository = StationRepository();
-  final Completer<GoogleMapController> _controller = Completer();
-  
-  List<Station> _stations = [];
-  bool _isLoading = true;
-  Set<Marker> _markers = {};
+class _StationsViewState extends ConsumerState<StationsView> {
   Station? _selectedStation;
+  String _searchQuery = '';
+  String? _filterStatus;
 
-  static const CameraPosition _initialPosition = CameraPosition(
-    target: LatLng(17.4435, 78.3772), // Hyderabad
-    zoom: 12,
-  );
-
-  // Dark Map Style JSON
-  final String _mapStyle = '''
-[
-  {
-    "elementType": "geometry",
-    "stylers": [{"color": "#242f3e"}]
-  },
-  {
-    "elementType": "labels.text.stroke",
-    "stylers": [{"color": "#242f3e"}]
-  },
-  {
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#746855"}]
-  },
-  {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#d59563"}]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#d59563"}]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [{"color": "#263c3f"}]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#6b9a76"}]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry",
-    "stylers": [{"color": "#38414e"}]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry.stroke",
-    "stylers": [{"color": "#212a37"}]
-  },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#9ca5b3"}]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [{"color": "#746855"}]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry.stroke",
-    "stylers": [{"color": "#1f2835"}]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#f3d19c"}]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "geometry",
-    "stylers": [{"color": "#2f3948"}]
-  },
-  {
-    "featureType": "transit.station",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#d59563"}]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [{"color": "#17263c"}]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [{"color": "#515c6d"}]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.stroke",
-    "stylers": [{"color": "#17263c"}]
-  }
-]
-''';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
+  void _onStationSelected(Station station) {
+    setState(() {
+      if (_selectedStation?.id == station.id) {
+        _selectedStation = null;
+      } else {
+        _selectedStation = station;
+      }
+    });
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try {
-      final stations = await _repository.getStations();
-      final markers = stations.map((station) {
-        return Marker(
-          markerId: MarkerId(station.id.toString()),
-          position: LatLng(station.latitude, station.longitude),
-          infoWindow: InfoWindow(
-            title: station.name,
-            snippet: '${station.availableBatteries} Batteries Available',
-          ),
-          onTap: () => setState(() => _selectedStation = station),
-        );
-      }).toSet();
-
-      setState(() {
-        _stations = stations;
-        _markers = markers;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
+  void _onEdit(Station station) async {
+    await showDialog(
+      context: context,
+      builder: (context) => StationFormDialog(station: station),
+    );
+    
+    // Refresh detailed station if it was selected
+    if (_selectedStation?.id == station.id) {
+      final stations = ref.read(stationsProvider).valueOrNull ?? [];
+      final updated = stations.where((s) => s.id == station.id).firstOrNull;
+      if (updated != null) {
+        setState(() => _selectedStation = updated);
+      }
     }
   }
 
-  Future<void> _onStationSelected(Station station) async {
-    setState(() => _selectedStation = station);
-    final GoogleMapController controller = await _controller.future;
-    controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        target: LatLng(station.latitude, station.longitude),
-        zoom: 15,
+  void _onDelete(Station station) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Station',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete ${station.name}?\nThis action cannot be undone.',
+          style: GoogleFonts.inter(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await ref.read(stationsProvider.notifier).deleteStation(station.id);
+              if (_selectedStation?.id == station.id) {
+                setState(() => _selectedStation = null);
+              }
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${station.name} deleted successfully'),
+                    backgroundColor: Colors.blue,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
-    ));
-    controller.showMarkerInfoWindow(MarkerId(station.id.toString()));
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // List Panel
-        Expanded(
-          flex: 1, // 40% width
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              border: Border(right: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-            ),
+    final stationsAsync = ref.watch(stationsProvider);
+    final isMobile = MediaQuery.of(context).size.width < 1100;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      body: Row(
+        children: [
+          // Main Content
+          Expanded(
+            flex: 3,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Text(
-                    'Station Network',
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: TextField(
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Search locations...',
-                      hintStyle: const TextStyle(color: Colors.white38),
-                      prefixIcon: const Icon(Icons.search, color: Colors.white38),
-                      filled: true,
-                      fillColor: Colors.black.withValues(alpha: 0.2),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _stations.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final station = _stations[index];
-                            final isSelected = _selectedStation?.id == station.id;
-                            
-                            return Card(
-                              color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: isSelected 
-                                  ? BorderSide(color: Colors.blue.withValues(alpha: 0.5))
-                                  : BorderSide.none,
+                  child: stationsAsync.when(
+                    data: (stations) {
+                      // Apply Filters
+                      var filtered = stations.where((s) {
+                        final matchesSearch = _searchQuery.isEmpty ||
+                            s.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                            s.address.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                            (s.city?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+                        
+                        final matchesStatus = _filterStatus == null || 
+                            s.status.toUpperCase() == _filterStatus!.toUpperCase();
+                        
+                        return matchesSearch && matchesStatus;
+                      }).toList();
+
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PageHeader(
+                              title: 'All Stations',
+                              subtitle: 'Manage your station network — view, create, edit, and monitor health.',
+                              actionButton: ElevatedButton.icon(
+                                onPressed: () => showDialog(
+                                  context: context,
+                                  builder: (context) => const StationFormDialog(),
+                                ),
+                                icon: const Icon(Icons.add_location_alt, size: 18),
+                                label: const Text('Add Station'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF3B82F6),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
                               ),
-                              child: ListTile(
-                                onTap: () => _onStationSelected(station),
-                                title: Text(
-                                  station.name,
-                                  style: GoogleFonts.inter(
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                              searchField: TextField(
+                                style: const TextStyle(color: Colors.white, fontSize: 13),
+                                onChanged: (v) => setState(() => _searchQuery = v),
+                                decoration: InputDecoration(
+                                  hintText: 'Search stations...',
+                                  hintStyle: const TextStyle(color: Colors.white30),
+                                  prefixIcon: const Icon(Icons.search, color: Colors.white30, size: 18),
+                                  filled: true,
+                                  fillColor: const Color(0xFF1E293B),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
                                   ),
                                 ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      station.address,
-                                      style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
+                              ),
+                            ),
+
+                            // Stats Row
+                            _buildStatsRow(stations),
+                            const SizedBox(height: 24),
+
+                            // Table Section
+                            AdvancedCard(
+                              padding: EdgeInsets.zero,
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Row(
                                       children: [
-                                        _buildBadge(
-                                          '${station.availableBatteries} Bats',
-                                          Colors.green,
-                                          Icons.battery_charging_full,
+                                        Text(
+                                          '${filtered.length} Stations Found',
+                                          style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
                                         ),
-                                        const SizedBox(width: 8),
-                                        _buildBadge(
-                                          '${station.emptySlots} Slots', 
-                                          Colors.orange,
-                                          Icons.check_box_outline_blank,
-                                        ),
+                                        const Spacer(),
+                                        _buildFilterDropdown(),
                                       ],
                                     ),
-                                  ],
-                                ),
-                                trailing: _buildStatusDot(station.status),
+                                  ),
+                                  AdvancedTable(
+                                    columns: const ['Station', 'City', 'Status', 'Slots', 'Bats', 'Actions'],
+                                    rows: filtered.map((s) => [
+                                      // Station Info
+                                      Row(children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: _statusColor(s.status).withValues(alpha: 0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(Icons.ev_station, size: 14, color: _statusColor(s.status)),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(s.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                              Text(s.address, style: const TextStyle(color: Colors.white38, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                            ],
+                                          ),
+                                        ),
+                                      ]),
+                                      // City
+                                      Text(s.city ?? '—', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                                      // Status
+                                      StatusBadge(status: s.status),
+                                      // Slots Indicator
+                                      _buildSlotIndicator(s),
+                                      // Batteries
+                                      Text('${s.availableBatteries}', style: TextStyle(color: s.availableBatteries > 0 ? Colors.green : Colors.white38, fontWeight: FontWeight.bold, fontSize: 13)),
+                                      // Actions
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _actionBtn(Icons.edit_outlined, Colors.blue, () => _onEdit(s)),
+                                          _actionBtn(Icons.visibility_outlined, Colors.white54, () => _onStationSelected(s)),
+                                          _actionBtn(Icons.delete_outline, Colors.redAccent, () => _onDelete(s)),
+                                        ],
+                                      ),
+                                    ]).toList(),
+                                  ),
+                                ],
                               ),
-                            );
-                          },
+                            ),
+                          ],
                         ),
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.redAccent))),
+                  ),
                 ),
               ],
             ),
           ),
+
+          // Detail Panel (Desktop only)
+          if (!isMobile && _selectedStation != null)
+            Expanded(
+              flex: 1,
+              child: _buildDetailPanel(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(List<Station> stations) {
+    final total = stations.length;
+    final operational = stations.where((s) => s.status.toLowerCase() == 'operational' || s.status.toLowerCase() == 'active').length;
+    final maintenance = stations.where((s) => s.status.toLowerCase() == 'maintenance').length;
+    final offline = stations.where((s) => s.status.toLowerCase() == 'offline' || s.status.toLowerCase() == 'inactive').length;
+
+    return Row(
+      children: [
+        _statCard('Total', total.toString(), Icons.ev_station, Colors.blue),
+        const SizedBox(width: 16),
+        _statCard('Operational', operational.toString(), Icons.check_circle_outline, Colors.green),
+        const SizedBox(width: 16),
+        _statCard('Maintenance', maintenance.toString(), Icons.build_outlined, Colors.orange),
+        const SizedBox(width: 16),
+        _statCard('Offline', offline.toString(), Icons.cloud_off, Colors.red),
+      ],
+    );
+  }
+
+  Widget _statCard(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: AdvancedCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+              ],
+            ),
+          ],
         ),
-        
-        // Map Panel
-        Expanded(
-          flex: 2, // 60% width
-          child: Stack(
-            children: [
-              GoogleMap(
-                mapType: MapType.normal,
-                style: _mapStyle,
-                initialCameraPosition: _initialPosition,
-                onMapCreated: (GoogleMapController controller) {
-                  _controller.complete(controller);
-                },
-                markers: _markers,
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
+      ),
+    );
+  }
+
+  Widget _buildSlotIndicator(Station s) {
+    final pct = s.totalSlots > 0 ? (s.totalSlots - s.availableSlots) / s.totalSlots : 0.0;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 40,
+          height: 4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: pct,
+              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation(_statusColor(s.status)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text('${s.totalSlots - s.availableSlots}/${s.totalSlots}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+      ],
+    );
+  }
+
+  Widget _buildFilterDropdown() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String?>(
+        value: _filterStatus,
+        hint: const Text('All Status', style: TextStyle(color: Colors.white54, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B),
+        icon: const Icon(Icons.filter_list, color: Colors.white54, size: 16),
+        style: const TextStyle(color: Colors.white, fontSize: 13),
+        items: const [
+          DropdownMenuItem(value: null, child: Text('All Status')),
+          DropdownMenuItem(value: 'active', child: Text('Active')),
+          DropdownMenuItem(value: 'maintenance', child: Text('Maintenance')),
+          DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
+        ],
+        onChanged: (v) => setState(() => _filterStatus = v),
+      ),
+    );
+  }
+
+  Widget _buildDetailPanel() {
+    final station = _selectedStation!;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF0F172A),
+        border: Border(left: BorderSide(color: Colors.white10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(station.name, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text(station.address, style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => _selectedStation = null),
+                  icon: const Icon(Icons.close, color: Colors.white38),
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  CameraPlayer(station: station),
+                  const SizedBox(height: 24),
+                  
+                  // Stats Grid
+                  _buildDetailStatsGrid(station),
+                  const SizedBox(height: 24),
+
+                  // Actions
+                  _detailActionBtn('Performance Stats', Icons.bar_chart, Colors.purple, () => context.go('/stations/performance/${station.id}/${Uri.encodeComponent(station.name)}')),
+                  _detailActionBtn('Operating Hours', Icons.schedule, Colors.orange, () => _showOperationsSheet(station)),
+                  _detailActionBtn('Active Rentals', Icons.list_alt, Colors.teal, () => _showRentalsSheet(station)),
+                  _detailActionBtn('Technical Specs', Icons.electrical_services, Colors.blue, () => showStationSpecsDialog(context, station)),
+                  
+                  const SizedBox(height: 40),
+                ],
               ),
-              Positioned(
-                bottom: 24,
-                right: 24,
-                child: FloatingActionButton(
-                  onPressed: () async {
-                    final controller = await _controller.future;
-                    controller.animateCamera(CameraUpdate.newCameraPosition(_initialPosition));
-                  },
-                  backgroundColor: const Color(0xFF1E293B),
-                  child: const Icon(Icons.center_focus_strong, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailStatsGrid(Station station) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        _detailInfoChip('${station.totalSlots} Total Slots', Colors.blue),
+        _detailInfoChip('${station.availableBatteries} Batteries', Colors.green),
+        _detailInfoChip('${station.availableSlots} Empty Slots', Colors.orange),
+        _statusBadge(station),
+      ],
+    );
+  }
+
+  Widget _statusBadge(Station station) {
+    final statusObj = StationHours.fromJsonString(station.openingHours).getStatus(is24x7: station.is24x7);
+    final String label;
+    final Color color;
+    
+    if (station.status.toLowerCase() == 'maintenance') {
+      label = 'MAINTENANCE';
+      color = Colors.orange;
+    } else if (station.status.toLowerCase() == 'inactive') {
+      label = 'INACTIVE';
+      color = Colors.grey;
+    } else {
+      label = statusObj == StationStatus.open ? 'OPEN' : (statusObj == StationStatus.closingSoon ? 'CLOSING SOON' : 'CLOSED');
+      color = statusObj == StationStatus.open ? Colors.green : (statusObj == StationStatus.closingSoon ? Colors.orange : Colors.red);
+    }
+
+    return infoChip(label, color);
+  }
+
+  Widget _detailInfoChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Text(label, style: GoogleFonts.inter(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _detailActionBtn(String label, IconData icon, Color color, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 16),
+              Text(label, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+              const Spacer(),
+              const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showRentalsSheet(Station station) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Active Rentals', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: controller,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: ActiveRentalsGrid(stationId: station.id),
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildBadge(String text, Color color, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+  void _showOperationsSheet(Station station) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-        ],
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Station Operations', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: controller,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: OperatingHoursSettingsView(station: station),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildStatusDot(String status) {
-    Color color;
-    switch (status) {
-      case 'active': color = Colors.green; break;
-      case 'maintenance': color = Colors.orange; break;
-      default: color = Colors.red;
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+      case 'operational': return Colors.green;
+      case 'maintenance': return Colors.orange;
+      case 'inactive':
+      case 'offline': return Colors.red;
+      default: return Colors.blue;
     }
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 4, spreadRadius: 1),
-        ],
-      ),
-    );
   }
+
+  Widget _actionBtn(IconData icon, Color color, VoidCallback onTap) => Tooltip(
+    message: 'Action',
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, size: 18, color: color),
+      ),
+    ),
+  );
+}
+
+Widget infoChip(String label, Color color) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withValues(alpha: 0.3)),
+    ),
+    child: Text(
+      label,
+      style: GoogleFonts.inter(
+        color: color,
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+  );
 }

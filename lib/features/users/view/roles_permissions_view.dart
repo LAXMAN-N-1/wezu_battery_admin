@@ -168,10 +168,10 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                   Switch(
                     value: role.isActive,
                     onChanged: (v) async {
-                      await _repository.updateRole(role.id, isActive: v);
+                      await _repository.updateRole(role.copyWith(isActive: v));
                       _loadData();
                     },
-                    activeColor: Colors.blue,
+                    activeThumbColor: Colors.blue,
                   ),
                   const SizedBox(width: 8),
                   IconButton(
@@ -269,7 +269,7 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                               child: Checkbox(
                                 value: hasPermission,
                                 onChanged: (v) async {
-                                  await _repository.togglePermission(role, role.permissions.map((p) => p is Map ? p['slug'] as String : p.toString()).toList(), perm.slug);
+                                  await _repository.togglePermission(role, perm.id);
                                   _loadData();
                                 },
                                 activeColor: Colors.green,
@@ -534,10 +534,11 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                       onPressed: () async {
                         if (nameController.text.isEmpty) return;
                         await _repository.updateRole(
-                          role.id,
-                          name: nameController.text,
-                          description: descController.text,
-                          isActive: isActive,
+                          role.copyWith(
+                            name: nameController.text,
+                            description: descController.text,
+                            isActive: isActive,
+                          ),
                         );
                         _loadData();
                         if (mounted) Navigator.pop(context);

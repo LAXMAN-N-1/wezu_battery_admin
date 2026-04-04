@@ -1,11 +1,13 @@
 import '../../../../core/api/api_client.dart';
 import '../models/role.dart';
+import 'dart:math';
 
 class RoleRepository {
   final ApiClient _api = ApiClient();
-  
+
   // Cache permissions locally for synchronous utility methods
   List<Permission> _cachedPermissions = [];
+  final Map<int, String> _permissionIdToSlug = {};
 
   Future<List<Role>> getRoles({
     int skip = 0,
@@ -25,6 +27,19 @@ class RoleRepository {
 
       final response = await _api.get('/api/v1/admin/rbac/roles', queryParameters: queryParams);
       final data = response.data as List;
+      for (final roleEntry in data.whereType<Map>()) {
+        final roleMap = Map<String, dynamic>.from(roleEntry);
+        final permissions = roleMap['permissions'];
+        if (permissions is! List) continue;
+        for (final permissionEntry in permissions.whereType<Map>()) {
+          final permissionMap = Map<String, dynamic>.from(permissionEntry);
+          final id = permissionMap['id'];
+          final slug = permissionMap['slug']?.toString();
+          if (id is int && slug != null && slug.isNotEmpty) {
+            _permissionIdToSlug[id] = slug;
+          }
+        }
+      }
       return data.map((json) => Role.fromJson(json)).toList();
     } catch (e) {
       print("Error fetching roles: $e");
@@ -44,27 +59,62 @@ class RoleRepository {
 
   Future<List<Permission>> getPermissions({int skip = 0, int limit = 1000}) async {
     try {
-      final queryParams = {'skip': skip, 'limit': limit};
-      final response = await _api.get('/api/v1/admin/rbac/permissions', queryParameters: queryParams);
-      
-      // The response might be { "modules": [...] } as per spec or a direct list
-      List data;
-      if (response.data is Map && response.data['modules'] != null) {
-        // Spec says grouped by module, but our model expects a flat list for now.
-        // I'll flatten it or handle accordingly.
-        data = [];
-        for (var module in (response.data['modules'] as List)) {
-          if (module['permissions'] != null) {
-            data.addAll(module['permissions']);
-          }
-        }
-      } else if (response.data is List) {
-        data = response.data;
-      } else {
-        data = [];
+      final response = await _api.get('/api/v1/admin/rbac/permissions');
+      final payload = response.data;
+
+      final modules = payload is Map<String, dynamic>
+          ? payload['modules'] as List<dynamic>?
+          : payload is Map
+          ? (payload['modules'] as List<dynamic>?)
+          : null;
+
+      if (modules == null) {
+        _cachedPermissions = [];
+        return [];
+      }
+
+      final permissions = <Permission>[];
+      final slugToId = <String, int>{};
+      for (final entry in _permissionIdToSlug.entries) {
+        slugToId[entry.value] = entry.key;
       }
       
-      _cachedPermissions = data.map((json) => Permission.fromJson(json)).toList();
+      var generatedId = _permissionIdToSlug.keys.isEmpty
+          ? 1
+          : _permissionIdToSlug.keys.reduce(max) + 1;
+
+      for (final moduleEntry in modules) {
+        if (moduleEntry is! Map) continue;
+        final moduleMap = Map<String, dynamic>.from(moduleEntry);
+        final moduleName =
+            moduleMap['module']?.toString() ??
+            moduleMap['label']?.toString() ??
+            'general';
+        final modulePermissions = moduleMap['permissions'];
+        if (modulePermissions is! List) continue;
+
+        for (final permissionEntry in modulePermissions) {
+          if (permissionEntry is! Map) continue;
+          final permissionMap = Map<String, dynamic>.from(permissionEntry);
+          final slug = permissionMap['id']?.toString() ?? '';
+          if (slug.isEmpty) continue;
+          final id = slugToId[slug] ?? generatedId++;
+          slugToId[slug] = id;
+
+          final permission = Permission(
+            id: id,
+            slug: slug,
+            module: permissionMap['resource']?.toString() ?? moduleName,
+            action: permissionMap['action']?.toString() ?? '',
+            description: permissionMap['description']?.toString() ?? '',
+          );
+
+          _permissionIdToSlug[id] = slug;
+          permissions.add(permission);
+        }
+      }
+
+      _cachedPermissions = permissions;
       return _cachedPermissions;
     } catch (e) {
       print("Error fetching permissions: $e");
@@ -98,47 +148,38 @@ class RoleRepository {
     int? parentId,
     List<int> permissionIds = const [],
   }) async {
+    final permissionSlugs = await _permissionSlugsFromIds(permissionIds);
+
     final response = await _api.post('/api/v1/admin/rbac/roles', data: {
       'name': name,
       'description': description,
       'category': category,
       'level': level,
       'is_active': isActive,
-      'permission_ids': permissionIds,
+      'permissions': permissionSlugs,
       if (parentId != null) 'parent_id': parentId,
     });
     return Role.fromJson(response.data);
   }
 
-  Future<Role> updateRole(int roleId, {
-    String? name,
-    String? description,
-    String? category,
-    int? level,
-    bool? isActive,
-    int? parentId,
-    List<String>? permissions,
-  }) async {
-    final Map<String, dynamic> data = {};
-    if (name != null) data['name'] = name;
-    if (description != null) data['description'] = description;
-    if (category != null) data['category'] = category;
-    if (level != null) data['level'] = level;
-    if (isActive != null) data['is_active'] = isActive;
-    if (parentId != null) data['parent_id'] = parentId;
-    if (permissions != null) data['permissions'] = permissions;
+  Future<Role> updateRole(Role role, {List<int>? newPermissionIds}) async {
+    final ids = newPermissionIds ?? _extractPermissionIds(role.permissions);
+    final permissionSlugs = await _permissionSlugsFromIds(ids);
 
-    final response = await _api.put('/api/v1/admin/rbac/roles/$roleId', data: data);
+    final response = await _api.put(
+      '/api/v1/admin/rbac/roles/${role.id}',
+      data: {
+        'name': role.name,
+        'description': role.description,
+        'is_active': role.isActive,
+        'permissions': permissionSlugs,
+      },
+    );
     return Role.fromJson(response.data);
   }
 
   Future<void> deleteRole(int roleId) async {
     await _api.delete('/api/v1/admin/rbac/roles/$roleId');
-  }
-
-  Future<Map<String, dynamic>> getRolePermissions(int roleId) async {
-    final response = await _api.get('/api/v1/admin/rbac/roles/$roleId/permissions');
-    return response.data;
   }
 
   Future<Map<String, dynamic>> assignPermissionsToRole(int roleId, List<String> permissions, {String mode = 'overwrite'}) async {
@@ -218,41 +259,67 @@ class RoleRepository {
     return response.data as List;
   }
 
-  // Access Paths
-  Future<Map<String, dynamic>> assignAccessPath(int userId, String pattern, String level) async {
-    final response = await _api.post('/api/v1/admin/rbac/users/$userId/access-paths', data: {
-      'path_pattern': pattern,
-      'access_level': level,
-    });
-    return response.data;
+  Future<void> togglePermission(Role role, int permissionId) async {
+    final perms = _extractPermissionIds(role.permissions);
+    if (perms.contains(permissionId)) {
+      perms.remove(permissionId);
+    } else {
+      perms.add(permissionId);
+    }
+    await updateRole(role, newPermissionIds: perms);
   }
 
-  Future<List<dynamic>> getUserAccessPaths(int userId) async {
-    final response = await _api.get('/api/v1/admin/rbac/users/$userId/access-paths');
-    return response.data as List;
-  }
+  Future<List<String>> _permissionSlugsFromIds(List<int> ids) async {
+    if (ids.isEmpty) return <String>[];
+    if (_permissionIdToSlug.isEmpty) {
+      await getPermissions();
+    }
 
-  Future<void> removeAccessPath(int userId, int pathId) async {
-    await _api.delete('/api/v1/admin/rbac/users/$userId/access-paths/$pathId');
-  }
-
-  Future<Map<String, dynamic>> updateAccessPath(int userId, int pathId, String level) async {
-    final response = await _api.put('/api/v1/admin/rbac/users/$userId/access-paths/$pathId', data: {
-      'access_level': level,
-    });
-    return response.data;
-  }
-
-  Future<void> togglePermission(Role role, List<String> currentPermissions, String permissionSlug) async {
-      final perms = List<String>.from(currentPermissions);
-      if (perms.contains(permissionSlug)) {
-        perms.remove(permissionSlug);
-      } else {
-        perms.add(permissionSlug);
+    final slugs = <String>[];
+    for (final id in ids) {
+      final slug = _permissionIdToSlug[id];
+      if (slug != null && slug.isNotEmpty) {
+        slugs.add(slug);
       }
-      await assignPermissionsToRole(role.id, perms);
+    }
+    return slugs.toSet().toList();
   }
 
+  int? _permissionIdFromSlug(String slug) {
+    for (final entry in _permissionIdToSlug.entries) {
+      if (entry.value == slug) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
+  List<int> _extractPermissionIds(List<dynamic> permissions) {
+    final ids = <int>{};
+    for (final permission in permissions) {
+      if (permission is int) {
+        ids.add(permission);
+        continue;
+      }
+      if (permission is String) {
+        final id = _permissionIdFromSlug(permission);
+        if (id != null) ids.add(id);
+        continue;
+      }
+      if (permission is Map) {
+        final rawId = permission['id'];
+        if (rawId is int) {
+          ids.add(rawId);
+          continue;
+        }
+        if (rawId != null) {
+          final id = _permissionIdFromSlug(rawId.toString());
+          if (id != null) ids.add(id);
+        }
+      }
+    }
+    return ids.toList();
+  }
   /// Get permission categories for grouped display
   List<String> getPermissionCategories() {
     return _cachedPermissions.map((p) => p.category).toSet().toList();

@@ -24,3 +24,6 @@ class ExpandedSectionsNotifier extends StateNotifier<Set<String>> {
 
 // Keep legacy provider for backward compat
 final navigationProvider = StateProvider<int>((ref) => 0);
+
+/// Manages the visibility of the sidebar
+final sidebarOpenProvider = StateProvider<bool>((ref) => true);

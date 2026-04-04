@@ -29,7 +29,10 @@ class DashboardChart extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -46,7 +49,11 @@ class DashboardChart extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.arrow_drop_down, color: Colors.blue, size: 16),
+                    const Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.blue,
+                      size: 16,
+                    ),
                   ],
                 ),
               ),
@@ -69,8 +76,12 @@ class DashboardChart extends StatelessWidget {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -125,10 +136,7 @@ class DashboardChart extends StatelessWidget {
                     ],
                     isCurved: true,
                     gradient: LinearGradient(
-                      colors: [
-                        Colors.blue.shade400,
-                        Colors.purple.shade400,
-                      ],
+                      colors: [Colors.blue.shade400, Colors.purple.shade400],
                     ),
                     barWidth: 4,
                     isStrokeCapRound: true,

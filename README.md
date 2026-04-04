@@ -1,16 +1,66 @@
-# frontend_admin
+# WEZU Battery Admin Frontend
 
-A new Flutter project.
+Flutter web admin panel deployed with Docker Compose and reverse-proxied by Coolify.
 
-## Getting Started
+## Production defaults
 
-This project is a starting point for a Flutter application.
+- Frontend domain: `admin.powerfrill.com`
+- Backend API: `https://api1.powerfrill.com`
+- Container internal port: `80`
+- Public host port mapping: disabled (Coolify proxy should handle ingress)
 
-A few resources to get you started if this is your first Flutter project:
+## Local run
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+flutter pub get
+flutter run -d chrome --dart-define=API_BASE_URL=https://api1.powerfrill.com
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Build (web)
+
+```bash
+flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=https://api1.powerfrill.com
+```
+
+## Docker image
+
+```bash
+docker build \
+  --build-arg API_BASE_URL=https://api1.powerfrill.com \
+  -t wezu-battery-admin:latest .
+```
+
+## Coolify settings
+
+- Build Pack: `Docker Compose`
+- Compose file: `docker-compose.yaml`
+- Service port (internal): `80`
+- Domain: `admin.powerfrill.com`
+- SSL: Let’s Encrypt enabled
+- Exposed host ports in compose: none (`ports:` should not be used)
+
+### Coolify environment variables (build-time)
+
+Set this in Coolify:
+
+```env
+API_BASE_URL=https://api1.powerfrill.com
+```
+
+## DNS checklist
+
+- `A` record: `admin.powerfrill.com` -> VPS public IP
+- Do not configure any DNS port mapping.
+- If using Coolify ingress, avoid separate host-level nginx TLS termination for this domain.
+
+## Deployment checks
+
+```bash
+curl -I https://admin.powerfrill.com
+curl -sS https://admin.powerfrill.com/health
+```
+
+Expected:
+
+- HTTPS response with valid certificate for `admin.powerfrill.com`
+- `/health` returns `200 ok`

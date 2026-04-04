@@ -1,72 +1,145 @@
-
+import 'package:dio/dio.dart';
+import '../../../../core/api/api_client.dart';
+import '../../../../core/services/csv/csv_service.dart';
 import '../models/battery.dart';
 
 class InventoryRepository {
-  Future<List<Battery>> getBatteries() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    return [
-      Battery(
-        id: 1,
-        serialNumber: 'BAT-2024-001',
-        modelNumber: 'Model-X',
-        status: 'rented',
-        healthPercentage: 98.5,
-        locationName: 'Station A',
-        cycleCount: 45,
-        lastUpdated: DateTime.now().subtract(const Duration(minutes: 5)),
-      ),
-      Battery(
-        id: 2,
-        serialNumber: 'BAT-2024-002',
-        modelNumber: 'Model-Y',
-        status: 'available',
-        healthPercentage: 100.0,
-        locationName: 'Warehouse',
-        cycleCount: 0,
-        lastUpdated: DateTime.now().subtract(const Duration(hours: 1)),
-      ),
-      Battery(
-        id: 3,
-        serialNumber: 'BAT-2024-003',
-        modelNumber: 'Model-X',
-        status: 'maintenance',
-        healthPercentage: 78.2,
-        locationName: 'Service Center',
-        cycleCount: 320,
-        lastUpdated: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      Battery(
-        id: 4,
-        serialNumber: 'BAT-2024-004',
-        modelNumber: 'Model-Z',
-        status: 'available',
-        healthPercentage: 99.1,
-        locationName: 'Station B',
-        cycleCount: 12,
-        lastUpdated: DateTime.now().subtract(const Duration(minutes: 30)),
-      ),
-      Battery(
-        id: 5,
-        serialNumber: 'BAT-2024-005',
-        modelNumber: 'Model-X',
-        status: 'rented',
-        healthPercentage: 95.0,
-        locationName: 'Station C',
-        cycleCount: 89,
-        lastUpdated: DateTime.now().subtract(const Duration(hours: 4)),
-      ),
-      Battery(
-        id: 6,
-        serialNumber: 'BAT-2024-006',
-        modelNumber: 'Model-X',
-        status: 'retired',
-        healthPercentage: 45.0,
-        locationName: 'Recycling Plant',
-        cycleCount: 1200,
-        lastUpdated: DateTime.now().subtract(const Duration(days: 30)),
-      ),
-    ];
+  final ApiClient _api = ApiClient();
+  static const String _baseUrl = '/api/v1/admin/batteries';
+
+  /// Paginated battery list with total count
+  Future<Map<String, dynamic>> getBatteries({
+    String? status,
+    String? locationType,
+    String? batteryType,
+    double? minHealth,
+    double? maxHealth,
+    String? search,
+    String sortBy = 'created_at',
+    String sortOrder = 'desc',
+    int offset = 0,
+    int limit = 20,
+  }) async {
+    final Map<String, dynamic> query = {
+      'offset': offset,
+      'limit': limit,
+      'sort_by': sortBy,
+      'sort_order': sortOrder,
+    };
+    if (status != null && status != 'All') {
+      query['status'] = status.toLowerCase();
+    }
+    if (locationType != null && locationType != 'All') {
+      query['location_type'] = locationType.toLowerCase();
+    }
+    if (batteryType != null && batteryType != 'All') {
+      query['battery_type'] = batteryType;
+    }
+    if (minHealth != null) query['min_health'] = minHealth;
+    if (maxHealth != null) query['max_health'] = maxHealth;
+    if (search != null && search.isNotEmpty) query['search'] = search;
+
+    final response = await _api.get(_baseUrl, queryParameters: query);
+    final data = response.data;
+    final List<dynamic> items = data['items'] ?? [];
+    final rawTotalCount = data['total_count'];
+    final totalCount = (rawTotalCount is num)
+        ? rawTotalCount.toInt()
+        : int.tryParse(rawTotalCount?.toString() ?? '') ?? 0;
+    return {
+      'items': items.map((json) => Battery.fromJson(json)).toList(),
+      'total_count': totalCount,
+    };
+  }
+
+  Future<Map<String, dynamic>> getBatterySummary() async {
+    final response = await _api.get('$_baseUrl/summary');
+    return response.data;
+  }
+
+  Future<List<BatteryAuditLog>> getBatteryAuditLogs(String batteryId) async {
+    final response = await _api.get('$_baseUrl/$batteryId/history');
+    final List<dynamic> data = response.data;
+    return data.map((json) => BatteryAuditLog.fromJson(json)).toList();
+  }
+
+  Future<List<BatteryHealthHistory>> getBatteryHealthHistory(
+    String batteryId, {
+    int days = 90,
+  }) async {
+    final response = await _api.get(
+      '$_baseUrl/$batteryId/health-history',
+      queryParameters: {'days': days},
+    );
+    final List<dynamic> data = response.data;
+    return data.map((json) => BatteryHealthHistory.fromJson(json)).toList();
+  }
+
+  Future<Battery> createBattery(Map<String, dynamic> data) async {
+    final response = await _api.post(_baseUrl, data: data);
+    return Battery.fromJson(response.data);
+  }
+
+  Future<Battery> updateBattery(String id, Map<String, dynamic> data) async {
+    final response = await _api.patch('$_baseUrl/$id', data: data);
+    return Battery.fromJson(response.data);
+  }
+
+  Future<void> deleteBattery(String id, {String? reason}) async {
+    await _api.patch(
+      '$_baseUrl/$id',
+      data: {'status': 'retired', 'description': reason ?? 'Admin Deletion'},
+    );
+  }
+
+  Future<Map<String, dynamic>> bulkUpdateBatteries(
+    List<String> batteryIds,
+    String status,
+  ) async {
+    final response = await _api.post(
+      '$_baseUrl/bulk-update',
+      data: {'battery_ids': batteryIds, 'status': status},
+    );
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> importBatteries(
+    List<int> bytes,
+    String filename, {
+    bool dryRun = false,
+  }) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final response = await _api.post(
+      '$_baseUrl/import',
+      data: formData,
+      queryParameters: {'dry_run': dryRun},
+    );
+    return response.data;
+  }
+
+  Future<void> exportBatteries({
+    String? status,
+    String? locationType,
+    String? batteryType,
+  }) async {
+    final Map<String, dynamic> query = {};
+    if (status != null && status != 'All') {
+      query['status'] = status.toLowerCase();
+    }
+    if (locationType != null && locationType != 'All') {
+      query['location_type'] = locationType.toLowerCase();
+    }
+    if (batteryType != null && batteryType != 'All') {
+      query['battery_type'] = batteryType;
+    }
+
+    final response = await _api.get('$_baseUrl/export', queryParameters: query);
+
+    await CsvService.downloadCsvString(
+      response.data.toString(),
+      'batteries_export',
+    );
   }
 }

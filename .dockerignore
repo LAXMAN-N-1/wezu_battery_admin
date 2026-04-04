@@ -1,0 +1,17 @@
+.git
+.gitignore
+.dart_tool
+.idea
+.vscode
+build
+coverage
+android
+ios
+linux
+macos
+windows
+*.iml
+.DS_Store
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata

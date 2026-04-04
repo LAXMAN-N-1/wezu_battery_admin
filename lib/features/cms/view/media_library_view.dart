@@ -1,253 +1,173 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-import '../data/models/media_asset.dart';
-import '../data/repositories/media_repository.dart';
+import 'package:flutter/services.dart';
+import '../data/repositories/cms_repository.dart';
 
 class MediaLibraryView extends StatefulWidget {
   const MediaLibraryView({super.key});
-
-  @override
-  State<MediaLibraryView> createState() => _MediaLibraryViewState();
+  @override State<MediaLibraryView> createState() => _MediaLibraryViewState();
 }
 
 class _MediaLibraryViewState extends State<MediaLibraryView> {
-  final MediaRepository _repository = MediaRepository();
-  List<MediaAsset> _assets = [];
+  final CmsRepository _repo = CmsRepository();
+  List<Map<String, dynamic>> _assets = [];
   bool _isLoading = true;
   String? _filterCategory;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
+  @override void initState() { super.initState(); _loadData(); }
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    try {
-      final assets = await _repository.getMediaAssets(category: _filterCategory);
-      setState(() {
-        _assets = assets;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading media: $e')),
-        );
-      }
-    }
+    try { _assets = await _repo.getMediaAssets(category: _filterCategory); if (mounted) setState(() => _isLoading = false); }
+    catch (e) { if (mounted) setState(() => _isLoading = false); }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                'Media Library',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showUploadDialog,
+        backgroundColor: const Color(0xFF3B82F6),
+        icon: const Icon(Icons.cloud_upload_outlined, color: Colors.white),
+        label: Text('Upload Media', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+      body: SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Media Library', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text('Manage and organize your platform images and digital assets', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+        ]),
+        const SizedBox(height: 24),
+        Row(children: ['All', 'general', 'banners', 'blogs', 'products'].map((cat) {
+          final selected = cat == 'All' ? _filterCategory == null : _filterCategory == cat;
+          return Padding(padding: const EdgeInsets.only(right: 8), child: GestureDetector(
+            onTap: () { setState(() => _filterCategory = cat == 'All' ? null : cat); _loadData(); },
+            child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(color: selected ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? const Color(0xFF3B82F6).withOpacity(0.4) : Colors.transparent)),
+              child: Text(cat == 'All' ? 'All' : cat.toUpperCase(), style: GoogleFonts.inter(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 12)))));
+        }).toList()),
+        const SizedBox(height: 24),
+        _isLoading ? const Center(child: CircularProgressIndicator())
+            : _assets.isEmpty ? _buildEmptyState() : GridView.builder(
+                shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, childAspectRatio: 1, crossAxisSpacing: 16, mainAxisSpacing: 16),
+                itemCount: _assets.length, itemBuilder: (context, index) => _buildMediaCard(_assets[index]),
               ),
-              
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Trigger file picker
-                },
-                icon: const Icon(Icons.upload_file_outlined),
-                label: const Text('Upload Assets'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Filters
-          Row(
-            children: [
-              _buildCategoryChip(null, 'All Assets'),
-              const SizedBox(width: 12),
-              _buildCategoryChip('blog', 'Blog Images'),
-              const SizedBox(width: 12),
-              _buildCategoryChip('banner', 'App Banners'),
-              const SizedBox(width: 12),
-              _buildCategoryChip('kyc', 'KYC Documents'),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _assets.isEmpty
-                  ? _buildEmptyState()
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 6,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1,
-                      ),
-                      itemCount: _assets.length,
-                      itemBuilder: (context, index) {
-                        return _buildAssetTile(_assets[index]);
-                      },
-                    ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String? category, String label) {
-    bool isSelected = _filterCategory == category;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() {
-          _filterCategory = category;
-          _loadData();
-        });
-      },
-      backgroundColor: Colors.white.withValues(alpha: 0.05),
-      selectedColor: Colors.blue.withValues(alpha: 0.2),
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.blue : Colors.white70,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-    );
-  }
-
-  Widget _buildAssetTile(MediaAsset asset) {
-    return Tooltip(
-      message: asset.fileName,
-      child: InkWell(
-        onTap: () => _showAssetDetails(asset),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (asset.isImage)
-                Image.network(asset.url, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image, color: Colors.white24))
-              else if (asset.isPdf)
-                const Center(child: Icon(Icons.picture_as_pdf, color: Colors.redAccent, size: 32))
-              else
-                const Center(child: Icon(Icons.insert_drive_file_outlined, color: Colors.white24, size: 32)),
-              
-              Positioned(
-                top: 4,
-                right: 4,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.more_vert, size: 14, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showAssetDetails(MediaAsset asset) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: Text(asset.fileName, style: const TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (asset.isImage)
-              Container(
-                height: 200,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(image: NetworkImage(asset.url), fit: BoxFit.contain),
-                ),
-              ),
-            const SizedBox(height: 16),
-            _buildDetailRow('URL', asset.url),
-            _buildDetailRow('Type', asset.fileType),
-            _buildDetailRow('Category', asset.category),
-            _buildDetailRow('Uploaded', DateFormat('MMM d, y').format(asset.createdAt)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Copy URL to clipboard logic
-              Navigator.pop(context);
-            },
-            child: const Text('Copy URL'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
-          Text(value, style: const TextStyle(color: Colors.white70, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-        ],
-      ),
+      ])),
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        children: [
-          const SizedBox(height: 100),
-          Icon(Icons.perm_media_outlined, size: 80, color: Colors.white.withValues(alpha: 0.1)),
-          const SizedBox(height: 24),
-          Text(
-            'Library is empty',
-            style: GoogleFonts.outfit(fontSize: 20, color: Colors.white70),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Upload images for your blogs and banners here.',
-            style: TextStyle(color: Colors.white38),
-          ),
-        ],
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      const SizedBox(height: 60),
+      Icon(Icons.photo_library_outlined, size: 64, color: Colors.white.withOpacity(0.2)),
+      const SizedBox(height: 16),
+      Text('No Media Found', style: GoogleFonts.outfit(fontSize: 18, color: Colors.white54)),
+      const SizedBox(height: 8),
+      Text('Upload your first image to get started.', style: GoogleFonts.inter(fontSize: 14, color: Colors.white38)),
+    ]));
+  }
+
+  Widget _buildMediaCard(Map<String, dynamic> asset) {
+    return GestureDetector(
+      onTap: () => _showAssetDetails(asset),
+      child: Container(
+        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withOpacity(0.06)), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))]),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(fit: StackFit.expand, children: [
+            Image.network(asset['url'] ?? '', fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Icon(Icons.broken_image_outlined, size: 40, color: Colors.white.withOpacity(0.2))),
+            Positioned(bottom: 0, left: 0, right: 0,
+              child: Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black.withOpacity(0.8), Colors.transparent])),
+                padding: const EdgeInsets.all(8), child: Text(asset['file_name'] ?? 'Unknown', style: GoogleFonts.inter(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis))),
+          ]),
+        ),
       ),
     );
+  }
+
+  void _showAssetDetails(Map<String, dynamic> asset) {
+    showDialog(context: context, builder: (ctx) => Dialog(
+      backgroundColor: Colors.transparent, insetPadding: const EdgeInsets.all(40),
+      child: Container(width: 800, height: 500, decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
+        child: Row(children: [
+          // Image Preview
+          Expanded(flex: 3, child: Container(decoration: BoxDecoration(color: Colors.black, borderRadius: const BorderRadius.horizontal(left: Radius.circular(24))),
+            child: Stack(fit: StackFit.expand, children: [
+              Image.network(asset['url'] ?? '', fit: BoxFit.contain),
+              Positioned(top: 16, left: 16, child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)), child: Text('${(asset['file_size_bytes'] / 1024).round()} KB', style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 11)))),
+            ]),
+          )),
+          // Data Sidebar
+          Expanded(flex: 2, child: Padding(padding: const EdgeInsets.all(32), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Expanded(child: Text('Asset Details', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white))),
+              IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(ctx)),
+            ]),
+            const SizedBox(height: 24),
+            _detailRow('File Name', asset['file_name'] ?? 'Unknown'),
+            _detailRow('Type', (asset['file_type'] ?? 'image/jpeg').toUpperCase()),
+            _detailRow('Category', (asset['category'] ?? 'general').toUpperCase()),
+            const SizedBox(height: 16),
+            Text('Alt Text', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+            const SizedBox(height: 4),
+            Text(asset['alt_text'] ?? 'No alt text provided', style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
+            const Spacer(),
+            Text('Public URL', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+            const SizedBox(height: 8),
+            Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
+              child: Row(children: [
+                Expanded(child: Text(asset['url'] ?? '', style: GoogleFonts.robotoMono(color: Colors.blue.shade300, fontSize: 11), maxLines: 2, overflow: TextOverflow.ellipsis)),
+                const SizedBox(width: 8),
+                InkWell(onTap: () { Clipboard.setData(ClipboardData(text: asset['url'])); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL copied to clipboard'))); }, child: const Icon(Icons.copy, size: 16, color: Colors.white54)),
+              ])),
+            const SizedBox(height: 24),
+            SizedBox(width: double.infinity, child: OutlinedButton.icon(
+              onPressed: () async { await _repo.deleteMediaAsset(asset['id']); if (ctx.mounted) Navigator.pop(ctx); _loadData(); },
+              icon: const Icon(Icons.delete_outline, size: 18), label: const Text('Delete Asset'),
+              style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), padding: const EdgeInsets.symmetric(vertical: 16)),
+            )),
+          ]))),
+        ]),
+      ),
+    ));
+  }
+
+  Widget _detailRow(String label, String val) {
+    return Padding(padding: const EdgeInsets.only(bottom: 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+      const SizedBox(height: 4),
+      Text(val, style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+    ]));
+  }
+
+  void _showUploadDialog() {
+    final urlCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final altCtrl = TextEditingController();
+    String category = 'general';
+
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1E293B),
+      title: Text('Upload Media Link', style: GoogleFonts.outfit(color: Colors.white)),
+      content: SizedBox(width: 400, child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: urlCtrl, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Image Direct URL', labelStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: Colors.white.withOpacity(0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none))),
+        const SizedBox(height: 10),
+        TextField(controller: nameCtrl, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'File Name', labelStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: Colors.white.withOpacity(0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none))),
+        const SizedBox(height: 10),
+        TextField(controller: altCtrl, style: const TextStyle(color: Colors.white), decoration: InputDecoration(labelText: 'Alt Text (SEO)', labelStyle: const TextStyle(color: Colors.white38), filled: true, fillColor: Colors.white.withOpacity(0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none))),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () async {
+          if (urlCtrl.text.isEmpty) return;
+          await _repo.createMediaAsset(nameCtrl.text.isNotEmpty ? nameCtrl.text : 'untitled_image.jpg', 'image/jpeg', 102450, urlCtrl.text, altText: altCtrl.text, category: category);
+          if (ctx.mounted) Navigator.pop(ctx); _loadData();
+        }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)), child: const Text('Add to Library')),
+      ],
+    ));
   }
 }
