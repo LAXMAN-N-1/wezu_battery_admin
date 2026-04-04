@@ -23,7 +23,6 @@ class AnalyticsRepository {
     return defaults;
   }
 
-
   double _toDouble(dynamic value) {
     if (value is num) return value.toDouble();
     return double.tryParse(value?.toString() ?? '') ?? 0.0;
@@ -125,7 +124,10 @@ class AnalyticsRepository {
       return const {};
     }
 
-    final total = items.fold<int>(0, (sum, item) => sum + _toInt(item['count'] ?? item['value']));
+    final total = items.fold<int>(
+      0,
+      (sum, item) => sum + _toInt(item['count'] ?? item['value']),
+    );
     final distribution = items.map((item) {
       final count = _toInt(item['count'] ?? item['value']);
       final percentage = total > 0 ? (count * 100) / total : 0.0;
@@ -236,9 +238,14 @@ class AnalyticsRepository {
 
     final normalized = stations.map((item) {
       return {
-        'station_name': item['station_name'] ?? item['station'] ?? item['name'] ?? 'Unknown',
+        'station_name':
+            item['station_name'] ??
+            item['station'] ??
+            item['name'] ??
+            'Unknown',
         'revenue': item['revenue'] ?? item['value'] ?? 0,
-        'rental_count': item['rental_count'] ?? item['rentals'] ?? item['swaps'] ?? 0,
+        'rental_count':
+            item['rental_count'] ?? item['rentals'] ?? item['swaps'] ?? 0,
         'percentage': item['percentage'] ?? 0,
         'avg_session_duration': item['avg_session_duration'] ?? 0,
         'battery_mix': item['battery_mix'] ?? const [],
@@ -246,7 +253,10 @@ class AnalyticsRepository {
       };
     }).toList();
 
-    final totalRevenue = normalized.fold<double>(0, (sum, item) => sum + _toDouble(item['revenue']));
+    final totalRevenue = normalized.fold<double>(
+      0,
+      (sum, item) => sum + _toDouble(item['revenue']),
+    );
     return {'total_revenue': totalRevenue, 'stations': normalized};
   }
 
@@ -312,6 +322,44 @@ class AnalyticsRepository {
         };
       }).toList(),
     };
+  }
+
+  Future<DashboardBootstrapData> getDashboardBootstrap({
+    String period = '30d',
+  }) async {
+    final response = await _apiClient.get(
+      '$_base/dashboard',
+      queryParameters: {'period': period},
+    );
+    final map = _asMap(response.data, defaults: {'period': period});
+    final normalizedPeriod = map['period']?.toString() ?? period;
+
+    return DashboardBootstrapData.fromJson({
+      'period': normalizedPeriod,
+      'generated_at': map['generated_at'],
+      'overview': _normalizeOverviewResponse(map['overview']),
+      'trends': _normalizeTrendResponse(
+        map['trends'],
+        period: normalizedPeriod,
+      ),
+      'conversion_funnel': _asMap(map['conversion_funnel'], listKey: 'stages'),
+      'battery_health_distribution': _normalizeBatteryHealthResponse(
+        map['battery_health_distribution'],
+      ),
+      'inventory_status': _normalizeInventoryStatusResponse(
+        map['inventory_status'],
+      ),
+      'demand_forecast': _normalizeDemandForecastResponse(
+        map['demand_forecast'],
+      ),
+      'revenue_by_station': _normalizeRevenueByStationResponse(
+        map['revenue_by_station'],
+      ),
+      'recent_activity': _normalizeRecentActivityResponse(
+        map['recent_activity'],
+      ),
+      'top_stations': _normalizeTopStationsResponse(map['top_stations']),
+    });
   }
 
   /// GET /api/v1/admin/analytics/overview
@@ -432,156 +480,26 @@ class AnalyticsRepository {
   Future<StationRevenueData> getRevenueByStation({
     String period = '30d',
   }) async {
-    try {
-      final response = await _apiClient.get(
-        '$_base/revenue/by-station',
-        queryParameters: {'period': period},
-      );
-      return StationRevenueData.fromJson(
-        _normalizeRevenueByStationResponse(response.data),
-      );
-    } catch (e) {
-      return StationRevenueData.fromJson({
-        "total_revenue": 1850000.0,
-        "stations": [
-          {
-            "name": "Banjara Hills Sec A",
-            "revenue": 350000,
-            "rentals": 1200,
-            "percentage": 18.9,
-            "utilization": 88,
-            "avg_session_duration": 16.2,
-            "battery_mix": [
-              {"type": "Li-ion", "revenue": 210000, "percentage": 60, "rental_count": 780},
-              {"type": "LFP", "revenue": 110000, "percentage": 31, "rental_count": 340},
-              {"type": "NiMH", "revenue": 30000, "percentage": 9, "rental_count": 80},
-            ],
-          },
-          {
-            "name": "Jubilee Hills Checkpost",
-            "revenue": 280000,
-            "rentals": 950,
-            "percentage": 15.1,
-            "utilization": 84,
-            "avg_session_duration": 14.0,
-            "battery_mix": [
-              {"type": "Li-ion", "revenue": 170000, "percentage": 61, "rental_count": 640},
-              {"type": "LFP", "revenue": 80000, "percentage": 28, "rental_count": 240},
-              {"type": "NiMH", "revenue": 30000, "percentage": 11, "rental_count": 70},
-            ],
-          },
-        ],
-      });
-    }
+    final response = await _apiClient.get(
+      '$_base/revenue/by-station',
+      queryParameters: {'period': period},
+    );
+    return StationRevenueData.fromJson(
+      _normalizeRevenueByStationResponse(response.data),
+    );
   }
 
   /// GET /api/v1/admin/analytics/revenue/by-battery-type
   Future<BatteryTypeRevenueData> getRevenueByBatteryType({
     String period = '30d',
   }) async {
-    try {
-      final response = await _apiClient.get(
-        '$_base/revenue/by-battery-type',
-        queryParameters: {'period': period},
-      );
-      return BatteryTypeRevenueData.fromJson(
-        _asMap(response.data, listKey: 'types'),
-      );
-    } catch (e) {
-      return BatteryTypeRevenueData.fromJson({
-        "types": [
-          {
-            "type": "Lithium-Ion v2 (Fast)",
-            "revenue": 950000,
-            "percentage": 51.3,
-            "rental_count": 3200,
-          },
-          {
-            "type": "LFP Standard",
-            "revenue": 650000,
-            "percentage": 35.1,
-            "rental_count": 2800,
-          },
-          {
-            "type": "NiMH Legacy",
-            "revenue": 250000,
-            "percentage": 13.6,
-            "rental_count": 1200,
-          },
-        ],
-        "station_mix": [
-          {
-            "station_name": "Banjara Hills Sec A",
-            "battery_mix": [
-              {
-                "type": "Lithium-Ion v2 (Fast)",
-                "revenue": 210000,
-                "percentage": 60,
-                "rental_count": 780,
-              },
-              {
-                "type": "LFP Standard",
-                "revenue": 110000,
-                "percentage": 31,
-                "rental_count": 340,
-              },
-              {
-                "type": "NiMH Legacy",
-                "revenue": 30000,
-                "percentage": 9,
-                "rental_count": 80,
-              },
-            ],
-          },
-          {
-            "station_name": "Jubilee Hills Checkpost",
-            "battery_mix": [
-              {
-                "type": "Lithium-Ion v2 (Fast)",
-                "revenue": 170000,
-                "percentage": 61,
-                "rental_count": 640,
-              },
-              {
-                "type": "LFP Standard",
-                "revenue": 80000,
-                "percentage": 28,
-                "rental_count": 240,
-              },
-              {
-                "type": "NiMH Legacy",
-                "revenue": 30000,
-                "percentage": 11,
-                "rental_count": 70,
-              },
-            ],
-          },
-          {
-            "station_name": "Gachibowli DLF",
-            "battery_mix": [
-              {
-                "type": "Lithium-Ion v2 (Fast)",
-                "revenue": 140000,
-                "percentage": 56,
-                "rental_count": 480,
-              },
-              {
-                "type": "LFP Standard",
-                "revenue": 85000,
-                "percentage": 34,
-                "rental_count": 250,
-              },
-              {
-                "type": "NiMH Legacy",
-                "revenue": 25000,
-                "percentage": 10,
-                "rental_count": 70,
-              },
-            ],
-          },
-        ],
-      });
-    }
+    final response = await _apiClient.get(
+      '$_base/revenue/by-battery-type',
+      queryParameters: {'period': period},
+    );
+    return BatteryTypeRevenueData.fromJson(
+      _asMap(response.data, listKey: 'types'),
+    );
   }
 
   /// GET /api/v1/admin/analytics/export?report_type=overview
@@ -596,105 +514,20 @@ class AnalyticsRepository {
 
   /// GET /api/v1/admin/analytics/recent-activity
   Future<RecentActivityData> getRecentActivity({String? type}) async {
-    try {
-      final response = await _apiClient.get(
-        '$_base/recent-activity',
-        queryParameters: {if (type != null) 'type': type},
-      );
-      return RecentActivityData.fromJson(
-        _normalizeRecentActivityResponse(response.data),
-      );
-    } catch (e) {
-      final all = [
-        {
-          "title": "New User Registration",
-          "description": "Raj Kumar verified via Aadhaar e-KYC",
-          "time": "2 min ago",
-          "type": "user",
-          "details": {"user_id": "USR-1298", "kyc": "aadhaar"},
-          "severity": "info",
-        },
-        {
-          "title": "Battery Rental Started",
-          "description": "Battery #WZ-4821 rented at HYD-01 station",
-          "time": "8 min ago",
-          "type": "rental",
-          "details": {
-            "battery_id": "WZ-4821",
-            "station": "HYD-01",
-            "user": "USR-1022",
-          },
-        },
-        {
-          "title": "Battery Swap Completed",
-          "description": "User Priya S. swapped at BLR-02 station",
-          "time": "15 min ago",
-          "type": "swap",
-          "details": {"station": "BLR-02", "user": "USR-1121"},
-        },
-        {
-          "title": "Payment Received",
-          "description": "₹450 received for Order #ORD-9921",
-          "time": "22 min ago",
-          "type": "payment",
-          "details": {"order_id": "ORD-9921", "amount": 450},
-        },
-        {
-          "title": "Low Battery Alert",
-          "description": "Station DEL-04 reporting 3 batteries < 20%",
-          "time": "45 min ago",
-          "type": "alert",
-          "severity": "critical",
-        },
-      ];
-
-      final filtered = type == null
-          ? all
-          : all.where((item) => item["type"] == type).toList();
-
-      return RecentActivityData.fromJson({"activities": filtered});
-    }
+    final response = await _apiClient.get(
+      '$_base/recent-activity',
+      queryParameters: {if (type != null) 'type': type},
+    );
+    return RecentActivityData.fromJson(
+      _normalizeRecentActivityResponse(response.data),
+    );
   }
 
   /// GET /api/v1/admin/analytics/top-stations
   Future<TopStationsData> getTopPerformingStations() async {
-    try {
-      final response = await _apiClient.get('$_base/top-stations');
-      return TopStationsData.fromJson(
-        _normalizeTopStationsResponse(response.data),
-      );
-    } catch (e) {
-      return TopStationsData.fromJson({
-        "stations": [
-          {
-            "id": "HYD-01",
-            "name": "Hyderabad Central",
-            "location": "Hyderabad Central",
-            "rentals": 4520,
-            "revenue": 180000,
-            "utilization": 92,
-            "rating": 4.8,
-            "available_percent": 6,
-            "charging_percent": 10,
-            "offline_percent": 8,
-            "sparkline": [80, 82, 84, 85, 88, 90, 92],
-          },
-          {
-            "id": "BLR-02",
-            "name": "Bangalore Koramangala",
-            "location": "Bangalore Koramangala",
-            "rentals": 3890,
-            "revenue": 145000,
-            "utilization": 88,
-            "rating": 4.7,
-            "available_percent": 8,
-            "charging_percent": 12,
-            "offline_percent": 12,
-            "sparkline": [70, 72, 75, 80, 82, 85, 88],
-          },
-        ],
-      });
-    }
+    final response = await _apiClient.get('$_base/top-stations');
+    return TopStationsData.fromJson(
+      _normalizeTopStationsResponse(response.data),
+    );
   }
 }
-

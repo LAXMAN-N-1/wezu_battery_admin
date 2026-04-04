@@ -31,6 +31,25 @@ void _watchHeavyRefresh(Ref ref) {
   ref.watch(dashboardHeavyRefreshTriggerProvider);
 }
 
+void _watchAnyRefresh(Ref ref) {
+  ref.watch(dashboardRefreshTriggerProvider);
+  ref.watch(dashboardLightRefreshTriggerProvider);
+  ref.watch(dashboardHeavyRefreshTriggerProvider);
+}
+
+final dashboardBootstrapPeriodProvider = Provider<String>((ref) {
+  return ref.watch(analyticsPeriodProvider);
+});
+
+final dashboardBootstrapProvider = FutureProvider<DashboardBootstrapData>((
+  ref,
+) async {
+  _watchAnyRefresh(ref);
+  final repo = ref.read(analyticsRepositoryProvider);
+  final period = ref.watch(dashboardBootstrapPeriodProvider);
+  return repo.getDashboardBootstrap(period: period);
+});
+
 // ─────────────────────────────────────────────
 // Data providers — manually refreshed via dashboardRefreshTriggerProvider
 // ─────────────────────────────────────────────
@@ -40,7 +59,13 @@ final dashboardOverviewProvider = FutureProvider<DashboardOverview>((
 ) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  final data = await repo.getOverview();
+  DashboardOverview data;
+  try {
+    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+    data = bootstrap.overview;
+  } catch (_) {
+    data = await repo.getOverview();
+  }
   Future.microtask(() {
     if (ref.exists(lastRefreshTimeProvider)) {
       ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
@@ -55,13 +80,25 @@ final trendDataProvider = FutureProvider<TrendData>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(trendPeriodProvider);
+  final bootstrapPeriod = ref.watch(dashboardBootstrapPeriodProvider);
+  if (period == bootstrapPeriod) {
+    try {
+      final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+      return bootstrap.trends;
+    } catch (_) {}
+  }
   return repo.getTrends(period: period);
 });
 
 final conversionFunnelProvider = FutureProvider<ConversionFunnel>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  return repo.getConversionFunnel();
+  try {
+    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+    return bootstrap.conversionFunnel;
+  } catch (_) {
+    return repo.getConversionFunnel();
+  }
 });
 
 final batteryHealthProvider = FutureProvider<BatteryHealthDistribution>((
@@ -69,7 +106,12 @@ final batteryHealthProvider = FutureProvider<BatteryHealthDistribution>((
 ) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  return repo.getBatteryHealthDistribution();
+  try {
+    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+    return bootstrap.batteryHealthDistribution;
+  } catch (_) {
+    return repo.getBatteryHealthDistribution();
+  }
 });
 
 final revenueByRegionProvider = FutureProvider<RevenueByRegion>((ref) async {
@@ -90,13 +132,23 @@ final userGrowthProvider = FutureProvider<UserGrowth>((ref) async {
 final inventoryStatusProvider = FutureProvider<InventoryStatus>((ref) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  return repo.getInventoryStatus();
+  try {
+    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+    return bootstrap.inventoryStatus;
+  } catch (_) {
+    return repo.getInventoryStatus();
+  }
 });
 
 final demandForecastProvider = FutureProvider<DemandForecast>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  return repo.getDemandForecast();
+  try {
+    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+    return bootstrap.demandForecast;
+  } catch (_) {
+    return repo.getDemandForecast();
+  }
 });
 
 final userBehaviorProvider = FutureProvider<UserBehavior>((ref) async {
@@ -115,6 +167,13 @@ final revenueByStationProvider = FutureProvider<StationRevenueData>((
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(analyticsPeriodProvider);
+  final bootstrapPeriod = ref.watch(dashboardBootstrapPeriodProvider);
+  if (period == bootstrapPeriod) {
+    try {
+      final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+      return bootstrap.revenueByStation;
+    } catch (_) {}
+  }
   return repo.getRevenueByStation(period: period);
 });
 
@@ -132,13 +191,24 @@ final recentActivityProvider = FutureProvider<RecentActivityData>((ref) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final type = ref.watch(activityFilterProvider);
+  if (type == 'all') {
+    try {
+      final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+      return bootstrap.recentActivity;
+    } catch (_) {}
+  }
   return repo.getRecentActivity(type: type == 'all' ? null : type);
 });
 
 final topStationsProvider = FutureProvider<TopStationsData>((ref) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  return repo.getTopPerformingStations();
+  try {
+    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
+    return bootstrap.topStations;
+  } catch (_) {
+    return repo.getTopPerformingStations();
+  }
 });
 
 class TrendMetric {

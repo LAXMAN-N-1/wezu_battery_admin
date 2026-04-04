@@ -75,11 +75,7 @@ class DashboardOverview {
       }
     }
 
-    KpiMetric extract(
-      String key,
-      String fallbackLabel,
-      dynamic fallbackValue,
-    ) {
+    KpiMetric extract(String key, String fallbackLabel, dynamic fallbackValue) {
       // Try from top-level keys first
       if (json.containsKey(key) && json[key] is Map) {
         return KpiMetric.fromJson(json[key]);
@@ -108,11 +104,7 @@ class DashboardOverview {
       fleetUtilization: extract('fleet_utilization', 'Fleet Utilization', 0),
       activeStations: extract('active_stations', 'Active Stations', 0),
       activeDealers: extract('active_dealers', 'Active Dealers', 0),
-      avgBatteryHealth: extract(
-        'avg_battery_health',
-        'Avg. Battery Health',
-        0,
-      ),
+      avgBatteryHealth: extract('avg_battery_health', 'Avg. Battery Health', 0),
       openTickets: extract('open_tickets', 'Open Tickets', 0),
       revenuePerRental: extract('revenue_per_rental', 'Revenue per Rental', 0),
       avgSessionDuration: extract('avg_session_duration', 'Avg. Session', 0),
@@ -226,7 +218,8 @@ class HealthBucket {
 
   factory HealthBucket.fromJson(Map<String, dynamic> json) {
     return HealthBucket(
-      category: (json['category'] ?? json['range'] ?? json['label'] ?? '').toString(),
+      category: (json['category'] ?? json['range'] ?? json['label'] ?? '')
+          .toString(),
       count: (json['count'] ?? json['value'] ?? 0).toInt(),
       percentage: (json['percentage'] ?? json['percent'] ?? 0).toDouble(),
     );
@@ -248,7 +241,8 @@ class BatteryHealthDistribution {
 
   factory BatteryHealthDistribution.fromJson(Map<String, dynamic> json) {
     final raw = json['distribution'] ?? json['buckets'] ?? json['data'] ?? [];
-    final rawPrevious = json['previous_distribution'] ??
+    final rawPrevious =
+        json['previous_distribution'] ??
         json['previous'] ??
         json['previous_buckets'] ??
         [];
@@ -259,8 +253,12 @@ class BatteryHealthDistribution {
       previousBuckets: (rawPrevious as List)
           .map((e) => HealthBucket.fromJson(e))
           .toList(),
-      previousTotal: (json['previous_total'] ?? json['prev_total'] ?? json['total_previous'] ?? 0)
-          .toInt(),
+      previousTotal:
+          (json['previous_total'] ??
+                  json['prev_total'] ??
+                  json['total_previous'] ??
+                  0)
+              .toInt(),
     );
   }
 }
@@ -276,9 +274,9 @@ class SessionBucket {
   const SessionBucket({required this.range, required this.count});
 
   factory SessionBucket.fromJson(Map<String, dynamic> json) => SessionBucket(
-        range: (json['range'] ?? json['label'] ?? '').toString(),
-        count: (json['count'] ?? json['value'] ?? 0).toInt(),
-      );
+    range: (json['range'] ?? json['label'] ?? '').toString(),
+    count: (json['count'] ?? json['value'] ?? 0).toInt(),
+  );
 }
 
 class UserBehavior {
@@ -307,15 +305,17 @@ class UserBehavior {
       peakHours: (json['peak_hours'] is Map) ? json['peak_hours'] : {},
       heatmap: (json['heatmap'] is List)
           ? (json['heatmap'] as List)
-              .map<List<int>>((row) => (row as List)
-                  .map<int>((e) => (e as num).toInt())
-                  .toList())
-              .toList()
+                .map<List<int>>(
+                  (row) => (row as List)
+                      .map<int>((e) => (e as num).toInt())
+                      .toList(),
+                )
+                .toList()
           : const [],
       sessionHistogram: (json['session_histogram'] is List)
           ? (json['session_histogram'] as List)
-              .map((e) => SessionBucket.fromJson(e))
-              .toList()
+                .map((e) => SessionBucket.fromJson(e))
+                .toList()
           : const [],
       cohortBreakdown: (json['cohort_breakdown'] is Map)
           ? (json['cohort_breakdown'] as Map).map(
@@ -383,7 +383,8 @@ class RegionRevenue {
 
   factory RegionRevenue.fromJson(Map<String, dynamic> json) {
     return RegionRevenue(
-      region: (json['region'] ?? json['name'] ?? json['station'] ?? '').toString(),
+      region: (json['region'] ?? json['name'] ?? json['station'] ?? '')
+          .toString(),
       revenue: (json['revenue'] ?? json['amount'] ?? 0).toDouble(),
       rentalCount: (json['rental_count'] ?? json['rentals'] ?? 0).toInt(),
     );
@@ -426,7 +427,8 @@ class GrowthPoint {
     final returning = (json['returning_users'] ?? (total - newUsers)).toInt();
 
     return GrowthPoint(
-      period: (json['period'] ?? json['date'] ?? json['month'] ?? '').toString(),
+      period: (json['period'] ?? json['date'] ?? json['month'] ?? '')
+          .toString(),
       totalUsers: total,
       newUsers: newUsers,
       returningUsers: returning < 0 ? 0 : returning,
@@ -470,7 +472,8 @@ class InventoryItem {
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
     return InventoryItem(
-      category: (json['category'] ?? json['type'] ?? json['name'] ?? '').toString(),
+      category: (json['category'] ?? json['type'] ?? json['name'] ?? '')
+          .toString(),
       total: (json['total'] ?? 0).toInt(),
       available: (json['available'] ?? json['in_stock'] ?? 0).toInt(),
       rented: (json['rented'] ?? json['in_use'] ?? 0).toInt(),
@@ -531,12 +534,11 @@ class StationRevenue {
       rentalCount: (json['rental_count'] ?? json['rentals'] ?? 0).toInt(),
       percentage: (json['percentage'] ?? 0).toDouble(),
       avgSessionDuration:
-          (json['avg_session_duration'] ?? json['avg_session'] ?? 0)
-              .toDouble(),
+          (json['avg_session_duration'] ?? json['avg_session'] ?? 0).toDouble(),
       batteryMix: (json['battery_mix'] is List)
           ? (json['battery_mix'] as List)
-              .map((e) => BatteryTypeRevenue.fromJson(e))
-              .toList()
+                .map((e) => BatteryTypeRevenue.fromJson(e))
+                .toList()
           : const [],
       utilization: (json['utilization'] ?? json['util'] ?? 0).toDouble(),
     );
@@ -590,9 +592,13 @@ class BatteryTypeRevenue {
 
 class BatteryTypeRevenueData {
   final List<BatteryTypeRevenue> types;
-  final List<StationRevenue> stationMix; // reuse StationRevenue for per-station mix
+  final List<StationRevenue>
+  stationMix; // reuse StationRevenue for per-station mix
 
-  const BatteryTypeRevenueData({required this.types, this.stationMix = const []});
+  const BatteryTypeRevenueData({
+    required this.types,
+    this.stationMix = const [],
+  });
 
   factory BatteryTypeRevenueData.fromJson(Map<String, dynamic> json) {
     final raw = json['types'] ?? json['data'] ?? [];
@@ -696,16 +702,16 @@ class TopStation {
       revenue: (json['revenue'] ?? 0).toDouble(),
       utilization: (json['utilization'] ?? 0).toDouble(),
       rating: (json['rating'] ?? 0).toDouble(),
-      availablePercent:
-          (json['available_percent'] ?? json['available'] ?? 0).toDouble(),
-      chargingPercent:
-          (json['charging_percent'] ?? json['charging'] ?? 0).toDouble(),
-      offlinePercent:
-          (json['offline_percent'] ?? json['offline'] ?? 0).toDouble(),
+      availablePercent: (json['available_percent'] ?? json['available'] ?? 0)
+          .toDouble(),
+      chargingPercent: (json['charging_percent'] ?? json['charging'] ?? 0)
+          .toDouble(),
+      offlinePercent: (json['offline_percent'] ?? json['offline'] ?? 0)
+          .toDouble(),
       sparkline: (json['sparkline'] is List)
           ? (json['sparkline'] as List)
-              .map((e) => (e as num).toDouble())
-              .toList()
+                .map((e) => (e as num).toDouble())
+                .toList()
           : const [],
     );
   }
@@ -720,6 +726,68 @@ class TopStationsData {
     final raw = json['stations'] ?? json['data'] ?? [];
     return TopStationsData(
       stations: (raw as List).map((e) => TopStation.fromJson(e)).toList(),
+    );
+  }
+}
+
+class DashboardBootstrapData {
+  final String period;
+  final DateTime? generatedAt;
+  final DashboardOverview overview;
+  final TrendData trends;
+  final ConversionFunnel conversionFunnel;
+  final BatteryHealthDistribution batteryHealthDistribution;
+  final InventoryStatus inventoryStatus;
+  final DemandForecast demandForecast;
+  final StationRevenueData revenueByStation;
+  final RecentActivityData recentActivity;
+  final TopStationsData topStations;
+
+  const DashboardBootstrapData({
+    required this.period,
+    required this.generatedAt,
+    required this.overview,
+    required this.trends,
+    required this.conversionFunnel,
+    required this.batteryHealthDistribution,
+    required this.inventoryStatus,
+    required this.demandForecast,
+    required this.revenueByStation,
+    required this.recentActivity,
+    required this.topStations,
+  });
+
+  factory DashboardBootstrapData.fromJson(Map<String, dynamic> json) {
+    Map<String, dynamic> asMap(dynamic value) {
+      if (value is Map<String, dynamic>) return value;
+      if (value is Map) return Map<String, dynamic>.from(value);
+      return const {};
+    }
+
+    return DashboardBootstrapData(
+      period: json['period']?.toString() ?? '30d',
+      generatedAt: json['generated_at'] != null
+          ? DateTime.tryParse(json['generated_at'].toString())
+          : null,
+      overview: DashboardOverview.fromJson(asMap(json['overview'])),
+      trends: TrendData.fromJson(asMap(json['trends'])),
+      conversionFunnel: ConversionFunnel.fromJson(
+        asMap(json['conversion_funnel']),
+      ),
+      batteryHealthDistribution: BatteryHealthDistribution.fromJson(
+        asMap(json['battery_health_distribution']),
+      ),
+      inventoryStatus: InventoryStatus.fromJson(
+        asMap(json['inventory_status']),
+      ),
+      demandForecast: DemandForecast.fromJson(asMap(json['demand_forecast'])),
+      revenueByStation: StationRevenueData.fromJson(
+        asMap(json['revenue_by_station']),
+      ),
+      recentActivity: RecentActivityData.fromJson(
+        asMap(json['recent_activity']),
+      ),
+      topStations: TopStationsData.fromJson(asMap(json['top_stations'])),
     );
   }
 }
