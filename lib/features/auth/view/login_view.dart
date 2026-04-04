@@ -17,6 +17,8 @@ class LoginView extends ConsumerStatefulWidget {
 class _LoginViewState extends ConsumerState<LoginView> {
   static const _rememberCredentialKey = 'remembered_admin_credential';
   static const _rememberToggleKey = 'remember_admin_credential_enabled';
+  static const _credentialFieldKey = ValueKey('admin-login-credential-field');
+  static const _passwordFieldKey = ValueKey('admin-login-password-field');
 
   final _formKey = GlobalKey<FormState>();
   final _credentialController = TextEditingController();
@@ -342,22 +344,21 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               child: Column(
                                 children: [
                                   AdminTextField(
+                                        textFieldKey: _credentialFieldKey,
                                         controller: _credentialController,
                                         focusNode: _credentialFocusNode,
                                         label: "Login Credential",
                                         hint: "Email / phone / username",
                                         icon: Icons.person_outline,
-                                        keyboardType:
-                                            TextInputType.emailAddress,
+                                        keyboardType: TextInputType.text,
                                         textInputAction: TextInputAction.next,
                                         autofillHints: const [
                                           AutofillHints.username,
                                           AutofillHints.email,
-                                          AutofillHints.telephoneNumber,
                                         ],
                                         validator: _credentialValidator,
                                         autocorrect: false,
-                                        enableSuggestions: false,
+                                        enableSuggestions: true,
                                         textCapitalization:
                                             TextCapitalization.none,
                                         onChanged: _onFieldChanged,
@@ -377,6 +378,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                           return KeyEventResult.ignored;
                                         },
                                         child: AdminTextField(
+                                          textFieldKey: _passwordFieldKey,
                                           controller: _passwordController,
                                           focusNode: _passwordFocusNode,
                                           label: "Password",
@@ -391,7 +393,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                           ],
                                           validator: _passwordValidator,
                                           autocorrect: false,
-                                          enableSuggestions: false,
+                                          enableSuggestions: true,
                                           textCapitalization:
                                               TextCapitalization.none,
                                           onChanged: _onFieldChanged,

@@ -181,6 +181,7 @@ class StatCard extends StatelessWidget {
 }
 
 class AdminTextField extends StatefulWidget {
+  final Key? textFieldKey;
   final TextEditingController controller;
   final FocusNode? focusNode;
   final String label;
@@ -201,6 +202,7 @@ class AdminTextField extends StatefulWidget {
 
   const AdminTextField({
     super.key,
+    this.textFieldKey,
     required this.controller,
     this.focusNode,
     required this.label,
@@ -258,6 +260,7 @@ class _AdminTextFieldState extends State<AdminTextField> {
                   : [],
             ),
             child: TextFormField(
+              key: widget.textFieldKey,
               controller: widget.controller,
               focusNode: widget.focusNode,
               enabled: widget.enabled,
