@@ -55,11 +55,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Primary: POST /api/v1/auth/login with JSON body
-      final response = await _apiClient.post('/api/v1/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
+      final response = await _apiClient.post(
+        '/api/v1/auth/token',
+        data: {
+          'grant_type': 'password',
+          'username': email,
+          'password': password,
+        },
+        options: Options(
+          contentType: Headers.formUrlEncodedContentType,
+        ),
+      );
 
       if (response.statusCode == 200) {
         final accessToken = response.data['access_token'];
@@ -80,40 +86,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = state.copyWith(isLoading: false, error: 'Login failed');
       }
     } on DioException catch (e) {
-      // Fallback: POST /api/v1/auth/token with form data (OAuth2 compatible)
-      if (e.response?.statusCode != 401 && e.response?.statusCode != 400) {
-        try {
-          final formData = FormData.fromMap({
-            'username': email,
-            'password': password,
-          });
-          final fallbackResponse = await _apiClient.post('/api/v1/auth/token', data: formData);
-
-          if (fallbackResponse.statusCode == 200) {
-            final accessToken = fallbackResponse.data['access_token'];
-            final refreshToken = fallbackResponse.data['refresh_token'];
-            final user = fallbackResponse.data['user'];
-
-            await _apiClient.storage.write(key: 'admin_token', value: accessToken);
-            if (refreshToken != null) {
-              await _apiClient.storage.write(key: 'admin_refresh_token', value: refreshToken);
-            }
-
-            state = state.copyWith(
-              isLoading: false,
-              isAuthenticated: true,
-              user: user is Map<String, dynamic> ? user : null,
-            );
-            return;
-          }
-        } catch (_) {
-          // Fallback also failed, use original error
+      String errorMessage = 'An error occurred';
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        errorMessage = 'Connection timed out. Please check your internet or server status.';
+      } else if (e.response?.data is Map) {
+        final detail = e.response?.data['detail'];
+        if (detail is String) {
+          errorMessage = detail;
+        } else if (detail is List && detail.isNotEmpty) {
+          errorMessage = detail[0]['msg'] ?? 'Validation error';
         }
       }
-
+      
       state = state.copyWith(
         isLoading: false,
-        error: e.response?.data['detail'] ?? 'An error occurred',
+        error: errorMessage,
       );
     }
   }

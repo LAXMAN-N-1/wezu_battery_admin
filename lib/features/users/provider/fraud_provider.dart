@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/fraud_repository.dart';
+import '../data/models/fraud_risk.dart';
+import '../data/models/duplicate_account.dart';
+import '../data/models/blacklist_entry.dart';
 
 // ─── State ───────────────────────────────────────────────────────────
 
@@ -9,23 +12,23 @@ class FraudState {
   final String? successMessage;
 
   // High risk users list
-  final List<dynamic> highRiskUsers;
+  final List<FraudRisk> highRiskUsers;
   final double riskThreshold;
 
   // Selected user risk detail
-  final Map<String, dynamic>? selectedUserRisk;
+  final FraudRisk? selectedUserRisk;
   final int? selectedUserId;
 
   // Duplicate accounts
-  final List<dynamic> duplicateAccounts;
+  final List<DuplicateAccount> duplicateAccounts;
   final String? duplicateStatusFilter;
 
   // Blacklist
-  final List<dynamic> blacklist;
+  final List<BlacklistEntry> blacklist;
   final String? blacklistTypeFilter;
 
   // Device fingerprints
-  final List<dynamic> deviceFingerprints;
+  final List<Map<String, dynamic>> deviceFingerprints;
   final bool showSuspiciousOnly;
 
   // Active tab
@@ -52,15 +55,15 @@ class FraudState {
     bool? isLoading,
     String? error,
     String? successMessage,
-    List<dynamic>? highRiskUsers,
+    List<FraudRisk>? highRiskUsers,
     double? riskThreshold,
-    Map<String, dynamic>? selectedUserRisk,
+    FraudRisk? selectedUserRisk,
     int? selectedUserId,
-    List<dynamic>? duplicateAccounts,
+    List<DuplicateAccount>? duplicateAccounts,
     String? duplicateStatusFilter,
-    List<dynamic>? blacklist,
+    List<BlacklistEntry>? blacklist,
     String? blacklistTypeFilter,
-    List<dynamic>? deviceFingerprints,
+    List<Map<String, dynamic>>? deviceFingerprints,
     bool? showSuspiciousOnly,
     int? activeTab,
     bool clearSelectedUser = false,
@@ -106,10 +109,10 @@ class FraudNotifier extends StateNotifier<FraudState> {
       ]);
       state = state.copyWith(
         isLoading: false,
-        highRiskUsers: results[0],
-        duplicateAccounts: results[1],
-        blacklist: results[2],
-        deviceFingerprints: results[3],
+        highRiskUsers: results[0] as List<FraudRisk>,
+        duplicateAccounts: results[1] as List<DuplicateAccount>,
+        blacklist: results[2] as List<BlacklistEntry>,
+        deviceFingerprints: results[3] as List<Map<String, dynamic>>,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

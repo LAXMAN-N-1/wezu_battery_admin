@@ -24,7 +24,7 @@ class AnalyticsRepository {
   }
 
   /// Daily/weekly/monthly trend data for rentals and revenue
-  Future<dynamic> getTrends({String period = 'daily'}) async {
+  Future<dynamic> getTrends({String period = '30d'}) async {
     final response = await _api.get(
       '/api/v1/admin/analytics/trends',
       queryParameters: {'period': period},
@@ -65,6 +65,24 @@ class AnalyticsRepository {
   /// Top stations dashboard data
   Future<dynamic> getTopStations() async {
     final response = await _api.get('/api/v1/admin/analytics/top-stations');
+    return response.data;
+  }
+
+  /// Revenue distribution by station
+  Future<dynamic> getRevenueByStation({String period = '30d'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/revenue/by-station',
+      queryParameters: {'period': period},
+    );
+    return response.data;
+  }
+
+  /// Revenue split by battery chemistry/model
+  Future<dynamic> getRevenueByBatteryType({String period = '30d'}) async {
+    final response = await _api.get(
+      '/api/v1/admin/analytics/revenue/by-battery-type',
+      queryParameters: {'period': period},
+    );
     return response.data;
   }
 

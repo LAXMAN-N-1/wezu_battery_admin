@@ -79,6 +79,8 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ],
           ),
           const SizedBox(height: 24),
+          _buildRevenueByBatteryType(state.revenueByBatteryType),
+          const SizedBox(height: 24),
           _buildTopStations(state.topStations),
           const SizedBox(height: 24),
           _buildDemandForecast(state.demandForecast),
@@ -99,7 +101,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
   }
 
   Widget _buildHeader() {
-    return Row(
+    return Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,15 +120,24 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ),
           ],
         ),
-        const Spacer(),
-        ElevatedButton.icon(
-          onPressed: () => ref.read(analyticsProvider.notifier).exportReport('overview'),
-          icon: const Icon(Icons.download_outlined),
-          label: const Text('Export CSV'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue.withValues(alpha: 0.1),
-            foregroundColor: Colors.blue,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        
+        PopupMenuButton<String>(
+          onSelected: (type) => ref.read(analyticsProvider.notifier).exportReport(type),
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: 'overview', child: Text('Overview Report')),
+            const PopupMenuItem(value: 'trends', child: Text('Trends Report')),
+            const PopupMenuItem(value: 'forecast', child: Text('Demand Forecast')),
+            const PopupMenuItem(value: 'behavior', child: Text('User Behavior')),
+          ],
+          child: ElevatedButton.icon(
+            onPressed: null, // Using PopupMenuButton's child
+            icon: const Icon(Icons.download_outlined),
+            label: const Text('Export CSV'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.withValues(alpha: 0.1),
+              foregroundColor: Colors.blue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
         ),
       ],
@@ -179,7 +190,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Platform Trends',
@@ -189,7 +200,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
+              
               _buildPeriodSelector(
                 state.trendsPeriod,
                 (p) => ref.read(analyticsProvider.notifier).changeTrendsPeriod(p),
@@ -240,7 +251,11 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: const [FlSpot(0, 3), FlSpot(2, 5), FlSpot(4, 4), FlSpot(6, 8), FlSpot(8, 6)],
+                    spots: (state.trends is Map && state.trends['data'] is List)
+                        ? (state.trends['data'] as List).asMap().entries.map((e) {
+                            return FlSpot(e.key.toDouble(), (e.value['value'] ?? 0).toDouble());
+                          }).toList()
+                        : const [FlSpot(0, 0)],
                     isCurved: true,
                     color: Colors.blue,
                     barWidth: 3,
@@ -274,9 +289,16 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildFunnelStep('Installs', '1,200', 1.0, Colors.blue),
-          _buildFunnelStep('Registrations', '850', 0.7, Colors.purple),
-          _buildFunnelStep('First Rental', '420', 0.35, Colors.green),
+          if (data is Map && data['steps'] is List)
+            ...(data['steps'] as List).map((step) {
+              final label = step['label']?.toString() ?? 'Unknown';
+              final count = step['count']?.toString() ?? '0';
+              final factor = (step['percentage'] ?? 0).toDouble() / 100.0;
+              final color = step['label'] == 'Installs' ? Colors.blue : (step['label'] == 'Registrations' ? Colors.purple : Colors.green);
+              return _buildFunnelStep(label, count, factor.clamp(0.0, 1.0), color);
+            })
+          else
+            const Center(child: Text('No funnel data', style: TextStyle(color: Colors.white38))),
         ],
       ),
     );
@@ -288,10 +310,10 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              const Spacer(),
+              
               Text(count, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
             ],
           ),
@@ -333,10 +355,18 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildBehaviorRow('Avg. Daily Usage', '42 mins', Icons.timer_outlined),
-          _buildBehaviorRow('Repeat Customers', '76%', Icons.replay_outlined),
-          _buildBehaviorRow('Peak Hour', '6 PM - 8 PM', Icons.access_time_outlined),
-          _buildBehaviorRow('Churn Rate', '4.2%', Icons.trending_down_outlined),
+          if (data is Map && data['metrics'] is List)
+            ...(data['metrics'] as List).map((m) {
+              return _buildBehaviorRow(
+                m['label'] ?? 'Unknown',
+                m['value'] ?? '0',
+                m['label']?.toString().contains('Daily') == true ? Icons.timer_outlined : (m['label']?.toString().contains('Repeat') == true ? Icons.replay_outlined : (m['label']?.toString().contains('Peak') == true ? Icons.access_time_outlined : Icons.trending_up_outlined)),
+              );
+            })
+          else if (data is Map)
+            ...data.entries.map((e) => _buildBehaviorRow(e.key.replaceAll('_', ' ').toUpperCase(), e.value.toString(), Icons.analytics_outlined))
+          else
+            const Center(child: Text('No behavior data', style: TextStyle(color: Colors.white38))),
         ],
       ),
     );
@@ -345,7 +375,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
   Widget _buildBehaviorRow(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
+      child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(8),
@@ -357,7 +387,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
           ),
           const SizedBox(width: 16),
           Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-          const Spacer(),
+          
           Text(value, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
         ],
       ),
@@ -384,12 +414,18 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
               PieChartData(
                 sectionsSpace: 0,
                 centerSpaceRadius: 40,
-                sections: [
-                  PieChartSectionData(color: Colors.green, value: 65, title: '65%', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  PieChartSectionData(color: Colors.yellow, value: 20, title: '20%', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  PieChartSectionData(color: Colors.orange, value: 10, title: '10%', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  PieChartSectionData(color: Colors.red, value: 5, title: '5%', radius: 50, titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                ],
+                sections: (data is Map && data['distribution'] is List)
+                    ? (data['distribution'] as List).map((d) {
+                        final color = d['range']?.toString().contains('80') == true ? Colors.green : (d['range']?.toString().contains('60') == true ? Colors.yellow : (d['range']?.toString().contains('40') == true ? Colors.orange : Colors.red));
+                        return PieChartSectionData(
+                          color: color,
+                          value: (d['percentage'] ?? 0).toDouble(),
+                          title: '${(d['percentage'] ?? 0).toInt()}%',
+                          radius: 50,
+                          titleStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        );
+                      }).toList()
+                    : [],
               ),
             ),
           ),
@@ -438,10 +474,16 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ),
           ),
           const SizedBox(height: 24),
-          _buildRegionRow('Bangalore', '₹4,50,000', 0.9),
-          _buildRegionRow('Hyderabad', '₹3,20,000', 0.65),
-          _buildRegionRow('Chennai', '₹2,80,000', 0.55),
-          _buildRegionRow('Pune', '₹1,50,000', 0.3),
+          if (data is List)
+            ...data.map((r) {
+              return _buildRegionRow(
+                r['region'] ?? r['city'] ?? 'Unknown',
+                '₹${r['revenue'] ?? 0}',
+                ((r['percentage'] ?? 0).toDouble() / 100.0).clamp(0.0, 1.0),
+              );
+            })
+          else
+            const Center(child: Text('No regional data', style: TextStyle(color: Colors.white38))),
         ],
       ),
     );
@@ -453,10 +495,10 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(city, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              const Spacer(),
+              
               Text(revenue, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w600)),
             ],
           ),
@@ -500,13 +542,54 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
           const SizedBox(height: 20),
           AdvancedTable(
             columns: const ['Station Name', 'Rentals', 'Revenue', 'Avg Health', 'Status'],
-            rows: [
-              [_stationText('BLR-Central-01'), _whiteText('450'), _whiteText('₹54,000'), _healthBadge('92%'), const StatusBadge(status: 'Active')],
-              [_stationText('BLR-Whitefield-04'), _whiteText('380'), _whiteText('₹42,500'), _healthBadge('88%'), const StatusBadge(status: 'Active')],
-              [_stationText('HYD-Gachibowli-12'), _whiteText('310'), _whiteText('₹38,200'), _healthBadge('85%'), const StatusBadge(status: 'Maintenance')],
-              [_stationText('CHE-OMR-08'), _whiteText('280'), _whiteText('₹32,100'), _healthBadge('90%'), const StatusBadge(status: 'Active')],
-            ],
+            rows: (data is List)
+                ? data.map((s) {
+                    return [
+                      _stationText(s['name'] ?? 'N/A'),
+                      _whiteText(s['total_rentals']?.toString() ?? '0'),
+                      _whiteText('₹${s['total_revenue'] ?? 0}'),
+                      _healthBadge('${(s['avg_health'] ?? 0).toInt()}%'),
+                      StatusBadge(status: s['status'] ?? 'Active'),
+                    ];
+                  }).toList()
+                : [],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRevenueByBatteryType(dynamic data) {
+    return AdvancedCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Revenue by Battery Type',
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (data is List)
+            Wrap(
+              spacing: 24,
+              runSpacing: 24,
+              children: data.map((b) {
+                return SizedBox(
+                  width: 200,
+                  child: _inventoryMetric(
+                    b['battery_type'] ?? 'Unknown',
+                    '₹${b['revenue'] ?? 0}',
+                    Colors.purple.shade300,
+                  ),
+                );
+              }).toList(),
+            )
+          else
+            const Center(child: Text('No battery revenue data', style: TextStyle(color: Colors.white38))),
         ],
       ),
     );
@@ -548,7 +631,11 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
-                    spots: const [FlSpot(0, 100), FlSpot(10, 150), FlSpot(20, 130), FlSpot(30, 200)],
+                    spots: (data is Map && data['forecast'] is List)
+                        ? (data['forecast'] as List).asMap().entries.map((e) {
+                            return FlSpot(e.key.toDouble(), (e.value['value'] ?? 0).toDouble());
+                          }).toList()
+                        : [],
                     isCurved: true,
                     color: Colors.amber,
                     barWidth: 3,
@@ -569,7 +656,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'User Growth & Retention',
@@ -579,7 +666,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const Spacer(),
+              
               _buildPeriodSelector(
                 state.userGrowthPeriod,
                 (p) => ref.read(analyticsProvider.notifier).changeUserGrowthPeriod(p),
@@ -591,12 +678,14 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             height: 250,
             child: BarChart(
               BarChartData(
-                barGroups: [
-                  BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 10, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 15, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 22, color: Colors.blue, width: 20)]),
-                  BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 30, color: Colors.blue, width: 20)]),
-                ],
+                barGroups: (state.userGrowth is Map && state.userGrowth['data'] is List)
+                    ? (state.userGrowth['data'] as List).asMap().entries.map((e) {
+                        return BarChartGroupData(
+                          x: e.key,
+                          barRods: [BarChartRodData(toY: (e.value['value'] ?? 0).toDouble(), color: Colors.blue, width: 20)],
+                        );
+                      }).toList()
+                    : [],
                 titlesData: FlTitlesData(
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -624,10 +713,20 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ),
           ),
           const SizedBox(height: 20),
-          _activityItem('Bulk stock update completed for BLR-CN-01', '2 mins ago', Icons.sync),
-          _activityItem('New dealer registration pending review: EnerGrid', '15 mins ago', Icons.person_add),
-          _activityItem('Critical battery temperature alert: BT-3042', '45 mins ago', Icons.warning_amber, color: Colors.red),
-          _activityItem('Daily revenue report generated', '2 hours ago', Icons.description),
+          if (data is List)
+            ...data.map((item) {
+              final type = item['type']?.toString().toLowerCase() ?? 'info';
+              final color = type == 'alert' || type == 'error' || type.contains('critical') ? Colors.red : Colors.blue;
+              final icon = type == 'alert' || type == 'error' || type.contains('critical') ? Icons.warning_amber : (type.contains('update') ? Icons.sync : Icons.info_outline);
+              return _activityItem(
+                item['message'] ?? item['description'] ?? 'System action occurred',
+                item['timestamp'] ?? item['time'] ?? 'Recently',
+                icon,
+                color: color,
+              );
+            })
+          else
+            const Center(child: Text('No recent activity', style: TextStyle(color: Colors.white38))),
         ],
       ),
     );
@@ -674,10 +773,15 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             ),
           ),
           const SizedBox(height: 24),
-          _inventoryMetric('Total Fleet', '4,250', Colors.blue),
-          _inventoryMetric('In Use', '2,840', Colors.green),
-          _inventoryMetric('Charging', '1,120', Colors.amber),
-          _inventoryMetric('Maintenance', '290', Colors.red),
+          if (data is Map)
+            ...data.entries.map((e) {
+              final label = e.key.replaceAll('_', ' ').toUpperCase();
+              final value = e.value.toString();
+              final color = e.key.contains('use') ? Colors.green : (e.key.contains('charge') ? Colors.amber : (e.key.contains('maintenance') ? Colors.red : Colors.blue));
+              return _inventoryMetric(label, value, color);
+            })
+          else
+            const Center(child: Text('No inventory data', style: TextStyle(color: Colors.white38))),
         ],
       ),
     );

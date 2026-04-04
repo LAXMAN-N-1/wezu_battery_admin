@@ -38,8 +38,7 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final roles = await _repository.getRoles();
-    // Permissions are accessed via repository methods in the permission matrix tab
+    final roles = await _repository.getRoles(includePermissions: true);
     await _repository.getPermissions();
     setState(() {
       _roles = roles;
@@ -169,7 +168,7 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                   Switch(
                     value: role.isActive,
                     onChanged: (v) async {
-                      await _repository.updateRole(role.copyWith(isActive: v));
+                      await _repository.updateRole(role.id, isActive: v);
                       _loadData();
                     },
                     activeColor: Colors.blue,
@@ -233,7 +232,7 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                 ),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: DataTable(
+                  child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
                     headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.03)),
                     columns: [
                       DataColumn(label: SizedBox(width: 160, child: Text('Permission', style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)))),
@@ -262,13 +261,15 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                           for (var p in role.permissions) {
                             if (p is int && p == perm.id) hasPermission = true;
                             if (p is Map && p['id'] == perm.id) hasPermission = true;
+                            if (p is String && p == perm.slug) hasPermission = true;
+                            if (p is Map && p['slug'] == perm.slug) hasPermission = true;
                           }
                           return DataCell(
                             Center(
                               child: Checkbox(
                                 value: hasPermission,
                                 onChanged: (v) async {
-                                  await _repository.togglePermission(role, perm.id);
+                                  await _repository.togglePermission(role, role.permissions.map((p) => p is Map ? p['slug'] as String : p.toString()).toList(), perm.slug);
                                   _loadData();
                                 },
                                 activeColor: Colors.green,
@@ -279,7 +280,7 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                         }),
                       ]);
                     }).toList(),
-                  ),
+                  )),
                 ),
               ],
             ),
@@ -451,7 +452,12 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                   Expanded(child: ElevatedButton(
                     onPressed: () async {
                       if (nameController.text.isEmpty) return;
-                      await _repository.createRole(name: nameController.text, description: descController.text, permissionIds: []);
+                      await _repository.createRole(
+                        name: nameController.text,
+                        description: descController.text,
+                        category: 'custom',
+                        permissionIds: [],
+                      );
                       _loadData();
                       if (mounted) Navigator.pop(context);
                     },
@@ -528,11 +534,10 @@ class _RolesPermissionsViewState extends ConsumerState<RolesPermissionsView> wit
                       onPressed: () async {
                         if (nameController.text.isEmpty) return;
                         await _repository.updateRole(
-                          role.copyWith(
-                            name: nameController.text,
-                            description: descController.text,
-                            isActive: isActive,
-                          ),
+                          role.id,
+                          name: nameController.text,
+                          description: descController.text,
+                          isActive: isActive,
                         );
                         _loadData();
                         if (mounted) Navigator.pop(context);

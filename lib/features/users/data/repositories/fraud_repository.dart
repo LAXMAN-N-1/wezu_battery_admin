@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/api/api_client.dart';
+import '../models/fraud_risk.dart';
+import '../models/duplicate_account.dart';
+import '../models/blacklist_entry.dart';
 
 final fraudRepositoryProvider = Provider<FraudRepository>((ref) {
   return FraudRepository(ref.watch(apiClientProvider));
@@ -11,55 +14,61 @@ class FraudRepository {
   FraudRepository(this._api);
 
   /// List users with high fraud risk scores
-  Future<List<dynamic>> getHighRiskUsers({double threshold = 50, int limit = 100}) async {
+  Future<List<FraudRisk>> getHighRiskUsers({double threshold = 50, int limit = 100}) async {
     final response = await _api.get(
       '/api/v1/admin/fraud/high-risk-users',
       queryParameters: {'threshold': threshold, 'limit': limit},
     );
-    return response.data is List ? response.data as List : [];
+    if (response.data is List) {
+      return (response.data as List).map((json) => FraudRisk.fromJson(json)).toList();
+    }
+    return [];
   }
 
   /// Get fraud risk score for a specific user
-  Future<Map<String, dynamic>> getUserRiskScore(int userId) async {
+  Future<FraudRisk> getUserRiskScore(int userId) async {
     final response = await _api.get('/api/v1/admin/fraud/users/$userId/risk-score');
-    return response.data is Map<String, dynamic>
-        ? response.data as Map<String, dynamic>
-        : {};
+    return FraudRisk.fromJson(response.data);
   }
 
   /// Get potential duplicate accounts
-  Future<List<dynamic>> getDuplicateAccounts({String? status, double minConfidence = 50}) async {
+  Future<List<DuplicateAccount>> getDuplicateAccounts({String? status, double minConfidence = 50}) async {
     final params = <String, dynamic>{'min_confidence': minConfidence};
     if (status != null) params['status'] = status;
     final response = await _api.get(
       '/api/v1/admin/fraud/duplicate-accounts',
       queryParameters: params,
     );
-    return response.data is List ? response.data as List : [];
+    if (response.data is List) {
+      return (response.data as List).map((json) => DuplicateAccount.fromJson(json)).toList();
+    }
+    return [];
   }
 
   /// Take action on duplicate account detection
-  Future<dynamic> handleDuplicateAccount(int id, {required String action, String? notes}) async {
-    final response = await _api.post(
+  Future<void> handleDuplicateAccount(int id, {required String action, String? notes}) async {
+    await _api.post(
       '/api/v1/admin/fraud/duplicate-accounts/$id/action',
       data: {'action': action, if (notes != null) 'notes': notes},
     );
-    return response.data;
   }
 
   /// Get blacklist entries
-  Future<List<dynamic>> getBlacklist({String? type}) async {
+  Future<List<BlacklistEntry>> getBlacklist({String? type}) async {
     final params = <String, dynamic>{};
     if (type != null) params['type'] = type;
     final response = await _api.get(
       '/api/v1/admin/fraud/blacklist',
       queryParameters: params.isNotEmpty ? params : null,
     );
-    return response.data is List ? response.data as List : [];
+    if (response.data is List) {
+      return (response.data as List).map((json) => BlacklistEntry.fromJson(json)).toList();
+    }
+    return [];
   }
 
   /// Add entry to blacklist
-  Future<Map<String, dynamic>> addToBlacklist({
+  Future<BlacklistEntry> addToBlacklist({
     required String type,
     required String value,
     required String reason,
@@ -68,19 +77,16 @@ class FraudRepository {
       '/api/v1/admin/fraud/blacklist',
       data: {'type': type, 'value': value, 'reason': reason},
     );
-    return response.data is Map<String, dynamic>
-        ? response.data as Map<String, dynamic>
-        : {};
+    return BlacklistEntry.fromJson(response.data);
   }
 
   /// Remove from blacklist
-  Future<dynamic> removeFromBlacklist(int id) async {
-    final response = await _api.delete('/api/v1/admin/fraud/blacklist/$id');
-    return response.data;
+  Future<void> removeFromBlacklist(int id) async {
+    await _api.delete('/api/v1/admin/fraud/blacklist/$id');
   }
 
   /// Get device fingerprints for analysis
-  Future<List<dynamic>> getDeviceFingerprints({
+  Future<List<Map<String, dynamic>>> getDeviceFingerprints({
     int? userId,
     bool suspiciousOnly = false,
     int limit = 100,
@@ -94,7 +100,7 @@ class FraudRepository {
       '/api/v1/admin/fraud/device-fingerprints',
       queryParameters: params,
     );
-    return response.data is List ? response.data as List : [];
+    return response.data is List ? List<Map<String, dynamic>>.from(response.data) : [];
   }
 
   /// Submit device fingerprint for tracking

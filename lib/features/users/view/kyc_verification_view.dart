@@ -24,6 +24,7 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(kycProvider.notifier).loadPendingQueue();
+      ref.read(kycProvider.notifier).loadDashboard();
     });
   }
 
@@ -37,6 +38,7 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
     ref.read(kycProvider.notifier).loadPendingQueue(
       userType: _userTypeFilter == 'all' ? null : _userTypeFilter,
     );
+    ref.read(kycProvider.notifier).loadDashboard();
   }
 
   @override
@@ -83,14 +85,14 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Left — Queue list
+                      // Left — Pending User Queue
                       SizedBox(
-                        width: 380,
-                        child: _buildQueueList(kycState.pendingQueue),
+                        width: 400,
+                        child: _buildPendingUserList(kycState.pendingQueue),
                       ),
-                      const SizedBox(width: 20),
-                      // Right — Document viewer
-                      Expanded(child: _buildDocumentViewer()),
+                      const SizedBox(width: 24),
+                      // Right — Detailed Review & Actions
+                      Expanded(child: _buildUserReviewPanel()),
                     ],
                   ),
                 ),
@@ -109,6 +111,7 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
             _refresh();
           } else {
             _statusFilter = value;
+            // Note: status filter can be added to loadPendingQueue if backend supports it
           }
         });
       },
@@ -124,7 +127,7 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
     );
   }
 
-  Widget _buildQueueList(List<dynamic> users) {
+  Widget _buildPendingUserList(List<dynamic> users) {
     if (users.isEmpty) {
       return Center(
         child: Column(
@@ -132,7 +135,7 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
           children: [
             Icon(Icons.check_circle_outline, color: Colors.green.withValues(alpha: 0.4), size: 48),
             const SizedBox(height: 12),
-            Text('No users in this queue', style: GoogleFonts.inter(color: Colors.white38)),
+            Text('No pending KYC submissions', style: GoogleFonts.inter(color: Colors.white38)),
           ],
         ),
       );
@@ -157,25 +160,25 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
             });
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: isSelected ? Colors.blue.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.06)),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                  child: Text(user['full_name']?[0] ?? '?', style: const TextStyle(color: Colors.blue, fontSize: 12)),
+                  child: Text(user['full_name']?[0] ?? '?', style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user['full_name'] ?? 'Unknown', style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+                      Text(user['full_name'] ?? 'Unknown', style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                       Text('${user['user_type'] ?? 'user'} • ${user['email'] ?? ''}', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
                       Text(DateFormat('MMM d, HH:mm').format(submittedAt), style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
                     ],
@@ -194,21 +197,30 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
     );
   }
 
-  Widget _buildDocumentViewer() {
+  IconData _getDocumentIcon(String type) {
+    switch (type) {
+      case 'passport': return Icons.flight_takeoff;
+      case 'national_id': return Icons.badge_outlined;
+      case 'driving_license': return Icons.drive_eta_outlined;
+      default: return Icons.description_outlined;
+    }
+  }
+
+  Widget _buildUserReviewPanel() {
     if (_selectedUser == null) {
       return Container(
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
         ),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.description_outlined, color: Colors.white.withValues(alpha: 0.2), size: 56),
+              Icon(Icons.person_search_outlined, color: Colors.white.withValues(alpha: 0.1), size: 64),
               const SizedBox(height: 16),
-              Text('Select a user to review documents', style: GoogleFonts.inter(color: Colors.white38, fontSize: 14)),
+              Text('Select a user to begin verification', style: GoogleFonts.inter(color: Colors.white38, fontSize: 14)),
             ],
           ),
         ),
@@ -221,17 +233,17 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         children: [
-          // User info header
+          // User Header
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              color: Colors.white.withValues(alpha: 0.02),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Row(
               children: [
@@ -239,7 +251,8 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(user['full_name'] ?? '', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                      Text(user['full_name'] ?? '', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
                       Text('${user['phone_number'] ?? ''} • ${user['email'] ?? ''}', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
                     ],
                   ),
@@ -249,88 +262,91 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
             ),
           ),
 
-          // Document Selector Tabs
-          if (documents.isNotEmpty)
-            Container(
-              height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)))),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: documents.length,
-                itemBuilder: (context, index) {
-                  final doc = documents[index];
-                  final isSelected = _selectedDocument?.id == doc.id;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedDocument = doc),
-                    child: Container(
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: isSelected ? Colors.blue : Colors.transparent, width: 2)),
-                      ),
+          // Document Tabs
+          Container(
+            height: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)))),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: documents.length,
+              itemBuilder: (context, index) {
+                final doc = documents[index];
+                final isSelected = _selectedDocument?.id == doc.id;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedDocument = doc),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: isSelected ? Colors.blue : Colors.transparent, width: 2)),
+                    ),
+                    child: Center(
                       child: Text(doc.typeLabel, style: GoogleFonts.inter(color: isSelected ? Colors.blue : Colors.white54, fontSize: 13, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400)),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-
-          // Document Detail area
-          Expanded(
-            child: _selectedDocument == null 
-              ? const Center(child: Text('No documents available', style: TextStyle(color: Colors.white24)))
-              : _buildSelectedDocumentDetail(_selectedDocument!),
           ),
 
-          // Action buttons
+          // Document Viewer
+          Expanded(
+            child: _selectedDocument == null
+                ? const Center(child: Text('No documents available'))
+                : _buildSelectedDocumentDetail(_selectedDocument!),
+          ),
+
+          // Final Actions
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              color: Colors.white.withValues(alpha: 0.02),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('Final Decision', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _notesController,
+                  maxLines: 2,
                   style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: 'Final review notes...',
+                    hintText: 'Add verification notes or rejection details...',
                     hintStyle: GoogleFonts.inter(color: Colors.white24),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => _handleSubmitDecision(user['user_id'], 'rejected'),
+                        onPressed: () => _handleFinalDecision(user['user_id'], 'rejected'),
                         icon: const Icon(Icons.close, size: 18),
-                        label: const Text('Reject KYC'),
+                        label: const Text('Reject Submission'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red.withValues(alpha: 0.8),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => _handleSubmitDecision(user['user_id'], 'approved'),
+                        onPressed: () => _handleFinalDecision(user['user_id'], 'approved'),
                         icon: const Icon(Icons.check, size: 18),
-                        label: const Text('Approve KYC'),
+                        label: const Text('Approve Submission'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.withValues(alpha: 0.8),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -345,59 +361,58 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
   }
 
   Widget _buildSelectedDocumentDetail(KycDocument doc) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${doc.typeLabel} Info', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
+              Text('Document Information', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600)),
               _buildStatusPill(doc.status),
             ],
           ),
-          const SizedBox(height: 12),
-          Text('Number: ${doc.documentNumber ?? "N/A"}', style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
-          const SizedBox(height: 20),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.black26,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: InteractiveViewer(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.image_outlined, size: 64, color: Colors.white.withValues(alpha: 0.1)),
-                      const SizedBox(height: 12),
-                      Text('Document Preview', style: GoogleFonts.inter(color: Colors.white24, fontSize: 13)),
-                      Text(doc.fileUrl, style: GoogleFonts.inter(color: Colors.blue.withValues(alpha: 0.4), fontSize: 10), overflow: TextOverflow.ellipsis),
-                    ],
-                  ),
+          const SizedBox(height: 16),
+          _buildDetailRow('Number', doc.documentNumber ?? 'N/A'),
+          _buildDetailRow('Type', doc.typeLabel),
+          const SizedBox(height: 24),
+          Container(
+            height: 350,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            ),
+            child: InteractiveViewer(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.image_outlined, size: 64, color: Colors.white.withValues(alpha: 0.05)),
+                    const SizedBox(height: 12),
+                    Text(doc.fileUrl, style: GoogleFonts.inter(color: Colors.blue.withValues(alpha: 0.4), fontSize: 10)),
+                  ],
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             children: [
               OutlinedButton.icon(
-                onPressed: () => ref.read(kycProvider.notifier).rejectDocument(doc.id, 'Image unclear'),
-                icon: const Icon(Icons.report_problem_outlined, size: 16),
-                label: const Text('Reject Doc'),
+                onPressed: () => _handleDocAction(doc.id, 'reject'),
+                icon: const Icon(Icons.close, size: 16),
+                label: const Text('Flag for Correction'),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent, side: const BorderSide(color: Colors.redAccent)),
               ),
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => ref.read(kycProvider.notifier).approveDocument(doc.id),
                 icon: const Icon(Icons.check, size: 16),
-                label: const Text('Approve Doc'),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green.withValues(alpha: 0.2), foregroundColor: Colors.green),
+                label: const Text('Pre-approve Doc'),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white10, foregroundColor: Colors.white),
               ),
             ],
           ),
@@ -406,12 +421,12 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
     );
   }
 
-  Future<void> _handleSubmitDecision(int userId, String decision) async {
+  Future<void> _handleFinalDecision(int userId, String decision) async {
     if (decision == 'rejected' && _notesController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please provide rejection notes')));
       return;
     }
-    
+
     try {
       await ref.read(kycProvider.notifier).finalizeVerification(userId, decision, _notesController.text);
       _notesController.clear();
@@ -419,9 +434,57 @@ class _KycVerificationViewState extends ConsumerState<KycVerificationView> {
         _selectedUser = null;
         _selectedDocument = null;
       });
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('User $decision successfully')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Submission $decision successfully')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 140, child: Text(label, style: GoogleFonts.inter(color: Colors.white38, fontSize: 13))),
+          Expanded(child: Text(value, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500))),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleDocAction(int docId, String action) async {
+    if (action == 'reject') {
+      final reasonController = TextEditingController();
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: Text('Reject Document', style: GoogleFonts.outfit(color: Colors.white)),
+          content: TextField(
+            controller: reasonController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: 'Rejection Reason',
+              labelStyle: const TextStyle(color: Colors.white54),
+              filled: true, fillColor: Colors.white.withValues(alpha: 0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () {
+                if (reasonController.text.isNotEmpty) {
+                  ref.read(kycProvider.notifier).rejectDocument(docId, reasonController.text);
+                  Navigator.pop(ctx);
+                }
+              },
+              child: const Text('Reject', style: TextStyle(color: Colors.redAccent)),
+            ),
+          ],
+        ),
+      );
     }
   }
 

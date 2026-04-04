@@ -13,9 +13,9 @@ class ApiClient {
   ApiClient() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'https://145.223.19.229.sslip.io:28443', // Update for staging/prod
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        baseUrl: 'https://api1.powerfrill.com', // Update for staging/prod
+        connectTimeout: const Duration(seconds: 45),
+        receiveTimeout: const Duration(seconds: 45),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -53,8 +53,8 @@ class ApiClient {
     return await dio.get(path, queryParameters: queryParameters);
   }
 
-  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
-    return await dio.post(path, data: data, queryParameters: queryParameters);
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) async {
+    return await dio.post(path, data: data, queryParameters: queryParameters, options: options);
   }
 
   Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {

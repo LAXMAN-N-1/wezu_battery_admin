@@ -26,7 +26,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E1A),
-      body: Row(
+      body: Row(crossAxisAlignment: CrossAxisAlignment.center,
+
         children: [
           // Left Side (60% width) - Branding & Stats
           if (!isMobile)
@@ -116,8 +117,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
                 ),
               ),
             ),
+            if (!isMobile) const SizedBox(width: 16),
+
             
           // Right Side (40% width) - Login Form
+
           Expanded(
             flex: 4,
             child: Container(
@@ -189,7 +193,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               "Remember me",
                               style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
                             ),
-                            const Spacer(),
+                            
                             TextButton(
                               onPressed: () {},
                               child: Text(

@@ -35,6 +35,12 @@ class AnalyticsState {
   // Revenue by region
   final dynamic revenueByRegion;
 
+  // Revenue by station
+  final dynamic revenueByStation;
+
+  // Revenue by battery type
+  final dynamic revenueByBatteryType;
+
   // User growth
   final dynamic userGrowth;
   final String userGrowthPeriod;
@@ -55,6 +61,8 @@ class AnalyticsState {
     this.recentActivity,
     this.topStations,
     this.revenueByRegion,
+    this.revenueByStation,
+    this.revenueByBatteryType,
     this.userGrowth,
     this.userGrowthPeriod = 'monthly',
     this.inventoryStatus,
@@ -73,6 +81,8 @@ class AnalyticsState {
     dynamic recentActivity,
     dynamic topStations,
     dynamic revenueByRegion,
+    dynamic revenueByStation,
+    dynamic revenueByBatteryType,
     dynamic userGrowth,
     String? userGrowthPeriod,
     dynamic inventoryStatus,
@@ -90,6 +100,8 @@ class AnalyticsState {
       recentActivity: recentActivity ?? this.recentActivity,
       topStations: topStations ?? this.topStations,
       revenueByRegion: revenueByRegion ?? this.revenueByRegion,
+      revenueByStation: revenueByStation ?? this.revenueByStation,
+      revenueByBatteryType: revenueByBatteryType ?? this.revenueByBatteryType,
       userGrowth: userGrowth ?? this.userGrowth,
       userGrowthPeriod: userGrowthPeriod ?? this.userGrowthPeriod,
       inventoryStatus: inventoryStatus ?? this.inventoryStatus,
@@ -121,6 +133,8 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         _repository.getRevenueByRegion(),                           // 8
         _repository.getUserGrowth(period: state.userGrowthPeriod),  // 9
         _repository.getInventoryStatus(),                           // 10
+        _repository.getRevenueByStation(period: '30d'),             // 11
+        _repository.getRevenueByBatteryType(period: '30d'),         // 12
       ]);
 
       state = state.copyWith(
@@ -136,6 +150,8 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         revenueByRegion: results[8],
         userGrowth: results[9],
         inventoryStatus: results[10],
+        revenueByStation: results[11],
+        revenueByBatteryType: results[12],
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

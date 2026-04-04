@@ -11,47 +11,94 @@ class KycRepository {
 
   KycRepository(this._api);
 
-  /// List all users with pending KYC verification
-  Future<Map<String, dynamic>> getPendingQueue({int page = 1, int size = 10, String? userType}) async {
+  /// List all users with pending KYC verification.
+  Future<Map<String, dynamic>> getPendingKycQueue({
+    int page = 1,
+    int size = 10,
+    String? userType,
+  }) async {
     try {
       final queryParams = <String, dynamic>{
         'page': page,
         'size': size,
       };
       if (userType != null) queryParams['user_type'] = userType;
-
+ 
       final response = await _api.get('/api/v1/admin/kyc/pending', queryParameters: queryParams);
       return response.data;
     } catch (e) {
-      print("Error fetching KYC queue: $e");
-      return {'items': [], 'total': 0};
+      print("Error fetching pending KYC queue: $e");
+      return {'items': [], 'total': 0, 'page': page, 'size': size};
     }
   }
-
-  /// List all documents waiting for verification (direct list)
-  Future<List<KycDocument>> getPendingDocuments() async {
+ 
+  /// List all KYC documents with user info.
+  Future<List<KycDocument>> listKycDocuments({
+    int skip = 0,
+    int limit = 50,
+    String? status,
+    String? search,
+  }) async {
     try {
-      final response = await _api.get('/api/v1/admin/kyc/documents/pending');
-      final List data = response.data ?? [];
+      final queryParams = <String, dynamic>{
+        'skip': skip,
+        'limit': limit,
+      };
+      if (status != null && status.isNotEmpty) queryParams['status'] = status;
+      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+
+      final response = await _api.get('/api/v1/admin/kyc-docs/', queryParameters: queryParams);
+      
+      List data;
+      if (response.data is List) {
+        data = response.data;
+      } else if (response.data is Map && response.data['items'] is List) {
+        data = response.data['items'];
+      } else {
+        data = [];
+      }
+      
       return data.map((json) => KycDocument.fromJson(json)).toList();
     } catch (e) {
-      print("Error fetching pending documents: $e");
+      print("Error listing KYC documents: $e");
       return [];
     }
   }
+ 
+  /// Get global KYC stats
+  Future<Map<String, dynamic>> getKycStats() async {
+    try {
+      final response = await _api.get('/api/v1/admin/kyc-docs/stats');
+      return response.data;
+    } catch (e) {
+      print("Error fetching KYC stats: $e");
+      return {};
+    }
+  }
 
-  /// Approve individual document
+  /// Get a single KYC document with user details
+  Future<KycDocument?> getDocumentDetail(int docId) async {
+    try {
+      final response = await _api.get('/api/v1/admin/kyc/documents/$docId');
+      return KycDocument.fromJson(response.data);
+    } catch (e) {
+      print("Error fetching document detail for $docId: $e");
+      return null;
+    }
+  }
+ 
+  /// Approve individual document (POST)
   Future<KycDocument?> approveDocument(int docId) async {
     try {
       final response = await _api.post('/api/v1/admin/kyc/documents/$docId/approve');
       return KycDocument.fromJson(response.data);
     } catch (e) {
-      print('Error approving document: $e');
+      print('Error approving document $docId: $e');
       return null;
     }
   }
-
-  /// Reject individual document
+ 
+  /// Reject individual document with reason (POST)
   Future<KycDocument?> rejectDocument(int docId, String reason) async {
     try {
       final response = await _api.post(
@@ -60,11 +107,11 @@ class KycRepository {
       );
       return KycDocument.fromJson(response.data);
     } catch (e) {
-      print('Error rejecting document: $e');
+      print('Error rejecting document $docId: $e');
       return null;
     }
   }
-
+ 
   /// Finalize KYC decision (Approve or Reject entire submission)
   Future<void> verifyKycSubmission(
     int userId, {
@@ -85,8 +132,8 @@ class KycRepository {
       throw Exception('Failed to finalize KYC: $e');
     }
   }
-
-  /// Alternative Reject Submission (POST)
+ 
+  /// Reject submission with a mandatory reason (POST)
   Future<void> rejectSubmission(int userId, String reason, {Map<String, dynamic>? rejectionReasons}) async {
     try {
       await _api.post(
@@ -100,8 +147,8 @@ class KycRepository {
       throw Exception('Failed to reject submission: $e');
     }
   }
-
-  /// Alternative Reject User Kyc (PUT)
+ 
+  /// Reject User Kyc (PUT)
   Future<void> rejectUserKyc(int userId, String reason, {Map<String, dynamic>? rejectionReasons}) async {
     try {
       await _api.put(
@@ -115,8 +162,8 @@ class KycRepository {
       throw Exception('Failed to reject user KYC: $e');
     }
   }
-
-  /// Alternative Approve User Kyc (PUT)
+ 
+  /// Approve User Kyc (PUT)
   Future<void> approveUserKyc(int userId) async {
     try {
       await _api.put('/api/v1/admin/kyc/$userId/approve');
@@ -124,7 +171,7 @@ class KycRepository {
       throw Exception('Failed to approve user KYC: $e');
     }
   }
-
+ 
   /// Complete Video KYC session
   Future<void> completeVideoKyc(
     int sessionId, {
@@ -145,7 +192,7 @@ class KycRepository {
       throw Exception('Failed to complete video KYC: $e');
     }
   }
-
+ 
   /// Admin KYC Dashboard metrics
   Future<Map<String, dynamic>> getKycDashboard() async {
     try {

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:fl_chart/fl_chart.dart'; // Removed as unused
+import 'package:intl/intl.dart';
+import '../data/models/fraud_risk.dart';
+import '../data/models/duplicate_account.dart';
+import '../data/models/blacklist_entry.dart';
 import '../provider/fraud_provider.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 
@@ -14,6 +17,11 @@ class FraudRiskView extends ConsumerStatefulWidget {
 
 class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _panController = TextEditingController();
+  final _panNameController = TextEditingController();
+  final _gstController = TextEditingController();
+  final _gstBusinessController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   @override
   void initState() {
@@ -24,6 +32,11 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
   @override
   void dispose() {
     _tabController.dispose();
+    _panController.dispose();
+    _panNameController.dispose();
+    _gstController.dispose();
+    _gstBusinessController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -115,9 +128,8 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
             itemCount: state.highRiskUsers.length,
             itemBuilder: (context, idx) {
               final user = state.highRiskUsers[idx];
-              final score = user['risk_score'] ?? 0;
-              final isSelected = state.selectedUserId == user['id'];
-              return _buildUserTile(user, score, isSelected);
+              final isSelected = state.selectedUserId == user.userId;
+              return _buildUserTile(user, isSelected);
             },
           ),
         ),
@@ -135,25 +147,24 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
     );
   }
 
-  Widget _buildUserTile(Map<String, dynamic> user, int score, bool isSelected) {
-    final level = _getLevel(score);
-    final color = _riskColor(level);
+  Widget _buildUserTile(FraudRisk user, bool isSelected) {
+    final color = _riskColor(user.level);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: AdvancedCard(
         padding: const EdgeInsets.all(16),
         child: InkWell(
-          onTap: () => ref.read(fraudProvider.notifier).selectUser(user['id']),
+          onTap: () => ref.read(fraudProvider.notifier).selectUser(user.userId),
           child: Row(
             children: [
-              _buildMiniGauge(score, color),
+              _buildMiniGauge(user.score, color),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user['name'] ?? 'Unknown User', style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                    _buildRiskBadge(level),
+                    Text(user.userName, style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                    _buildRiskBadge(user.level),
                   ],
                 ),
               ),
@@ -165,47 +176,54 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
     );
   }
 
-  Widget _buildUserDetailPanel(Map<String, dynamic> risk) {
-    final score = risk['total_score'] ?? 0;
-    final factors = risk['breakdown'] as Map<String, dynamic>? ?? {};
+  Widget _buildUserDetailPanel(FraudRisk risk) {
+    final color = _riskColor(risk.level);
     return AdvancedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _buildBigGauge(score, _riskColor(_getLevel(score))),
+              _buildBigGauge(risk.score, color),
               const SizedBox(width: 24),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('User ID: ${risk['user_id']}', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                  Text('Last analysis updated: 2 hours ago', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+                  Text('User ID: ${risk.userId}', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(risk.userName, style: GoogleFonts.inter(color: Colors.white70, fontSize: 16)),
+                  Text('Last analysis updated: ${DateFormat('MMM d, HH:mm').format(risk.lastUpdated)}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
                 ],
               ),
-              const Spacer(),
-              _buildActionButton('Suspend User', Colors.red),
+              
+              _buildActionButton('Suspend User', Colors.red, () {}),
               const SizedBox(width: 12),
-              _buildActionButton('Whitelist', Colors.green),
+              _buildActionButton('Whitelist', Colors.green, () {}),
             ],
           ),
           const SizedBox(height: 32),
           Text('Risk Breakdown Factors', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          ...factors.entries.map((f) => _buildFactorRow(f.key, f.value.toString())),
+          ...risk.factors.map((f) => _buildFactorRow(f.name, f.contribution.toString(), f.description)),
         ],
       ),
     );
   }
 
-  Widget _buildFactorRow(String name, String value) {
+  Widget _buildFactorRow(String name, String value, String desc) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(name.replaceAll('_', ' ').toUpperCase(), style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
-          const Spacer(),
-          Text('+$value', style: GoogleFonts.inter(color: Colors.orange, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(name.toUpperCase(), style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+              Text('+$value', style: GoogleFonts.inter(color: Colors.orange, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          if (desc.isNotEmpty)
+            Text(desc, style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
         ],
       ),
     );
@@ -226,13 +244,13 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
               columns: const ['Primary ID', 'Suspected ID', 'Confidence', 'Matching IP', 'Matching Phone', 'Status', 'Actions'],
               rows: state.duplicateAccounts.map((d) {
                 return [
-                  _whiteText(d['primary_user_id'].toString()),
-                  _whiteText(d['suspected_duplicate_user_id'].toString()),
-                  _percentBadge(d['overall_confidence']),
-                  _boolIcon(d['matching_ip']),
-                  _boolIcon(d['matching_phone']),
-                  StatusBadge(status: d['status'] ?? 'DETECTED'),
-                  _buildActionMenu(d['id']),
+                  _whiteText(d.primaryUserId.toString()),
+                  _whiteText(d.suspectedDuplicateUserId.toString()),
+                  _percentBadge(d.overallConfidence),
+                  _boolIcon(d.matchingIp),
+                  _boolIcon(d.matchingPhone),
+                  StatusBadge(status: d.status),
+                  _buildActionMenu(d.id),
                 ];
               }).toList(),
             ),
@@ -251,10 +269,10 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text('Global Blacklist Entries', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
+                
                 ElevatedButton.icon(
                   onPressed: () => _showAddBlacklistDialog(),
                   icon: const Icon(Icons.add),
@@ -272,13 +290,13 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
               columns: const ['Type', 'Value', 'Reason', 'Date Added', 'Actions'],
               rows: state.blacklist.map((b) {
                 return [
-                  _whiteText(b['type'].toString().toUpperCase()),
-                  Text(b['value'].toString(), style: GoogleFonts.firaCode(color: Colors.white, fontSize: 12)),
-                  _whiteText(b['reason'].toString()),
-                  _whiteText('Today'),
+                  _whiteText(b.type.toUpperCase()),
+                  Text(b.value, style: GoogleFonts.firaCode(color: Colors.white, fontSize: 12)),
+                  _whiteText(b.reason),
+                  _whiteText(DateFormat('MMM d, yyyy').format(b.createdAt)),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                    onPressed: () => ref.read(fraudProvider.notifier).removeFromBlacklist(b['id']),
+                    onPressed: () => ref.read(fraudProvider.notifier).removeFromBlacklist(b.id),
                   ),
                 ];
               }).toList(),
@@ -298,17 +316,22 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text('Device Fingerprints', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                Switch(
-                  value: state.showSuspiciousOnly,
-                  onChanged: (v) => ref.read(fraudProvider.notifier).refreshDeviceFingerprints(suspiciousOnly: v),
-                  activeTrackColor: Colors.blue.withValues(alpha: 0.5),
-                  activeThumbColor: Colors.blue,
+                
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Switch(
+                      value: state.showSuspiciousOnly,
+                      onChanged: (v) => ref.read(fraudProvider.notifier).refreshDeviceFingerprints(suspiciousOnly: v),
+                      activeTrackColor: Colors.blue.withValues(alpha: 0.5),
+                      activeThumbColor: Colors.blue,
+                    ),
+                    Text('Suspicious Only', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                  ],
                 ),
-                Text('Suspicious Only', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 20),
@@ -316,12 +339,12 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
               columns: const ['User ID', 'Device Type', 'OS', 'Fingerprint Hash', 'Risk Score', 'First Seen'],
               rows: state.deviceFingerprints.map((f) {
                 return [
-                  _whiteText(f['id'].toString()),
-                  _whiteText(f['type']?.toString().toUpperCase() ?? 'IPAD'),
-                  _whiteText('iOS'),
-                  Text('9a2b...f3c4', style: GoogleFonts.firaCode(color: Colors.blue.shade200, fontSize: 11)),
-                  _percentBadge(85), // Real score here
-                  _whiteText('Mar 18, 2026'),
+                  _whiteText(f['id']?.toString() ?? 'N/A'),
+                  _whiteText(f['type']?.toString().toUpperCase() ?? 'UNKNOWN'),
+                  _whiteText(f['os']?.toString() ?? 'N/A'),
+                  Text(f['hash']?.toString().substring(0, 8) ?? 'N/A', style: GoogleFonts.firaCode(color: Colors.blue.shade200, fontSize: 11)),
+                  _percentBadge(f['risk_score'] ?? 0),
+                  _whiteText(f['first_seen'] ?? 'N/A'),
                 ];
               }).toList(),
             ),
@@ -339,9 +362,13 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: _buildVerificationForm('PAN Verification', Icons.badge_outlined, 'Enter PAN Number', 'Enter Full Name')),
+          Expanded(child: _buildVerificationForm('PAN Verification', Icons.badge_outlined, 'Enter PAN Number', 'Enter Full Name', _panController, _panNameController, () {
+            ref.read(fraudProvider.notifier).verifyPan(panNumber: _panController.text, name: _panNameController.text);
+          })),
           const SizedBox(width: 24),
-          Expanded(child: _buildVerificationForm('GST Verification', Icons.business_outlined, 'Enter GST Number', 'Enter Business Name')),
+          Expanded(child: _buildVerificationForm('GST Verification', Icons.business_outlined, 'Enter GST Number', 'Enter Business Name', _gstController, _gstBusinessController, () {
+            ref.read(fraudProvider.notifier).verifyGst(gstNumber: _gstController.text, businessName: _gstBusinessController.text);
+          })),
           const SizedBox(width: 24),
           Expanded(
             child: AdvancedCard(
@@ -350,9 +377,11 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
                 children: [
                   Text('Phone Verification', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 24),
-                  AdminTextField(controller: TextEditingController(), label: 'Phone Number', hint: 'e.g. +91 98XXX XXXXX', icon: Icons.phone_android_outlined),
+                  AdminTextField(controller: _phoneController, label: 'Phone Number', hint: 'e.g. +91 98XXX XXXXX', icon: Icons.phone_android_outlined),
                   const SizedBox(height: 24),
-                  AdminButton(label: 'Check Risk', onPressed: () {}),
+                  AdminButton(label: 'Check Risk', onPressed: () {
+                    ref.read(fraudProvider.notifier).verifyPhone(phoneNumber: _phoneController.text);
+                  }),
                 ],
               ),
             ),
@@ -362,18 +391,18 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
     );
   }
 
-  Widget _buildVerificationForm(String title, IconData icon, String label1, String label2) {
+  Widget _buildVerificationForm(String title, IconData icon, String label1, String label2, TextEditingController c1, TextEditingController c2, VoidCallback onVerify) {
     return AdvancedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
-          AdminTextField(controller: TextEditingController(), label: label1, hint: 'Value...', icon: icon),
+          AdminTextField(controller: c1, label: label1, hint: 'Value...', icon: icon),
           const SizedBox(height: 16),
-          AdminTextField(controller: TextEditingController(), label: label2, hint: 'Reference...', icon: Icons.person_outline),
+          AdminTextField(controller: c2, label: label2, hint: 'Reference...', icon: Icons.person_outline),
           const SizedBox(height: 24),
-          AdminButton(label: 'Verify Now', onPressed: () {}),
+          AdminButton(label: 'Verify Now', onPressed: onVerify),
         ],
       ),
     );
@@ -389,7 +418,7 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
         alignment: Alignment.center,
         children: [
           CircularProgressIndicator(
-            value: value / 100,
+            value: (value / 100).clamp(0.0, 1.0),
             strokeWidth: 4,
             backgroundColor: Colors.white.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation(color),
@@ -408,7 +437,7 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
         alignment: Alignment.center,
         children: [
           CircularProgressIndicator(
-            value: value / 100,
+            value: (value / 100).clamp(0.0, 1.0),
             strokeWidth: 8,
             backgroundColor: Colors.white.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation(color),
@@ -430,12 +459,12 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
   }
 
   Widget _percentBadge(dynamic val) {
-    final v = val is num ? val.toInt() : 0;
+    final v = val is num ? val.toDouble() : 0.0;
     final color = v > 70 ? Colors.red : (v > 40 ? Colors.orange : Colors.green);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(4)),
-      child: Text('$v%', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+      child: Text('${v.toStringAsFixed(0)}%', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
     );
   }
 
@@ -445,8 +474,8 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
     size: 18,
   );
 
-  Widget _buildActionButton(String label, Color color) => ElevatedButton(
-    onPressed: () {},
+  Widget _buildActionButton(String label, Color color, VoidCallback onPressed) => ElevatedButton(
+    onPressed: onPressed,
     style: ElevatedButton.styleFrom(
       backgroundColor: color.withValues(alpha: 0.12),
       foregroundColor: color,
@@ -479,15 +508,8 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
 
   Widget _whiteText(String text) => Text(text, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13));
 
-  String _getLevel(int score) {
-    if (score >= 75) return 'critical';
-    if (score >= 50) return 'high';
-    if (score >= 25) return 'medium';
-    return 'low';
-  }
-
   Color _riskColor(String level) {
-    switch (level) {
+    switch (level.toLowerCase()) {
       case 'critical': return Colors.red;
       case 'high': return Colors.orange;
       case 'medium': return Colors.amber;
@@ -497,44 +519,64 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTicker
   }
 
   void _showAddBlacklistDialog() {
+    String selectedType = 'ip';
+    final valueController = TextEditingController();
+    final reasonController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: Text('Add to Blacklist', style: GoogleFonts.outfit(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DropdownButtonFormField<String>(
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: Colors.white),
-              initialValue: 'ip', // Fixed deprecation (was 'value')
-              // Use value or initialValue? If it's a recent Flutter change, maybe it's initialValue. I'll use value for now as it's standard, but maybe the error meant something else.
-              // Wait, the error message said line 510:15.
-              // Let's check the line again.
-
-              items: const [
-                DropdownMenuItem(value: 'ip', child: Text('IP Address')),
-                DropdownMenuItem(value: 'device', child: Text('Device ID')),
-                DropdownMenuItem(value: 'email', child: Text('Email')),
-                DropdownMenuItem(value: 'phone', child: Text('Phone')),
-              ],
-              onChanged: (v) {},
-              decoration: const InputDecoration(labelText: 'Type'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          title: Text('Add to Blacklist', style: GoogleFonts.outfit(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                dropdownColor: const Color(0xFF1E293B),
+                style: const TextStyle(color: Colors.white),
+                value: selectedType,
+                items: const [
+                  DropdownMenuItem(value: 'ip', child: Text('IP Address')),
+                  DropdownMenuItem(value: 'device', child: Text('Device ID')),
+                  DropdownMenuItem(value: 'email', child: Text('Email')),
+                  DropdownMenuItem(value: 'phone', child: Text('Phone')),
+                ],
+                onChanged: (v) => setDialogState(() => selectedType = v!),
+                decoration: const InputDecoration(labelText: 'Type'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: valueController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Value (e.g. 192.168.1.1)'),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: reasonController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Reason'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 16),
-            const TextField(decoration: InputDecoration(labelText: 'Value (e.g. 192.168.1.1)')),
-            const SizedBox(height: 16),
-            const TextField(decoration: InputDecoration(labelText: 'Reason')),
+            TextButton(
+              onPressed: () {
+                ref.read(fraudProvider.notifier).addToBlacklist(
+                  type: selectedType,
+                  value: valueController.text,
+                  reason: reasonController.text,
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () {
-            ref.read(fraudProvider.notifier).addToBlacklist(type: 'ip', value: '1.1.1.1', reason: 'Abuse');
-            Navigator.pop(context);
-          }, child: const Text('Add')),
-        ],
       ),
     );
   }

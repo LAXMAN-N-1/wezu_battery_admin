@@ -80,11 +80,45 @@ class AuditLogRepository {
     }
   }
 
+  /// Fetch audit configuration including supported actions and modules.
+  Future<Map<String, List<String>>> getAuditConfig() async {
+    try {
+      final response = await _api.get('/api/v1/admin/audit/config');
+      return {
+        'actions': List<String>.from(response.data['actions'] ?? []),
+        'modules': List<String>.from(response.data['modules'] ?? []),
+      };
+    } catch (e) {
+      print('Error fetching audit config: $e');
+      return {
+        'actions': ['all', 'login', 'logout', 'create', 'update', 'delete', 'suspend', 'reactivate', 'kyc_approve', 'kyc_reject', 'permission_change'],
+        'modules': ['all', 'auth', 'users', 'kyc', 'roles', 'settings', 'fleet', 'finance'],
+      };
+    }
+  }
+
+  /// Trigger a server-side audit log export.
+  Future<bool> exportLogs({String? action, String? module}) async {
+    try {
+      final data = <String, dynamic>{};
+      if (action != null && action != 'all') data['action'] = action;
+      if (module != null && module != 'all') data['resource_type'] = module;
+      
+      await _api.post('/api/v1/admin/audit/export', data: data);
+      return true;
+    } catch (e) {
+      print('Error exporting audit logs: $e');
+      return false;
+    }
+  }
+
   Future<List<String>> getActionTypes() async {
-    return ['all', 'login', 'logout', 'create', 'update', 'delete', 'suspend', 'reactivate', 'kyc_approve', 'kyc_reject', 'permission_change'];
+    final config = await getAuditConfig();
+    return ['all', ...config['actions']!];
   }
 
   Future<List<String>> getModules() async {
-    return ['all', 'auth', 'users', 'kyc', 'roles', 'settings', 'fleet', 'finance'];
+    final config = await getAuditConfig();
+    return ['all', ...config['modules']!];
   }
 }
