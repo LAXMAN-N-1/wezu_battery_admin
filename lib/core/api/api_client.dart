@@ -244,10 +244,11 @@ class ApiClient {
 
     final refreshed = await refreshAccessToken();
 
-    // If refresh fails transiently, keep using the previous token and let the
-    // server be the source of truth instead of forcing an immediate logout.
+    // If refresh failed, do NOT return the old expired token — that would
+    // cause a storm of 401s hitting the backend.  Return null so the
+    // interceptor can lock the session and show the expired-session modal.
     if (refreshed == null) {
-      return token;
+      return null;
     }
 
     return refreshed;
@@ -426,6 +427,7 @@ class ApiClient {
       await readAuthValue(refreshTokenStorageKey),
     );
     if (refreshToken == null || TokenUtils.isExpired(refreshToken)) {
+      cancelAllRequests(reason: 'Refresh token expired');
       await clearSession(notifyListeners: true);
       return null;
     }
@@ -464,7 +466,9 @@ class ApiClient {
       final statusCode = e.response?.statusCode;
 
       // Explicit auth failures mean session is invalid and must be cleared.
+      // Cancel all pending requests to stop the 401 storm.
       if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
+        cancelAllRequests(reason: 'Refresh rejected ($statusCode)');
         await clearSession(notifyListeners: true);
         return null;
       }
@@ -472,6 +476,7 @@ class ApiClient {
       // 422 with token failure keywords also means invalid session.
       if (statusCode == 422) {
         if (_responseMentionsTokenFailure(e.response?.data)) {
+          cancelAllRequests(reason: 'Refresh rejected (422)');
           await clearSession(notifyListeners: true);
           return null;
         }

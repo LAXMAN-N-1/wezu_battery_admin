@@ -126,13 +126,13 @@ class UserRepository {
     };
 
     try {
-      final response = await _api.post('/api/v1/admin/users', data: payload);
-      return response.data as Map<String, dynamic>;
-    } on Exception {
       final response = await _api.post(
         '/api/v1/admin/users/create',
         data: payload,
       );
+      return response.data as Map<String, dynamic>;
+    } on Exception {
+      final response = await _api.post('/api/v1/admin/users', data: payload);
       return response.data as Map<String, dynamic>;
     }
   }

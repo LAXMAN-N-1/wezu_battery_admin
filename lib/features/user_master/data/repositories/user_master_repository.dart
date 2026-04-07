@@ -83,8 +83,19 @@ class UserMasterRepository {
   }
 
   Future<User> createUser(Map<String, dynamic> data) async {
-    final response = await _apiClient.post('/api/v1/admin/users', data: data);
-    return User.fromJson(response.data);
+    try {
+      final response = await _apiClient.post(
+        '/api/v1/admin/users/create',
+        data: data,
+      );
+      return User.fromJson(response.data);
+    } on Exception {
+      final response = await _apiClient.post(
+        '/api/v1/admin/users',
+        data: data,
+      );
+      return User.fromJson(response.data);
+    }
   }
 
   Future<User> updateUser(String id, Map<String, dynamic> data) async {
