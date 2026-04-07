@@ -1,215 +1,299 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/repositories/cms_repository.dart';
+import 'package:intl/intl.dart';
+import '../data/models/blog.dart';
+import '../data/cms_providers.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
-class BlogManagementView extends StatefulWidget {
+class BlogManagementView extends ConsumerStatefulWidget {
   const BlogManagementView({super.key});
-  @override State<BlogManagementView> createState() => _BlogManagementViewState();
+
+  @override
+  ConsumerState<BlogManagementView> createState() => _BlogManagementViewState();
 }
 
-class _BlogManagementViewState extends State<BlogManagementView> {
-  final CmsRepository _repo = CmsRepository();
-  List<Map<String, dynamic>> _blogs = [];
-  bool _isLoading = true;
-  String? _filterStatus;
+class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
+  String _activeTab = 'All';
+  final _searchController = TextEditingController();
+  String? _selectedCategory;
 
-  @override void initState() { super.initState(); _loadData(); }
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try { _blogs = await _repo.getBlogs(status: _filterStatus); if (mounted) setState(() => _isLoading = false); }
-    catch (e) { if (mounted) setState(() => _isLoading = false); }
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Blog Management', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 4),
-          Text('Create, edit and publish blog articles', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-        ])),
-        ElevatedButton.icon(onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('New Post'),
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-      ]),
-      const SizedBox(height: 16),
-      // Status filters
-      Row(children: [
-        _filterChip('All', _filterStatus == null, () { setState(() => _filterStatus = null); _loadData(); }),
-        const SizedBox(width: 8),
-        _filterChip('Published', _filterStatus == 'published', () { setState(() => _filterStatus = 'published'); _loadData(); }),
-        const SizedBox(width: 8),
-        _filterChip('Draft', _filterStatus == 'draft', () { setState(() => _filterStatus = 'draft'); _loadData(); }),
-        const SizedBox(width: 8),
-        _filterChip('Scheduled', _filterStatus == 'scheduled', () { setState(() => _filterStatus = 'scheduled'); _loadData(); }),
-      ]),
-      const SizedBox(height: 16),
-      _isLoading ? const Center(child: CircularProgressIndicator())
-          : Column(children: _blogs.map(_buildBlogCard).toList()),
-    ]));
+    final blogState = ref.watch(blogListProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 32),
+          _buildFilters(),
+          const SizedBox(height: 24),
+          blogState.when(
+            data: (blogs) {
+              final filteredBlogs = _applyFilters(blogs);
+              if (filteredBlogs.isEmpty) {
+                return _buildEmptyState();
+              }
+              return _buildBlogTable(filteredBlogs);
+            },
+            loading: () => _buildShimmer(),
+            error: (e, st) => _buildErrorState(e.toString()),
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _filterChip(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(onTap: onTap, child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.4) : Colors.transparent)),
-      child: Text(label, style: GoogleFonts.inter(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 13))));
-  }
-
-  Widget _buildBlogCard(Map<String, dynamic> blog) {
-    final status = blog['status']?.toString() ?? 'draft';
-    final statusColor = status == 'published' ? Colors.green : status == 'draft' ? Colors.grey : Colors.amber;
-    final views = (blog['views_count'] as num?)?.toInt() ?? 0;
-    return Container(margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
-      child: InkWell(
-        onTap: () => _showEditDialog(blog),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Thumbnail
-        ClipRRect(borderRadius: BorderRadius.circular(10),
-          child: Container(width: 100, height: 70, color: Colors.white.withValues(alpha: 0.05),
-            child: blog['featured_image_url'] != null
-              ? Image.network(blog['featured_image_url'], fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image, color: Colors.white24))
-              : const Icon(Icons.article, color: Colors.white24, size: 30))),
-        const SizedBox(width: 16),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Expanded(child: Text(blog['title']?.toString() ?? '', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis)),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text(status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold))),
-          ]),
-          const SizedBox(height: 4),
-          Text(blog['summary']?.toString() ?? '', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 8),
-          Row(children: [
-            Icon(Icons.category, size: 13, color: Colors.white38), const SizedBox(width: 4),
-            Text(blog['category']?.toString() ?? 'general', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
-            const SizedBox(width: 16),
-            Icon(Icons.visibility, size: 13, color: Colors.white38), const SizedBox(width: 4),
-            Text('$views views', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
-            const Spacer(),
-            IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), iconSize: 18,
-              onPressed: () async { await _repo.deleteBlog(blog['id']); _loadData(); }),
-          ]),
-        ])),
-      ]),
-    )));
-  }
-
-  void _showEditDialog(Map<String, dynamic> blog) {
-    final titleCtrl = TextEditingController(text: blog['title']?.toString());
-    final slugCtrl = TextEditingController(text: blog['slug']?.toString());
-    final summaryCtrl = TextEditingController(text: blog['summary']?.toString());
-    final contentCtrl = TextEditingController(text: blog['content']?.toString());
-    String status = blog['status']?.toString() ?? 'draft';
-    String category = blog['category']?.toString() ?? 'general';
-
-    showDialog(context: context, builder: (ctx) => StatefulBuilder(
-      builder: (context, setModalState) => Dialog(
-        backgroundColor: Colors.transparent, insetPadding: const EdgeInsets.all(40),
-        child: Container(width: 800, height: 750, decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
-          child: Column(children: [
-            Padding(padding: const EdgeInsets.all(24), child: Row(children: [
-              Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.edit_document, color: Colors.blue)),
-              const SizedBox(width: 16),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Edit Blog Post', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text('Update details, rich text content, and publish status', style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
-              ])),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(ctx)),
-            ])),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
-            Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(32), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Expanded(child: _field(titleCtrl, 'Headline Title')), const SizedBox(width: 16),
-                Expanded(child: _field(slugCtrl, 'URL Slug (e.g. new-update-2026)')),
-              ]),
-              const SizedBox(height: 20),
-              _field(summaryCtrl, 'Short Excerpt Summary', maxLines: 2),
-              const SizedBox(height: 20),
-              Row(children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Publish Status', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: status, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
-                    items: ['draft', 'published', 'scheduled'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
-                    onChanged: (v) { if (v != null) setModalState(() => status = v); }
-                  ),
-                ])),
-                const SizedBox(width: 16),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Content Category', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: category, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
-                    items: ['general', 'news', 'educational', 'update'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
-                    onChanged: (v) { if (v != null) setModalState(() => category = v); }
-                  ),
-                ])),
-              ]),
-              const SizedBox(height: 24),
-              Text('HTML Body Content', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
-              _field(contentCtrl, 'Write your comprehensive article here...', maxLines: 12),
-            ]))),
-            Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
-            Padding(padding: const EdgeInsets.all(24), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.delete_forever, size: 18), label: const Text('Delete Post'),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.red, side: const BorderSide(color: Colors.red), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14)),
-                onPressed: () async { await _repo.deleteBlog(blog['id']); if (ctx.mounted) Navigator.pop(ctx); _loadData(); },
-              ),
-              Row(children: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Discard')), const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save, size: 18), label: const Text('Save & Publish'),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14)),
-                  onPressed: () async {
-                    await _repo.updateBlog(blog['id'], {
-                      'title': titleCtrl.text, 'slug': slugCtrl.text, 'summary': summaryCtrl.text,
-                      'content': contentCtrl.text, 'status': status, 'category': category,
-                    });
-                    if (ctx.mounted) Navigator.pop(ctx); _loadData();
-                  },
-                ),
-              ]),
-            ])),
-          ]),
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Blog Management',
+              style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Create, edit and publish blog articles across the WEZU platform',
+              style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+            ),
+          ],
         ),
-      )
-    ));
+        const Spacer(),
+        ElevatedButton.icon(
+          onPressed: () => context.push('/cms/blogs/new'),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('New Post'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF3B82F6),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
+    );
   }
 
-  void _showCreateDialog() {
-    final titleCtrl = TextEditingController();
-    final slugCtrl = TextEditingController();
-    final summaryCtrl = TextEditingController();
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1E293B),
-      title: Text('New Blog Post', style: GoogleFonts.outfit(color: Colors.white)),
-      content: SizedBox(width: 450, child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _field(titleCtrl, 'Title'), const SizedBox(height: 10),
-        _field(slugCtrl, 'Slug'), const SizedBox(height: 10),
-        _field(summaryCtrl, 'Summary', maxLines: 2),
-      ])),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () async {
-          await _repo.createBlog({'title': titleCtrl.text, 'slug': slugCtrl.text, 'summary': summaryCtrl.text, 'content': '<p>${summaryCtrl.text}</p>', 'status': 'draft', 'author_id': 1, 'category': 'news'});
-          if (ctx.mounted) Navigator.pop(ctx); _loadData();
-        }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)), child: const Text('Create')),
-      ]));
+  Widget _buildFilters() {
+    final blogState = ref.watch(blogListProvider);
+    final countAll = blogState.asData?.value.length ?? 0;
+    final countPublished = blogState.asData?.value.where((b) => b.status == 'published').length ?? 0;
+    final countDraft = blogState.asData?.value.where((b) => b.status == 'draft').length ?? 0;
+    final countScheduled = blogState.asData?.value.where((b) => b.status == 'scheduled').length ?? 0;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            _filterTab('All', countAll),
+            _filterTab('Published', countPublished),
+            _filterTab('Draft', countDraft),
+            _filterTab('Scheduled', countScheduled),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.02),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: (v) => setState(() {}),
+                  decoration: InputDecoration(
+                    hintText: 'Search posts by title or author...',
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                    prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.2)),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            _buildDropdownFilter('Category', _selectedCategory, ['All', 'news', 'tips', 'updates', 'technology', 'company'], (val) {
+              setState(() => _selectedCategory = val == 'All' ? null : val);
+            }),
+          ],
+        ),
+      ],
+    );
   }
 
-  Widget _field(TextEditingController ctrl, String label, {int maxLines = 1}) {
-    return TextField(controller: ctrl, style: const TextStyle(color: Colors.white), maxLines: maxLines,
-      decoration: InputDecoration(labelText: maxLines == 1 ? label : null, hintText: maxLines > 1 ? label : null, labelStyle: const TextStyle(color: Colors.white38), hintStyle: const TextStyle(color: Colors.white38),
-        filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)));
+  Widget _filterTab(String label, int count) {
+    final active = _activeTab == label;
+    return GestureDetector(
+      onTap: () => setState(() => _activeTab = label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: active ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.transparent),
+        ),
+        child: Row(
+          children: [
+            Text(label, style: GoogleFonts.inter(color: active ? Colors.blue.shade300 : Colors.white38, fontWeight: active ? FontWeight.w600 : FontWeight.w400, fontSize: 13)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: active ? const Color(0xFF3B82F6).withOpacity(0.2) : Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(6)),
+              child: Text(count.toString(), style: GoogleFonts.inter(color: active ? Colors.blue.shade300 : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownFilter(String label, String? value, List<String> items, ValueChanged<String?> onChanged) {
+    return Container(
+      width: 180,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value ?? 'All',
+          dropdownColor: const Color(0xFF1E293B),
+          style: const TextStyle(color: Colors.white),
+          items: items.map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  List<Blog> _applyFilters(List<Blog> blogs) {
+    return blogs.where((b) {
+      if (_activeTab != 'All' && b.status.toLowerCase() != _activeTab.toLowerCase()) return false;
+      if (_selectedCategory != null && b.category != _selectedCategory) return false;
+      if (_searchController.text.isNotEmpty && !b.title.toLowerCase().contains(_searchController.text.toLowerCase())) return false;
+      return true;
+    }).toList();
+  }
+
+  Widget _buildBlogTable(List<Blog> blogs) {
+    return AdvancedTable(
+      columns: ['Thumbnail', 'Title', 'Author', 'Category', 'Status', 'Views', 'Actions'],
+      rows: blogs.map((blog) {
+        return [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 60,
+              height: 40,
+              child: blog.featuredImageUrl != null
+                  ? Image.network(blog.featuredImageUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _imagePlaceholder())
+                  : _imagePlaceholder(),
+            ),
+          ),
+          Text(blog.title, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis),
+          _authorBadge('Super Admin'),
+          _categoryBadge(blog.category),
+          StatusBadge(status: blog.status),
+          Text(NumberFormat.compact().format(blog.viewsCount), style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+          Row(
+            children: [
+              IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue), onPressed: () => context.push('/cms/blogs/${blog.id}/edit')),
+              IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _confirmDelete(blog)),
+            ],
+          ),
+        ];
+      }).toList(),
+      onRowTap: (idx) => context.push('/cms/blogs/${blogs[idx].id}/edit'),
+    );
+  }
+
+  Widget _imagePlaceholder() => Container(color: Colors.white10, child: const Icon(Icons.image_outlined, size: 16, color: Colors.white24));
+
+  Widget _authorBadge(String name) {
+    return Row(
+      children: [
+        CircleAvatar(radius: 10, backgroundColor: Colors.blue.withOpacity(0.2), child: Text(name[0], style: const TextStyle(fontSize: 8, color: Colors.blue))),
+        const SizedBox(width: 8),
+        Text(name, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+      ],
+    );
+  }
+
+  Widget _categoryBadge(String category) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+      child: Text(category.toUpperCase(), style: GoogleFonts.inter(fontSize: 9, color: Colors.white54, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(64.0),
+        child: Column(
+          children: [
+            Icon(Icons.article_outlined, size: 64, color: Colors.white.withOpacity(0.1)),
+            const SizedBox(height: 16),
+            Text('No blog posts found', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Create your first blog post to get started', style: GoogleFonts.inter(color: Colors.white38)),
+            const SizedBox(height: 24),
+            ElevatedButton(onPressed: () => context.push('/cms/blogs/new'), child: const Text('New Post')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmer() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red)));
+  }
+
+  void _confirmDelete(Blog blog) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Delete Post?', style: TextStyle(color: Colors.white)),
+        content: Text('Are you sure you want to delete "${blog.title}"? This cannot be undone.', style: const TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              ref.read(blogListProvider.notifier).deleteBlog(blog.id);
+              Navigator.pop(ctx);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 }

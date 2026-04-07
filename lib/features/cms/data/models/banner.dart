@@ -29,9 +29,9 @@ class Banner {
 
   factory Banner.fromJson(Map<String, dynamic> json) {
     return Banner(
-      id: json['id'],
-      title: json['title'],
-      imageUrl: json['image_url'],
+      id: json['id'] ?? 0,
+      title: json['title'] ?? '',
+      imageUrl: json['image_url'] ?? '',
       deepLink: json['deep_link'],
       externalUrl: json['external_url'],
       priority: json['priority'] ?? 0,
@@ -39,8 +39,8 @@ class Banner {
       startDate: json['start_date'] != null ? DateTime.parse(json['start_date']) : null,
       endDate: json['end_date'] != null ? DateTime.parse(json['end_date']) : null,
       clickCount: json['click_count'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : DateTime.now(),
     );
   }
 
@@ -55,5 +55,31 @@ class Banner {
       'start_date': startDate?.toIso8601String(),
       'end_date': endDate?.toIso8601String(),
     };
+  }
+
+  Banner copyWith({
+    String? title,
+    String? imageUrl,
+    String? deepLink,
+    String? externalUrl,
+    int? priority,
+    bool? isActive,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return Banner(
+      id: id,
+      title: title ?? this.title,
+      imageUrl: imageUrl ?? this.imageUrl,
+      deepLink: deepLink ?? this.deepLink,
+      externalUrl: externalUrl ?? this.externalUrl,
+      priority: priority ?? this.priority,
+      isActive: isActive ?? this.isActive,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      clickCount: clickCount,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
   }
 }
