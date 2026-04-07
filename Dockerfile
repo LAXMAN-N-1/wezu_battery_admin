@@ -29,14 +29,20 @@ COPY assets/ assets/
 COPY analysis_options.yaml ./
 
 # 4) Build web — cache .dart_tool between builds for incremental compilation
+#    If API_BASE_URL is empty, omit --dart-define so the Dart code uses its
+#    built-in default (same-origin proxy on web, direct URL on native).
 RUN --mount=type=cache,target=/root/.pub-cache \
     --mount=type=cache,target=/app/.dart_tool \
+    EXTRA_ARGS="" && \
+    if [ -n "$API_BASE_URL" ]; then \
+      EXTRA_ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"; \
+    fi && \
     flutter build web \
       --release \
       --pwa-strategy=none \
       --web-renderer=canvaskit \
-      --dart-define=API_BASE_URL=${API_BASE_URL} \
-      --no-tree-shake-icons
+      --no-tree-shake-icons \
+      $EXTRA_ARGS
 
 # ─── Stage 2: Lightweight Nginx Runtime (~7 MB) ─────────────────────────────
 FROM nginx:1.27-alpine AS runtime
