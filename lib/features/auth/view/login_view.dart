@@ -36,15 +36,26 @@ class _LoginViewState extends ConsumerState<LoginView> {
     super.initState();
     _hydrateRememberedCredential();
     _refreshCapsLockIndicator();
+    // Listen to controller changes to detect browser autofill.
+    // Browser autofill updates the controller text but does NOT trigger
+    // onChanged, so the Sign In button would stay disabled without this.
+    _credentialController.addListener(_onControllerChanged);
+    _passwordController.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
+    _credentialController.removeListener(_onControllerChanged);
+    _passwordController.removeListener(_onControllerChanged);
     _credentialFocusNode.dispose();
     _passwordFocusNode.dispose();
     _credentialController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
   }
 
   String? _credentialValidator(String? value) {
@@ -397,7 +408,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                           ],
                                           validator: _passwordValidator,
                                           autocorrect: false,
-                                          enableSuggestions: true,
+                                          enableSuggestions: false,
                                           textCapitalization:
                                               TextCapitalization.none,
                                           onChanged: _onFieldChanged,
