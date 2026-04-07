@@ -1,23 +1,42 @@
+# ── Version control ──
 .git
 .gitignore
-.dart_tool
+
+# ── IDE ──
 .idea
 .vscode
+*.iml
+
+# ── Build artifacts (rebuilt inside container) ──
+.dart_tool
 build
 coverage
-test
+
+# ── Platform dirs (not needed for web build) ──
 android
 ios
 linux
 macos
 windows
-*.iml
+test
+
+# ── OS junk ──
 .DS_Store
+
+# ── Flutter generated ──
 .flutter-plugins
 .flutter-plugins-dependencies
 .metadata
+.packages
+
+# ── Project-specific non-build files ──
 README.md
 openapi.json
 fix_methods.dart
 refactor.py
 revert_script.dart
+docker-compose.yml
+docker-compose.yaml
+Dockerfile
+nginx.conf.bak
+*.md
