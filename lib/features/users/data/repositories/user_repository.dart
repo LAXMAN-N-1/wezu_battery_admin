@@ -16,7 +16,8 @@ class PaginatedUsers {
 }
 
 class UserRepository {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+  UserRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
   String? _normalizeStatus(String? status) {
     if (status == null || status.trim().isEmpty) return null;

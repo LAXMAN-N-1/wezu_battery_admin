@@ -22,7 +22,9 @@ class DashboardView extends ConsumerStatefulWidget {
 class _DashboardViewState extends ConsumerState<DashboardView>
     with WidgetsBindingObserver {
   // Tiered refresh to avoid bursty load and keep critical widgets fresher.
-  static const Duration _lightAutoRefreshInterval = Duration(minutes: 1);
+  // With Phase 3 repository-level caching (overview=60s, heavy=5min),
+  // the light timer can be less aggressive.
+  static const Duration _lightAutoRefreshInterval = Duration(minutes: 2);
   static const Duration _heavyAutoRefreshInterval = Duration(minutes: 8);
   static const double _jitterMin = 0.85;
   static const double _jitterMax = 1.15;

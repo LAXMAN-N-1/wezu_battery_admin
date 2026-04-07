@@ -23,9 +23,11 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final stats = await _repo.getOrderStats();
-    final data = await _repo.getOrders(status: _statusFilter);
-    setState(() { _stats = stats; _orders = data['orders'] ?? []; _isLoading = false; });
+    final results = await Future.wait([
+      _repo.getOrderStats(),
+      _repo.getOrders(status: _statusFilter),
+    ]);
+    setState(() { _stats = results[0]; _orders = results[1]['orders'] ?? []; _isLoading = false; });
   }
 
   @override

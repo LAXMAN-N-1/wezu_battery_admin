@@ -4,7 +4,8 @@ import '../../../../core/api/api_client.dart';
 import '../models/role.dart';
 
 class RoleRepository {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+  RoleRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
   List<Permission> _cachedPermissions = [];
   final Map<int, String> _permissionIdToSlug = {};

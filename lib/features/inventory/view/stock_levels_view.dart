@@ -9,12 +9,14 @@ import '../widgets/reorder_modal.dart';
 
 // Riverpod Providers for this screen
 final stockOverviewProvider = FutureProvider.autoDispose<StockOverview>((ref) {
+  ref.keepAlive();
   return ref.watch(stockRepositoryProvider).getOverview();
 });
 
 final stockStationsProvider = FutureProvider.autoDispose<List<StationStock>>((
   ref,
 ) {
+  ref.keepAlive();
   final alertOnly = ref.watch(stockAlertFilterProvider);
   final sortBy = ref.watch(stockSortProvider);
   return ref
@@ -25,6 +27,7 @@ final stockStationsProvider = FutureProvider.autoDispose<List<StationStock>>((
 final activeAlertsProvider = FutureProvider.autoDispose<List<StockAlert>>((
   ref,
 ) {
+  ref.keepAlive();
   return ref.watch(stockRepositoryProvider).getAlerts();
 });
 
@@ -42,6 +45,7 @@ final _activeFilterProvider = StateProvider<String>((ref) => 'All Locations');
 final stockLocationsProvider = FutureProvider.autoDispose<List<LocationStock>>((
   ref,
 ) {
+  ref.keepAlive();
   return ref.watch(stockRepositoryProvider).getLocations();
 });
 

@@ -27,11 +27,13 @@ class _IoTDashboardViewState extends State<IoTDashboardView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final stats = await _repository.getIoTStats();
-      final devices = await _repository.getIoTDevices();
+      final results = await Future.wait([
+        _repository.getIoTStats(),
+        _repository.getIoTDevices(),
+      ]);
       setState(() {
-        _stats = stats;
-        _devices = devices;
+        _stats = results[0] as IoTStats;
+        _devices = results[1] as List<IoTDevice>;
         _isLoading = false;
       });
     } catch (e) {

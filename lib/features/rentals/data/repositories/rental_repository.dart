@@ -5,7 +5,8 @@ import '../models/purchase_model.dart';
 import '../models/late_fee_model.dart';
 
 class RentalRepository {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+  RentalRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
   Future<RentalStats> getRentalStats() async {
     try {
@@ -16,7 +17,7 @@ class RentalRepository {
     }
   }
 
-  Future<List<Rental>> getActiveRentals({int skip = 0, int limit = 100}) async {
+  Future<List<Rental>> getActiveRentals({int skip = 0, int limit = 25}) async {
     try {
       final response = await _api.get('/api/v1/admin/rentals/active', queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((r) => Rental.fromJson(r)).toList();
@@ -36,7 +37,7 @@ class RentalRepository {
     }
   }
 
-  Future<List<SwapSession>> getSwaps({int skip = 0, int limit = 100}) async {
+  Future<List<SwapSession>> getSwaps({int skip = 0, int limit = 25}) async {
     try {
       final response = await _api.get('/api/v1/admin/rentals/swaps', queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((s) => SwapSession.fromJson(s)).toList();
@@ -45,7 +46,7 @@ class RentalRepository {
     }
   }
 
-  Future<List<PurchaseOrder>> getPurchases({int skip = 0, int limit = 100}) async {
+  Future<List<PurchaseOrder>> getPurchases({int skip = 0, int limit = 25}) async {
     try {
       final response = await _api.get('/api/v1/admin/rentals/purchases', queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((p) => PurchaseOrder.fromJson(p)).toList();
@@ -54,9 +55,10 @@ class RentalRepository {
     }
   }
 
-  Future<List<LateFee>> getLateFees() async {
+  Future<List<LateFee>> getLateFees({int skip = 0, int limit = 25}) async {
     try {
-      final response = await _api.get('/api/v1/admin/rentals/late-fees');
+      final response = await _api.get('/api/v1/admin/rentals/late-fees',
+          queryParameters: {'skip': skip.toString(), 'limit': limit.toString()});
       return (response.data as List).map((l) => LateFee.fromJson(l)).toList();
     } catch (e) {
       rethrow;

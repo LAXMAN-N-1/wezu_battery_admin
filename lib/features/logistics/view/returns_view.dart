@@ -25,9 +25,11 @@ class _ReturnsViewState extends State<ReturnsView> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final stats = await _repo.getReturnStats();
-    final returns = await _repo.getReturns(status: _statusFilter);
-    setState(() { _stats = stats; _returns = returns; _isLoading = false; });
+    final results = await Future.wait([
+      _repo.getReturnStats(),
+      _repo.getReturns(status: _statusFilter),
+    ]);
+    setState(() { _stats = results[0] as Map<String, dynamic>; _returns = results[1] as List<dynamic>; _isLoading = false; });
   }
 
   @override

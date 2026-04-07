@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/user.dart';
 import '../data/repositories/user_repository.dart';
-
-final userRepositoryProvider = Provider<UserRepository>((ref) => UserRepository());
+// Re-export so existing importers still see userRepositoryProvider.
+export '../../../core/providers/repository_providers.dart'
+    show userRepositoryProvider;
+import '../../../core/providers/repository_providers.dart';
 
 class UserListState {
   final List<User> users;

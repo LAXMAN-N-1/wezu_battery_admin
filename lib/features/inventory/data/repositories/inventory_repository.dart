@@ -4,7 +4,8 @@ import '../../../../core/services/csv/csv_service.dart';
 import '../models/battery.dart';
 
 class InventoryRepository {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+  InventoryRepository([ApiClient? api]) : _api = api ?? ApiClient();
   static const String _baseUrl = '/api/v1/admin/batteries';
 
   /// Paginated battery list with total count

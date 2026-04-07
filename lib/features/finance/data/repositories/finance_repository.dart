@@ -40,7 +40,7 @@ class FinanceRepository {
 
   // ─── TRANSACTIONS ───────────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>> getTransactions({int skip = 0, int limit = 100, String? type, String? status}) async {
+  Future<Map<String, dynamic>> getTransactions({int skip = 0, int limit = 25, String? type, String? status}) async {
     try {
       final params = <String, dynamic>{'skip': skip, 'limit': limit};
       if (type != null) params['type'] = type;

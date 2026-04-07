@@ -12,6 +12,7 @@ import 'stock_levels_view.dart';
 
 final stationDetailProvider = FutureProvider.family
     .autoDispose<StationStockDetail, int>((ref, stationId) {
+      ref.keepAlive();
       return ref.watch(stockRepositoryProvider).getStationDetail(stationId);
     });
 

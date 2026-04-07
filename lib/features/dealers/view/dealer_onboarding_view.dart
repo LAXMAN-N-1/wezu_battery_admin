@@ -39,12 +39,11 @@ class _DealerOnboardingViewState extends State<DealerOnboardingView> {
   }
 
   Future<void> _loadAllCounts() async {
-    final counts = <String, int>{};
-    for (final stage in _stages) {
-      final apps = await _repository.getApplications(stage: stage['key']);
-      counts[stage['key']] = apps.length;
-    }
-    if (mounted) setState(() => _stageCounts = counts);
+    final futures = _stages.map((stage) =>
+      _repository.getApplications(stage: stage['key']).then((apps) => MapEntry(stage['key'] as String, apps.length)),
+    );
+    final entries = await Future.wait(futures);
+    if (mounted) setState(() => _stageCounts = Map.fromEntries(entries));
   }
 
   Future<void> _loadData() async {

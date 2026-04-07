@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import '../../../core/api/api_client.dart';
+import '../../../core/api/api_cache.dart';
 import 'dashboard_models.dart';
 
 class AnalyticsRepository {
   final ApiClient _apiClient;
+  final ApiCache _cache = ApiCache();
 
   AnalyticsRepository(this._apiClient);
 
@@ -327,165 +329,195 @@ class AnalyticsRepository {
   Future<DashboardBootstrapData> getDashboardBootstrap({
     String period = '30d',
   }) async {
-    final response = await _apiClient.get(
-      '$_base/dashboard',
-      queryParameters: {'period': period},
-    );
-    final map = _asMap(response.data, defaults: {'period': period});
-    final normalizedPeriod = map['period']?.toString() ?? period;
+    return _cache.getOrFetch<DashboardBootstrapData>(
+      'bootstrap_$period',
+      ttl: const Duration(seconds: 60),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/dashboard',
+          queryParameters: {'period': period},
+        );
+        final map = _asMap(response.data, defaults: {'period': period});
+        final normalizedPeriod = map['period']?.toString() ?? period;
 
-    return DashboardBootstrapData.fromJson({
-      'period': normalizedPeriod,
-      'generated_at': map['generated_at'],
-      'overview': _normalizeOverviewResponse(map['overview']),
-      'trends': _normalizeTrendResponse(
-        map['trends'],
-        period: normalizedPeriod,
-      ),
-      'conversion_funnel': _asMap(map['conversion_funnel'], listKey: 'stages'),
-      'battery_health_distribution': _normalizeBatteryHealthResponse(
-        map['battery_health_distribution'],
-      ),
-      'inventory_status': _normalizeInventoryStatusResponse(
-        map['inventory_status'],
-      ),
-      'demand_forecast': _normalizeDemandForecastResponse(
-        map['demand_forecast'],
-      ),
-      'revenue_by_station': _normalizeRevenueByStationResponse(
-        map['revenue_by_station'],
-      ),
-      'recent_activity': _normalizeRecentActivityResponse(
-        map['recent_activity'],
-      ),
-      'top_stations': _normalizeTopStationsResponse(map['top_stations']),
-    });
+        return DashboardBootstrapData.fromJson({
+          'period': normalizedPeriod,
+          'generated_at': map['generated_at'],
+          'overview': _normalizeOverviewResponse(map['overview']),
+          'trends': _normalizeTrendResponse(
+            map['trends'],
+            period: normalizedPeriod,
+          ),
+          'conversion_funnel': _asMap(map['conversion_funnel'], listKey: 'stages'),
+          'battery_health_distribution': _normalizeBatteryHealthResponse(
+            map['battery_health_distribution'],
+          ),
+          'inventory_status': _normalizeInventoryStatusResponse(
+            map['inventory_status'],
+          ),
+          'demand_forecast': _normalizeDemandForecastResponse(
+            map['demand_forecast'],
+          ),
+          'revenue_by_station': _normalizeRevenueByStationResponse(
+            map['revenue_by_station'],
+          ),
+          'recent_activity': _normalizeRecentActivityResponse(
+            map['recent_activity'],
+          ),
+          'top_stations': _normalizeTopStationsResponse(map['top_stations']),
+        });
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/overview
   Future<DashboardOverview> getOverview() async {
-    try {
-      final response = await _apiClient.get('$_base/overview');
-      return DashboardOverview.fromJson(
-        _normalizeOverviewResponse(response.data),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<DashboardOverview>(
+      'overview',
+      ttl: const Duration(seconds: 60),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/overview');
+        return DashboardOverview.fromJson(
+          _normalizeOverviewResponse(response.data),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/trends?period=daily
   Future<TrendData> getTrends({String period = 'daily'}) async {
-    try {
-      final response = await _apiClient.get(
-        '$_base/trends',
-        queryParameters: {'period': period},
-      );
-      return TrendData.fromJson(
-        _normalizeTrendResponse(response.data, period: period),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<TrendData>(
+      'trends_$period',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/trends',
+          queryParameters: {'period': period},
+        );
+        return TrendData.fromJson(
+          _normalizeTrendResponse(response.data, period: period),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/conversion-funnel
   Future<ConversionFunnel> getConversionFunnel() async {
-    try {
-      final response = await _apiClient.get('$_base/conversion-funnel');
-      return ConversionFunnel.fromJson(
-        _asMap(response.data, listKey: 'stages'),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<ConversionFunnel>(
+      'conversion_funnel',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/conversion-funnel');
+        return ConversionFunnel.fromJson(
+          _asMap(response.data, listKey: 'stages'),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/battery-health-distribution
   Future<BatteryHealthDistribution> getBatteryHealthDistribution() async {
-    try {
-      final response = await _apiClient.get(
-        '$_base/battery-health-distribution',
-      );
-      return BatteryHealthDistribution.fromJson(
-        _normalizeBatteryHealthResponse(response.data),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<BatteryHealthDistribution>(
+      'battery_health',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/battery-health-distribution',
+        );
+        return BatteryHealthDistribution.fromJson(
+          _normalizeBatteryHealthResponse(response.data),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/user-behavior
   Future<UserBehavior> getUserBehavior() async {
-    try {
-      final response = await _apiClient.get('$_base/user-behavior');
-      return UserBehavior.fromJson(_asMap(response.data));
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<UserBehavior>(
+      'user_behavior',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/user-behavior');
+        return UserBehavior.fromJson(_asMap(response.data));
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/demand-forecast
   Future<DemandForecast> getDemandForecast() async {
-    try {
-      final response = await _apiClient.get('$_base/demand-forecast');
-      return DemandForecast.fromJson(
-        _normalizeDemandForecastResponse(response.data),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<DemandForecast>(
+      'demand_forecast',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/demand-forecast');
+        return DemandForecast.fromJson(
+          _normalizeDemandForecastResponse(response.data),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/revenue/by-region
   Future<RevenueByRegion> getRevenueByRegion() async {
-    try {
-      final response = await _apiClient.get('$_base/revenue/by-region');
-      return RevenueByRegion.fromJson(
-        _normalizeRevenueByRegionResponse(response.data),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<RevenueByRegion>(
+      'revenue_by_region',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/revenue/by-region');
+        return RevenueByRegion.fromJson(
+          _normalizeRevenueByRegionResponse(response.data),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/user-growth?period=monthly
   Future<UserGrowth> getUserGrowth({String period = 'monthly'}) async {
-    try {
-      final response = await _apiClient.get(
-        '$_base/user-growth',
-        queryParameters: {'period': period},
-      );
-      return UserGrowth.fromJson(
-        _asMap(response.data, listKey: 'data', defaults: {'period': period}),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<UserGrowth>(
+      'user_growth_$period',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/user-growth',
+          queryParameters: {'period': period},
+        );
+        return UserGrowth.fromJson(
+          _asMap(response.data, listKey: 'data', defaults: {'period': period}),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/inventory-status
   Future<InventoryStatus> getInventoryStatus() async {
-    try {
-      final response = await _apiClient.get('$_base/inventory-status');
-      return InventoryStatus.fromJson(
-        _normalizeInventoryStatusResponse(response.data),
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return _cache.getOrFetch<InventoryStatus>(
+      'inventory_status',
+      ttl: const Duration(minutes: 2),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/inventory-status');
+        return InventoryStatus.fromJson(
+          _normalizeInventoryStatusResponse(response.data),
+        );
+      },
+    );
   }
 
   /// GET /api/v1/admin/analytics/revenue/by-station
   Future<StationRevenueData> getRevenueByStation({
     String period = '30d',
   }) async {
-    final response = await _apiClient.get(
-      '$_base/revenue/by-station',
-      queryParameters: {'period': period},
-    );
-    return StationRevenueData.fromJson(
-      _normalizeRevenueByStationResponse(response.data),
+    return _cache.getOrFetch<StationRevenueData>(
+      'revenue_by_station_$period',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/revenue/by-station',
+          queryParameters: {'period': period},
+        );
+        return StationRevenueData.fromJson(
+          _normalizeRevenueByStationResponse(response.data),
+        );
+      },
     );
   }
 
@@ -493,12 +525,18 @@ class AnalyticsRepository {
   Future<BatteryTypeRevenueData> getRevenueByBatteryType({
     String period = '30d',
   }) async {
-    final response = await _apiClient.get(
-      '$_base/revenue/by-battery-type',
-      queryParameters: {'period': period},
-    );
-    return BatteryTypeRevenueData.fromJson(
-      _asMap(response.data, listKey: 'types'),
+    return _cache.getOrFetch<BatteryTypeRevenueData>(
+      'revenue_by_battery_type_$period',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/revenue/by-battery-type',
+          queryParameters: {'period': period},
+        );
+        return BatteryTypeRevenueData.fromJson(
+          _asMap(response.data, listKey: 'types'),
+        );
+      },
     );
   }
 
@@ -514,20 +552,32 @@ class AnalyticsRepository {
 
   /// GET /api/v1/admin/analytics/recent-activity
   Future<RecentActivityData> getRecentActivity({String? type}) async {
-    final response = await _apiClient.get(
-      '$_base/recent-activity',
-      queryParameters: {if (type != null) 'type': type},
-    );
-    return RecentActivityData.fromJson(
-      _normalizeRecentActivityResponse(response.data),
+    return _cache.getOrFetch<RecentActivityData>(
+      'recent_activity_${type ?? 'all'}',
+      ttl: const Duration(seconds: 60),
+      fetch: () async {
+        final response = await _apiClient.get(
+          '$_base/recent-activity',
+          queryParameters: {if (type != null) 'type': type},
+        );
+        return RecentActivityData.fromJson(
+          _normalizeRecentActivityResponse(response.data),
+        );
+      },
     );
   }
 
   /// GET /api/v1/admin/analytics/top-stations
   Future<TopStationsData> getTopPerformingStations() async {
-    final response = await _apiClient.get('$_base/top-stations');
-    return TopStationsData.fromJson(
-      _normalizeTopStationsResponse(response.data),
+    return _cache.getOrFetch<TopStationsData>(
+      'top_stations',
+      ttl: const Duration(minutes: 5),
+      fetch: () async {
+        final response = await _apiClient.get('$_base/top-stations');
+        return TopStationsData.fromJson(
+          _normalizeTopStationsResponse(response.data),
+        );
+      },
     );
   }
 }

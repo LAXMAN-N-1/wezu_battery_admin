@@ -32,7 +32,7 @@ class StationRepository {
 
   Future<Map<String, dynamic>> getStationsPaginated({
     int skip = 0,
-    int limit = 100,
+    int limit = 25,
     String? search,
     String? status,
     String? city,

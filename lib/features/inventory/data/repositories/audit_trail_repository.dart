@@ -2,7 +2,8 @@ import '../../../../core/api/api_client.dart';
 import '../models/audit_trail_model.dart';
 
 class AuditTrailRepository {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+  AuditTrailRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
   Future<Map<String, dynamic>> getAuditTrails({
     int skip = 0,

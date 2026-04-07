@@ -4,9 +4,10 @@ import '../models/dealer_application.dart';
 import '../models/commission.dart';
 
 class DealerRepository {
-  final ApiClient _api = ApiClient();
+  final ApiClient _api;
+  DealerRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
-  Future<Map<String, dynamic>> getDealers({int skip = 0, int limit = 100, String? search, String? city}) async {
+  Future<Map<String, dynamic>> getDealers({int skip = 0, int limit = 25, String? search, String? city}) async {
     final Map<String, dynamic> params = {
       'skip': skip.toString(),
       'limit': limit.toString(),

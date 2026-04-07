@@ -21,9 +21,11 @@ class _DriversViewState extends State<DriversView> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final stats = await _repo.getDriverStats();
-    final drivers = await _repo.getDrivers();
-    setState(() { _stats = stats; _drivers = drivers; _isLoading = false; });
+    final results = await Future.wait([
+      _repo.getDriverStats(),
+      _repo.getDrivers(),
+    ]);
+    setState(() { _stats = results[0] as Map<String, dynamic>; _drivers = results[1] as List<dynamic>; _isLoading = false; });
   }
 
   @override

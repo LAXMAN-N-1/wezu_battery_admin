@@ -12,6 +12,7 @@ import 'dio_adapter_stub.dart'
     as dio_adapter;
 import '../utils/token_utils.dart';
 import '../widgets/api_error_handler.dart';
+import 'retry_interceptor.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
@@ -65,9 +66,14 @@ class ApiClient {
   ApiClient._internal() {
     final baseOptions = BaseOptions(
       baseUrl: _resolvedApiBaseUrl(),
-      connectTimeout: const Duration(seconds: 60),
-      receiveTimeout: const Duration(seconds: 60),
-      headers: {'Accept': 'application/json'},
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+      },
     );
 
     dio = Dio(baseOptions);
@@ -75,6 +81,7 @@ class ApiClient {
     _configureHttpAdapters();
 
     dio.interceptors.add(AuthInterceptor(this));
+    dio.interceptors.add(RetryInterceptor(dio: dio));
 
     // Add detailed API logging only in debug mode.
     if (kDebugMode) {
@@ -329,9 +336,7 @@ class ApiClient {
 
     return pathLower == '/api/v1/auth/login' ||
         pathLower == '/api/v1/auth/admin/login' ||
-        pathLower == '/api/v1/auth/refresh' ||
-        pathLower == '/api/v1/auth/token/refresh' ||
-        pathLower == '/api/v1/auth/refresh-token';
+        pathLower == '/api/v1/auth/refresh';
   }
 
   DioException sessionExpiredException(
@@ -387,94 +392,70 @@ class ApiClient {
       return null;
     }
 
-    final attempts = <({String path, Map<String, dynamic> payload})>[
-      (path: '/api/v1/auth/refresh', payload: {'refresh_token': refreshToken}),
-      (
-        path: '/api/v1/auth/token/refresh',
-        payload: {'refresh_token': refreshToken},
-      ),
-      (
-        path: '/api/v1/auth/admin/refresh',
-        payload: {'refresh_token': refreshToken},
-      ),
-      (
-        path: '/api/v1/auth/refresh-token',
-        payload: {'refresh_token': refreshToken},
-      ),
-      (path: '/api/v1/auth/refresh', payload: {'refresh': refreshToken}),
-    ];
+    try {
+      final response = await _refreshDio.post<dynamic>(
+        '/api/v1/auth/refresh',
+        data: {'refresh_token': refreshToken},
+        options: Options(
+          contentType: Headers.jsonContentType,
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $refreshToken',
+          },
+          extra: const {_skipAuthInterceptorKey: true},
+        ),
+      );
 
-    for (final attempt in attempts) {
-      try {
-        final response = await _refreshDio.post<dynamic>(
-          attempt.path,
-          data: attempt.payload,
-          options: Options(
-            contentType: Headers.jsonContentType,
-            headers: {
-              'Accept': 'application/json',
-              'Authorization': 'Bearer $refreshToken',
-            },
-            extra: const {_skipAuthInterceptorKey: true},
-          ),
-        );
+      final data = _normalizeResponseData(response.data);
+      final newAccessToken = sanitizeToken(_extractAccessToken(data));
+      if (newAccessToken == null) {
+        debugPrint('[ApiClient] refresh response missing access token');
+        return null;
+      }
 
-        final data = _normalizeResponseData(response.data);
-        final newAccessToken = sanitizeToken(_extractAccessToken(data));
-        if (newAccessToken == null) {
-          continue;
-        }
+      final newRefreshToken =
+          sanitizeToken(_extractRefreshToken(data)) ?? refreshToken;
 
-        final newRefreshToken =
-            sanitizeToken(_extractRefreshToken(data)) ?? refreshToken;
+      await writeAuthValue(accessTokenStorageKey, newAccessToken);
+      await writeAuthValue(refreshTokenStorageKey, newRefreshToken);
+      _sessionExpiredNotified = false;
+      return newAccessToken;
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
 
-        await writeAuthValue(accessTokenStorageKey, newAccessToken);
-        await writeAuthValue(refreshTokenStorageKey, newRefreshToken);
-        _sessionExpiredNotified = false;
-        return newAccessToken;
-      } on DioException catch (e) {
-        final statusCode = e.response?.statusCode;
-        final shouldContinue =
-            statusCode == 404 || statusCode == 405 || statusCode == 415;
+      // Explicit auth failures mean session is invalid and must be cleared.
+      if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
+        await clearSession(notifyListeners: true);
+        return null;
+      }
 
-        if (shouldContinue) {
-          continue;
-        }
-
-        // 422 can be endpoint contract mismatch or invalid refresh token payload.
-        if (statusCode == 422) {
-          if (_responseMentionsTokenFailure(e.response?.data)) {
-            await clearSession(notifyListeners: true);
-            return null;
-          }
-          continue;
-        }
-
-        // Explicit auth failures mean session is invalid and must be cleared.
-        if (statusCode == 400 || statusCode == 401 || statusCode == 403) {
+      // 422 with token failure keywords also means invalid session.
+      if (statusCode == 422) {
+        if (_responseMentionsTokenFailure(e.response?.data)) {
           await clearSession(notifyListeners: true);
           return null;
         }
+      }
 
-        // Do not clear session on transient server/network issues.
-        if (statusCode != null && statusCode >= 500) {
-          debugPrint('[ApiClient] token refresh failed: $e');
-          return null;
-        }
-
-        if (e.type == DioExceptionType.connectionError ||
-            e.type == DioExceptionType.connectionTimeout ||
-            e.type == DioExceptionType.receiveTimeout ||
-            e.type == DioExceptionType.sendTimeout) {
-          debugPrint('[ApiClient] token refresh transient failure: $e');
-          return null;
-        }
-
+      // Do not clear session on transient server/network issues.
+      if (statusCode != null && statusCode >= 500) {
         debugPrint('[ApiClient] token refresh failed: $e');
         return null;
       }
+
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        debugPrint('[ApiClient] token refresh transient failure: $e');
+        return null;
+      }
+
+      debugPrint('[ApiClient] token refresh failed: $e');
+      return null;
     }
-    return null;
   }
 
   Future<void> _notifySessionExpired() async {

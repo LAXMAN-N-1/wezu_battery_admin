@@ -32,15 +32,17 @@ class _SupportViewState extends State<SupportView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final statsResult = await _repository.getTicketsStats();
-      final ticketsResult = await _repository.getTickets(
-        status: _statusFilter,
-        source: _sourceFilter,
-      );
+      final results = await Future.wait([
+        _repository.getTicketsStats(),
+        _repository.getTickets(
+          status: _statusFilter,
+          source: _sourceFilter,
+        ),
+      ]);
       
       setState(() {
-        _stats = statsResult;
-        _tickets = ticketsResult;
+        _stats = results[0] as Map<String, dynamic>;
+        _tickets = results[1] as List<SupportTicket>;
         _isLoading = false;
       });
     } catch (e) {

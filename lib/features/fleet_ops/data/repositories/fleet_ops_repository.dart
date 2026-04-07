@@ -5,7 +5,8 @@ import '../models/telemetry_model.dart';
 import '../models/alert_model.dart';
 
 class FleetOpsRepository {
-  final ApiClient _apiClient = ApiClient();
+  final ApiClient _apiClient;
+  FleetOpsRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
   Future<IoTStats> getIoTStats() async {
     try {

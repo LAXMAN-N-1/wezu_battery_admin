@@ -23,8 +23,8 @@ class Stations extends _$Stations {
     // Watch maintenance schedules so this provider rebuilds when one starts/ends
     final maintenanceSchedules = ref.watch(maintenanceProvider);
 
-    // Core polling logic: refresh every 30 seconds
-    final timer = Timer.periodic(const Duration(seconds: 30), (_) {
+    // Core polling logic: refresh every 60 seconds
+    final timer = Timer.periodic(const Duration(seconds: 60), (_) {
       ref.invalidateSelf();
     });
     ref.onDispose(() => timer.cancel());
