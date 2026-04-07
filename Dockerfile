@@ -7,8 +7,6 @@ FROM ghcr.io/cirruslabs/flutter:3.41.0 AS build
 
 WORKDIR /app
 
-ARG API_BASE_URL=
-
 ENV PUB_CACHE=/root/.pub-cache \
     CI=true \
     FLUTTER_SUPPRESS_ANALYTICS=true
@@ -29,20 +27,15 @@ COPY assets/ assets/
 COPY analysis_options.yaml ./
 
 # 4) Build web — cache .dart_tool between builds for incremental compilation
-#    If API_BASE_URL is empty, omit --dart-define so the Dart code uses its
-#    built-in default (same-origin proxy on web, direct URL on native).
+#    No API_BASE_URL: on web the app uses same-origin requests (empty baseUrl)
+#    which hit the nginx reverse proxy at /api/ → api1.powerfrill.com.
 #    Note: --web-renderer removed in Flutter 3.41 (CanvasKit is default).
 #    Note: --pwa-strategy removed in Flutter 3.41 (deprecated).
 RUN --mount=type=cache,target=/root/.pub-cache \
     --mount=type=cache,target=/app/.dart_tool \
-    EXTRA_ARGS="" && \
-    if [ -n "$API_BASE_URL" ]; then \
-      EXTRA_ARGS="--dart-define=API_BASE_URL=${API_BASE_URL}"; \
-    fi && \
     flutter build web \
       --release \
-      --no-tree-shake-icons \
-      $EXTRA_ARGS
+      --no-tree-shake-icons
 
 # ─── Stage 2: Lightweight Nginx Runtime (~7 MB) ─────────────────────────────
 FROM nginx:1.27-alpine AS runtime
