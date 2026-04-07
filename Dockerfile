@@ -31,6 +31,7 @@ COPY analysis_options.yaml ./
 # 4) Build web — cache .dart_tool between builds for incremental compilation
 #    If API_BASE_URL is empty, omit --dart-define so the Dart code uses its
 #    built-in default (same-origin proxy on web, direct URL on native).
+#    Note: --web-renderer was removed in Flutter 3.41; CanvasKit is the default.
 RUN --mount=type=cache,target=/root/.pub-cache \
     --mount=type=cache,target=/app/.dart_tool \
     EXTRA_ARGS="" && \
@@ -40,7 +41,6 @@ RUN --mount=type=cache,target=/root/.pub-cache \
     flutter build web \
       --release \
       --pwa-strategy=none \
-      --web-renderer=canvaskit \
       --no-tree-shake-icons \
       $EXTRA_ARGS
 
