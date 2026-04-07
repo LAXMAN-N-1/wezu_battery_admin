@@ -7,7 +7,7 @@ FROM ghcr.io/cirruslabs/flutter:3.41.0 AS build
 
 WORKDIR /app
 
-ARG API_BASE_URL=https://api1.powerfrill.com
+ARG API_BASE_URL=
 
 ENV PUB_CACHE=/root/.pub-cache \
     CI=true \

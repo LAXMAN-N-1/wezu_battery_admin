@@ -71,8 +71,10 @@ class ApiClient {
       sendTimeout: const Duration(seconds: 30),
       headers: {
         'Accept': 'application/json',
-        'Accept-Encoding': 'gzip, deflate',
-        'Connection': 'keep-alive',
+        // Accept-Encoding & Connection are forbidden headers in browsers
+        // (managed automatically by XMLHttpRequest/fetch). Only set on native.
+        if (!kIsWeb) 'Accept-Encoding': 'gzip, deflate',
+        if (!kIsWeb) 'Connection': 'keep-alive',
       },
     );
 
@@ -98,10 +100,13 @@ class ApiClient {
   static String _resolvedApiBaseUrl() {
     final value = const String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: _fallbackApiBaseUrl,
+      defaultValue: '',
     ).trim();
     if (value.isEmpty) {
-      return _fallbackApiBaseUrl;
+      // On web with no explicit API_BASE_URL, use same-origin (empty string)
+      // so requests hit the nginx reverse proxy at /api/...
+      // On native platforms, fall back to the direct API URL.
+      return kIsWeb ? '' : _fallbackApiBaseUrl;
     }
     return value.replaceAll(RegExp(r'/+$'), '');
   }
