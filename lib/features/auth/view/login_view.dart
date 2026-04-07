@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +32,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
   bool _rememberMe = false;
   bool _hasSubmitted = false;
   bool _capsLockEnabled = false;
+  Timer? _autofillPollTimer;
+  int _autofillPollCount = 0;
 
   @override
   void initState() {
@@ -41,10 +45,28 @@ class _LoginViewState extends ConsumerState<LoginView> {
     // onChanged, so the Sign In button would stay disabled without this.
     _credentialController.addListener(_onControllerChanged);
     _passwordController.addListener(_onControllerChanged);
+
+    // Google Password Manager on Flutter web can fill DOM inputs with a delay
+    // that doesn't always sync to TextEditingController via addListener.
+    // Poll every 300ms for up to 10 seconds to catch delayed autofill.
+    _autofillPollTimer = Timer.periodic(
+      const Duration(milliseconds: 300),
+      (_) {
+        _autofillPollCount++;
+        // Stop polling after ~10 seconds (33 ticks × 300ms)
+        if (_autofillPollCount > 33) {
+          _autofillPollTimer?.cancel();
+          _autofillPollTimer = null;
+          return;
+        }
+        if (mounted) setState(() {});
+      },
+    );
   }
 
   @override
   void dispose() {
+    _autofillPollTimer?.cancel();
     _credentialController.removeListener(_onControllerChanged);
     _passwordController.removeListener(_onControllerChanged);
     _credentialFocusNode.dispose();
@@ -120,15 +142,25 @@ class _LoginViewState extends ConsumerState<LoginView> {
     }
 
     setState(() => _hasSubmitted = true);
+
+    // Re-read controller text at submission time — this is critical for
+    // Google Password Manager on Flutter web, which may have filled the
+    // underlying DOM <input> elements without syncing to the controllers.
+    final credential = _credentialController.text.trim();
+    final password = _passwordController.text;
+
+    // If fields are still empty after autofill attempt, validate form.
+    if (credential.isEmpty || password.isEmpty) {
+      _formKey.currentState?.validate();
+      return;
+    }
+
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid) {
       return;
     }
 
     FocusScope.of(context).unfocus();
-
-    final credential = _credentialController.text.trim();
-    final password = _passwordController.text;
 
     await ref.read(authProvider.notifier).login(credential, password);
     if (!mounted) {
@@ -192,10 +224,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
     final authState = ref.watch(authProvider);
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 900;
-    final canSubmit =
-        !authState.isLoading &&
-        _credentialController.text.trim().isNotEmpty &&
-        _passwordController.text.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E1A),
@@ -408,7 +436,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                           ],
                                           validator: _passwordValidator,
                                           autocorrect: false,
-                                          enableSuggestions: false,
+                                          enableSuggestions: true,
                                           textCapitalization:
                                               TextCapitalization.none,
                                           onChanged: _onFieldChanged,
@@ -551,9 +579,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           AdminButton(
                             label: "Sign In",
                             isLoading: authState.isLoading,
-                            onPressed: canSubmit
-                                ? () => _submit(authState)
-                                : null,
+                            onPressed: authState.isLoading
+                                ? null
+                                : () => _submit(authState),
                           ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
 
                           const SizedBox(height: 32),
