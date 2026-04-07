@@ -169,6 +169,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     try {
+      // Unlock the API client so login requests can flow (the previous session
+      // may have been locked after a 401).
+      _apiClient.unlockSession();
+
       final result = await _authenticate(normalizedCredential, rawPassword);
       await _persistSession(result);
 

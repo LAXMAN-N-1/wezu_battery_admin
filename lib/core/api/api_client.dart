@@ -63,6 +63,16 @@ class ApiClient {
   Future<void> Function()? _sessionExpiredCallback;
   bool _sessionExpiredNotified = false;
 
+  /// A global [CancelToken] shared across all in-flight requests.
+  /// When a 401 session-expired is detected, this token is cancelled so every
+  /// pending/queued request is immediately aborted instead of hitting the
+  /// backend.
+  CancelToken _globalCancelToken = CancelToken();
+
+  /// Whether the session is currently in a "locked-out" state.  While true,
+  /// new requests are rejected immediately without touching the network.
+  bool _sessionLocked = false;
+
   ApiClient._internal() {
     final baseOptions = BaseOptions(
       baseUrl: _resolvedApiBaseUrl(),
@@ -273,6 +283,29 @@ class ApiClient {
       await _notifySessionExpired();
     }
   }
+
+  /// Cancel every in-flight request and lock the session so no new requests
+  /// are dispatched until [unlockSession] is called (typically after the user
+  /// taps "Log In Again" and a fresh token is stored).
+  void cancelAllRequests({String reason = 'Session expired'}) {
+    if (!_globalCancelToken.isCancelled) {
+      _globalCancelToken.cancel(reason);
+    }
+    _sessionLocked = true;
+  }
+
+  /// Re-enable API calls after the user has re-authenticated.
+  void unlockSession() {
+    _sessionLocked = false;
+    _sessionExpiredNotified = false;
+    _globalCancelToken = CancelToken();
+  }
+
+  /// Whether the session is currently locked (no API calls allowed).
+  bool get isSessionLocked => _sessionLocked;
+
+  /// Returns the current global [CancelToken].
+  CancelToken get globalCancelToken => _globalCancelToken;
 
   Future<bool> hasActiveRefreshToken() async {
     final refreshToken = sanitizeToken(
@@ -628,11 +661,13 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     return await dio.get(
       path,
       queryParameters: queryParameters,
       options: options,
+      cancelToken: cancelToken ?? _globalCancelToken,
     );
   }
 
@@ -641,12 +676,14 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     return await dio.post(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
+      cancelToken: cancelToken ?? _globalCancelToken,
     );
   }
 
@@ -655,12 +692,14 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     return await dio.put(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
+      cancelToken: cancelToken ?? _globalCancelToken,
     );
   }
 
@@ -669,12 +708,14 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     return await dio.patch(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
+      cancelToken: cancelToken ?? _globalCancelToken,
     );
   }
 
@@ -683,12 +724,14 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    CancelToken? cancelToken,
   }) async {
     return await dio.delete(
       path,
       data: data,
       queryParameters: queryParameters,
       options: options,
+      cancelToken: cancelToken ?? _globalCancelToken,
     );
   }
 }
@@ -711,11 +754,57 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
+    // ── Client-side JWT expiry pre-check ──────────────────────────────
+    // If the session is already locked (a 401 was handled), reject
+    // immediately without hitting the network.
+    if (_apiClient._sessionLocked) {
+      handler.reject(
+        _apiClient.sessionExpiredException(
+          options,
+          error: 'Session expired – awaiting re-login',
+        ),
+      );
+      return;
+    }
+
+    // Check the access token's exp claim client-side.
+    final rawAccessToken = _apiClient.sanitizeToken(
+      await _apiClient.readAuthValue(ApiClient.accessTokenStorageKey),
+    );
+
+    final accessExpired =
+        rawAccessToken == null || TokenUtils.isExpired(rawAccessToken);
+
+    if (accessExpired) {
+      // Access token expired – check if refresh is also expired.
+      final rawRefreshToken = _apiClient.sanitizeToken(
+        await _apiClient.readAuthValue(ApiClient.refreshTokenStorageKey),
+      );
+      final refreshExpired =
+          rawRefreshToken == null || TokenUtils.isExpired(rawRefreshToken);
+
+      if (refreshExpired) {
+        // Both tokens expired → lock session, cancel everything, notify.
+        _apiClient.cancelAllRequests(reason: 'Session expired');
+        await _apiClient.clearSession(notifyListeners: true);
+        handler.reject(
+          _apiClient.sessionExpiredException(
+            options,
+            error: 'Session expired',
+          ),
+        );
+        return;
+      }
+    }
+
+    // ── Normal flow: get a valid access token (may refresh) ───────────
     final token = _apiClient.sanitizeToken(
       await _apiClient.getValidAccessToken(),
     );
     if (token == null) {
+      _apiClient.cancelAllRequests(reason: 'Session expired');
       _apiClient.clearAuthHeader(options.headers);
+      await _apiClient.clearSession(notifyListeners: true);
       handler.reject(
         _apiClient.sessionExpiredException(options, error: 'Session expired'),
       );
@@ -758,6 +847,9 @@ class AuthInterceptor extends Interceptor {
         return;
       }
 
+      // ── 401 confirmed, session is dead ────────────────────────────
+      // Cancel ALL pending/queued requests so they don't fire the next batch.
+      _apiClient.cancelAllRequests(reason: 'Session expired');
       await _apiClient.clearSession(notifyListeners: true);
       handler.reject(
         _apiClient.sessionExpiredException(
