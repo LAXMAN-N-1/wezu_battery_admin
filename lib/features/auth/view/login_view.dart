@@ -9,6 +9,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../provider/auth_provider.dart';
 import '../../../core/widgets/admin_ui_components.dart';
+import '../../../core/utils/autofill_helper_stub.dart'
+    if (dart.library.html) '../../../core/utils/autofill_helper_web.dart'
+    as autofill;
 
 class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
@@ -48,7 +51,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     // Google Password Manager on Flutter web can fill DOM inputs with a delay
     // that doesn't always sync to TextEditingController via addListener.
-    // Poll every 300ms for up to 10 seconds to catch delayed autofill.
+    // Poll every 300ms for up to 10 seconds — try reading DOM values directly.
     _autofillPollTimer = Timer.periodic(
       const Duration(milliseconds: 300),
       (_) {
@@ -59,7 +62,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
           _autofillPollTimer = null;
           return;
         }
-        if (mounted) setState(() {});
+        if (!mounted) return;
+        // Try to sync DOM-autofilled values into the controllers.
+        _syncDomAutofillValues();
+        setState(() {});
       },
     );
   }
@@ -78,6 +84,35 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   void _onControllerChanged() {
     if (mounted) setState(() {});
+  }
+
+  /// Reads autofill values directly from the browser DOM and syncs them
+  /// into the TextEditingControllers if they're currently empty.
+  /// This handles the case where the password manager fills <input> elements
+  /// but Flutter never picks up the change.
+  void _syncDomAutofillValues() {
+    if (_credentialController.text.trim().isNotEmpty &&
+        _passwordController.text.trim().isNotEmpty) {
+      // Both fields already have values — stop polling early.
+      _autofillPollTimer?.cancel();
+      _autofillPollTimer = null;
+      return;
+    }
+
+    final domValues = autofill.readAutofillValues();
+    final domCredential = domValues['credential'];
+    final domPassword = domValues['password'];
+
+    if (_credentialController.text.trim().isEmpty &&
+        domCredential != null &&
+        domCredential.trim().isNotEmpty) {
+      _credentialController.text = domCredential;
+    }
+    if (_passwordController.text.trim().isEmpty &&
+        domPassword != null &&
+        domPassword.isNotEmpty) {
+      _passwordController.text = domPassword;
+    }
   }
 
   String? _credentialValidator(String? value) {
@@ -143,11 +178,24 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     setState(() => _hasSubmitted = true);
 
-    // Re-read controller text at submission time — this is critical for
-    // Google Password Manager on Flutter web, which may have filled the
-    // underlying DOM <input> elements without syncing to the controllers.
-    final credential = _credentialController.text.trim();
-    final password = _passwordController.text;
+    // Re-read controller text at submission time.
+    var credential = _credentialController.text.trim();
+    var password = _passwordController.text;
+
+    // Fallback: On Flutter web, browser password managers fill the DOM
+    // <input> elements directly but TextEditingController may never sync.
+    // Read values straight from the DOM as a last resort.
+    if (credential.isEmpty || password.isEmpty) {
+      final domValues = autofill.readAutofillValues();
+      if (credential.isEmpty && domValues['credential'] != null) {
+        credential = domValues['credential']!.trim();
+        _credentialController.text = credential;
+      }
+      if (password.isEmpty && domValues['password'] != null) {
+        password = domValues['password']!;
+        _passwordController.text = password;
+      }
+    }
 
     // If fields are still empty after autofill attempt, validate form.
     if (credential.isEmpty || password.isEmpty) {
