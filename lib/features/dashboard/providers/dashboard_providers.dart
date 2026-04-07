@@ -117,6 +117,9 @@ final batteryHealthProvider = FutureProvider<BatteryHealthDistribution>((
 final revenueByRegionProvider = FutureProvider<RevenueByRegion>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
+  // Wait for bootstrap to finish before firing extra requests
+  // to avoid overwhelming the backend with parallel calls.
+  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getRevenueByRegion();
 });
 
@@ -126,6 +129,8 @@ final userGrowthProvider = FutureProvider<UserGrowth>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(userGrowthPeriodProvider);
+  // Wait for bootstrap to finish before firing extra requests.
+  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getUserGrowth(period: period);
 });
 
@@ -154,6 +159,8 @@ final demandForecastProvider = FutureProvider<DemandForecast>((ref) async {
 final userBehaviorProvider = FutureProvider<UserBehavior>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
+  // Wait for bootstrap to finish before firing extra requests.
+  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getUserBehavior();
 });
 
@@ -183,6 +190,8 @@ final revenueByBatteryTypeProvider = FutureProvider<BatteryTypeRevenueData>((
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(analyticsPeriodProvider);
+  // Wait for bootstrap to finish before firing extra requests.
+  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getRevenueByBatteryType(period: period);
 });
 final activityFilterProvider = StateProvider<String>((ref) => 'all');

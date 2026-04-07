@@ -1,21 +1,35 @@
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_cache.dart';
 import '../models/settings_models.dart';
 
 class SettingsRepository {
   final ApiClient _apiClient;
+  final ApiCache _cache = ApiCache();
   SettingsRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
   static const String _base = '/api/v1/admin/settings';
 
   Future<Map<String, SystemConfigItem>> getGeneralSettings() async {
-    final r = await _apiClient.get('$_base/general');
-    final Map<String, SystemConfigItem> result = {};
-    (r.data as Map<String, dynamic>).forEach((k, v) {
-      result[k] = SystemConfigItem(id: v['id'] ?? 0, key: k, value: v['value']?.toString() ?? '', description: v['description']?.toString());
-    });
-    return result;
+    return _cache.getOrFetch<Map<String, SystemConfigItem>>(
+      'general_settings',
+      ttl: const Duration(seconds: 120),
+      fetch: () async {
+        final r = await _apiClient.get('$_base/general');
+        final Map<String, SystemConfigItem> result = {};
+        (r.data as Map<String, dynamic>).forEach((k, v) {
+          result[k] = SystemConfigItem(id: v['id'] ?? 0, key: k, value: v['value']?.toString() ?? '', description: v['description']?.toString());
+        });
+        return result;
+      },
+    );
   }
-  Future<void> updateGeneralSetting(int id, String value) async => await _apiClient.patch('$_base/general/$id', queryParameters: {'value': value});
-  Future<void> createGeneralSetting(String key, String value, {String? desc}) async => await _apiClient.post('$_base/general', queryParameters: {'key': key, 'value': value, if (desc != null) 'description': desc});
+  Future<void> updateGeneralSetting(int id, String value) async {
+    await _apiClient.patch('$_base/general/$id', queryParameters: {'value': value});
+    _cache.invalidate('general_settings');
+  }
+  Future<void> createGeneralSetting(String key, String value, {String? desc}) async {
+    await _apiClient.post('$_base/general', queryParameters: {'key': key, 'value': value, if (desc != null) 'description': desc});
+    _cache.invalidate('general_settings');
+  }
 
   Future<List<FeatureFlagItem>> getFeatureFlags() async {
     final r = await _apiClient.get('$_base/feature-flags');
