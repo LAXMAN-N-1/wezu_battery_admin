@@ -8,6 +8,7 @@ import 'dialogs/create_user_dialog.dart';
 import 'dialogs/edit_user_dialog.dart';
 import 'dialogs/invite_users_dialog.dart';
 import 'dialogs/suspend_user_dialog.dart';
+import '../../../core/widgets/wezu_skeleton.dart';
 
 class UsersView extends ConsumerStatefulWidget {
   const UsersView({super.key});
@@ -149,7 +150,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       const SizedBox(height: 12),
 
       Expanded(child: state.isLoading
-        ? const Center(child: CircularProgressIndicator())
+        ? const Padding(padding: EdgeInsets.all(12), child: WezuSkeletonTable(rows: 8, columns: 6))
         : mobile
           ? _buildUserCards(state)
           : _buildUserTable(state),
@@ -298,7 +299,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
 
   // === Invites Tab ===
   Widget _buildInvitesTab(InviteListState state, bool mobile) {
-    if (state.isLoading) return const Center(child: CircularProgressIndicator());
+    if (state.isLoading) return const Padding(padding: EdgeInsets.all(12), child: WezuSkeletonTable(rows: 8, columns: 3));
     return Column(
       children: [
         Row(children: [
@@ -430,7 +431,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       future: ref.read(userRepositoryProvider).getCreationHistory(),
       builder: (ctx, snap) {
         if (snap.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
+          return const Padding(padding: EdgeInsets.all(12), child: WezuSkeletonTable(rows: 5, columns: 4));
         }
         if (snap.hasError) {
           return Card(

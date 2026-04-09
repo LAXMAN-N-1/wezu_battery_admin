@@ -37,8 +37,10 @@ class StationRepository {
     String? status,
     String? city,
     String? stationType,
+    String? fields,
   }) async {
     final params = <String, dynamic>{'skip': skip, 'limit': limit};
+    if (fields != null && fields.isNotEmpty) params['fields'] = fields;
     if (search != null && search.isNotEmpty) params['search'] = search;
     if (status != null && status.isNotEmpty) params['status'] = status;
     if (city != null && city.isNotEmpty) params['city'] = city;

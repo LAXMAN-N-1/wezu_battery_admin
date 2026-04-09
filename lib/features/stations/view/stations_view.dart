@@ -11,6 +11,7 @@ import '../widgets/active_rentals_grid.dart';
 import 'station_form_view.dart';
 import 'operating_hours_settings_view.dart';
 import 'station_specs_view.dart';
+import '../../../core/widgets/wezu_skeleton.dart';
 
 class StationsView extends ConsumerStatefulWidget {
   const StationsView({super.key});
@@ -243,7 +244,10 @@ class _StationsViewState extends ConsumerState<StationsView> {
                         ),
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: WezuSkeletonTable(rows: 6, columns: 6),
+                    ),
                     error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.redAccent))),
                   ),
                 ),

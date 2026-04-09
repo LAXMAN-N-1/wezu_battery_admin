@@ -62,10 +62,12 @@ class UserRepository {
     String? sortOrder,
     String? role,
     String? status,
+    String? fields,
   }) async {
     try {
       final skip = page > 1 ? (page - 1) * limit : 0;
       final queryParams = <String, dynamic>{'skip': skip, 'limit': limit};
+      if (fields != null) queryParams['fields'] = fields;
       if (sortBy != null) queryParams['sort_by'] = sortBy;
       if (sortOrder != null) queryParams['sort_order'] = sortOrder;
       final normalizedStatus = _normalizeStatus(status);

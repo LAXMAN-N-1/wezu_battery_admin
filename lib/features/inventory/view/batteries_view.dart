@@ -11,6 +11,7 @@ import '../widgets/battery_form_drawer.dart';
 import '../widgets/battery_detail_drawer.dart';
 import '../widgets/battery_import_modal.dart';
 import '../widgets/battery_qr_modal.dart';
+import '../../../core/widgets/wezu_skeleton.dart';
 
 class BatteriesView extends StatefulWidget {
   const BatteriesView({super.key});
@@ -133,6 +134,45 @@ class _BatteriesViewState extends State<BatteriesView>
         );
       }
     }
+  }
+
+  Future<void> _loadDataSilently() async {
+    try {
+      double? minHealth;
+      double? maxHealth;
+      if (_healthFilter == 'Good >80%') minHealth = 80;
+      else if (_healthFilter == 'Fair 50-80%') { minHealth = 50; maxHealth = 80; }
+      else if (_healthFilter == 'Poor <50%') maxHealth = 50;
+
+      String? effectiveStatus = _statusFilter;
+      if (_quickFilter == 'Needs Attention') {
+        maxHealth = 60;
+        effectiveStatus = 'All';
+      }
+
+      final results = await Future.wait([
+        _repository.getBatteries(
+          status: effectiveStatus,
+          locationType: _locationFilter,
+          batteryType: _batteryTypeFilter,
+          minHealth: minHealth,
+          maxHealth: maxHealth,
+          search: _searchQuery,
+          offset: _currentPage * _rowsPerPage,
+          limit: _rowsPerPage,
+        ),
+        _repository.getBatterySummary(),
+      ]);
+
+      if (mounted) {
+        final listResult = results[0];
+        setState(() {
+          _batteries = listResult['items'] as List<Battery>;
+          _totalCount = (listResult['total_count'] is num) ? (listResult['total_count'] as num).toInt() : int.tryParse(listResult['total_count']?.toString() ?? '') ?? 0;
+          _summary = results[1];
+        });
+      }
+    } catch (_) {}
   }
 
   void _onSearchChanged(String query) {
@@ -378,9 +418,24 @@ class _BatteriesViewState extends State<BatteriesView>
       ),
     );
     if (confirm == true) {
+      final selectedCopy = _selectedIds.toList();
+      setState(() {
+        for (var i = 0; i < _batteries.length; i++) {
+          if (_selectedIds.contains(_batteries[i].id)) {
+            _batteries[i] = _batteries[i].copyWith(status: status);
+          }
+        }
+        _selectedIds.clear();
+        _bulkBarController.reverse();
+      });
+
       try {
-        await _repository.bulkUpdateBatteries(_selectedIds.toList(), status);
-        _loadData();
+        _repository.bulkUpdateBatteries(selectedCopy, status).then((_) {
+          _loadDataSilently();
+        }).catchError((_) {
+          _loadDataSilently(); // Re-sync on failure safely
+        });
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -466,15 +521,22 @@ class _BatteriesViewState extends State<BatteriesView>
                 return;
               }
               try {
-                await _repository.deleteBattery(
-                  battery.id,
+                final copyId = battery.id;
+                setState(() => _batteries.removeWhere((b) => b.id == copyId));
+
+                _repository.deleteBattery(
+                  copyId,
                   reason: reasonController.text,
-                );
+                ).then((_) {
+                  _loadDataSilently();
+                }).catchError((_) {
+                  _loadDataSilently();
+                });
+
                 if (!context.mounted || !mounted) {
                   return;
                 }
                 Navigator.pop(context);
-                _loadData();
               } catch (e) {
                 if (!context.mounted || !mounted) {
                   return;
@@ -1101,9 +1163,9 @@ class _BatteriesViewState extends State<BatteriesView>
     return AdvancedCard(
       padding: EdgeInsets.zero,
       child: _isLoading
-          ? const SizedBox(
-              height: 400,
-              child: Center(child: CircularProgressIndicator()),
+          ? const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: WezuSkeletonTable(rows: 10, columns: 8),
             )
           : _batteries.isEmpty
           ? _emptyState()

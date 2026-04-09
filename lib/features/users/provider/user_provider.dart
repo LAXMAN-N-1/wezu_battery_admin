@@ -86,6 +86,7 @@ class UserListNotifier extends StateNotifier<UserListState> {
         limit: limit ?? state.limit,
         role: state.filterRole,
         status: state.filterStatus,
+        fields: 'id,full_name,email,phone_number,user_type,status,kyc_status,role_id,created_at,suspension_status',
       );
       state = state.copyWith(
         users: response.users,
@@ -149,23 +150,66 @@ class UserListNotifier extends StateNotifier<UserListState> {
   }
 
   Future<void> toggleUserActive(int userId) async {
-    await _repository.toggleUserActive(userId);
-    await loadUsers();
+    final prevUsers = state.users;
+    state = state.copyWith(users: state.users.map((u) {
+      if (u.id == userId) return u.copyWith(isActive: !u.isActive);
+      return u;
+    }).toList());
+
+    try {
+      await _repository.toggleUserActive(userId);
+    } catch (e) {
+      state = state.copyWith(users: prevUsers);
+      rethrow;
+    }
   }
 
   Future<void> suspendUser(int userId, {required String reason, int? durationDays}) async {
-    await _repository.suspendUser(userId, reason: reason, durationDays: durationDays);
-    await loadUsers();
+    final prevUsers = state.users;
+    state = state.copyWith(users: state.users.map((u) {
+      if (u.id == userId) return u.copyWith(suspensionStatus: 'suspended');
+      return u;
+    }).toList());
+
+    try {
+      await _repository.suspendUser(userId, reason: reason, durationDays: durationDays);
+    } catch (e) {
+      state = state.copyWith(users: prevUsers);
+      rethrow;
+    }
   }
 
   Future<void> reactivateUser(int userId) async {
-    await _repository.reactivateUser(userId);
-    await loadUsers();
+    final prevUsers = state.users;
+    state = state.copyWith(users: state.users.map((u) {
+      if (u.id == userId) {
+        // Optimistically set active
+        return u.copyWith(suspensionStatus: 'active');
+      }
+      return u;
+    }).toList());
+
+    try {
+      await _repository.reactivateUser(userId);
+    } catch (e) {
+      state = state.copyWith(users: prevUsers);
+      rethrow;
+    }
   }
 
   Future<void> updateKycStatus(int userId, String status) async {
-    await _repository.updateKycStatus(userId, status);
-    await loadUsers();
+    final prevUsers = state.users;
+    state = state.copyWith(users: state.users.map((u) {
+      if (u.id == userId) return u.copyWith(kycStatus: status);
+      return u;
+    }).toList());
+
+    try {
+      await _repository.updateKycStatus(userId, status);
+    } catch (e) {
+      state = state.copyWith(users: prevUsers);
+      rethrow;
+    }
   }
 
   Future<void> resetPassword(int userId) async {
@@ -174,8 +218,15 @@ class UserListNotifier extends StateNotifier<UserListState> {
   }
 
   Future<void> deleteUser(int userId) async {
-    await _repository.deleteUser(userId);
-    await loadUsers();
+    final prevUsers = state.users;
+    state = state.copyWith(users: state.users.where((u) => u.id != userId).toList());
+
+    try {
+      await _repository.deleteUser(userId);
+    } catch (e) {
+      state = state.copyWith(users: prevUsers);
+      rethrow;
+    }
   }
 }
 
