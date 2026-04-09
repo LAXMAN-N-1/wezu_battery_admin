@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
+/// A single shimmer block element using flutter_animate (already in pubspec.lock).
 class WezuSkeleton extends StatelessWidget {
   final double width;
   final double height;
@@ -15,21 +16,23 @@ class WezuSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: const Color(0xFF1E293B), // Matches Dark Theme Backgrounds
-      highlightColor: const Color(0xFF334155), // Lighter Slate for the sweeper
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
-    );
+    )
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          duration: 1200.ms,
+          color: const Color(0xFF334155),
+        );
   }
 }
 
+/// A table-shaped skeleton loader that mimics data rows during loading.
 class WezuSkeletonTable extends StatelessWidget {
   final int rows;
   final int columns;
@@ -50,9 +53,9 @@ class WezuSkeletonTable extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             border: rowIndex < rows - 1
-                ? Border(
+                ? const Border(
                     bottom: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.04), // Replicates AdvancedTable divider
+                      color: Color(0x0AFFFFFF), // ~4% white
                     ),
                   )
                 : null,
@@ -61,7 +64,8 @@ class WezuSkeletonTable extends StatelessWidget {
             children: List.generate(columns, (colIndex) {
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(right: colIndex < columns - 1 ? 16.0 : 0),
+                  padding: EdgeInsets.only(
+                      right: colIndex < columns - 1 ? 16.0 : 0),
                   child: WezuSkeleton(
                     height: rowHeight,
                     width: double.infinity,
