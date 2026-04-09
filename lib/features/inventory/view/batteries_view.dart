@@ -440,7 +440,7 @@ class _BatteriesViewState extends State<BatteriesView>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${_selectedIds.length} batteries updated to $status',
+                '${selectedCopy.length} batteries updated to $status',
               ),
               backgroundColor: Colors.greenAccent.shade700,
             ),

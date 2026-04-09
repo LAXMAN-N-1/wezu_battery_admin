@@ -81,6 +81,48 @@ class Battery {
       notes: json['notes']?.toString(),
     );
   }
+
+  Battery copyWith({
+    String? id,
+    String? serialNumber,
+    String? batteryType,
+    String? status,
+    double? healthPercentage,
+    String? locationType,
+    String? locationName,
+    int? cycleCount,
+    int? totalCycles,
+    DateTime? updatedAt,
+    DateTime? createdAt,
+    String? manufacturer,
+    DateTime? manufactureDate,
+    DateTime? purchaseDate,
+    DateTime? warrantyExpiry,
+    DateTime? lastChargedAt,
+    DateTime? lastInspectedAt,
+    String? notes,
+  }) {
+    return Battery(
+      id: id ?? this.id,
+      serialNumber: serialNumber ?? this.serialNumber,
+      batteryType: batteryType ?? this.batteryType,
+      status: status ?? this.status,
+      healthPercentage: healthPercentage ?? this.healthPercentage,
+      locationType: locationType ?? this.locationType,
+      locationName: locationName ?? this.locationName,
+      cycleCount: cycleCount ?? this.cycleCount,
+      totalCycles: totalCycles ?? this.totalCycles,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdAt: createdAt ?? this.createdAt,
+      manufacturer: manufacturer ?? this.manufacturer,
+      manufactureDate: manufactureDate ?? this.manufactureDate,
+      purchaseDate: purchaseDate ?? this.purchaseDate,
+      warrantyExpiry: warrantyExpiry ?? this.warrantyExpiry,
+      lastChargedAt: lastChargedAt ?? this.lastChargedAt,
+      lastInspectedAt: lastInspectedAt ?? this.lastInspectedAt,
+      notes: notes ?? this.notes,
+    );
+  }
 }
 
 class BatteryAuditLog {

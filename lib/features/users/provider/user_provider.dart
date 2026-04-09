@@ -167,7 +167,7 @@ class UserListNotifier extends StateNotifier<UserListState> {
   Future<void> suspendUser(int userId, {required String reason, int? durationDays}) async {
     final prevUsers = state.users;
     state = state.copyWith(users: state.users.map((u) {
-      if (u.id == userId) return u.copyWith(suspensionStatus: 'suspended');
+      if (u.id == userId) return u.copyWith(suspensionReason: reason, isActive: false);
       return u;
     }).toList());
 
@@ -184,7 +184,7 @@ class UserListNotifier extends StateNotifier<UserListState> {
     state = state.copyWith(users: state.users.map((u) {
       if (u.id == userId) {
         // Optimistically set active
-        return u.copyWith(suspensionStatus: 'active');
+        return u.copyWith(isActive: true);
       }
       return u;
     }).toList());
