@@ -157,56 +157,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<_AuthResult> _authenticate(String credential, String password) async {
-    final attempts =
-        <
-          ({
-            String path,
-            Map<String, dynamic> payload,
-            bool allowAdminRoleRetry,
-            bool isFormEncoded,
-          })
-        >[
-          (
-            path: '/api/v1/auth/admin/login',
-            payload: {'username': credential, 'password': password},
-            allowAdminRoleRetry: false,
-            isFormEncoded: false,
-          ),
-          (
-            path: '/api/v1/auth/token',
-            payload: {
-              'username': credential,
-              'password': password,
-              'grant_type': 'password',
-            },
-            allowAdminRoleRetry: false,
-            isFormEncoded: true,
-          ),
-          (
-            path: '/api/v1/auth/admin/login',
-            payload: {'email': credential, 'password': password},
-            allowAdminRoleRetry: false,
-            isFormEncoded: false,
-          ),
-          (
-            path: '/api/v1/auth/login',
-            payload: {'credential': credential, 'password': password},
-            allowAdminRoleRetry: true,
-            isFormEncoded: false,
-          ),
-          (
-            path: '/api/v1/auth/login',
-            payload: {'username': credential, 'password': password},
-            allowAdminRoleRetry: true,
-            isFormEncoded: false,
-          ),
-          (
-            path: '/api/v1/auth/login',
-            payload: {'email': credential, 'password': password},
-            allowAdminRoleRetry: true,
-            isFormEncoded: false,
-          ),
-        ];
+    final attempts = <({String path, Map<String, dynamic> payload, bool allowAdminRoleRetry, bool isFormEncoded})>[
+      (
+        path: '/api/v1/auth/login',
+        payload: {'username': credential, 'password': password},
+        allowAdminRoleRetry: true,
+        isFormEncoded: false,
+      ),
+      (
+        path: '/api/v1/auth/token',
+        payload: {'username': credential, 'password': password, 'grant_type': 'password'},
+        allowAdminRoleRetry: false,
+        isFormEncoded: true,
+      ),
+      (
+        path: '/api/v1/auth/admin/login',
+        payload: {'username': credential, 'password': password},
+        allowAdminRoleRetry: false,
+        isFormEncoded: false,
+      ),
+      (
+        path: '/api/v1/auth/admin/login',
+        payload: {'email': credential, 'password': password},
+        allowAdminRoleRetry: false,
+        isFormEncoded: false,
+      ),
+      (
+        path: '/api/v1/auth/login',
+        payload: {'credential': credential, 'password': password},
+        allowAdminRoleRetry: true,
+        isFormEncoded: false,
+      ),
+      (
+        path: '/api/v1/auth/login',
+        payload: {'email': credential, 'password': password},
+        allowAdminRoleRetry: true,
+        isFormEncoded: false,
+      ),
+    ];
 
     DioException? lastError;
 
@@ -354,6 +342,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   bool _shouldTryNextEndpoint(DioException error) {
+    if (error.response == null) {
+      return true;
+    }
+
     final statusCode = error.response?.statusCode;
     return statusCode == 404 ||
         statusCode == 405 ||
@@ -373,8 +365,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void _logLoginFailure(DioException error, {required String endpoint}) {
     final statusCode = error.response?.statusCode;
     final responseData = error.response?.data;
+    final errorType = error.type;
     debugPrint(
-      '[Auth] login failed endpoint=$endpoint statusCode=$statusCode responseData=$responseData',
+      '[Auth] login failed endpoint=$endpoint errorType=$errorType statusCode=$statusCode responseData=$responseData',
     );
   }
 

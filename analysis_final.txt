@@ -1,0 +1,8 @@
+﻿Analyzing audit...                                              
+
+   info - Unnecessary 'this.' qualifier - lib\features\audit\data\providers\audit_logs_provider.dart:66:49 - unnecessary_this
+warning - Unused import: 'package:flutter_animate/flutter_animate.dart' - lib\features\audit\view\fraud_dashboard_view.dart:5:8 - unused_import
+   info - Unnecessary use of string interpolation - lib\features\audit\view\security_events_view.dart:379:18 - unnecessary_string_interpolations
+   info - Unnecessary use of string interpolation - lib\features\audit\view\security_events_view.dart:382:18 - unnecessary_string_interpolations
+warning - The declaration '_buildHeader' isn't referenced - lib\features\audit\view\security_settings_view.dart:272:10 - unused_element
+

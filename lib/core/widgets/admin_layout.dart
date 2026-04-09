@@ -7,6 +7,7 @@ import '../theme/app_themes.dart';
 import '../theme/theme_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
 import '../utils/responsive.dart';
+import '../../router/app_router.dart';
 
 /// Menu section data model
 class MenuSection {
@@ -188,7 +189,9 @@ const List<MenuSection> _menuSections = [
     icon: Icons.shield_outlined,
     label: 'Audit & Security',
     children: [
-      MenuItem(label: 'Audit Logs', route: '/audit/logs'),
+      MenuItem(label: 'Security Dashboard', route: '/audit/dashboard'),
+      MenuItem(label: 'Activity Logs', route: '/audit/logs'),
+      MenuItem(label: 'Security Events', route: '/audit/security-events'),
       MenuItem(label: 'Fraud Detection', route: '/audit/fraud'),
       MenuItem(label: 'Security Settings', route: '/audit/security'),
     ],
@@ -217,6 +220,12 @@ class AdminLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Sync sidebar selection with current route
+    ref.listen(routerProvider, (_, next) {
+      final route = next.routerDelegate.currentConfiguration.uri.toString();
+      ref.read(selectedRouteProvider.notifier).state = route;
+    });
+
     final isDesktop = Responsive.isDesktop(context);
 
     final colors = context.appColors;
@@ -266,7 +275,7 @@ class AdminLayout extends ConsumerWidget {
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
-                      BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                      BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
                     ],
                   ),
                   child: const Icon(Icons.bolt, color: Colors.white, size: 22),
@@ -324,7 +333,7 @@ class AdminLayout extends ConsumerWidget {
                 style: GoogleFonts.inter(color: Colors.red.shade300, fontWeight: FontWeight.w500, fontSize: 13),
               ),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              hoverColor: Colors.red.withOpacity(0.05),
+              hoverColor: Colors.red.withValues(alpha: 0.05),
             ),
           ),
         ],
@@ -393,8 +402,8 @@ class AdminLayout extends ConsumerWidget {
                   )
                 : null,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            tileColor: isActive && !isExpanded ? Colors.blue.withOpacity(0.08) : Colors.transparent,
-            hoverColor: Colors.white.withOpacity(0.03),
+            tileColor: isActive && !isExpanded ? Colors.blue.withValues(alpha: 0.08) : Colors.transparent,
+            hoverColor: Colors.white.withValues(alpha: 0.03),
           ),
         ),
 
@@ -442,8 +451,8 @@ class AdminLayout extends ConsumerWidget {
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: isActive ? Colors.blue.withOpacity(0.06) : Colors.transparent,
-        hoverColor: Colors.white.withOpacity(0.03),
+        tileColor: isActive ? Colors.blue.withValues(alpha: 0.06) : Colors.transparent,
+        hoverColor: Colors.white.withValues(alpha: 0.03),
       ),
     );
   }

@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../features/auth/provider/auth_provider.dart';
 import '../features/auth/view/login_view.dart';
+import '../features/auth/provider/auth_provider.dart';
 import '../features/dashboard/view/dashboard_view.dart';
 import '../features/bess/view/bess_overview_view.dart';
 import '../features/bess/view/energy_monitoring_view.dart';
@@ -21,6 +21,7 @@ import '../features/audit/view/audit_dashboard_view.dart';
 import '../features/audit/view/audit_logs_view.dart';
 import '../features/audit/view/security_events_view.dart';
 import '../features/audit/view/security_settings_view.dart';
+import '../features/audit/view/fraud_dashboard_view.dart';
 import '../features/settings/view/general_settings_view.dart';
 import '../features/settings/view/feature_flags_view.dart';
 import '../features/settings/view/api_keys_view.dart';
@@ -80,13 +81,27 @@ import '../features/user_master/view/access_logs_master_view.dart';
 import '../features/user_master/view/user_bulk_master_view.dart';
 import '../core/widgets/admin_layout.dart';
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+  RouterNotifier(this._ref) {
+    _ref.listen(authProvider, (previous, next) {
+      if (previous?.isAuthenticated != next.isAuthenticated || 
+          previous?.isLoading != next.isLoading) {
+        notifyListeners();
+      }
+    });
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final notifier = RouterNotifier(ref);
 
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: '/login',
     debugLogDiagnostics: kDebugMode,
+    refreshListenable: notifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isLoggingIn = state.matchedLocation == '/login';
 
       if (authState.isLoading) {
@@ -557,7 +572,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/audit/fraud',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: FraudRiskView()),
+                const NoTransitionPage(child: FraudDashboardView()),
           ),
           GoRoute(
             path: '/audit/security-events',
