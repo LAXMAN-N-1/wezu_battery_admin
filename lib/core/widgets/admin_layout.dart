@@ -105,18 +105,7 @@ const List<MenuSection> _menuSections = [
       MenuItem(label: 'Late Fees', route: '/rentals/late-fees'),
     ],
   ),
-  MenuSection(
-    id: 'finance',
-    icon: Icons.account_balance_outlined,
-    label: 'Finance',
-    children: [
-      MenuItem(label: 'Revenue Dashboard', route: '/finance'),
-      MenuItem(label: 'Transactions', route: '/finance/transactions'),
-      MenuItem(label: 'Settlements', route: '/finance/settlements'),
-      MenuItem(label: 'Invoices', route: '/finance/invoices'),
-      MenuItem(label: 'Profit Analysis', route: '/finance/profit'),
-    ],
-  ),
+
   MenuSection(
     id: 'logistics',
     icon: Icons.local_shipping_outlined,
@@ -189,10 +178,10 @@ const List<MenuSection> _menuSections = [
     icon: Icons.shield_outlined,
     label: 'Audit & Security',
     children: [
-      MenuItem(label: 'Security Dashboard', route: '/audit/dashboard'),
-      MenuItem(label: 'Activity Logs', route: '/audit/logs'),
-      MenuItem(label: 'Security Events', route: '/audit/security-events'),
-      MenuItem(label: 'Fraud Detection', route: '/audit/fraud'),
+      MenuItem(label: 'Dashboard', route: '/audit/dashboard'),
+      MenuItem(label: 'Audit Logs', route: '/audit/logs'),
+      MenuItem(label: 'Fraud & Risk', route: '/audit/fraud'),
+      MenuItem(label: 'Security Events', route: '/audit/events'),
       MenuItem(label: 'Security Settings', route: '/audit/security'),
     ],
   ),

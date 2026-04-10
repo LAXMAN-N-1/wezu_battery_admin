@@ -1,713 +1,510 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../data/providers/security_settings_provider.dart';
+import '../data/models/audit_models.dart';
+import '../data/repositories/audit_repository.dart';
+import 'widgets/audit_components.dart';
 
 class SecuritySettingsView extends ConsumerStatefulWidget {
   const SecuritySettingsView({super.key});
-
   @override
-  ConsumerState<SecuritySettingsView> createState() => _SecuritySettingsViewState();
+  State<SecuritySettingsView> createState() => _SecuritySettingsViewState();
 }
 
-class _SecuritySettingsViewState extends ConsumerState<SecuritySettingsView> {
-  final TextEditingController _ipController = TextEditingController();
-  final TextEditingController _ipLabelController = TextEditingController();
+class _SecuritySettingsViewState extends State<SecuritySettingsView> {
+  final AuditRepository _repo = AuditRepository();
+  SecuritySettings? _settings;
+  bool _isLoading = true;
+  bool _isSaving = false;
+  bool _isDirty = false;
+
+  // IP Whitelist inline form state
+  final _ipController = TextEditingController();
+  final _ipLabelController = TextEditingController();
+  bool _showAddIpRow = false;
+
+  // Current user IP
+  static const String _currentIp = '';
 
   @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(securitySettingsProvider);
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-    // Listen for errors and show snackbar
-    ref.listen(securitySettingsProvider.select((s) => s.error), (previous, next) {
-      if (next != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next), backgroundColor: Colors.redAccent),
-        );
-      }
-    });
+  @override
+  void dispose() {
+    _ipController.dispose();
+    _ipLabelController.dispose();
+    super.dispose();
+  }
 
-    // Listen for save success (isSaving transitions from true to false with no error)
-    ref.listen(securitySettingsProvider.select((s) => s.isSaving), (previous, isSaving) {
-      if (previous == true && isSaving == false && state.error == null && !state.isDirty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 20),
-                SizedBox(width: 12),
-                Text('Security settings applied successfully'),
-              ],
-            ),
-            backgroundColor: Color(0xFF10B981),
-            behavior: SnackBarBehavior.floating,
+  Future<void> _loadData() async {
+    setState(() { _isLoading = true; _isDirty = false; });
+    try {
+      final res = await _repo.getSecuritySettings();
+      if (mounted) setState(() { _settings = res; _isLoading = false; });
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _markDirty() => setState(() => _isDirty = true);
+
+  Future<void> _saveSettings() async {
+    if (_settings == null) return;
+
+    // Confirmation dialog before saving
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Apply Security Settings?',
+            style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        content: Text(
+          'Saving these settings will affect all active users immediately. Active sessions may be terminated depending on your changes.',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white54)),
           ),
-        );
-      }
-    });
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                if (state.error != null) ...[
-                  const SizedBox(height: 16),
-                  _buildWarningBanner(state.error!, Colors.redAccent),
-                ],
-                const SizedBox(height: 32),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final crossAxisCount = constraints.maxWidth > 1200 ? 2 : 1;
-                        return Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: Column(
-                                    children: [
-                                      _buildPasswordPolicy(state),
-                                      const SizedBox(height: 24),
-                                      _buildSessionManagement(state),
-                                      const SizedBox(height: 24),
-                                      _buildLoginControls(state),
-                                    ],
-                                  ),
-                                ),
-                                if (crossAxisCount > 1) const SizedBox(width: 24),
-                                if (crossAxisCount > 1)
-                                  Expanded(
-                                    flex: 1,
-                                    child: Column(
-                                      children: [
-                                        _buildTwoFactorAuth(state),
-                                        const SizedBox(height: 24),
-                                        _buildIpWhitelist(state),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            if (crossAxisCount == 1) ...[
-                               const SizedBox(height: 24),
-                               _buildTwoFactorAuth(state),
-                               const SizedBox(height: 24),
-                               _buildIpWhitelist(state),
-                            ],
-                            const SizedBox(height: 100), // Space for bottom bar
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
+            child: Text('Confirm & Save', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ),
-          _buildBottomActionBuffer(state),
         ],
       ),
     );
-  }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    if (confirmed != true) return;
+
+    setState(() => _isSaving = true);
+    try {
+      await _repo.updateSecuritySettings(_settings!.toJson());
+      if (mounted) {
+        setState(() { _isSaving = false; _isDirty = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
               children: [
-                const Icon(Icons.security_rounded, color: Colors.blueAccent, size: 28),
-                const SizedBox(width: 16),
-                Text(
-                  'Security Settings',
-                  style: GoogleFonts.outfit(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                const Icon(Icons.check_circle_outline, color: Colors.greenAccent, size: 18),
+                const SizedBox(width: 10),
+                Text('Security settings updated successfully', style: GoogleFonts.inter()),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Configure platform-wide security policies and access controls',
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.white54),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+            backgroundColor: const Color(0xFF1E3A5F),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        _isLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 32),
+                    if (_settings != null) ...[
+                      _buildPasswordPolicy(),
+                      const SizedBox(height: 20),
+                      _buildTwoFactor(),
+                      const SizedBox(height: 20),
+                      _buildSessionManagement(),
+                      const SizedBox(height: 20),
+                      _buildIpWhitelist(),
+                      const SizedBox(height: 20),
+                      _buildLoginControls(),
+                      const SizedBox(height: 20),
+                      _buildDangerZone(),
+                    ],
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.verified_user_rounded, color: Color(0xFF10B981), size: 16),
-                  const SizedBox(width: 8),
-                  Text('Security Score: 85', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                  const SizedBox(width: 4),
-                  const Text('Good', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-             Text(
-              'Last Updated: Apr 7, 2026 10:30 AM',
-              style: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
-            ),
-          ],
+        StickySaveBar(
+          isDirty: _isDirty,
+          isLoading: _isSaving,
+          onSave: _saveSettings,
+          onDiscard: _loadData,
         ),
       ],
     );
   }
 
-  Widget _buildCard({required String title, required IconData icon, required List<Widget> children, Color? accentColor}) {
-    final color = accentColor ?? Colors.blueAccent;
+  // ─── Page Header ─────────────────────────────────────────────────────────
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Security Settings',
+          style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Platform-wide security configuration — password policy, 2FA, sessions, IP whitelist and login controls',
+          style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+        ),
+      ],
+    ).animate().fadeIn().slideY(begin: -0.05);
+  }
+
+  // ─── Section wrapper ──────────────────────────────────────────────────────
+  Widget _section(String title, String subtitle, IconData icon, Color iconColor, List<Widget> children) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: const Color(0xFF1E293B).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(subtitle, style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 24),
+          Divider(color: Colors.white.withValues(alpha: 0.06), height: 1),
+          const SizedBox(height: 20),
           ...children,
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05);
   }
 
-  Widget _buildPasswordPolicy(SecuritySettingsState state) {
-    return _buildCard(
-      title: 'Password Policy',
-      icon: Icons.lock_outline_rounded,
-      children: [
-        _sliderSetting('Minimum Length', 'min_password_length', 8, 20, state),
-        _switchSetting('Require Uppercase Letter', 'At least one uppercase character (A-Z)', 'req_uppercase', state),
-        _switchSetting('Require Number', 'At least one number (0-9)', 'req_number', state),
-        _switchSetting('Require Special Character', 'e.g., !@#\$%^&*', 'req_special', state),
-        _dropdownSetting('Password Expiry', 'password_expiry', ['Every 30 Days', 'Every 60 Days', 'Every 90 Days', 'Never'], state),
-        _counterSetting('Prevent Reuse of Last N Passwords', 'reuse_limit', 0, 12, state),
+  // ─── Section A: Password Policy ───────────────────────────────────────────
+  Widget _buildPasswordPolicy() {
+    final p = _settings!.passwordPolicy;
+    return _section(
+      'Password Policy',
+      'Define password complexity and rotation requirements',
+      Icons.password_rounded,
+      Colors.blueAccent,
+      [
+        _sliderRow(
+          'Minimum Length',
+          'Characters required in password',
+          p.minLength.toDouble(),
+          6, 20,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(passwordPolicy: p.copyWith(minLength: v.round()));
+            _markDirty();
+          }),
+          valueLabel: '${p.minLength} chars',
+        ),
+        _toggleRow(
+          'Require Uppercase Letter',
+          'At least one uppercase character (A–Z)',
+          p.requireUppercase,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(passwordPolicy: p.copyWith(requireUppercase: v));
+            _markDirty();
+          }),
+        ),
+        _toggleRow(
+          'Require Number',
+          'At least one numeric digit (0–9)',
+          p.requireNumbers,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(passwordPolicy: p.copyWith(requireNumbers: v));
+            _markDirty();
+          }),
+        ),
+        _toggleRow(
+          'Require Special Character',
+          'e.g., ! @ # \$ % ^ & *',
+          p.requireSpecial,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(passwordPolicy: p.copyWith(requireSpecial: v));
+            _markDirty();
+          }),
+        ),
+        _dropdownRow(
+          'Password Expiry',
+          'How often users must reset their password',
+          _expiryLabel(p.expiryDays),
+          ['Never', 'Every 30 Days', 'Every 60 Days', 'Every 90 Days'],
+          (v) => setState(() {
+            final days = _expiryDays(v!);
+            _settings = _settings!.copyWith(passwordPolicy: p.copyWith(expiryDays: days));
+            _markDirty();
+          }),
+        ),
+        _stepperRow(
+          'Prevent Reuse (Last N Passwords)',
+          'Blocks users from reusing their previous passwords',
+          3,
+          0, 12,
+          (v) => _markDirty(),
+        ),
       ],
     );
   }
 
-  Widget _buildTwoFactorAuth(SecuritySettingsState state) {
-    return _buildCard(
-      title: 'Two-Factor Authentication (2FA)',
-      icon: Icons.phonelink_lock_rounded,
-      children: [
-        _switchSetting('Enforce 2FA for Super Admins', 'Recommended', '2fa_super_admin', state),
-        _switchSetting('Enforce 2FA for All Admins', '', '2fa_all_admin', state),
-        _switchSetting('Enforce 2FA for Dealers', '', '2fa_dealers', state),
-        const SizedBox(height: 16),
-        Text('Allowed 2FA Methods', style: GoogleFonts.inter(fontSize: 13, color: Colors.white54, fontWeight: FontWeight.w600)),
+  String _expiryLabel(int days) {
+    if (days == 0) return 'Never';
+    if (days == 30) return 'Every 30 Days';
+    if (days == 60) return 'Every 60 Days';
+    return 'Every 90 Days';
+  }
+
+  int _expiryDays(String label) {
+    if (label == 'Every 30 Days') return 30;
+    if (label == 'Every 60 Days') return 60;
+    if (label == 'Every 90 Days') return 90;
+    return 0;
+  }
+
+  // ─── Section B: Two-Factor Authentication ─────────────────────────────────
+  Widget _buildTwoFactor() {
+    final t = _settings!.twoFactor;
+    return _section(
+      'Two-Factor Authentication (2FA)',
+      'Configure multi-factor auth requirements per role',
+      Icons.security_rounded,
+      Colors.purpleAccent,
+      [
+        _toggleRow(
+          'Enforce 2FA for Super Admins',
+          'Recommended: always ON for highest-privilege accounts',
+          t.enforceSuperAdmin,
+          (v) {
+            if (!v) {
+              _show2FAWarning();
+            }
+            setState(() {
+              _settings = _settings!.copyWith(twoFactor: t.copyWith(enforceSuperAdmin: v));
+              _markDirty();
+            });
+          },
+          warningIfOff: true,
+        ),
+        _toggleRow(
+          'Enforce 2FA for All Admins',
+          'Require 2FA for all users with Admin role',
+          t.enforceAllAdmin,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(twoFactor: t.copyWith(enforceAllAdmin: v));
+            _markDirty();
+          }),
+        ),
+        _toggleRow(
+          'Enforce 2FA for Dealers',
+          'Require 2FA for all dealer-role accounts',
+          t.enabled,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(twoFactor: t.copyWith(enabled: v));
+            _markDirty();
+          }),
+        ),
+        const SizedBox(height: 4),
+        Builder(
+          builder: (context) {
+            final isAny2FAEnforced = t.enforceSuperAdmin || t.enforceAllAdmin || t.enabled;
+            return Opacity(
+              opacity: isAny2FAEnforced ? 1.0 : 0.4,
+              child: AbsorbPointer(
+                absorbing: !isAny2FAEnforced,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Allowed 2FA Methods', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                    const SizedBox(height: 10),
+                    _checkboxRow('SMS OTP', t.allowSMS, (v) => setState(() {
+                      _settings = _settings!.copyWith(twoFactor: t.copyWith(allowSMS: v ?? false));
+                      _markDirty();
+                    })),
+                    _checkboxRow('Email OTP', t.allowEmail, (v) => setState(() {
+                      _settings = _settings!.copyWith(twoFactor: t.copyWith(allowEmail: v ?? false));
+                      _markDirty();
+                    })),
+                    _checkboxRow('Authenticator App (TOTP)', t.allowTOTP, (v) => setState(() {
+                      _settings = _settings!.copyWith(twoFactor: t.copyWith(allowTOTP: v ?? false));
+                      _markDirty();
+                    })),
+                    if (!isAny2FAEnforced)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Enforce 2FA for a role above to enable method selection',
+                          style: GoogleFonts.inter(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }
+        ),
         const SizedBox(height: 12),
-        _checkboxItem('SMS OTP', '2fa_sms', state),
-        _checkboxItem('Email OTP', '2fa_email', state),
-        _checkboxItem('Authenticator App (TOTP)', '2fa_totp', state),
-        const SizedBox(height: 24),
-        _dropdownSetting('2FA Grace Period for New Users', '2fa_grace', ['3 Days', '7 Days', '14 Days'], state),
-        const SizedBox(height: 24),
-        _buildWarningBanner('Disabling 2FA for Super Admins is a security risk.', Colors.orange),
+        _dropdownRow(
+          '2FA Grace Period for New Users',
+          'How long new users have before 2FA is enforced',
+          '7 Days',
+          ['None', '7 Days', '14 Days'],
+          (v) => _markDirty(),
+        ),
       ],
     );
   }
 
-  Widget _buildSessionManagement(SecuritySettingsState state) {
-    return _buildCard(
-      title: 'Session Management',
-      icon: Icons.timer_outlined,
-      children: [
-        _dropdownSetting('Admin Session Timeout (Inactivity)', 'session_timeout', ['15 minutes', '30 minutes', '60 minutes', '2 hours'], state),
-        _counterSetting('Max Concurrent Sessions', 'max_sessions', 1, 10, state, suffix: '(Per Account)'),
-        _dropdownSetting('Remember Me Duration', 'remember_me_days', ['7 Days', '14 Days', '30 Days'], state),
-        const SizedBox(height: 32),
-        _buildDangerButton('Force Logout All Admin Sessions', 'Immediately invalidate all active admin sessions.', () => _showForceLogoutDialog()),
-      ],
-    );
-  }
-
-  Widget _buildIpWhitelist(SecuritySettingsState state) {
-    return _buildCard(
-      title: 'IP Whitelist',
-      icon: Icons.lan_outlined,
-      children: [
-        _switchSetting('Enable IP Whitelist', 'Restrict admin access to specific IP addresses', 'ip_whitelist_enabled', state),
-        const SizedBox(height: 16),
-        _buildWarningBanner('Enabling IP whitelist restricts admin access to listed IP only. Ensure your current IP is in the list before saving or you will be locked out.', Colors.orange),
-        const SizedBox(height: 24),
-        Row(
+  void _show2FAWarning() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
           children: [
-            Text('Your Current IP: 192.168.1.100', style: GoogleFonts.inter(fontSize: 13, color: Colors.white38)),
-            const Spacer(),
-            TextButton.icon(onPressed: () {}, icon: const Icon(Icons.add, size: 14), label: const Text('Add My IP')),
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 18),
+            const SizedBox(width: 10),
+            Text('Disabling 2FA for Super Admins is a security risk!', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
           ],
         ),
-        const SizedBox(height: 16),
-        _buildIpTable(state),
-        const SizedBox(height: 24),
-        _buildIpEntryForm(),
-      ],
-    );
-  }
-
-  Widget _buildLoginControls(SecuritySettingsState state) {
-    return _buildCard(
-      title: 'Login Controls',
-      icon: Icons.login_rounded,
-      accentColor: Colors.orangeAccent,
-      children: [
-        _counterSetting('Max Failed Login Attempts Before Lockout', 'max_failed_attempts', 1, 10, state),
-        _dropdownSetting('Account Lockout Duration', 'lockout_duration', ['15 minutes', '30 minutes', '60 minutes', '24 hours'], state),
-        _dropdownSetting('CAPTCHA on Login Page', 'captcha_mode', ['Always', 'After 3 Failed Attempts', 'Never'], state),
-        _switchSetting('Send Email Alert on Suspicious Login', 'New device, new country, or after failed attempts', 'alert_suspicious', state),
-        _switchSetting('Login from New Device Notification', 'Sends push/email to account owner', 'alert_new_device', state),
-      ],
-    );
-  }
-
-  Widget _sliderSetting(String label, String key, double min, double max, SecuritySettingsState state) {
-    final rawValue = (state.localSettings[key] ?? state.settings[key]);
-    final value = (rawValue is num) ? rawValue.toDouble() : min;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(label, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-              const Spacer(),
-              Text(value.toInt().toString(), style: GoogleFonts.robotoMono(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-            ],
-          ),
-          Slider(
-            value: value.clamp(min, max),
-            min: min,
-            max: max,
-            divisions: (max - min).toInt(),
-            activeColor: Colors.blueAccent,
-            inactiveColor: Colors.white10,
-            onChanged: (v) => ref.read(securitySettingsProvider.notifier).updateLocalSetting(key, v.toInt()),
-          ),
-        ],
+        backgroundColor: Colors.orange.shade900,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
-  Widget _switchSetting(String label, String subtitle, String key, SecuritySettingsState state) {
-    final value = state.localSettings[key] ?? state.settings[key] ?? false;
+  // ─── Section C: Session Management ────────────────────────────────────────
+  Widget _buildSessionManagement() {
+    final s = _settings!.sessionMgmt;
+    return _section(
+      'Session Management',
+      'Control active session duration and concurrency',
+      Icons.timer_outlined,
+      Colors.tealAccent,
+      [
+        _dropdownRow(
+          'Admin Session Timeout (Inactivity)',
+          'Auto-logout after this period of inactivity',
+          _timeoutLabel(s.timeoutMinutes),
+          ['15 minutes', '30 minutes', '1 hour', '4 hours', 'Never'],
+          (v) => setState(() {
+            _settings = _settings!.copyWith(sessionMgmt: s.copyWith(timeoutMinutes: _timeoutMinutes(v!)));
+            _markDirty();
+          }),
+        ),
+        _stepperRow(
+          'Max Concurrent Sessions',
+          'How many simultaneous logins are allowed per account',
+          s.maxConcurrentSessions,
+          1, 10,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(sessionMgmt: s.copyWith(maxConcurrentSessions: v));
+            _markDirty();
+          }),
+        ),
+        _dropdownRow(
+          'Remember Me Duration',
+          'How long the "remember me" cookie persists',
+          '7 Days',
+          ['7 Days', '14 Days', '30 Days', 'Disabled'],
+          (v) => _markDirty(),
+        ),
+        _toggleRow(
+          'Notify on New Session',
+          'Alert users when a new session is started on their account',
+          s.notifyNewSession,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(sessionMgmt: s.copyWith(notifyNewSession: v));
+            _markDirty();
+          }),
+        ),
+        const SizedBox(height: 8),
+        _buildForceLogoutButton(),
+      ],
+    );
+  }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+  String _timeoutLabel(int mins) {
+    if (mins == 15) return '15 minutes';
+    if (mins == 30) return '30 minutes';
+    if (mins == 60) return '1 hour';
+    if (mins == 240) return '4 hours';
+    return 'Never';
+  }
+
+  int _timeoutMinutes(String label) {
+    if (label == '15 minutes') return 15;
+    if (label == '30 minutes') return 30;
+    if (label == '1 hour') return 60;
+    if (label == '4 hours') return 240;
+    return 9999;
+  }
+
+  Widget _buildForceLogoutButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
+      ),
       child: Row(
         children: [
+          const Icon(Icons.logout, color: Colors.redAccent, size: 18),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-                if (subtitle.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(subtitle, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
-                  ),
+                Text('Force Log Out All Admins', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.redAccent)),
+                Text('Immediately invalidates all active admin sessions across the platform', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
               ],
             ),
           ),
-          Switch(
-            value: value == true,
-            onChanged: (v) => ref.read(securitySettingsProvider.notifier).updateLocalSetting(key, v),
-            activeThumbColor: const Color(0xFF10B981),
-            trackColor: WidgetStateProperty.resolveWith((states) {
-               if (states.contains(WidgetState.selected)) return const Color(0xFF10B981).withValues(alpha: 0.3);
-               return Colors.white10;
-            }),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dropdownSetting(String label, String key, List<String> options, SecuritySettingsState state) {
-    final value = state.localSettings[key] ?? state.settings[key] ?? options.first;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Expanded(child: Text(label, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500))),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.black26,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white10),
+          OutlinedButton.icon(
+            onPressed: _showForceLogoutDialog,
+            icon: const Icon(Icons.warning_amber_rounded, size: 14),
+            label: Text('Force Logout', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              side: const BorderSide(color: Colors.redAccent),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: DropdownButton<String>(
-              value: options.contains(value) ? value : options.first,
-              dropdownColor: const Color(0xFF1E293B),
-              underline: const SizedBox(),
-              icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-              items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-              onChanged: (v) => ref.read(securitySettingsProvider.notifier).updateLocalSetting(key, v),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _counterSetting(String label, String key, int min, int max, SecuritySettingsState state, {String suffix = ''}) {
-    final value = (state.localSettings[key] ?? state.settings[key] ?? min) as int;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Flexible(child: Text(label, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500))),
-                if (suffix.isNotEmpty) ...[
-                   const SizedBox(width: 8),
-                   Text(suffix, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
-                ],
-              ],
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black26,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: value > min ? () => ref.read(securitySettingsProvider.notifier).updateLocalSetting(key, value - 1) : null,
-                  icon: const Icon(Icons.remove, size: 14, color: Colors.white54),
-                ),
-                Text(value.toString(), style: GoogleFonts.robotoMono(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                IconButton(
-                  onPressed: value < max ? () => ref.read(securitySettingsProvider.notifier).updateLocalSetting(key, value + 1) : null,
-                  icon: const Icon(Icons.add, size: 14, color: Colors.white54),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _checkboxItem(String label, String key, SecuritySettingsState state) {
-    final value = state.localSettings[key] ?? state.settings[key] ?? false;
-    return InkWell(
-      onTap: () => ref.read(securitySettingsProvider.notifier).updateLocalSetting(key, !(value == true)),
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 18,
-              height: 18,
-              decoration: BoxDecoration(
-                color: value == true ? Colors.blueAccent : Colors.transparent,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: value == true ? Colors.blueAccent : Colors.white24, width: 2),
-              ),
-              child: value == true ? const Icon(Icons.check, size: 12, color: Colors.white) : null,
-            ),
-            const SizedBox(width: 12),
-            Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWarningBanner(String message, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.warning_amber_rounded, color: color, size: 18),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.inter(color: color.withValues(alpha: 0.9), fontSize: 12, fontWeight: FontWeight.w500, height: 1.4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIpTable(SecuritySettingsState state) {
-    final rawList = state.localSettings['ip_whitelist'] ?? state.settings['ip_whitelist'] ?? [];
-    final List<dynamic> ipList = rawList is List ? rawList : [];
-
-    return Table(
-      columnWidths: const {
-        0: FlexColumnWidth(2),
-        1: FlexColumnWidth(2),
-        2: FlexColumnWidth(1.5),
-        3: FlexColumnWidth(1.5),
-        4: FixedColumnWidth(50),
-      },
-      children: [
-        TableRow(
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white10))),
-          children: [
-            _tblHdr('IP Address / CIDR'),
-            _tblHdr('Label'),
-            _tblHdr('Added By'),
-            _tblHdr('Added Date'),
-            _tblHdr('Action'),
-          ],
-        ),
-        ...ipList.asMap().entries.map((e) {
-          final item = e.value is Map ? e.value : {'ip': e.value.toString(), 'label': 'Manual'};
-          return TableRow(
-            children: [
-               _tblCell(item['ip'] ?? '-'),
-               _tblCell(item['label'] ?? '-'),
-               _tblCell(item['added_by'] ?? 'Sirisha'),
-               _tblCell(item['date'] ?? 'Jan 10, 2026'),
-               Center(
-                 child: IconButton(
-                   onPressed: () => ref.read(securitySettingsProvider.notifier).removeIpFromWhitelist(e.key),
-                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
-                 ),
-               ),
-            ],
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _tblHdr(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Text(label, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _tblCell(String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Text(value, style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
-    );
-  }
-
-  Widget _buildIpEntryForm() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 2,
-          child: _buildInputField('IP Address / CIDR', 'e.g., 203.0.113.0/24', _ipController),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: _buildInputField('Label (Optional)', 'e.g., Office VPN', _ipLabelController),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
-          onPressed: () {
-            if (_ipController.text.isNotEmpty) {
-              ref.read(securitySettingsProvider.notifier).addIpToWhitelist(_ipController.text, _ipLabelController.text);
-              _ipController.clear();
-              _ipLabelController.clear();
-            }
-          },
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('Add'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInputField(String label, String hint, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white10),
-            filled: true,
-            fillColor: Colors.black26,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDangerButton(String label, String sub, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
-        ),
-        child: Row(
-          children: [
-             Container(
-               padding: const EdgeInsets.all(8),
-               decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), shape: BoxShape.circle),
-               child: const Icon(Icons.logout_rounded, color: Colors.redAccent, size: 18),
-             ),
-             const SizedBox(width: 16),
-             Expanded(
-               child: Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                    Text(label, style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text(sub, style: GoogleFonts.inter(color: Colors.redAccent.withValues(alpha: 0.5), fontSize: 11)),
-                 ],
-               ),
-             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomActionBuffer(SecuritySettingsState state) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
-          border: const Border(top: BorderSide(color: Colors.white10)),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, -5)),
-          ],
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline, color: Colors.blueAccent, size: 20),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    state.isDirty ? 'You have unsaved changes' : 'About Security Settings',
-                    style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  Text(
-                    state.isDirty ? 'Please review and save your security settings.' : 'These settings apply to the entire platform and affect all users immediately.',
-                    style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 32),
-            _actionButton('Discard Changes', Colors.white24, Colors.white, () => ref.read(securitySettingsProvider.notifier).discardChanges(), isOutlined: true),
-            const SizedBox(width: 12),
-            _actionButton(state.isSaving ? 'Applying...' : 'Save Security Settings', Colors.blueAccent, Colors.white, () {
-               if (!state.isSaving) _showSaveConfirmDialog();
-            }, icon: Icons.save_rounded),
-          ],
-        ),
-      ),
-    ).animate(target: state.isDirty ? 1 : 0).slideY(begin: 1.0, end: 0.0);
-  }
-
-  Widget _actionButton(String label, Color color, Color textColor, VoidCallback onTap, {bool isOutlined = false, IconData? icon}) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: icon != null ? Icon(icon, size: 16) : const SizedBox(),
-      label: Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isOutlined ? Colors.transparent : color,
-        foregroundColor: textColor,
-        elevation: isOutlined ? 0 : 4,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: isOutlined ? BorderSide(color: color) : BorderSide.none),
-      ),
-    );
-  }
-
-  void _showSaveConfirmDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Confirm Changes', style: TextStyle(color: Colors.white)),
-        content: const Text('Are you sure you want to apply these security settings? This will affect all users across the system.', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ref.read(securitySettingsProvider.notifier).saveChanges();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-            child: const Text('Apply Settings'),
           ),
         ],
       ),
@@ -715,76 +512,736 @@ class _SecuritySettingsViewState extends ConsumerState<SecuritySettingsView> {
   }
 
   void _showForceLogoutDialog() {
+    final controller = TextEditingController();
+    bool canConfirm = false;
+
     showDialog(
       context: context,
-      builder: (context) {
-        final TextEditingController confirmController = TextEditingController();
-        bool isInputValid = false;
-
-        return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-                const SizedBox(width: 16),
-                Text('Critical Security Action', style: GoogleFonts.outfit(color: Colors.white)),
-              ],
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setLocal) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Colors.redAccent, width: 1.5),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+              const SizedBox(width: 10),
+              Text('Force Logout All Admins', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.redAccent.withValues(alpha: 0.25)),
+                ),
+                child: Text(
+                  'This will immediately terminate ALL active admin sessions. Every logged-in admin will be forcibly signed out and must log in again.',
+                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Type "FORCE OUT" to confirm:',
+                style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 14, letterSpacing: 1.5),
+                onChanged: (v) => setLocal(() => canConfirm = v == 'FORCE OUT'),
+                decoration: InputDecoration(
+                  hintText: 'FORCE OUT',
+                  hintStyle: GoogleFonts.robotoMono(color: Colors.white24, fontSize: 14),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.06),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: canConfirm ? Colors.redAccent : Colors.white12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: canConfirm ? Colors.redAccent : Colors.white12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: canConfirm ? Colors.redAccent : Colors.blueAccent, width: 2),
+                  ),
+                  suffixIcon: canConfirm
+                      ? const Icon(Icons.check_circle, color: Colors.redAccent)
+                      : null,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white54)),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            ElevatedButton.icon(
+              onPressed: canConfirm
+                  ? () {
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: [
+                              const Icon(Icons.logout, color: Colors.white, size: 18),
+                              const SizedBox(width: 10),
+                              Text('All admin sessions terminated', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                          backgroundColor: Colors.redAccent.shade700,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      );
+                    }
+                  : null,
+              icon: const Icon(Icons.logout, size: 14),
+              label: Text('Force Log Out All', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: canConfirm ? Colors.redAccent : Colors.grey.shade800,
+                disabledBackgroundColor: Colors.grey.shade800,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  // ─── Section D: IP Whitelist ──────────────────────────────────────────────
+  Widget _buildIpWhitelist() {
+    final ip = _settings!.ipWhitelist;
+    return _section(
+      'IP Whitelist',
+      'Restrict admin access to specific IP addresses or CIDR ranges',
+      Icons.lan_outlined,
+      Colors.orangeAccent,
+      [
+        _toggleRow(
+          'Enable IP Whitelist',
+          'Only listed IPs can access the admin portal',
+          ip.enabled,
+          (v) {
+            if (v) _showIpWarning();
+            setState(() {
+              _settings = _settings!.copyWith(ipWhitelist: ip.copyWith(enabled: v));
+              _markDirty();
+            });
+          },
+        ),
+        if (ip.enabled) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orangeAccent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.3)),
+            ),
+            child: Row(
               children: [
-                const Text(
-                  'This will immediately invalidate ALL active administrative sessions across the entire platform.',
-                  style: TextStyle(color: Colors.white70, height: 1.5),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Type "FORCE OUT" to confirm:',
-                  style: GoogleFonts.inter(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: confirmController,
-                  onChanged: (v) => setDialogState(() => isInputValid = v == 'FORCE OUT'),
-                  style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'FORCE OUT',
-                    hintStyle: const TextStyle(color: Colors.white10),
-                    filled: true,
-                    fillColor: Colors.black26,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Enabling IP whitelist restricts admin access to listed IPs only. Ensure your current IP is in the list before saving or you will be locked out.',
+                    style: GoogleFonts.inter(color: Colors.orangeAccent, fontSize: 12),
                   ),
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: Colors.white38)),
-              ),
-              ElevatedButton(
-                onPressed: isInputValid
-                    ? () {
-                        Navigator.pop(context);
-                        ref.read(securitySettingsProvider.notifier).forceLogoutAll();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('All admin sessions terminated'), backgroundColor: Colors.redAccent),
-                        );
-                      }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  disabledBackgroundColor: Colors.red.withValues(alpha: 0.1),
-                ),
-                child: const Text('Execute Force Logout'),
+          ),
+        ],
+        // Current IP quick-add
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.my_location, color: Colors.white38, size: 16),
+              const SizedBox(width: 10),
+              Text('Your current IP: ', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+              Text(_currentIp, style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {
+                  if (!ip.whitelistedIps.contains(_currentIp)) {
+                    setState(() {
+                      final newList = [...ip.whitelistedIps, _currentIp];
+                      _settings = _settings!.copyWith(ipWhitelist: ip.copyWith(whitelistedIps: newList));
+                      _markDirty();
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$_currentIp added to whitelist', style: GoogleFonts.inter()),
+                        backgroundColor: const Color(0xFF1E3A5F),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.add_circle_outline, size: 14),
+                label: Text('Add My IP', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700)),
+                style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
               ),
             ],
           ),
-        );
-      },
+        ),
+        // Whitelisted IPs table
+        if (ip.whitelistedIps.isNotEmpty) ...[
+          Row(
+            children: [
+              Expanded(flex: 3, child: Text('IP ADDRESS', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w700))),
+              Expanded(flex: 3, child: Text('LABEL', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w700))),
+              Expanded(flex: 2, child: Text('ADDED BY', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w700))),
+              const SizedBox(width: 40),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...ip.whitelistedIps.asMap().entries.map((e) => _ipRow(e.value, e.key, ip)),
+          const SizedBox(height: 8),
+        ],
+        // Add IP inline form
+        if (_showAddIpRow) _buildAddIpForm(ip),
+        TextButton.icon(
+          onPressed: () => setState(() => _showAddIpRow = !_showAddIpRow),
+          icon: Icon(_showAddIpRow ? Icons.close : Icons.add, size: 16),
+          label: Text(
+            _showAddIpRow ? 'Cancel' : '+ Add IP Address',
+            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+        ),
+      ],
+    );
+  }
+
+  Widget _ipRow(String ipAddr, int index, IpWhitelistConfig ip) {
+    final labels = ['Head Office VPN', 'Dev Team VPN', 'AWS Bastion', 'CI/CD Runner'];
+    final label = index < labels.length ? labels[index] : 'Custom Range';
+    final isCurrentIp = ipAddr == _currentIp;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isCurrentIp
+            ? Colors.blueAccent.withValues(alpha: 0.06)
+            : Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isCurrentIp
+              ? Colors.blueAccent.withValues(alpha: 0.25)
+              : Colors.white.withValues(alpha: 0.07),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                Text(
+                  ipAddr,
+                  style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 13),
+                ),
+                if (isCurrentIp) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text('YOU', style: GoogleFonts.inter(color: Colors.blueAccent, fontSize: 9, fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text('Super Admin', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                final newList = List<String>.from(ip.whitelistedIps)..removeAt(index);
+                _settings = _settings!.copyWith(ipWhitelist: ip.copyWith(whitelistedIps: newList));
+                _markDirty();
+              });
+            },
+            icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+            tooltip: 'Remove',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddIpForm(IpWhitelistConfig ip) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.blueAccent.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: TextField(
+              controller: _ipController,
+              style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: '192.168.1.0/24',
+                hintStyle: GoogleFonts.robotoMono(color: Colors.white24, fontSize: 13),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.04),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                labelText: 'IP / CIDR',
+                labelStyle: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 3,
+            child: TextField(
+              controller: _ipLabelController,
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'e.g. Office VPN',
+                hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 13),
+                filled: true,
+                fillColor: Colors.white.withValues(alpha: 0.04),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                labelText: 'Label',
+                labelStyle: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          ElevatedButton(
+            onPressed: () {
+              final rawIp = _ipController.text.trim();
+              if (rawIp.isEmpty) return;
+              // Basic CIDR / IP validation
+              final ipPattern = RegExp(r'^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$');
+              if (!ipPattern.hasMatch(rawIp)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Invalid IP or CIDR format', style: GoogleFonts.inter()),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                );
+                return;
+              }
+              setState(() {
+                final newList = [...ip.whitelistedIps, rawIp];
+                _settings = _settings!.copyWith(ipWhitelist: ip.copyWith(whitelistedIps: newList));
+                _ipController.clear();
+                _ipLabelController.clear();
+                _showAddIpRow = false;
+                _markDirty();
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Add', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showIpWarning() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Ensure $_currentIp is whitelisted before saving, or you will be locked out!',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.orange.shade900,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  // ─── Section E: Login Controls ────────────────────────────────────────────
+  Widget _buildLoginControls() {
+    final l = _settings!.loginControls;
+    return _section(
+      'Login Controls',
+      'Brute-force protection, CAPTCHA and device notifications',
+      Icons.lock_person_outlined,
+      Colors.greenAccent,
+      [
+        _stepperRow(
+          'Max Failed Login Attempts Before Lockout',
+          'Account will be locked after this many consecutive failures',
+          l.maxFailedAttempts,
+          3, 10,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(loginControls: l.copyWith(maxFailedAttempts: v));
+            _markDirty();
+          }),
+        ),
+        _dropdownRow(
+          'Account Lockout Duration',
+          'How long a locked account remains inaccessible',
+          _lockoutLabel(l.lockoutDurationMinutes),
+          ['15 min', '30 min', '1 hour', '24 hours', 'Permanent (manual unlock required)'],
+          (v) => setState(() {
+            _settings = _settings!.copyWith(loginControls: l.copyWith(lockoutDurationMinutes: _lockoutMinutes(v!)));
+            _markDirty();
+          }),
+        ),
+        _dropdownRow(
+          'CAPTCHA on Login Page',
+          'When to show CAPTCHA challenge to users',
+          'After 3 Failed Attempts',
+          ['Disabled', 'After 3 Failed Attempts', 'Always Show'],
+          (v) => _markDirty(),
+        ),
+        _toggleRow(
+          'Email Alert on Suspicious Login',
+          'Notify account owner when login is from new device, country, or after failures',
+          l.emailOnLockout,
+          (v) => setState(() {
+            _settings = _settings!.copyWith(loginControls: l.copyWith(emailOnLockout: v));
+            _markDirty();
+          }),
+        ),
+        _toggleRow(
+          'Login from New Device Notification',
+          'Send push/email when a new device is used to log in',
+          true,
+          (v) => _markDirty(),
+        ),
+      ],
+    );
+  }
+
+  String _lockoutLabel(int mins) {
+    if (mins == 15) return '15 min';
+    if (mins == 30) return '30 min';
+    if (mins == 60) return '1 hour';
+    if (mins == 1440) return '24 hours';
+    return 'Permanent (manual unlock required)';
+  }
+
+  int _lockoutMinutes(String label) {
+    if (label == '15 min') return 15;
+    if (label == '30 min') return 30;
+    if (label == '1 hour') return 60;
+    if (label == '24 hours') return 1440;
+    return 99999;
+  }
+
+  // ─── Danger Zone ──────────────────────────────────────────────────────────
+  Widget _buildDangerZone() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 20),
+              const SizedBox(width: 12),
+              Text(
+                'Danger Zone',
+                style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.redAccent),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'These actions are irreversible and will immediately affect all platform users.',
+            style: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: _showForceLogoutDialog,
+                icon: const Icon(Icons.logout, size: 16),
+                label: const Text('Force Log Out All Admins'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.key_off_outlined, size: 16),
+                label: const Text('Revoke All API Tokens'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orangeAccent,
+                  side: const BorderSide(color: Colors.orangeAccent),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms);
+  }
+
+  // ─── Reusable control widgets ─────────────────────────────────────────────
+  Widget _toggleRow(String title, String subtitle, bool value, Function(bool) onChanged, {bool warningIfOff = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.blueAccent,
+            inactiveThumbColor: Colors.white30,
+            inactiveTrackColor: Colors.white12,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sliderRow(String title, String subtitle, double value, double min, double max, Function(double) onChanged, {String? valueLabel}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                  Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  valueLabel ?? '${value.round()}',
+                  style: GoogleFonts.robotoMono(color: Colors.blueAccent, fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: Colors.blueAccent,
+              inactiveTrackColor: Colors.white12,
+              thumbColor: Colors.blueAccent,
+              overlayColor: Colors.blueAccent.withValues(alpha: 0.15),
+              valueIndicatorColor: Colors.blueAccent,
+              trackHeight: 4,
+            ),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: (max - min).round(),
+              onChanged: onChanged,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${min.round()} chars', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
+              Text('${max.round()} chars', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stepperRow(String title, String subtitle, int value, int min, int max, Function(int) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: value > min ? () => onChanged(value - 1) : null,
+                  icon: const Icon(Icons.remove, size: 16, color: Colors.white54),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  constraints: const BoxConstraints(),
+                ),
+                Container(
+                  width: 40,
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$value',
+                    style: GoogleFonts.robotoMono(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  onPressed: value < max ? () => onChanged(value + 1) : null,
+                  icon: const Icon(Icons.add, size: 16, color: Colors.white54),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dropdownRow(String title, String subtitle, String value, List<String> options, Function(String?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          DropdownButtonHideUnderline(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              constraints: const BoxConstraints(minWidth: 180),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: DropdownButton<String>(
+                value: options.contains(value) ? value : options.first,
+                dropdownColor: const Color(0xFF1E293B),
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                iconEnabledColor: Colors.white38,
+                items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+                onChanged: onChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _checkboxRow(String label, bool value, ValueChanged<bool?> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        borderRadius: BorderRadius.circular(6),
+        child: Row(
+          children: [
+            Checkbox(
+              value: value,
+              onChanged: onChanged,
+              activeColor: Colors.blueAccent,
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+            Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
+          ],
+        ),
+      ),
     );
   }
 }

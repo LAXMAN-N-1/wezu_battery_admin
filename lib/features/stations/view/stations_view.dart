@@ -188,7 +188,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
                                           '${filtered.length} Stations Found',
                                           style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
                                         ),
-                                        const Spacer(),
+                                        
                                         _buildFilterDropdown(),
                                       ],
                                     ),
@@ -466,12 +466,12 @@ class _StationsViewState extends ConsumerState<StationsView> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
-          child: Row(
+          child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 16),
               Text(label, style: GoogleFonts.outfit(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-              const Spacer(),
+              
               const Icon(Icons.chevron_right, color: Colors.white24, size: 18),
             ],
           ),

@@ -31,7 +31,9 @@ class WezuLogo extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 0.2),
+                        color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 
+                          0.2,
+                        ),
                         blurRadius: size * 0.5,
                         spreadRadius: size * 0.1,
                       ),
@@ -64,7 +66,9 @@ class WezuLogo extends StatelessWidget {
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 0.5 * value),
+                          color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 
+                            0.5 * value,
+                          ),
                           blurRadius: 20.0 * value,
                           spreadRadius: 2.0 * value,
                         ),
@@ -686,3 +690,4 @@ class AdvancedTable extends StatelessWidget {
     );
   }
 }
+

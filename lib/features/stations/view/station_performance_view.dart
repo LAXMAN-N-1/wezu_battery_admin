@@ -83,11 +83,11 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Row(children: [
+                            child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
                               const Icon(Icons.trending_up, color: Color(0xFF3B82F6), size: 20),
                               const SizedBox(width: 10),
                               Text('Performance Comparison', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                              const Spacer(),
+                              
                               Text('${_stations.length} stations', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
                             ]),
                           ),

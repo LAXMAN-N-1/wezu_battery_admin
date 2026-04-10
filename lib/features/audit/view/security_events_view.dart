@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
 import '../data/models/audit_models.dart';
 import '../data/providers/security_events_provider.dart';
 import '../data/providers/audit_dashboard_provider.dart';
@@ -15,120 +16,150 @@ class SecurityEventsView extends ConsumerStatefulWidget {
   ConsumerState<SecurityEventsView> createState() => _SecurityEventsViewState();
 }
 
-class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
-  final ScrollController _terminalController = ScrollController();
+class _SecurityEventsViewState extends State<SecurityEventsView> {
+  final AuditRepository _repo = AuditRepository();
+  final ScrollController _terminalScrollController = ScrollController();
+  
+  List<SecurityEventItem> _events = [];
+  Map<String, dynamic> _stats = {};
+  final List<String> _terminalLogs = [];
+  bool _isLoading = true;
   bool _autoScroll = true;
-  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _terminalScrollController.dispose();
+    super.dispose();
+  }
+
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await _repo.getSecurityEvents();
+      final stats = await _repo.getAuditStats();
+      if (mounted) {
+        setState(() {
+          _events = res['items'] as List<SecurityEventItem>;
+          _stats = stats;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(securityEventsProvider);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF060F1A),
-      body: Column(
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatsStrip(ref, state),
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildSummaryCards(),
+          const SizedBox(height: 24),
           Expanded(
-            child: Column(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTerminalToolbar(state),
-                Expanded(
-                  child: _buildConsole(state),
-                ),
+                Expanded(flex: 6, child: _buildTerminalContainer()),
+                const SizedBox(width: 24),
+                Expanded(flex: 4, child: _buildActiveIncidents()),
               ],
             ),
           ),
-          _buildTerminalStatusBar(state),
         ],
       ),
     );
   }
 
-  Widget _buildStatsStrip(WidgetRef ref, SecurityEventsState currentBatch) {
-    final dashboardState = ref.watch(auditDashboardProvider);
-    final stats = dashboardState.stats;
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Security Event Console', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 4),
+            Text('Real-time threat monitoring, live log streaming, and incident prioritization', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          ],
+        ),
+        Row(
+          children: [
+            _statusBadge('FIREWALL: ACTIVE', Colors.blueAccent),
+            const SizedBox(width: 12),
+            _statusBadge('THREAT LEVEL: LOW', Colors.greenAccent),
+          ],
+        ),
+      ],
+    ).animate().fadeIn().slideY(begin: -0.05);
+  }
 
+  Widget _statusBadge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(bottom: BorderSide(color: Colors.white10)),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
+      child: Row(
         children: [
-          _statCard(
-            'Total Alerts',
-            '${stats?.totalEventsToday ?? 0}',
-            Icons.notification_important_outlined,
-            const Color(0xFF3B82F6),
-            () => ref.read(securityEventsProvider.notifier).setFilterSeverity(null),
-            currentBatch.filterSeverity == null,
-          ),
-          _statCard(
-            'Low Risk',
-            '${stats?.infoEventsToday ?? 0}',
-            Icons.shield_outlined,
-            const Color(0xFF10B981),
-            () => ref.read(securityEventsProvider.notifier).setFilterSeverity('low'),
-            currentBatch.filterSeverity == 'low',
-          ),
-          _statCard(
-            'Medium Risk',
-            '${stats?.warningEventsToday ?? 0}',
-            Icons.gpp_maybe_outlined,
-            const Color(0xFFF59E0B),
-            () => ref.read(securityEventsProvider.notifier).setFilterSeverity('medium'),
-            currentBatch.filterSeverity == 'medium',
-          ),
-          _statCard(
-            'Critical Threats',
-            '${stats?.criticalEventsToday ?? 0}',
-            Icons.report_problem_outlined,
-            const Color(0xFFEF4444),
-            () => ref.read(securityEventsProvider.notifier).setFilterSeverity('high'),
-            currentBatch.filterSeverity == 'high' || currentBatch.filterSeverity == 'critical',
-          ),
+          Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 10),
+          Text(text, style: GoogleFonts.inter(color: color, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
         ],
       ),
     );
   }
 
+  Widget _buildSummaryCards() {
+    return Row(
+      children: [
+        _miniStatCard('Total Events', '${_stats['total_today'] ?? 0}', Icons.lan_outlined, Colors.blueAccent),
+        const SizedBox(width: 16),
+        _miniStatCard('Blocked Requests', '${_stats['failed_logins'] ?? 0}', Icons.block_flipped, Colors.redAccent),
+        const SizedBox(width: 16),
+        _miniStatCard('High Risk Alerts', '${_stats['critical_events'] ?? 0}', Icons.gpp_maybe_rounded, Colors.orangeAccent),
+        const SizedBox(width: 16),
+        _miniStatCard('System Uptime', _stats['uptime']?.toString() ?? '99.9%', Icons.check_circle_outline, Colors.greenAccent),
+      ],
+    );
+  }
 
-  Widget _statCard(String title, String value, IconData icon, Color color, VoidCallback onTap, bool isActive) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 190,
-        padding: const EdgeInsets.all(12),
+  Widget _miniStatCard(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isActive ? color.withValues(alpha: 0.15) : const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isActive ? color.withValues(alpha: 0.5) : color.withValues(alpha: 0.1),
-            width: isActive ? 1.5 : 1,
-          ),
+          color: const Color(0xFF1E293B).withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Row(
           children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  value,
-                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                Text(
-                  title,
-                  style: GoogleFonts.inter(fontSize: 10, color: Colors.white54),
-                ),
+                Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(label, style: GoogleFonts.inter(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w500)),
               ],
             ),
           ],
@@ -137,449 +168,302 @@ class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
     );
   }
 
-  Widget _buildTerminalToolbar(SecurityEventsState state) {
+  Widget _buildTerminalContainer() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(bottom: BorderSide(color: Colors.white10)),
+      decoration: BoxDecoration(
+        color: const Color(0xFF030712),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 30)],
       ),
       child: Column(
         children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          _buildTerminalHeader(),
+          Expanded(
+            child: ListView.builder(
+              controller: _terminalScrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: _terminalLogs.length,
+              itemBuilder: (context, index) {
+                final log = _terminalLogs[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: _formatLogLine(log),
+                );
+              },
+            ),
+          ),
+          _buildTerminalFooter(),
+        ],
+      ),
+    ).animate().fadeIn().slideX(begin: -0.05);
+  }
+
+  Widget _buildTerminalHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
-              const Icon(Icons.terminal_rounded, color: Colors.greenAccent, size: 18),
-              Text('SECURITY_WAF_CONSOLE', style: GoogleFonts.firaCode(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70)),
-              _buildTerminalSearch(),
-              _toolbarAction(Icons.download, 'Export .log', () => _exportLogs(ref)),
+              _circle(Colors.redAccent),
+              const SizedBox(width: 6),
+              _circle(Colors.orangeAccent),
+              const SizedBox(width: 6),
+              _circle(Colors.greenAccent),
+              const SizedBox(width: 16),
+              Text('security@wezu: ~/logs/live_stream.log', style: GoogleFonts.sourceCodePro(color: Colors.white38, fontSize: 13)),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildFilterTabs(state),
+          Row(
+            children: [
+              TextButton.icon(
+                onPressed: () => setState(() => _terminalLogs.clear()),
+                icon: const Icon(Icons.delete_sweep_outlined, size: 16),
+                label: const Text('Clear'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white38),
+              ),
+              const SizedBox(width: 8),
+              _activeIndicator(),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _exportLogs(WidgetRef ref) async {
-    final repo = ref.read(auditRepositoryProvider);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-            SizedBox(width: 16),
-            Text('Preparing security logs...'),
-          ],
-        ),
+  Widget _circle(Color color) => Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+
+  Widget _activeIndicator() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+      child: Row(
+        children: [
+          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)).animate(onPlay: (c) => c.repeat()).fadeOut(duration: 1.seconds),
+          const SizedBox(width: 6),
+          Text('REC', style: GoogleFonts.robotoMono(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
-
-    try {
-      final url = await repo.exportSecurityEvents(format: 'log');
-      if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        _showExportSuccess(url);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red));
-      }
-    }
   }
 
-  void _showExportSuccess(String url) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: Row(
+  Widget _formatLogLine(String log) {
+    Color textColor = Colors.white70;
+    if (log.contains('[CRIT]')) textColor = Colors.redAccent;
+    if (log.contains('[WARN]')) textColor = Colors.orangeAccent;
+    if (log.contains('[DEBG]')) textColor = Colors.blueAccent.withValues(alpha: 0.6);
+
+    return SelectableText(
+      log,
+      style: GoogleFonts.sourceCodePro(color: textColor, fontSize: 13, height: 1.4),
+    );
+  }
+
+  Widget _buildTerminalFooter() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.02),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text('${_terminalLogs.length} lines streamed', style: GoogleFonts.sourceCodePro(color: Colors.white24, fontSize: 11)),
+          Row(
+            children: [
+              Text('AUTO-SCROLL', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.bold)),
+              Transform.scale(
+                scale: 0.7,
+                child: Switch(
+                  value: _autoScroll,
+                  onChanged: (v) => setState(() => _autoScroll = v),
+                  activeThumbColor: Colors.blueAccent,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveIncidents() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Icon(Icons.check_circle, color: Colors.greenAccent),
-            const SizedBox(width: 12),
-            Text('Export Ready', style: GoogleFonts.outfit(color: Colors.white)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('The security console logs have been processed and are ready for download.', style: TextStyle(color: Colors.white70)),
-            const SizedBox(height: 16),
+            Text('ACTIVE INCIDENTS', style: GoogleFonts.inter(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
             Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(8)),
-              child: Text(url, style: GoogleFonts.firaCode(fontSize: 11, color: Colors.blueAccent)),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+              child: Text('${_events.where((e) => !e.isResolved).length} PENDING', style: TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Close'),
+        const SizedBox(height: 16),
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B).withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
+            child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent))
+                : ListView.separated(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _events.length,
+                    separatorBuilder: (_, __) => Divider(color: Colors.white.withValues(alpha: 0.04), height: 1),
+                    itemBuilder: (context, index) {
+                      final e = _events[index];
+                      final color = e.severity == 'Critical' ? Colors.redAccent : e.severity == 'Warning' ? Colors.orangeAccent : Colors.blueAccent;
+                      return ListTile(
+                        onTap: () => _showEventSheet(e),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                          child: Icon(Icons.security, color: color, size: 20),
+                        ),
+                        title: Text(e.eventType, style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                        subtitle: Row(
+                          children: [
+                            Text(DateFormat('HH:mm').format(DateTime.parse(e.timestamp)), style: GoogleFonts.robotoMono(color: Colors.white24, fontSize: 11)),
+                            const SizedBox(width: 8),
+                            const Text('•', style: TextStyle(color: Colors.white12)),
+                            const SizedBox(width: 8),
+                            Text(e.sourceIp ?? 'Local', style: GoogleFonts.robotoMono(color: Colors.blueAccent.withValues(alpha: 0.5), fontSize: 11)),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white12, size: 14),
+                      );
+                    },
+                  ),
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-               // In real app, open URL
-               if (Navigator.canPop(context)) {
-                 Navigator.pop(context);
-               }
-            },
-            icon: const Icon(Icons.download),
-            label: const Text('Download Now'),
-          ),
-        ],
-      ),
+        ),
+      ],
+    ).animate().fadeIn().slideX(begin: 0.05);
+  }
+
+  void _showEventSheet(SecurityEventItem event) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) => _buildDetailSheet(event),
     );
   }
 
-  Widget _buildFilterTabs(SecurityEventsState state) {
-    final categories = ['All', 'Rate Limit', 'Injection', 'Auth Failures', 'Token Expired', 'WAF Block', 'SSL'];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: categories.map((cat) {
-          final isSelected = (cat == 'All' && state.filterSeverity == null) || 
-                            (cat.toLowerCase().contains(state.filterSeverity ?? '~~~'));
-          
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              onTap: () {
-                final filter = cat == 'All' ? null : cat.toLowerCase();
-                ref.read(securityEventsProvider.notifier).setFilterSeverity(filter);
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  Widget _buildDetailSheet(SecurityEventItem event) {
+    final color = event.severity == 'Critical' ? Colors.redAccent : event.severity == 'Warning' ? Colors.orangeAccent : Colors.blueAccent;
+    
+    return Container(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                    child: Icon(Icons.security, color: color, size: 32),
+                  ),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(event.eventType, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text(DateFormat('MMMM d, yyyy — HH:mm:ss.SSS').format(DateTime.parse(event.timestamp)), style: GoogleFonts.inter(color: Colors.white38)),
+                    ],
+                  ),
+                ],
+              ),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54, size: 28)),
+            ],
+          ),
+          const SizedBox(height: 40),
+          _detailSection('INCIDENT INTELLIGENCE', [
+            _detailDataRow('Event ID', 'AUD-${event.id.toString()}'),
+            _detailDataRow('Origin Source', event.sourceIp ?? 'Internal System'),
+            _detailDataRow('Severity Level', event.severity.toUpperCase(), color: color),
+            _detailDataRow('System Status', event.isResolved ? 'RESOLVED' : 'ACTIVE THREAT', color: event.isResolved ? Colors.greenAccent : Colors.redAccent),
+          ]),
+          const SizedBox(height: 32),
+          _detailSection('EVENT DESCRIPTION', [
+            Container(
+              padding: const EdgeInsets.all(20),
+              width: double.infinity,
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(16)),
+              child: Text(event.details, style: GoogleFonts.inter(color: Colors.white70, height: 1.6, fontSize: 14)),
+            ),
+          ]),
+          const SizedBox(height: 32),
+          if (event.payload != null)
+            _detailSection('RAW PAYLOAD DATA (LOG)', [
+              Container(
+                padding: const EdgeInsets.all(20),
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.blueAccent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isSelected ? Colors.blueAccent : Colors.white10),
+                  color: const Color(0xFF030712),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
-                child: Text(
-                  cat,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? Colors.blueAccent : Colors.white54,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    event.payload!,
+                    style: GoogleFonts.sourceCodePro(color: Colors.greenAccent.withValues(alpha: 0.8), fontSize: 13),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildTerminalSearch() {
-    return Container(
-      width: 200,
-      height: 32,
-      decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.white10)),
-      child: TextField(
-        onChanged: (v) => setState(() => _searchQuery = v),
-        style: GoogleFonts.firaCode(fontSize: 11, color: Colors.greenAccent),
-        decoration: InputDecoration(hintText: 'grep...', hintStyle: GoogleFonts.firaCode(fontSize: 11, color: Colors.white24), prefixIcon: const Icon(Icons.search, size: 14, color: Colors.white24), border: InputBorder.none, contentPadding: const EdgeInsets.only(bottom: 12)),
-      ),
-    );
-  }
-
-  Widget _toolbarAction(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.white10)),
-        child: Row(children: [Icon(icon, size: 14, color: Colors.white54), const SizedBox(width: 6), Text(label, style: GoogleFonts.firaCode(fontSize: 11, color: Colors.white54))]),
-      ),
-    );
-  }
-
-  Widget _buildConsole(SecurityEventsState state) {
-    if (state.isLoading && state.events.isEmpty) {
-      return _buildTerminalShimmer();
-    }
-
-    final filteredEvents = state.events.where((e) => e.eventType.toLowerCase().contains(_searchQuery.toLowerCase()) || e.details.toLowerCase().contains(_searchQuery.toLowerCase())).toList();
-
-    if (filteredEvents.isEmpty) {
-      return _buildTerminalEmpty();
-    }
-
-    if (_autoScroll && _terminalController.hasClients) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _terminalController.animateTo(_terminalController.position.maxScrollExtent, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-      });
-    }
-
-    return ListView.builder(
-      controller: _terminalController,
-      padding: const EdgeInsets.all(16),
-      itemCount: filteredEvents.length,
-      itemBuilder: (context, index) => _buildTerminalLine(filteredEvents[index]),
-    );
-  }
-
-  Widget _buildTerminalShimmer() {
-    return ListView.builder(
-      itemCount: 20,
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          children: [
-            Container(width: 80, height: 12, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(width: 12),
-            Container(width: 40, height: 12, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(2))),
-            const SizedBox(width: 12),
-            Expanded(child: Container(height: 12, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(2)))),
-          ],
-        ),
-      ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 2.seconds, color: Colors.greenAccent.withValues(alpha: 0.05)),
-    );
-  }
-
-  Widget _buildTerminalEmpty() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.privacy_tip_outlined, size: 48, color: Colors.white10),
-          const SizedBox(height: 16),
-          Text('NO_SECURITY_THREATS_DETECTED', style: GoogleFonts.firaCode(fontSize: 14, color: Colors.greenAccent.withValues(alpha: 0.5))),
-          const SizedBox(height: 8),
-          Text('System integrity within normal parameters.', style: GoogleFonts.inter(fontSize: 12, color: Colors.white24)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTerminalLine(SecurityEventItem event) {
-    final severityColor = event.severity == 'critical' || event.severity == 'high' ? Colors.redAccent : event.severity == 'medium' ? Colors.orangeAccent : Colors.blueAccent;
-
-    return InkWell(
-      onTap: () => _showEventDetails(event),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('[${DateFormat('HH:mm:ss').format(DateTime.parse(event.timestamp))}]', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.white24)),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: severityColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-              child: Text(event.severity.toUpperCase(), style: GoogleFonts.firaCode(fontSize: 10, fontWeight: FontWeight.bold, color: severityColor)),
-            ),
-            const SizedBox(width: 12),
-            Text('src:', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.white24)),
-            Flexible(child: Text(event.sourceIp ?? '127.0.0.1', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.greenAccent.withValues(alpha: 0.7)), overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 12),
-            Text('event:', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.white24)),
-            Flexible(child: Text(event.eventType, style: GoogleFonts.firaCode(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70), overflow: TextOverflow.ellipsis)),
-            const SizedBox(width: 12),
-            Expanded(child: Text('>> ${event.details}', style: GoogleFonts.firaCode(fontSize: 12, color: Colors.white38), maxLines: 1, overflow: TextOverflow.ellipsis)),
-          ],
-        ),
-      ).animate().fadeIn(duration: 200.ms).slideX(begin: -0.01, end: 0),
-    );
-  }
-
-  void _showEventDetails(SecurityEventItem event) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'EventDetails',
-      transitionDuration: const Duration(milliseconds: 250),
-      pageBuilder: (context, anim1, anim2) => _buildDetailDrawer(event),
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(position: Tween<Offset>(begin: const Offset(1, 0), end: const Offset(0.35, 0)).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)), child: child);
-      },
-    );
-  }
-
-  Widget _buildDetailDrawer(SecurityEventItem event) {
-    return Material(
-      color: const Color(0xFF0F172A),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.65,
-        height: double.infinity,
-        decoration: const BoxDecoration(border: Border(left: BorderSide(color: Colors.white10))),
-        child: Column(
-          children: [
-            _buildDrawerHeader(event),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildThreatIdentity(event),
-                    const Divider(height: 64, color: Colors.white10),
-                    _buildGeoSection(event),
-                    const Divider(height: 64, color: Colors.white10),
-                    _buildPayloadSection(event),
-                    const SizedBox(height: 48),
-                    _buildResolutionActions(event),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader(SecurityEventItem event) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white10)), color: Color(0xFF1E293B)),
-      child: Row(
-        children: [
-          const Icon(Icons.security, color: Colors.greenAccent, size: 24),
-          const SizedBox(width: 16),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Security Threat Intel', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text('REF_ID: SEC-${event.id.toString().padLeft(5, '0')}', style: GoogleFonts.firaCode(fontSize: 11, color: Colors.white54)),
-          ]),
-          const Spacer(),
-          IconButton(
-            onPressed: () {
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            },
-            icon: const Icon(Icons.close, color: Colors.white38),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThreatIdentity(SecurityEventItem event) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('CORE INTELLIGENCE', style: GoogleFonts.firaCode(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: 1)),
-        const SizedBox(height: 24),
-        _intelRow('Event Type', event.eventType, Icons.bug_report),
-        _intelRow('Severity', event.severity.toUpperCase(), Icons.priority_high),
-        _intelRow('Timestamp', event.timestamp, Icons.schedule),
-        _intelRow('Status', event.isResolved ? 'RESOLVED' : 'ACTIVE THREAT', Icons.check_circle_outline),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.red.withValues(alpha: 0.1))),
-          child: Text(event.details, style: GoogleFonts.firaCode(fontSize: 13, color: Colors.redAccent)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGeoSection(SecurityEventItem event) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('SOURCE TRACING', style: GoogleFonts.firaCode(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: 1)),
-        const SizedBox(height: 24),
-        _intelRow('IP Address', event.sourceIp ?? '127.0.0.1', Icons.language),
-        _intelRow('Origin', '${event.country ?? 'LocalNetwork'} ${event.countryFlag ?? '🏠'}', Icons.place),
-        _intelRow('Coordinates', 'LAT: ${event.latitude ?? 'N/A'}, LNG: ${event.longitude ?? 'N/A'}', Icons.explore),
-      ],
-    );
-  }
-
-  Widget _buildPayloadSection(SecurityEventItem event) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('RAW PAYLOAD DATA', style: GoogleFonts.firaCode(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blueAccent, letterSpacing: 1)),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white10)),
-          child: Text(
-            event.payload ?? '{"source": "waf_logs", "action": "blocked", "reason": "sql_injection_attempt", "fingerprint": "eb62...91a"}',
-            style: GoogleFonts.firaCode(fontSize: 11, color: Colors.greenAccent.withValues(alpha: 0.7)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResolutionActions(SecurityEventItem event) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: event.isResolved ? null : () => ref.read(securityEventsProvider.notifier).resolveEvent(event.id),
-            icon: const Icon(Icons.verified_user),
-            label: Text(event.isResolved ? 'Already Resolved' : 'Mark as Resolved'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green.withValues(alpha: 0.1), foregroundColor: Colors.green, side: BorderSide(color: Colors.green.withValues(alpha: 0.3)), padding: const EdgeInsets.symmetric(vertical: 16)),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.block),
-            label: const Text('Block Source IP'),
-            style: OutlinedButton.styleFrom(foregroundColor: Colors.redAccent, side: const BorderSide(color: Colors.redAccent), padding: const EdgeInsets.symmetric(vertical: 16)),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _intelRow(String label, String value, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: Colors.white24),
-          const SizedBox(width: 12),
-          Text('$label:', style: GoogleFonts.firaCode(fontSize: 11, color: Colors.white38)),
-          const SizedBox(width: 8),
-          Text(value, style: GoogleFonts.firaCode(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTerminalStatusBar(SecurityEventsState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: const BoxDecoration(color: Color(0xFF111827), border: Border(top: BorderSide(color: Colors.white10))),
-      child: Row(
-        children: [
-          _statusItem('EVENTS: ${state.events.length}', Colors.white38),
-          const SizedBox(width: 24),
-          _statusItem('WAF: ACTIVE', Colors.greenAccent),
-          const SizedBox(width: 24),
-          _statusItem('THREAT_LEVEL: ELEVATED', Colors.orangeAccent),
-          const Spacer(),
+            ]),
+          const SizedBox(height: 48),
           Row(
             children: [
-              Text('AUTO_SCROLL', style: GoogleFonts.firaCode(fontSize: 10, color: Colors.white38)),
-              const SizedBox(width: 8),
-              SizedBox(height: 16, width: 32, child: Switch(
-                value: _autoScroll,
-                onChanged: (v) => setState(() => _autoScroll = v),
-                thumbColor: WidgetStateProperty.all(Colors.greenAccent),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              )),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    _repo.resolveSecurityEvent(event.id);
+                    Navigator.pop(context);
+                    _loadData();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent.withValues(alpha: 0.1),
+                    foregroundColor: Colors.greenAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.greenAccent.withValues(alpha: 0.3))),
+                  ),
+                  child: Text('RESOLVE INCIDENT', style: GoogleFonts.inter(fontWeight: FontWeight.w800, letterSpacing: 1)),
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                    foregroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.3))),
+                  ),
+                  child: Text('ESCALATE TO SOC', style: GoogleFonts.inter(fontWeight: FontWeight.w800, letterSpacing: 1)),
+                ),
+              ),
             ],
           ),
         ],
@@ -587,7 +471,27 @@ class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
     );
   }
 
-  Widget _statusItem(String label, Color color) {
-    return Text(label, style: GoogleFonts.firaCode(fontSize: 10, fontWeight: FontWeight.bold, color: color));
+  Widget _detailSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+        const SizedBox(height: 16),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _detailDataRow(String label, String value, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: GoogleFonts.inter(color: Colors.white30, fontSize: 14)),
+          Text(value, style: GoogleFonts.robotoMono(color: color ?? Colors.white70, fontSize: 14, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
   }
 }

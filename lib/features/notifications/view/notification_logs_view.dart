@@ -47,7 +47,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
         _buildFilter('Status', _filterStatus, ['sent', 'delivered', 'opened', 'failed'], (v) { setState(() => _filterStatus = v); _loadData(); }),
       ]),
       const SizedBox(height: 16),
-      _isLoading ? const Center(child: CircularProgressIndicator()) : _buildLogsTable(),
+      _isLoading ? const Center(child: CircularProgressIndicator()) : _buildLogsTableView(),
     ]));
   }
 
@@ -64,7 +64,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
 
   Widget _statCard(String title, String value, IconData icon, Color color) {
     return Container(width: 160, padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.15))),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.15))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(icon, color: color, size: 18), const SizedBox(height: 8),
         Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -74,7 +74,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
 
   Widget _buildFilter(String label, String? value, List<String> items, Function(String?) onChanged) {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(10)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
         value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
         dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -82,12 +82,12 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
         onChanged: onChanged)));
   }
 
-  Widget _buildLogsTable() {
+  Widget _buildLogsTableView() {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.06))),
       child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
         showCheckboxColumn: false,
-        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.03)),
+        headingRowColor: WidgetStateProperty.all(Colors.white.withOpacity(0.03)),
         columns: const [
           DataColumn(label: Text('Title', style: TextStyle(color: Colors.white70))),
           DataColumn(label: Text('User', style: TextStyle(color: Colors.white70))),
@@ -107,10 +107,10 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
             DataCell(SizedBox(width: 150, child: Text(l.title, style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis))),
             DataCell(Text(l.userId != null ? 'User #${l.userId}' : '—', style: const TextStyle(color: Colors.white54, fontSize: 12))),
             DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: channelColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(color: channelColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
               child: Text(l.channel.toUpperCase(), style: TextStyle(color: channelColor, fontSize: 10, fontWeight: FontWeight.bold)))),
             DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
               child: Text(l.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)))),
             DataCell(Text(_formatTs(l.sentAt), style: const TextStyle(color: Colors.white54, fontSize: 12))),
             DataCell(Text(l.deliveredAt != null ? '✓' : '—', style: TextStyle(color: l.deliveredAt != null ? Colors.green : Colors.white24))),
@@ -127,7 +127,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
   void _showLogDetails(NotificationLog l) {
     showDialog(context: context, builder: (ctx) => Dialog(
       backgroundColor: Colors.transparent, insetPadding: const EdgeInsets.all(40),
-      child: Container(width: 600, decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
+      child: Container(width: 600, decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(padding: const EdgeInsets.all(24), child: Row(children: [
             Icon(l.channel == 'push' ? Icons.notification_important : l.channel == 'sms' ? Icons.sms : Icons.email, color: Colors.blue),
@@ -138,16 +138,16 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
             ])),
             IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(ctx)),
           ])),
-          Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+          Divider(color: Colors.white.withOpacity(0.1), height: 1),
           Flexible(child: SingleChildScrollView(padding: const EdgeInsets.all(32), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _detailRow('Status', l.status.toUpperCase(), isPill: true, pillColor: l.status == 'delivered' ? Colors.green : l.status == 'failed' ? Colors.red : l.status == 'opened' ? Colors.purple : Colors.blue),
-            _detailRow('Recipient User ID', l.userId?.toString() ?? 'SYSTEM BROADCAST'),
-            _detailRow('Message Title', l.title),
-            _detailRow('Message Body / Template', l.message),
+            _buildDetailField('Status', l.status.toUpperCase(), isPill: true, pillColor: l.status == 'delivered' ? Colors.green : l.status == 'failed' ? Colors.red : l.status == 'opened' ? Colors.purple : Colors.blue),
+            _buildDetailField('Recipient User ID', l.userId?.toString() ?? 'SYSTEM BROADCAST'),
+            _buildDetailField('Message Title', l.title),
+            _buildDetailField('Message Body / Template', l.message),
             const SizedBox(height: 16),
             Text('Timestamps', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(10)),
               child: Column(children: [
                 _tsRow('Dispatched', l.sentAt),
                 _tsRow('Delivered to Device', l.deliveredAt),
@@ -155,9 +155,9 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
               ])),
             if (l.errorMessage != null) ...[
               const SizedBox(height: 24),
-              Text('Failure Reason', style: GoogleFonts.inter(color: Colors.red.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Failure Reason', style: GoogleFonts.inter(color: Colors.red.withOpacity(0.8), fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.withValues(alpha: 0.2))),
+              Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.red.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.withOpacity(0.2))),
                 child: Text(l.errorMessage!, style: GoogleFonts.robotoMono(color: Colors.red, fontSize: 12))),
             ],
             const SizedBox(height: 24),
@@ -178,13 +178,12 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
     ]));
   }
 
-  Widget _detailRow(String label, String val, {bool isPill = false, Color pillColor = Colors.blue}) {
+  Widget _buildDetailField(String label, String val, {bool isPill = false, Color pillColor = Colors.blue}) {
     return Padding(padding: const EdgeInsets.only(bottom: 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
       const SizedBox(height: 4),
-      isPill ? Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: pillColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)), child: Text(val, style: GoogleFonts.inter(color: pillColor, fontSize: 11, fontWeight: FontWeight.bold)))
+      isPill ? Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: pillColor.withOpacity(0.1), borderRadius: BorderRadius.circular(20)), child: Text(val, style: GoogleFonts.inter(color: pillColor, fontSize: 11, fontWeight: FontWeight.bold)))
              : Text(val, style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
     ]));
   }
 }
-

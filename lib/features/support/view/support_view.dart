@@ -206,7 +206,7 @@ class _SupportViewState extends State<SupportView> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 CircleAvatar(radius: 5, backgroundColor: color),
                 const SizedBox(width: 8),
@@ -214,7 +214,7 @@ class _SupportViewState extends State<SupportView> {
                   title,
                   style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const Spacer(),
+                
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
@@ -533,14 +533,14 @@ class _TicketDetailDialogState extends State<_TicketDetailDialog> {
           child: Column(
             children: [
               // Admin Controls Row
-              Row(
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   const Text('Update Status: ', style: TextStyle(color: Colors.white70, fontSize: 13)),
                   _buildStatusDropdown(),
                   const SizedBox(width: 24),
                   const Text('Priority: ', style: TextStyle(color: Colors.white70, fontSize: 13)),
                   _buildPriorityDropdown(),
-                  const Spacer(),
+                  
                   // Internal Note Toggle
                   Row(
                     children: [

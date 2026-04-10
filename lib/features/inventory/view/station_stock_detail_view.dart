@@ -555,7 +555,7 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
-        child: DataTable(
+        child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
           headingRowColor: WidgetStateProperty.all(
             const Color(0xFF0F172A).withValues(alpha: 0.5),
           ),
@@ -728,7 +728,7 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
               ],
             );
           }).toList(),
-        ),
+        )),
       ),
     );
   }
@@ -1052,7 +1052,7 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
-        child: DataTable(
+        child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
           headingRowColor: WidgetStateProperty.all(
             const Color(0xFF0F172A).withValues(alpha: 0.5),
           ),
@@ -1160,7 +1160,7 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
               ],
             ),
           ],
-        ),
+        )),
       ),
     );
   }
@@ -1544,7 +1544,7 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
           color: Colors.black26,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
+        child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const Text('Threshold:', style: TextStyle(color: Colors.white70)),
             const SizedBox(width: 12),
@@ -1569,7 +1569,7 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
                 onSubmitted: (_) => _save(),
               ),
             ),
-            const Spacer(),
+            
             if (_isLoading)
               const SizedBox(
                 width: 20,

@@ -25,16 +25,16 @@ class LegalDocument {
 
   factory LegalDocument.fromJson(Map<String, dynamic> json) {
     return LegalDocument(
-      id: json['id'],
-      title: json['title'],
-      slug: json['slug'],
-      content: json['content'],
+      id: json['id'] ?? 0,
+      title: json['title'] ?? '',
+      slug: json['slug'] ?? '',
+      content: json['content'] ?? '',
       version: json['version'] ?? '1.0.0',
       isActive: json['is_active'] ?? true,
       forceUpdate: json['force_update'] ?? false,
       publishedAt: json['published_at'] != null ? DateTime.parse(json['published_at']) : null,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : DateTime.now(),
     );
   }
 
@@ -46,6 +46,30 @@ class LegalDocument {
       'version': version,
       'is_active': isActive,
       'force_update': forceUpdate,
+      'published_at': publishedAt?.toIso8601String(),
     };
+  }
+
+  LegalDocument copyWith({
+    String? title,
+    String? slug,
+    String? content,
+    String? version,
+    bool? isActive,
+    bool? forceUpdate,
+    DateTime? publishedAt,
+  }) {
+    return LegalDocument(
+      id: id,
+      title: title ?? this.title,
+      slug: slug ?? this.slug,
+      content: content ?? this.content,
+      version: version ?? this.version,
+      isActive: isActive ?? this.isActive,
+      forceUpdate: forceUpdate ?? this.forceUpdate,
+      publishedAt: publishedAt ?? this.publishedAt,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
   }
 }
