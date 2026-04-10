@@ -72,10 +72,10 @@ class _ApiKeysViewState extends State<ApiKeysView> {
             IconButton(icon: const Icon(Icons.visibility_off, size: 18, color: Colors.white54), onPressed: () {}),
           ])),
         const SizedBox(height: 16),
-        Row(children: [
+        Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
           Icon(Icons.history, size: 14, color: Colors.white38), const SizedBox(width: 6),
           Text(key.lastUsedAt != null ? 'Last used: ${_formatDate(key.lastUsedAt!)}' : 'Never used', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
-          const Spacer(),
+          
           TextButton.icon(
             onPressed: () async { await _repo.deleteApiKey(key.id); _loadData(); },
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),

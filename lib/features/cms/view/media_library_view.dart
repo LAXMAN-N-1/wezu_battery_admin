@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../data/models/media_asset.dart';
 import '../data/cms_providers.dart';
-import '../../../core/widgets/admin_ui_components.dart';
+// import '../../../core/widgets/admin_ui_components.dart';
 
 class MediaLibraryView extends ConsumerStatefulWidget {
   const MediaLibraryView({super.key});
@@ -114,9 +114,9 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
         Container(
           width: 300,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.02),
+            color: Colors.white.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: TextField(
             controller: _searchController,
@@ -124,8 +124,8 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
             onChanged: (v) => setState(() {}),
             decoration: InputDecoration(
               hintText: 'Search assets by name...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-              prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.2), size: 18),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              prefixIcon: Icon(Icons.search, color: Colors.white.withValues(alpha: 0.2), size: 18),
               border: InputBorder.none,
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -145,9 +145,9 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.white.withOpacity(0.05) ,
+          color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05) ,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.transparent),
+          border: Border.all(color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : Colors.transparent),
         ),
         child: Text(
           label.toUpperCase(),
@@ -163,7 +163,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
 
   List<MediaAsset> _applyFilters(List<MediaAsset> assets) {
     return assets.where((a) {
-      if (_activeCategory != 'All' && a.category?.toLowerCase() != _activeCategory.toLowerCase()) return false;
+      if (_activeCategory != 'All' && a.category.toLowerCase() != _activeCategory.toLowerCase()) return false;
       if (_searchController.text.isNotEmpty && !a.fileName.toLowerCase().contains(_searchController.text.toLowerCase())) return false;
       return true;
     }).toList();
@@ -176,7 +176,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
         decoration: BoxDecoration(
           color: const Color(0xFF141E2B),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,7 +235,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
         backgroundColor: Colors.transparent,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 900, maxHeight: 600),
-          decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
+          decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
           child: Row(
             children: [
               Expanded(
@@ -274,14 +274,14 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
                       _infoRow('Name', asset.fileName),
                       _infoRow('Type', asset.fileType.toUpperCase()),
                       _infoRow('Size', '${(asset.fileSizeBytes / 1024).toStringAsFixed(2)} KB'),
-                      _infoRow('Category', asset.category?.toUpperCase() ?? 'GENERAL'),
+                      _infoRow('Category', asset.category.toUpperCase()),
                       _infoRow('Alt Text', asset.altText ?? 'None provided'),
                       const Spacer(),
                       _sectionLabel('Public URL'),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                         child: Row(
                           children: [
                             Expanded(child: Text(asset.url, style: GoogleFonts.robotoMono(color: Colors.blue.shade300, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)),
@@ -303,7 +303,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
                           icon: const Icon(Icons.delete_outline),
                           label: const Text('Remove Asset'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.withOpacity(0.1),
+                            backgroundColor: Colors.red.withValues(alpha: 0.1),
                             foregroundColor: Colors.red,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 0,
@@ -342,7 +342,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
       child: Column(
         children: [
           const SizedBox(height: 100),
-          Icon(Icons.image_search_outlined, size: 80, color: Colors.white.withOpacity(0.05)),
+          Icon(Icons.image_search_outlined, size: 80, color: Colors.white.withValues(alpha: 0.05)),
           const SizedBox(height: 24),
           Text('No assets found', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
@@ -365,7 +365,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
           backgroundColor: Colors.transparent,
           child: Container(
             width: 500,
-            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
+            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -396,10 +396,10 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
                           _sectionLabel('Category'),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            value: category,
+                            initialValue: category,
                             dropdownColor: const Color(0xFF1E293B),
                             style: const TextStyle(color: Colors.white, fontSize: 13),
-                            decoration: InputDecoration(filled: true, fillColor: Colors.white.withOpacity(0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+                            decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
                             items: ['general', 'banners', 'blogs', 'products', 'branding'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
                             onChanged: (v) => setModalState(() => category = v!),
                           ),
@@ -453,9 +453,9 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.all(16),
           ),

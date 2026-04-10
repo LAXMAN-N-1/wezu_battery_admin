@@ -110,9 +110,9 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                 ),
                 child: TextField(
                   controller: _searchController,
@@ -120,8 +120,8 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
                   onChanged: (v) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Search posts by title or author...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-                    prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.2)),
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                    prefixIcon: Icon(Icons.search, color: Colors.white.withValues(alpha: 0.2)),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
@@ -147,9 +147,9 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.transparent,
+          color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.transparent),
+          border: Border.all(color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : Colors.transparent),
         ),
         child: Row(
           children: [
@@ -157,7 +157,7 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: active ? const Color(0xFF3B82F6).withOpacity(0.2) : Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(6)),
+              decoration: BoxDecoration(color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(6)),
               child: Text(count.toString(), style: GoogleFonts.inter(color: active ? Colors.blue.shade300 : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
             ),
           ],
@@ -171,9 +171,9 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
       width: 180,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -233,7 +233,7 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
   Widget _authorBadge(String name) {
     return Row(
       children: [
-        CircleAvatar(radius: 10, backgroundColor: Colors.blue.withOpacity(0.2), child: Text(name[0], style: const TextStyle(fontSize: 8, color: Colors.blue))),
+        CircleAvatar(radius: 10, backgroundColor: Colors.blue.withValues(alpha: 0.2), child: Text(name[0], style: const TextStyle(fontSize: 8, color: Colors.blue))),
         const SizedBox(width: 8),
         Text(name, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
       ],
@@ -243,7 +243,7 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
   Widget _categoryBadge(String category) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4)),
       child: Text(category.toUpperCase(), style: GoogleFonts.inter(fontSize: 9, color: Colors.white54, fontWeight: FontWeight.bold)),
     );
   }
@@ -254,7 +254,7 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
         padding: const EdgeInsets.all(64.0),
         child: Column(
           children: [
-            Icon(Icons.article_outlined, size: 64, color: Colors.white.withOpacity(0.1)),
+            Icon(Icons.article_outlined, size: 64, color: Colors.white.withValues(alpha: 0.1)),
             const SizedBox(height: 16),
             Text('No blog posts found', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),

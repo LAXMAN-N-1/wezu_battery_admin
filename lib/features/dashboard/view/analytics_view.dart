@@ -29,7 +29,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   'Platform Analytics',
@@ -39,7 +39,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     color: colors.textPrimary,
                   ),
                 ),
-                const Spacer(),
+                
                 _buildPeriodSelector(colors),
                 const SizedBox(width: 8),
                 IconButton(

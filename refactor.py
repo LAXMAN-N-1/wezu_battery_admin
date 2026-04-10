@@ -76,7 +76,7 @@ def process_file(filepath):
         print(f"Refactored {filepath}")
 
 if __name__ == '__main__':
-    files = glob.glob('d:/wezu admin/wezu_battery_admin/lib/features/**/view/*.dart', recursive=True)
+    files = glob.glob('lib/features/**/view/*.dart', recursive=True)
     for f in files:
         process_file(f)
     print("Done")

@@ -102,9 +102,9 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
         Container(
           width: 300,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.02),
+            color: Colors.white.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: TextField(
             controller: _searchController,
@@ -112,8 +112,8 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
             onChanged: (v) => setState(() {}),
             decoration: InputDecoration(
               hintText: 'Search questions...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-              prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.2), size: 18),
+              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              prefixIcon: Icon(Icons.search, color: Colors.white.withValues(alpha: 0.2), size: 18),
               border: InputBorder.none,
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -133,9 +133,9 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.white.withOpacity(0.05),
+          color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.transparent),
+          border: Border.all(color: active ? const Color(0xFF3B82F6).withValues(alpha: 0.3) : Colors.transparent),
         ),
         child: Text(
           label.toUpperCase(),
@@ -164,7 +164,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
       decoration: BoxDecoration(
         color: const Color(0xFF141E2B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -174,7 +174,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
         leading: Container(
           width: 32,
           height: 32,
-          decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
           child: Center(child: Text('${index + 1}', style: GoogleFonts.outfit(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14))),
         ),
         title: Text(faq.question, style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
@@ -221,7 +221,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
   Widget _categoryBadge(String category) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4)),
       child: Text(category.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.bold)),
     );
   }
@@ -233,7 +233,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
       label: Text(label, style: TextStyle(color: color, fontSize: 12)),
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        backgroundColor: color.withOpacity(0.05),
+        backgroundColor: color.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
@@ -245,7 +245,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
         padding: const EdgeInsets.all(64.0),
         child: Column(
           children: [
-            Icon(Icons.help_outline, size: 64, color: Colors.white.withOpacity(0.1)),
+            Icon(Icons.help_outline, size: 64, color: Colors.white.withValues(alpha: 0.1)),
             const SizedBox(height: 16),
             Text('No FAQs found', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -269,7 +269,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
           backgroundColor: Colors.transparent,
           child: Container(
             constraints: const BoxConstraints(maxWidth: 600),
-            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
+            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -335,7 +335,7 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
                                   _fieldLabel('Status'),
                                   const SizedBox(height: 8),
                                   Container(
-                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                                     child: SwitchListTile(
                                       title: Text(isActive ? 'Visible' : 'Hidden', style: const TextStyle(color: Colors.white70, fontSize: 13)),
                                       value: isActive,
@@ -399,9 +399,9 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
 
   InputDecoration _fieldDecoration(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.05),
+        fillColor: Colors.white.withValues(alpha: 0.05),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       );
 

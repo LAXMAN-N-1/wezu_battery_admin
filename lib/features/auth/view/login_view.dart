@@ -272,10 +272,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.redAccent.withOpacity(0.1),
+                                color: Colors.redAccent.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: Colors.redAccent.withOpacity(0.2),
+                                  color: Colors.redAccent.withValues(alpha: 0.2),
                                 ),
                               ),
                               child: Row(
@@ -369,3 +369,4 @@ class GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

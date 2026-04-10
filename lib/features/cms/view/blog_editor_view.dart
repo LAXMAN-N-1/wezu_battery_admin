@@ -6,8 +6,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'dart:convert';
 import '../data/models/blog.dart';
 import '../data/cms_providers.dart';
-import '../data/repositories/blog_repository.dart';
-import '../../../core/widgets/admin_ui_components.dart';
+
 
 class BlogEditorView extends ConsumerStatefulWidget {
   final int? blogId;
@@ -189,7 +188,7 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
                             style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
                             decoration: InputDecoration(
                               hintText: 'Enter post title...',
-                              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
                               border: InputBorder.none,
                             ),
                             validator: (v) => v == null || v.isEmpty ? 'Title is required' : null,
@@ -213,15 +212,15 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
                           // Quill Editor
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.02),
+                              color: Colors.white.withValues(alpha: 0.02),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white.withOpacity(0.05)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                             ),
                             child: Column(
                               children: [
                                 QuillSimpleToolbar(
                                   controller: _quillController,
-                                  configurations: const QuillSimpleToolbarConfigurations(
+                                  config: const QuillSimpleToolbarConfig(
                                     showFontSize: false,
                                     showFontFamily: false,
                                     showSearchButton: false,
@@ -237,7 +236,7 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
                                   child: QuillEditor.basic(
                                     controller: _quillController,
                                     focusNode: _editorFocusNode,
-                                    configurations: const QuillEditorConfigurations(),
+                                    config: const QuillEditorConfig(),
                                   ),
                                 ),
                               ],
@@ -258,7 +257,7 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
                     width: 350,
                     decoration: BoxDecoration(
                       color: const Color(0xFF141E2B),
-                      border: Border(left: BorderSide(color: Colors.white.withOpacity(0.05))),
+                      border: Border(left: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
                     ),
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.all(24),
@@ -310,13 +309,13 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
       iconColor: Colors.blue,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      backgroundColor: Colors.white.withOpacity(0.02),
+      backgroundColor: Colors.white.withValues(alpha: 0.02),
       children: [
-        _buildTextField('Meta Title', _metaTitleController, hint: 'Search engine title'),
+        _buildTextField('Meta Title', _metaTitleController, hint: 'Search engine title', onChanged: (_) => setState(() {})),
         const SizedBox(height: 16),
-        _buildTextField('Meta Description', _metaDescController, hint: 'Search engine description', maxLines: 3),
+        _buildTextField('Meta Description', _metaDescController, hint: 'Search engine description', maxLines: 3, onChanged: (_) => setState(() {})),
         const SizedBox(height: 16),
-        _buildTextField('Focus Keyword', _focusKeywordController, hint: 'Main keyword for this post'),
+        _buildTextField('Focus Keyword', _focusKeywordController, hint: 'Main keyword for this post', onChanged: (_) => setState(() {})),
         const SizedBox(height: 24),
         Text('Preview', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
@@ -347,9 +346,9 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
         height: 180,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.02),
+          color: Colors.white.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.1), style: BorderStyle.solid),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1), style: BorderStyle.solid),
         ),
         child: _featuredImageUrl != null
             ? Stack(
@@ -362,18 +361,18 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
                       height: double.infinity, 
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         child: const Center(child: Icon(Icons.broken_image, color: Colors.white24)),
                       ),
                     ),
                   ),
-                  Positioned(right: 8, top: 8, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), backgroundColor: Colors.black26, onPressed: () => setState(() => _featuredImageUrl = null))),
+                  Positioned(right: 8, top: 8, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), style: IconButton.styleFrom(backgroundColor: Colors.black26), onPressed: () => setState(() => _featuredImageUrl = null))),
                 ],
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.image_outlined, size: 32, color: Colors.white.withOpacity(0.2)),
+                  Icon(Icons.image_outlined, size: 32, color: Colors.white.withValues(alpha: 0.2)),
                   const SizedBox(height: 12),
                   Text('Click to upload featured image', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
                   Text('Recommended: 1200x675px', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
@@ -383,7 +382,7 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hint}) {
+  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, String? hint, ValueChanged<String>? onChanged}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -392,12 +391,13 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
+          onChanged: onChanged,
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.all(16),
           ),
@@ -413,12 +413,12 @@ class _BlogEditorViewState extends ConsumerState<BlogEditorView> {
         Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           dropdownColor: const Color(0xFF1E293B),
           style: const TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
           ),
           items: items.map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),

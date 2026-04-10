@@ -87,7 +87,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
       decoration: BoxDecoration(
         color: const Color(0xFF141E2B),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,7 +163,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
                     IconButton(
                       onPressed: () => _confirmDelete(banner),
                       icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                      style: IconButton.styleFrom(backgroundColor: Colors.red.withOpacity(0.05)),
+                      style: IconButton.styleFrom(backgroundColor: Colors.red.withValues(alpha: 0.05)),
                     ),
                   ],
                 ),
@@ -197,7 +197,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
       child: Column(
         children: [
           const SizedBox(height: 100),
-          Icon(Icons.view_carousel_outlined, size: 80, color: Colors.white.withOpacity(0.05)),
+          Icon(Icons.view_carousel_outlined, size: 80, color: Colors.white.withValues(alpha: 0.05)),
           const SizedBox(height: 24),
           Text('No active banners', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
@@ -225,7 +225,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
            backgroundColor: Colors.transparent,
            child: Container(
              width: 700,
-             decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
+             decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
              child: Column(
                mainAxisSize: MainAxisSize.min,
                children: [
@@ -252,7 +252,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
                          Container(
                            width: double.infinity,
                            height: 160,
-                           decoration: BoxDecoration(color: Colors.white.withOpacity(0.02), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white10)),
+                           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white10)),
                            child: ClipRRect(
                              borderRadius: BorderRadius.circular(11),
                              child: imageCtrl.text.isNotEmpty 
@@ -288,7 +288,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
                                      },
                                      child: Container(
                                        padding: const EdgeInsets.all(16),
-                                       decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                                       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                                        child: Row(
                                          children: [
                                            const Icon(Icons.calendar_month, color: Colors.white38, size: 18),
@@ -318,7 +318,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
                                    _sectionLabel('Display Priority: ${priority.toInt()}'),
                                    const SizedBox(height: 8),
                                    SliderTheme(
-                                     data: SliderTheme.of(context).copyWith(trackHeight: 2, activeTrackColor: Colors.blue, thumbColor: Colors.blue, overlayColor: Colors.blue.withOpacity(0.1)),
+                                     data: SliderTheme.of(context).copyWith(trackHeight: 2, activeTrackColor: Colors.blue, thumbColor: Colors.blue, overlayColor: Colors.blue.withValues(alpha: 0.1)),
                                      child: Slider(value: priority, min: 1, max: 10, divisions: 9, onChanged: (v) => setModalState(() => priority = v)),
                                    ),
                                  ],
@@ -332,7 +332,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
                                    _sectionLabel('Status'),
                                    const SizedBox(height: 8),
                                    Container(
-                                     decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                                      child: SwitchListTile(
                                        title: const Text('Active', style: TextStyle(color: Colors.white70, fontSize: 13)),
                                        value: isActive,
@@ -393,7 +393,7 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
      );
   }
 
-  Widget _previewPlaceholder() => Center(child: Icon(Icons.image_outlined, color: Colors.white.withOpacity(0.05), size: 48));
+  Widget _previewPlaceholder() => Center(child: Icon(Icons.image_outlined, color: Colors.white.withValues(alpha: 0.05), size: 48));
 
   Widget _sectionLabel(String label) => Text(label, style: GoogleFonts.inter(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5));
 
@@ -409,9 +409,9 @@ class _BannerManagementViewState extends ConsumerState<BannerManagementView> {
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.all(16),
           ),

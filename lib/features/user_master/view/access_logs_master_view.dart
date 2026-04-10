@@ -75,7 +75,7 @@ class _AccessLogsMasterViewState extends ConsumerState<AccessLogsMasterView> {
           const Divider(color: Colors.white10, height: 1),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: DataTable(
+            child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
               columnSpacing: 32,
               headingTextStyle: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 13),
               dataTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -111,7 +111,7 @@ class _AccessLogsMasterViewState extends ConsumerState<AccessLogsMasterView> {
                   ],
                 );
               }),
-            ),
+            )),
           ),
           const SizedBox(height: 20),
         ],

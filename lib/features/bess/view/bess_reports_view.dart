@@ -53,9 +53,9 @@ class _BessReportsViewState extends State<BessReportsView> {
       const SizedBox(height: 24),
 
       // Filter
-      Row(children: [
+      Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
         Text('Report History', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
-        const Spacer(),
+        
         Container(padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
           child: DropdownButtonHideUnderline(child: DropdownButton<String?>(

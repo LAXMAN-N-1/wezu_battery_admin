@@ -80,7 +80,7 @@ class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                 child: const Icon(Icons.description_outlined, size: 16, color: Colors.blue),
               ),
               const SizedBox(width: 12),
@@ -90,14 +90,14 @@ class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
           Text(doc.slug, style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4)),
             child: Text('v${doc.version}', style: GoogleFonts.robotoMono(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
           ),
           doc.isActive 
             ? const StatusBadge(status: 'active')
             : const StatusBadge(status: 'draft'),
           Text(
-            doc.updatedAt != null ? DateFormat('MMM d, yyyy').format(doc.updatedAt!) : 'N/A',
+            DateFormat('MMM d, yyyy').format(doc.updatedAt),
             style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
           ),
           Row(
@@ -117,7 +117,7 @@ class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
         padding: const EdgeInsets.all(64.0),
         child: Column(
           children: [
-            Icon(Icons.gavel_outlined, size: 64, color: Colors.white.withOpacity(0.1)),
+            Icon(Icons.gavel_outlined, size: 64, color: Colors.white.withValues(alpha: 0.1)),
             const SizedBox(height: 16),
             Text('No documents found', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -143,7 +143,7 @@ class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
           backgroundColor: Colors.transparent,
           child: Container(
             width: 800,
-            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
+            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -186,20 +186,20 @@ class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
                                   const SizedBox(height: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+                                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                                     child: Row(
                                       children: [
                                         const Text('Active', style: TextStyle(color: Colors.white70, fontSize: 13)),
                                         Switch(
                                           value: isActive,
-                                          activeColor: Colors.blue,
+                                          activeThumbColor: Colors.blue,
                                           onChanged: (v) => setModalState(() => isActive = v),
                                         ),
                                         const Spacer(),
                                         const Text('Force Update', style: TextStyle(color: Colors.white70, fontSize: 13)),
                                         Switch(
                                           value: forceUpdate,
-                                          activeColor: Colors.redAccent,
+                                          activeThumbColor: Colors.redAccent,
                                           onChanged: (v) => setModalState(() => forceUpdate = v),
                                         ),
                                       ],
@@ -269,9 +269,9 @@ class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
           style: const TextStyle(color: Colors.white, fontSize: 13),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
             contentPadding: const EdgeInsets.all(16),
           ),
