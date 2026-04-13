@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import '../data/models/media_asset.dart';
-import '../data/cms_providers.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:typed_data';
 import '../../../core/widgets/admin_ui_components.dart';
+import '../../../core/widgets/glass_components.dart';
+import '../data/models/media_asset.dart';
+import '../provider/cms_providers.dart';
 
 class MediaLibraryView extends ConsumerStatefulWidget {
   const MediaLibraryView({super.key});
@@ -15,305 +19,466 @@ class MediaLibraryView extends ConsumerStatefulWidget {
 }
 
 class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
-  String _activeCategory = 'All';
-  final _searchController = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final TextEditingController _searchController = TextEditingController();
+  final Set<int> _selectedIds = {};
+  MediaAsset? _selectedAsset;
+  String _currentFolder = 'All Files';
+  final List<String> _folders = ['All Files', 'Blog Images', 'Banner Assets', 'Legal Documents', 'Videos'];
+  String _sortOrder = 'Newest First';
+  bool _isGridView = true;
 
   @override
   Widget build(BuildContext context) {
-    final mediaState = ref.watch(mediaListProvider);
+    return GlassScaffold(
+      scaffoldKey: _scaffoldKey,
+      endDrawer: _selectedAsset != null ? _MediaDetailsDrawer(asset: _selectedAsset!) : null,
+      child: Row(
+        children: [
+          _buildFolderSidebar(),
+          const VerticalDivider(width: 1, color: Colors.white10),
+          Expanded(child: _buildExplorerArea()),
+        ],
+      ),
+    );
+  }
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 32),
-            _buildFilters(),
-            const SizedBox(height: 24),
-            mediaState.when(
-              data: (assets) {
-                final filteredAssets = _applyFilters(assets);
-                if (filteredAssets.isEmpty) return _buildEmptyState();
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    childAspectRatio: 0.85,
-                  ),
-                  itemCount: filteredAssets.length,
-                  itemBuilder: (context, index) => _buildMediaCard(filteredAssets[index]),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
-            ),
-          ],
+  Widget _buildFolderSidebar() {
+    return Container(
+      width: 280,
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Explorer', style: GoogleFonts.outfit(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 32),
+          ..._folders.map((folder) => _buildSidebarItem(
+            _getFolderIcon(folder),
+            folder,
+            _currentFolder == folder,
+          )),
+          const SizedBox(height: 24),
+          TextButton.icon(
+            onPressed: _showNewFolderDialog,
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: const Text('New Folder'),
+            style: TextButton.styleFrom(foregroundColor: Colors.white38),
+          ),
+          const Spacer(),
+          _buildStorageUsage(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem(IconData icon, String label, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: () => setState(() => _currentFolder = label),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.1) : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: isSelected ? const Color(0xFF3B82F6) : Colors.white54),
+              const SizedBox(width: 12),
+              Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.white54, fontSize: 13, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
+  Widget _buildStorageUsage() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Media Library',
-              style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Manage and organize your platform assets, images, and branding files',
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
-            ),
-          ],
+        const Text('Storage Usage', style: TextStyle(color: Colors.white38, fontSize: 11)),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(value: 0.23, backgroundColor: Colors.white10, valueColor: const AlwaysStoppedAnimation(Color(0xFF3B82F6)), minHeight: 6),
         ),
-        const Spacer(),
-        ElevatedButton.icon(
-          onPressed: () => _showUploadDialog(),
-          icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-          label: const Text('Upload Media'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF3B82F6),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
+        const SizedBox(height: 8),
+        const Text('2.3 GB used of 10 GB', style: TextStyle(color: Colors.white54, fontSize: 12)),
       ],
     );
   }
 
-  Widget _buildFilters() {
-    final categories = ['All', 'general', 'banners', 'blogs', 'products', 'branding'];
-    return Row(
+  Widget _buildExplorerArea() {
+    final mediaAsync = ref.watch(mediaProvider);
+
+    return Column(
       children: [
+        _buildExplorerHeader(),
+        _buildToolbar(),
         Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: categories.map((cat) => _filterTab(cat)).toList(),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Container(
-          width: 300,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.02),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
-          ),
-          child: TextField(
-            controller: _searchController,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            onChanged: (v) => setState(() {}),
-            decoration: InputDecoration(
-              hintText: 'Search assets by name...',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-              prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.2), size: 18),
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
+          child: Stack(
+            children: [
+              mediaAsync.when(
+                data: (assets) => _isGridView ? _buildGrid(assets) : _buildList(assets),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, _) => Center(child: Text('Error: $err')),
+              ),
+              if (_selectedIds.isNotEmpty) _buildBulkActionBar(),
+              _buildUploadWidget(),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _filterTab(String label) {
-    final active = _activeCategory == label;
-    return GestureDetector(
-      onTap: () => setState(() => _activeCategory = label),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFF3B82F6).withOpacity(0.15) : Colors.white.withOpacity(0.05) ,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.transparent),
-        ),
-        child: Text(
-          label.toUpperCase(),
-          style: GoogleFonts.inter(
-            color: active ? Colors.blue.shade300 : Colors.white38,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-            fontSize: 11,
+  Widget _buildExplorerHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(_currentFolder, style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text('Manage and organize assets in this folder', style: TextStyle(color: Colors.white38, fontSize: 13)),
+            ],
           ),
-        ),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: _pickAndUploadFiles,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3B82F6),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+            label: const Text('UPLOAD FILES'),
+          ),
+        ],
       ),
     );
   }
 
-  List<MediaAsset> _applyFilters(List<MediaAsset> assets) {
-    return assets.where((a) {
-      if (_activeCategory != 'All' && a.category?.toLowerCase() != _activeCategory.toLowerCase()) return false;
-      if (_searchController.text.isNotEmpty && !a.fileName.toLowerCase().contains(_searchController.text.toLowerCase())) return false;
-      return true;
-    }).toList();
+  Widget _buildToolbar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+      child: Row(
+        children: [
+          Expanded(child: TextField(controller: _searchController, decoration: InputDecoration(prefixIcon: const Icon(Icons.search, size: 18, color: Colors.white24), hintText: 'Search files...', hintStyle: const TextStyle(color: Colors.white24), border: InputBorder.none))),
+          DropdownButton<String>(value: 'All Types', style: const TextStyle(color: Colors.white70), dropdownColor: const Color(0xFF1E293B), items: ['All Types', 'Images', 'Videos', 'PDFs'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (_) {}),
+          const SizedBox(width: 16),
+          IconButton(icon: Icon(Icons.grid_view, color: _isGridView ? const Color(0xFF3B82F6) : Colors.white24), onPressed: () => setState(() => _isGridView = true)),
+          IconButton(icon: Icon(Icons.list, color: !_isGridView ? const Color(0xFF3B82F6) : Colors.white24), onPressed: () => setState(() => _isGridView = false)),
+        ],
+      ),
+    );
   }
 
-  Widget _buildMediaCard(MediaAsset asset) {
-    return GestureDetector(
-      onTap: () => _showAssetDetails(asset),
+  Widget _buildGrid(List<MediaAsset> assets) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, childAspectRatio: 0.85, crossAxisSpacing: 20, mainAxisSpacing: 20),
+      itemCount: assets.length,
+      itemBuilder: (context, index) => _AssetCard(
+        asset: assets[index],
+        isSelected: _selectedIds.contains(assets[index].id),
+        onToggle: () => setState(() => _selectedIds.contains(assets[index].id) ? _selectedIds.remove(assets[index].id) : _selectedIds.add(assets[index].id)),
+        onTap: () => _showDetailsDrawer(assets[index]),
+      ),
+    );
+  }
+
+  Widget _buildList(List<MediaAsset> assets) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(24),
+      itemCount: assets.length,
+      separatorBuilder: (_, __) => const Divider(color: Colors.white10),
+      itemBuilder: (context, index) => ListTile(
+        title: Text(assets[index].fileName),
+        subtitle: Text(assets[index].fileType),
+        leading: const Icon(Icons.insert_drive_file),
+      ),
+    );
+  }
+
+  Widget _buildBulkActionBar() {
+    return Positioned(
+      bottom: 24,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(color: const Color(0xFF3B82F6), borderRadius: BorderRadius.circular(32), boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 20, offset: const Offset(0, 8))]),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('${_selectedIds.length} files selected', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 24),
+              _barAction(Icons.folder_shared, 'Move'),
+              _barAction(Icons.download, 'Download'),
+              _barAction(Icons.delete, 'Delete', isRed: true),
+              IconButton(icon: const Icon(Icons.close, color: Colors.white70), onPressed: () => setState(() => _selectedIds.clear())),
+            ],
+          ),
+        ).animate().slideY(begin: 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+  }
+
+  Widget _barAction(IconData icon, String label, {bool isRed = false}) {
+    return TextButton.icon(onPressed: () {}, icon: Icon(icon, size: 16, color: Colors.white), label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 13)));
+  }
+
+  Widget _buildUploadWidget() {
+    return Positioned(
+      bottom: 24,
+      right: 24,
       child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF141E2B),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
-        ),
+        width: 320,
+        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10), boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 30)]),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.network(
-                      asset.url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: Colors.white10, child: const Icon(Icons.broken_image_outlined, color: Colors.white24)),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(4)),
-                        child: Text(asset.fileType.split('/').last.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 8, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+              child: const Row(
+                children: [
+                  Text('Uploading 3 files...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Spacer(),
+                  Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+                ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(12),
+            const Padding(
+              padding: EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(asset.fileName, style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(NumberFormat.compact().format(asset.fileSizeBytes / 1024) + ' KB', style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
-                      Icon(Icons.more_horiz, size: 14, color: Colors.white24),
-                    ],
-                  ),
+                  _UploadProgressRow(name: 'hero_banner_solar.jpg', progress: 0.8),
+                  SizedBox(height: 12),
+                  _UploadProgressRow(name: 'terms_v3.pdf', progress: 0.45),
                 ],
               ),
             ),
           ],
         ),
-      ),
+      ).animate().slideX(begin: 1.0),
     );
   }
 
-  void _showAssetDetails(MediaAsset asset) {
+  void _showDetailsDrawer(MediaAsset asset) {
+    setState(() => _selectedAsset = asset);
+    _scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  Future<void> _pickAndUploadFiles() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.any,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        for (final file in result.files) {
+          if (file.bytes != null) {
+            await ref.read(mediaProvider.notifier).uploadFile(
+              bytes: file.bytes!,
+              fileName: file.name,
+              category: _currentFolder == 'All Files' ? 'general' : _currentFolder.toLowerCase().replaceAll(' ', '_'),
+            );
+          }
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Files uploaded successfully'), backgroundColor: Colors.green),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  IconData _getFolderIcon(String name) {
+    switch (name) {
+      case 'All Files': return Icons.folder_open;
+      case 'Blog Images': return Icons.image;
+      case 'Banner Assets': return Icons.campaign;
+      case 'Legal Documents': return Icons.description;
+      case 'Videos': return Icons.movie;
+      default: return Icons.folder;
+    }
+  }
+
+  void _showNewFolderDialog() {
+    final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 600),
-          decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
-          child: Row(
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Create New Folder', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Folder Name',
+            hintStyle: const TextStyle(color: Colors.white24),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white10)),
+            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFF3B82F6))),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL', style: TextStyle(color: Colors.white38))),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                setState(() {
+                  _folders.add(controller.text);
+                  _currentFolder = controller.text;
+                });
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3B82F6),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('CREATE'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AssetCard extends StatefulWidget {
+  final MediaAsset asset;
+  final bool isSelected;
+  final VoidCallback onToggle;
+  final VoidCallback onTap;
+
+  const _AssetCard({required this.asset, required this.isSelected, required this.onToggle, required this.onTap});
+
+  @override
+  State<_AssetCard> createState() => _AssetCardState();
+}
+
+class _AssetCardState extends State<_AssetCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: GlassContainer(
+          padding: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                flex: 3,
-                child: Container(
-                  decoration: const BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.horizontal(left: Radius.circular(23))),
-                  child: Center(
-                    child: Hero(
-                      tag: asset.id,
-                      child: Image.network(
-                        asset.url, 
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => const Center(
-                          child: Icon(Icons.broken_image, color: Colors.white24, size: 48),
-                        ),
-                      ),
-                    ),
-                  ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (widget.asset.isImage)
+                      Image.network(widget.asset.url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 32, color: Colors.white10))
+                    else
+                      const Center(child: Icon(Icons.insert_drive_file, size: 40, color: Colors.white24)),
+                    if (_isHovered) Container(color: Colors.black45),
+                    if (_isHovered || widget.isSelected) Positioned(top: 8, left: 8, child: Checkbox(value: widget.isSelected, onChanged: (_) => widget.onToggle(), fillColor: MaterialStateProperty.all(const Color(0xFF3B82F6)))),
+                    if (_isHovered) Positioned(bottom: 8, right: 8, child: Row(children: [IconButton(icon: const Icon(Icons.link, size: 16, color: Colors.white), onPressed: () {}), IconButton(icon: const Icon(Icons.folder_shared, size: 16, color: Colors.white), onPressed: () {})])),
+                  ],
                 ),
               ),
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text('Asset Info', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                          const Spacer(),
-                          IconButton(icon: const Icon(Icons.close, color: Colors.white38), onPressed: () => Navigator.pop(ctx)),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      _infoRow('Name', asset.fileName),
-                      _infoRow('Type', asset.fileType.toUpperCase()),
-                      _infoRow('Size', '${(asset.fileSizeBytes / 1024).toStringAsFixed(2)} KB'),
-                      _infoRow('Category', asset.category?.toUpperCase() ?? 'GENERAL'),
-                      _infoRow('Alt Text', asset.altText ?? 'None provided'),
-                      const Spacer(),
-                      _sectionLabel('Public URL'),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
-                        child: Row(
-                          children: [
-                            Expanded(child: Text(asset.url, style: GoogleFonts.robotoMono(color: Colors.blue.shade300, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            IconButton(
-                              icon: const Icon(Icons.copy, size: 16, color: Colors.blue),
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: asset.url));
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL copied!')));
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _confirmDelete(asset),
-                          icon: const Icon(Icons.delete_outline),
-                          label: const Text('Remove Asset'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.withOpacity(0.1),
-                            foregroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(widget.asset.fileName, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text('${(widget.asset.fileSizeBytes / 1024).toStringAsFixed(1)} KB • ${DateFormat('dd MMM').format(widget.asset.createdAt)}', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                  ],
                 ),
               ),
+            ],
+          ),
+        ),
+      ).animate(target: _isHovered ? 1 : 0).scale(begin: const Offset(1, 1), end: const Offset(1.02, 1.02), duration: 200.ms),
+    );
+  }
+}
+
+class _UploadProgressRow extends StatelessWidget {
+  final String name;
+  final double progress;
+  const _UploadProgressRow({required this.name, required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: const TextStyle(color: Colors.white70, fontSize: 12), maxLines: 1),
+        const SizedBox(height: 4),
+        ClipRRect(borderRadius: BorderRadius.circular(2), child: LinearProgressIndicator(value: progress, minHeight: 4, backgroundColor: Colors.white.withOpacity(0.05), valueColor: const AlwaysStoppedAnimation(Color(0xFF3B82F6)))),
+      ],
+    );
+  }
+}
+
+class _MediaDetailsDrawer extends StatelessWidget {
+  final MediaAsset asset;
+  const _MediaDetailsDrawer({required this.asset});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      width: 400,
+      backgroundColor: const Color(0xFF0F172A),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('File Details', style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Container(height: 200, width: double.infinity, decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(16)), child: asset.isImage ? Image.network(asset.url, fit: BoxFit.contain) : const Icon(Icons.insert_drive_file, size: 64, color: Colors.white10)),
+              const SizedBox(height: 32),
+              _infoRow('Filename', asset.fileName),
+              _infoRow('Size', '${(asset.fileSizeBytes / 1024).toStringAsFixed(2)} KB'),
+              _infoRow('Type', asset.fileType),
+              _infoRow('Dimensions', asset.dimensions ?? 'N/A'),
+              _infoRow('Uploaded', DateFormat('dd MMM yyyy, hh:mm a').format(asset.createdAt)),
+              const Spacer(),
+              ElevatedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.link, size: 18),
+                label: const Text('COPY PUBLIC URL'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 52),
+                ),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.download, size: 18), label: const Text('DOWNLOAD'), style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 52), foregroundColor: Colors.white70)),
             ],
           ),
         ),
@@ -323,167 +488,8 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
 
   Widget _infoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _sectionLabel(label),
-          const SizedBox(height: 4),
-          Text(value, style: GoogleFonts.inter(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
-  }
-
-  Widget _sectionLabel(String label) => Text(label, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5));
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        children: [
-          const SizedBox(height: 100),
-          Icon(Icons.image_search_outlined, size: 80, color: Colors.white.withOpacity(0.05)),
-          const SizedBox(height: 24),
-          Text('No assets found', style: GoogleFonts.outfit(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text('Upload your platform images or documents to populate the library', style: TextStyle(color: Colors.white38)),
-        ],
-      ),
-    );
-  }
-
-  void _showUploadDialog() {
-    final urlCtrl = TextEditingController();
-    final nameCtrl = TextEditingController();
-    final altCtrl = TextEditingController();
-    String category = 'general';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setModalState) => Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            width: 500,
-            decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withOpacity(0.1))),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    children: [
-                      Text('Upload Asset', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                      const Spacer(),
-                      IconButton(icon: const Icon(Icons.close, color: Colors.white38), onPressed: () => Navigator.pop(ctx)),
-                    ],
-                  ),
-                ),
-                const Divider(color: Colors.white10, height: 1),
-                Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    children: [
-                      _buildTextField('Asset URL', urlCtrl, 'Direct link to the media file'),
-                      const SizedBox(height: 20),
-                      _buildTextField('Internal Name', nameCtrl, 'e.g. app_hero_banner'),
-                      const SizedBox(height: 20),
-                      _buildTextField('Alt Text', altCtrl, 'Accessibility description'),
-                      const SizedBox(height: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _sectionLabel('Category'),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: category,
-                            dropdownColor: const Color(0xFF1E293B),
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
-                            decoration: InputDecoration(filled: true, fillColor: Colors.white.withOpacity(0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
-                            items: ['general', 'banners', 'blogs', 'products', 'branding'].map((s) => DropdownMenuItem(value: s, child: Text(s.toUpperCase()))).toList(),
-                            onChanged: (v) => setModalState(() => category = v!),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                      const SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: () async {
-                          await ref.read(mediaRepositoryProvider).createMediaAsset(
-                            fileName: nameCtrl.text.isNotEmpty ? nameCtrl.text : 'Asset_${DateTime.now().millisecondsSinceEpoch}',
-                            fileType: 'image/jpeg',
-                            fileSizeBytes: 0,
-                            url: urlCtrl.text,
-                            altText: altCtrl.text,
-                            category: category,
-                          );
-                          ref.invalidate(mediaListProvider);
-                          if (ctx.mounted) Navigator.pop(ctx);
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
-                        child: const Text('Add to Library'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController ctrl, String hint) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel(label),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: ctrl,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.all(16),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _confirmDelete(MediaAsset asset) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Delete Asset?', style: TextStyle(color: Colors.white)),
-        content: const Text('This will remove the link to this asset. The file itself may remain on the storage provider.', style: TextStyle(color: Colors.white70)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              ref.read(mediaListProvider.notifier).deleteAsset(asset.id);
-              Navigator.pop(ctx);
-              Navigator.pop(context); // Close the details view too
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)), const SizedBox(height: 4), Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold))]),
     );
   }
 }
