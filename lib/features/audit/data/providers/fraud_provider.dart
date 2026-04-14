@@ -5,7 +5,7 @@ import '../repositories/audit_repository.dart';
 
 class FraudState {
   final bool isLoading;
-  final List<FraudAlertItem> alerts;
+  final List<FraudAlert> alerts;
   final List<dynamic> highRiskUsers;
   final List<dynamic> duplicateAccounts;
   final int totalAlerts;
@@ -30,7 +30,7 @@ class FraudState {
 
   FraudState copyWith({
     bool? isLoading,
-    List<FraudAlertItem>? alerts,
+    List<FraudAlert>? alerts,
     List<dynamic>? highRiskUsers,
     List<dynamic>? duplicateAccounts,
     int? totalAlerts,
@@ -83,18 +83,18 @@ class FraudNotifier extends StateNotifier<FraudState> {
         skip: refresh ? 0 : state.alerts.length,
       );
 
-      final newAlerts = res['items'] as List<FraudAlertItem>;
+      final List<FraudAlert> newAlerts = res['items'] as List<FraudAlert>;
       final allAlerts = refresh ? newAlerts : [...state.alerts, ...newAlerts];
       
       // Calculate summary stats
       int high = allAlerts.where((e) => e.riskScore > 80 && e.status != 'Resolved').length;
-      int inv = allAlerts.where((e) => e.status == 'Investigation').length;
+      int inv = allAlerts.where((e) => e.status == 'Investigation' || e.status == 'Under Investigation').length;
       int resCount = allAlerts.where((e) => e.status == 'Resolved').length;
 
       state = state.copyWith(
         isLoading: false,
         alerts: allAlerts,
-        totalAlerts: res['total_count'] ?? 0,
+        totalAlerts: res['total'] ?? allAlerts.length,
         highRiskCount: high,
         investigatingCount: inv,
         resolvedCount: resCount,

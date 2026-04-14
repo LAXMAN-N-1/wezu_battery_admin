@@ -159,16 +159,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<_AuthResult> _authenticate(String credential, String password) async {
     final attempts = <({String path, Map<String, dynamic> payload, bool allowAdminRoleRetry, bool isFormEncoded})>[
       (
-        path: '/api/v1/auth/login',
-        payload: {'username': credential, 'password': password},
-        allowAdminRoleRetry: true,
-        isFormEncoded: false,
+        path: '/auth/token',
+        payload: {'username': credential, 'password': password, 'grant_type': 'password'},
+        allowAdminRoleRetry: false,
+        isFormEncoded: true,
       ),
       (
         path: '/api/v1/auth/token',
         payload: {'username': credential, 'password': password, 'grant_type': 'password'},
         allowAdminRoleRetry: false,
         isFormEncoded: true,
+      ),
+      (
+        path: '/api/v1/auth/login',
+        payload: {'username': credential, 'password': password},
+        allowAdminRoleRetry: true,
+        isFormEncoded: false,
       ),
       (
         path: '/api/v1/auth/admin/login',
@@ -347,7 +353,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     final statusCode = error.response?.statusCode;
-    return statusCode == 404 ||
+    return statusCode == 401 ||
+        statusCode == 404 ||
         statusCode == 405 ||
         statusCode == 415 ||
         statusCode == 422 ||

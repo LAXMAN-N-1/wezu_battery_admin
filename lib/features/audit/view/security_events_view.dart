@@ -5,8 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../data/models/audit_models.dart';
-import '../data/providers/security_events_provider.dart';
-import '../data/providers/audit_dashboard_provider.dart';
+// security_events_provider and audit_dashboard_provider not directly used — state is managed locally
 import '../data/repositories/audit_repository.dart';
 
 class SecurityEventsView extends ConsumerStatefulWidget {
@@ -16,7 +15,7 @@ class SecurityEventsView extends ConsumerStatefulWidget {
   ConsumerState<SecurityEventsView> createState() => _SecurityEventsViewState();
 }
 
-class _SecurityEventsViewState extends State<SecurityEventsView> {
+class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
   final AuditRepository _repo = AuditRepository();
   final ScrollController _terminalScrollController = ScrollController();
   

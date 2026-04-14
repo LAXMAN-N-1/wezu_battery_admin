@@ -495,7 +495,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildAlertRow(FraudAlertItem alert) {
+  Widget _buildAlertRow(FraudAlert alert) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: InkWell(
@@ -564,7 +564,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
               SizedBox(
                 width: 180,
                 child: Text(
-                  alert.timestamp,
+                  alert.detectedAt,
                   style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
                 ),
               ),
@@ -626,7 +626,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
   }
 
 
-  Widget _buildRiskGauge(int score) {
+  Widget _buildRiskGauge(double score) {
     final color = score > 80 ? Colors.redAccent : score > 50 ? Colors.orangeAccent : Colors.tealAccent;
     return Row(
       children: [
@@ -643,7 +643,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
                 valueColor: AlwaysStoppedAnimation(color),
               ),
               Text(
-                score.toString(),
+                score.toInt().toString(),
                 style: GoogleFonts.robotoMono(fontSize: 10, fontWeight: FontWeight.bold, color: color),
               ),
             ],
@@ -673,7 +673,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  void _showBlockDialog(FraudAlertItem alert) {
+  void _showBlockDialog(FraudAlert alert) {
     showDialog(
       context: context,
       builder: (context) => Center(
@@ -753,7 +753,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  void _showInvestigationDrawer(FraudAlertItem alert) {
+  void _showInvestigationDrawer(FraudAlert alert) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -766,7 +766,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildInvestigationUI(FraudAlertItem alert, BuildContext dialogContext) {
+  Widget _buildInvestigationUI(FraudAlert alert, BuildContext dialogContext) {
     return Material(
       color: const Color(0xFF0F172A),
       child: Container(
@@ -815,7 +815,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildInvestigationHero(FraudAlertItem alert) {
+  Widget _buildInvestigationHero(FraudAlert alert) {
     return Container(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -828,7 +828,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildUserHeader(FraudAlertItem alert) {
+  Widget _buildUserHeader(FraudAlert alert) {
     return Row(
       children: [
         CircleAvatar(
@@ -872,7 +872,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildRiskIndicator(int score) {
+  Widget _buildRiskIndicator(double score) {
     final color = score > 80 ? Colors.redAccent : score > 50 ? Colors.orangeAccent : Colors.tealAccent;
     return SizedBox(
       width: 56,
@@ -887,7 +887,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
             valueColor: AlwaysStoppedAnimation(color),
           ),
           Text(
-            score.toString(),
+            score.toInt().toString(),
             style: GoogleFonts.robotoMono(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ],
@@ -895,7 +895,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildActionToolbar(FraudAlertItem alert) {
+  Widget _buildActionToolbar(FraudAlert alert) {
     return Row(
       children: [
         _drawerActionBtn('Block Account', Colors.redAccent, Icons.do_not_disturb_on_outlined, () => _showBlockDialog(alert)),
@@ -936,7 +936,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildEvidenceTimeline(FraudAlertItem alert) {
+  Widget _buildEvidenceTimeline(FraudAlert alert) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1012,7 +1012,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
       ],
     );
   }
-  Widget _buildDrawerHeader(FraudAlertItem alert, BuildContext dialogContext) {
+  Widget _buildDrawerHeader(FraudAlert alert, BuildContext dialogContext) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -1056,7 +1056,7 @@ class _FraudDashboardViewState extends ConsumerState<FraudDashboardView> {
     );
   }
 
-  Widget _buildResolutionBar(FraudAlertItem alert, BuildContext dialogContext) {
+  Widget _buildResolutionBar(FraudAlert alert, BuildContext dialogContext) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(

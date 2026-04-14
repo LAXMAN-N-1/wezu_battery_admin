@@ -46,7 +46,8 @@ class _FraudRiskViewState extends State<FraudRiskView>
     setState(() => _isLoading = true);
     try {
       final res = await _repo.getFraudAlerts();
-      if (mounted) setState(() { _alerts = res; _isLoading = false; });
+      final items = res['items'] as List<FraudAlert>? ?? [];
+      if (mounted) setState(() { _alerts = items; _isLoading = false; });
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }

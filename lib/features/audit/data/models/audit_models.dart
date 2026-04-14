@@ -4,6 +4,7 @@ class AuditLogItem {
   final String userName;
   final String userEmail;
   final String? userAvatar;
+  final String? userRole;
   final String action;
   final String module;
   final String resourceType;
@@ -11,31 +12,54 @@ class AuditLogItem {
   final String details;
   final String? ipAddress;
   final String? location;
+  final String? city;
+  final String? countryFlag;
+  final String? userAgent;
   final String? device;
+  final String? os;
   final String? browser;
-  final String severity; // Info, Warning, Critical
-  final String status; // Success, Failed
+  final String severity; // info | warning | critical
+  final String status; // success | failed
   final String timestamp;
   final String? oldValue;
   final String? newValue;
-  final String severity;
-  final String status; // success | failed
   final bool isSuspicious;
 
   AuditLogItem({
-    required this.id, this.userId, this.userName = 'System', this.userEmail = '', this.userAvatar,
-    required this.action, required this.resourceType, this.resourceId,
-    required this.details, this.ipAddress, this.location, this.device, this.browser,
-    this.severity = 'Info', this.status = 'Success', required this.timestamp,
-    this.oldValue, this.newValue,
+    required this.id,
+    this.userId,
+    this.userName = 'System',
+    this.userEmail = '',
+    this.userAvatar,
+    this.userRole,
+    required this.action,
+    this.module = 'System',
+    required this.resourceType,
+    this.resourceId,
+    required this.details,
+    this.ipAddress,
+    this.location,
+    this.city,
+    this.countryFlag,
+    this.userAgent,
+    this.device,
+    this.os,
+    this.browser,
+    this.severity = 'info',
+    this.status = 'success',
+    required this.timestamp,
+    this.oldValue,
+    this.newValue,
+    this.isSuspicious = false,
   });
 
   factory AuditLogItem.fromJson(Map<String, dynamic> json) => AuditLogItem(
-    id: (json['id'] is int) ? json['id'] : 0,
+    id: (json['id'] is int) ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
     userId: json['user_id'] is int ? json['user_id'] : int.tryParse(json['user_id']?.toString() ?? ''),
     userName: json['user_name']?.toString() ?? 'System',
     userEmail: json['user_email']?.toString() ?? '',
     userAvatar: json['user_avatar']?.toString(),
+    userRole: json['user_role']?.toString(),
     action: json['action']?.toString() ?? '',
     module: json['module']?.toString() ?? 'System',
     resourceType: json['resource_type']?.toString() ?? '',
@@ -43,15 +67,17 @@ class AuditLogItem {
     details: json['details']?.toString() ?? '',
     ipAddress: json['ip_address']?.toString(),
     location: json['location']?.toString(),
+    city: json['city']?.toString(),
+    countryFlag: json['country_flag']?.toString(),
+    userAgent: json['user_agent']?.toString(),
     device: json['device']?.toString(),
+    os: json['os']?.toString(),
     browser: json['browser']?.toString(),
-    severity: json['severity']?.toString() ?? 'Info',
-    status: json['status']?.toString() ?? 'Success',
+    severity: (json['severity']?.toString().toLowerCase() ?? 'info'),
+    status: (json['status']?.toString().toLowerCase() ?? 'success'),
     timestamp: json['timestamp']?.toString() ?? '',
     oldValue: json['old_value']?.toString(),
     newValue: json['new_value']?.toString(),
-    severity: json['severity']?.toString() ?? 'info',
-    status: json['status']?.toString() ?? 'success',
     isSuspicious: json['is_suspicious'] == true,
   );
 
@@ -68,11 +94,13 @@ class AuditLogItem {
     String? resourceId,
     String? details,
     String? ipAddress,
-    String? userAgent,
-    String? browser,
-    String? os,
+    String? location,
     String? city,
     String? countryFlag,
+    String? userAgent,
+    String? device,
+    String? os,
+    String? browser,
     String? timestamp,
     String? oldValue,
     String? newValue,
@@ -93,11 +121,13 @@ class AuditLogItem {
       resourceId: resourceId ?? this.resourceId,
       details: details ?? this.details,
       ipAddress: ipAddress ?? this.ipAddress,
-      userAgent: userAgent ?? this.userAgent,
-      browser: browser ?? this.browser,
-      os: os ?? this.os,
+      location: location ?? this.location,
       city: city ?? this.city,
       countryFlag: countryFlag ?? this.countryFlag,
+      userAgent: userAgent ?? this.userAgent,
+      device: device ?? this.device,
+      os: os ?? this.os,
+      browser: browser ?? this.browser,
       timestamp: timestamp ?? this.timestamp,
       oldValue: oldValue ?? this.oldValue,
       newValue: newValue ?? this.newValue,
@@ -125,7 +155,8 @@ class SecurityEventItem {
 
   SecurityEventItem({
     required this.id, required this.eventType, required this.severity,
-    required this.details, this.sourceIp, this.userId, required this.timestamp,
+    required this.details, this.sourceIp, this.country, this.countryFlag,
+    this.latitude, this.longitude, this.userId, required this.timestamp,
     required this.isResolved, this.payload,
   });
 

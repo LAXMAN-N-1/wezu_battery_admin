@@ -11,13 +11,13 @@ import '../data/repositories/audit_repository.dart';
 import '../data/models/audit_models.dart';
 import 'widgets/audit_components.dart';
 
-class AuditDashboardView extends ConsumerWidget {
+class AuditDashboardView extends ConsumerStatefulWidget {
   const AuditDashboardView({super.key});
   @override
-  State<AuditDashboardView> createState() => _AuditDashboardViewState();
+  ConsumerState<AuditDashboardView> createState() => _AuditDashboardViewState();
 }
 
-class _AuditDashboardViewState extends State<AuditDashboardView>
+class _AuditDashboardViewState extends ConsumerState<AuditDashboardView>
     with TickerProviderStateMixin {
   final AuditRepository _repo = AuditRepository();
   Map<String, dynamic> _stats = {};

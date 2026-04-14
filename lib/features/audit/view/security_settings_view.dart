@@ -6,7 +6,7 @@ import '../data/models/audit_models.dart';
 import '../data/repositories/audit_repository.dart';
 import 'widgets/audit_components.dart';
 
-class SecuritySettingsView extends ConsumerStatefulWidget {
+class SecuritySettingsView extends StatefulWidget {
   const SecuritySettingsView({super.key});
   @override
   State<SecuritySettingsView> createState() => _SecuritySettingsViewState();
@@ -590,22 +590,33 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
             ),
             ElevatedButton.icon(
               onPressed: canConfirm
-                  ? () {
+                    ? () async {
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.logout, color: Colors.white, size: 18),
-                              const SizedBox(width: 10),
-                              Text('All admin sessions terminated', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                          backgroundColor: Colors.redAccent.shade700,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      );
+                      try {
+                        await _repo.forceLogoutAllAdmins();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.logout, color: Colors.white, size: 18),
+                                  const SizedBox(width: 10),
+                                  Text('All admin sessions terminated', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                              backgroundColor: Colors.redAccent.shade700,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                         if (mounted) {
+                           ScaffoldMessenger.of(context).showSnackBar(
+                             SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.redAccent),
+                           );
+                         }
+                      }
                     }
                   : null,
               icon: const Icon(Icons.logout, size: 14),
@@ -1027,7 +1038,7 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: _showRevokeTokensDialog,
                 icon: const Icon(Icons.key_off_outlined, size: 16),
                 label: const Text('Revoke All API Tokens'),
                 style: OutlinedButton.styleFrom(
@@ -1241,6 +1252,61 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
             Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showRevokeTokensDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.key_off_outlined, color: Colors.orangeAccent, size: 22),
+            const SizedBox(width: 10),
+            Text('Revoke All API Tokens?', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'This will immediately invalidate all active API keys used by external integrations, mobile apps, and developer tools. This action cannot be undone.',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await _repo.revokeAllApiTokens();
+                if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('All API tokens have been revoked', style: GoogleFonts.inter()),
+                      backgroundColor: Colors.orange.shade800,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                   ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.redAccent),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orangeAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Revoke All', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

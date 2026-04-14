@@ -12,7 +12,7 @@ import 'package:go_router/go_router.dart';
 import '../data/models/audit_models.dart';
 import '../data/providers/audit_logs_provider.dart';
 import '../data/providers/audit_dashboard_provider.dart';
-import '../widgets/json_diff_viewer.dart';
+// JsonDiffViewer is available via audit_components.dart
 import '../data/repositories/audit_repository.dart';
 import 'widgets/audit_components.dart';
 
@@ -23,7 +23,7 @@ class AuditLogsView extends ConsumerStatefulWidget {
   ConsumerState<AuditLogsView> createState() => _AuditLogsViewState();
 }
 
-class _AuditLogsViewState extends State<AuditLogsView> {
+class _AuditLogsViewState extends ConsumerState<AuditLogsView> {
   final AuditRepository _repo = AuditRepository();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();

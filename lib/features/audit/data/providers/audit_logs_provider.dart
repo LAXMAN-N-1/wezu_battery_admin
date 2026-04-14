@@ -87,19 +87,19 @@ class AuditLogsNotifier extends StateNotifier<AuditLogsState> {
         action: state.filterAction,
         severity: state.filterSeverity,
         status: state.filterStatus,
-        search: state.search,
-        startDate: state.dateRange?.start.toIso8601String(),
-        endDate: state.dateRange?.end.toIso8601String(),
+        query: state.search,
+        startDate: state.dateRange?.start,
+        endDate: state.dateRange?.end,
         skip: refresh ? 0 : state.logs.length,
         limit: 50,
       );
 
-      final newLogs = res['items'] as List<AuditLogItem>;
+      final List<AuditLogItem> newLogs = res['items'] as List<AuditLogItem>;
       state = state.copyWith(
         isLoading: false,
         isMoreLoading: false,
         logs: refresh ? newLogs : [...state.logs, ...newLogs],
-        totalCount: res['total_count'] ?? 0,
+        totalCount: res['total'] ?? state.totalCount,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, isMoreLoading: false, error: e.toString());
@@ -153,12 +153,12 @@ class AuditLogsNotifier extends StateNotifier<AuditLogsState> {
     });
   }
 
-  Future<void> flagAsSuspicious(int id, {bool isSuspicious = true}) async {
+  Future<void> flagAsSuspicious(int id, String reason) async {
     try {
-      await _repository.flagAuditLogSuspicious(id, isSuspicious: isSuspicious);
-      // Update local state
+      await _repository.flagAuditLogSuspicious(id, reason);
+      // Update local state - here we assume any flagged event is suspicious
       state = state.copyWith(
-        logs: state.logs.map((e) => e.id == id ? e.copyWith(isSuspicious: isSuspicious) : e).toList(),
+        logs: state.logs.map((e) => e.id == id ? e.copyWith(isSuspicious: true) : e).toList(),
       );
     } catch (e) {
       state = state.copyWith(error: 'Failed to flag log: $e');
@@ -168,7 +168,7 @@ class AuditLogsNotifier extends StateNotifier<AuditLogsState> {
   Future<void> toggleSuspicious(int id) async {
     final log = state.logs.where((e) => e.id == id).firstOrNull;
     if (log != null) {
-      await flagAsSuspicious(id, isSuspicious: !log.isSuspicious);
+      await flagAsSuspicious(id, log.isSuspicious ? 'Unmarked by admin' : 'Flagged by admin');
     }
   }
 }

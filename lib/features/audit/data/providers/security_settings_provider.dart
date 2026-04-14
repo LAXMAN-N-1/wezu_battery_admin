@@ -47,7 +47,7 @@ class SecuritySettingsNotifier extends StateNotifier<SecuritySettingsState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final settings = await _repository.getSecuritySettings();
-      state = state.copyWith(isLoading: false, settings: settings, clearLocal: true);
+      state = state.copyWith(isLoading: false, settings: settings.toJson(), clearLocal: true);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

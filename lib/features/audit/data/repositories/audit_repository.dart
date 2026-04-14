@@ -19,10 +19,10 @@ class AuditRepository {
       'skip': skip,
       'limit': limit,
     });
-    final List itemsRaw = response.data['items'] ?? [];
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
     return {
       'items': itemsRaw.map((json) => SecurityEventItem.fromJson(json)).toList(),
-      'total': response.data['total'] ?? itemsRaw.length,
+      'total': (response.data is Map) ? (response.data['total'] ?? response.data['total_count'] ?? itemsRaw.length) : itemsRaw.length,
     };
   }
 
@@ -30,13 +30,17 @@ class AuditRepository {
     await _apiClient.patch('$_securityBase/security-events/$eventId/resolve');
   }
 
-  Future<List<FraudAlert>> getFraudAlerts({int skip = 0, int limit = 50}) async {
+  Future<Map<String, dynamic>> getFraudAlerts({String? status, int skip = 0, int limit = 50}) async {
     final response = await _apiClient.get('$_securityBase/fraud-alerts', queryParameters: {
+      if (status != null && status != 'All') 'status': status,
       'skip': skip,
       'limit': limit,
     });
-    final List data = response.data is List ? response.data : (response.data['alerts'] ?? response.data['items'] ?? []);
-    return data.map((json) => FraudAlert.fromJson(json)).toList();
+    final List itemsRaw = (response.data is Map) ? (response.data['alerts'] ?? response.data['items'] ?? []) : (response.data ?? []);
+    return {
+      'items': itemsRaw.map((json) => FraudAlert.fromJson(json)).toList(),
+      'total': (response.data is Map) ? (response.data['total'] ?? response.data['total_count'] ?? itemsRaw.length) : itemsRaw.length,
+    };
   }
 
   Future<void> updateFraudAlertStatus(String alertId, String status) async {
@@ -56,22 +60,31 @@ class AuditRepository {
     await _apiClient.patch('$_securityBase/security-settings', data: updates);
   }
 
-  Future<List<Map<String, dynamic>>> getHighRiskUsers({int threshold = 50, int limit = 100}) async {
+  Future<Map<String, dynamic>> getHighRiskUsers({int threshold = 50, int limit = 100}) async {
     final response = await _apiClient.get('$_fraudBase/high-risk-users', queryParameters: {
       'threshold': threshold,
       'limit': limit,
     });
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return {
+      'items': itemsRaw,
+      'total': (response.data is Map) ? (response.data['total'] ?? itemsRaw.length) : itemsRaw.length,
+    };
   }
 
-  Future<List<Map<String, dynamic>>> getDuplicateAccounts() async {
+  Future<Map<String, dynamic>> getDuplicateAccounts() async {
     final response = await _apiClient.get('$_fraudBase/duplicate-accounts');
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return {
+      'items': itemsRaw,
+      'total': itemsRaw.length,
+    };
   }
 
   Future<List<Map<String, dynamic>>> getBlacklist() async {
     final response = await _apiClient.get('$_fraudBase/blacklist');
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return List<Map<String, dynamic>>.from(itemsRaw);
   }
 
   Future<void> addToBlacklist(Map<String, dynamic> data) async {
@@ -88,7 +101,8 @@ class AuditRepository {
 
   Future<List<Map<String, dynamic>>> getDeviceFingerprints() async {
     final response = await _apiClient.get('$_fraudBase/device-fingerprints');
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return List<Map<String, dynamic>>.from(itemsRaw);
   }
 
   Future<Map<String, dynamic>> verifyIdentity(String type, String value) async {
@@ -112,7 +126,6 @@ class AuditRepository {
     final queryParams = <String, dynamic>{
       'skip': skip,
       'limit': limit,
-      'days': 30,
     };
     if (action != null && action != 'All') queryParams['action'] = action;
     if (severity != null && severity != 'All') queryParams['severity'] = severity;
@@ -124,13 +137,13 @@ class AuditRepository {
 
     final response = await _apiClient.get('$_securityBase/audit-logs', queryParameters: queryParams);
     
-    final List itemsRaw = response.data['items'] ?? [];
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
     final List<AuditLogItem> items = itemsRaw.map((json) => AuditLogItem.fromJson(json)).toList();
     
     return {
       'items': items,
-      'total': response.data['total'] ?? response.data['total_count'] ?? items.length,
-      'has_more': response.data['has_more'] ?? false,
+      'total': (response.data is Map) ? (response.data['total'] ?? response.data['total_count'] ?? items.length) : items.length,
+      'has_more': (response.data is Map) ? (response.data['has_more'] ?? false) : false,
     };
   }
 
@@ -152,10 +165,19 @@ class AuditRepository {
 
   Future<List<Map<String, dynamic>>> getAuditTrails() async {
     final response = await _apiClient.get('/api/v1/admin/audit-trails/');
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return List<Map<String, dynamic>>.from(itemsRaw);
   }
 
   // --- Utility Methods ---
+
+  Future<void> forceLogoutAllAdmins() async {
+    await _apiClient.post('$_securityBase/force-logout-all');
+  }
+
+  Future<void> revokeAllApiTokens() async {
+    await _apiClient.post('$_securityBase/revoke-api-tokens');
+  }
 
   Future<void> saveInvestigationNote(String alertId, String content) async {
     await _apiClient.post('$_securityBase/fraud-alerts/$alertId/notes', data: {
@@ -169,7 +191,8 @@ class AuditRepository {
 
   Future<List<Map<String, dynamic>>> getSecurityOriginMetrics() async {
     final response = await _apiClient.get('$_securityBase/dashboard/origins');
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return List<Map<String, dynamic>>.from(itemsRaw);
   }
 
   Future<Map<String, dynamic>> getSecurityDashboard() async {
@@ -179,7 +202,8 @@ class AuditRepository {
 
   Future<List<Map<String, dynamic>>> getGeofences() async {
     final response = await _apiClient.get('$_iotBase/geofences');
-    return List<Map<String, dynamic>>.from(response.data);
+    final List itemsRaw = (response.data is Map) ? (response.data['items'] ?? []) : (response.data ?? []);
+    return List<Map<String, dynamic>>.from(itemsRaw);
   }
 }
 

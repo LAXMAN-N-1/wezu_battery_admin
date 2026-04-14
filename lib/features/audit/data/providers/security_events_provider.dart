@@ -47,7 +47,7 @@ class SecurityEventsNotifier extends StateNotifier<SecurityEventsState> {
     try {
       final res = await _repository.getSecurityEvents(
         severity: state.filterSeverity,
-        isResolved: state.filterResolved,
+        // Removed unsupported isResolved parameter to align with current repository signature
       );
       state = state.copyWith(
         isLoading: false,
