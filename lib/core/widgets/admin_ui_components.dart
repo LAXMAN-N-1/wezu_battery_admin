@@ -189,6 +189,7 @@ class AdminTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final Iterable<String>? autofillHints;
   final TextInputAction? textInputAction;
+  final int maxLines;
 
   const AdminTextField({
     super.key,
@@ -202,6 +203,7 @@ class AdminTextField extends StatefulWidget {
     this.keyboardType,
     this.autofillHints,
     this.textInputAction,
+    this.maxLines = 1,
   });
 
   @override
@@ -552,12 +554,18 @@ class AdvancedTable extends StatelessWidget {
   final List<String> columns;
   final List<List<Widget>> rows;
   final Function(int)? onRowTap;
+  final String? sortColumn;
+  final bool sortAscending;
+  final Function(String)? onSort;
 
   const AdvancedTable({
     super.key,
     required this.columns,
     required this.rows,
     this.onRowTap,
+    this.sortColumn,
+    this.sortAscending = true,
+    this.onSort,
   });
 
   @override
@@ -604,18 +612,39 @@ class AdvancedTable extends StatelessWidget {
           ),
           child: Row(
             children: columns.map((col) {
+              final isSorted = sortColumn == col;
               return SizedBox(
-                width:
-                    colWidth - (32 / columns.length), // Adjusting for padding
-                child: Text(
-                  col.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: Colors.white38,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                width: colWidth - (32 / columns.length),
+                child: MouseRegion(
+                  cursor: onSort != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                  child: GestureDetector(
+                    onTap: () => onSort?.call(col),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            col.toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: isSorted ? Colors.white : Colors.white38,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isSorted) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                            size: 12,
+                            color: const Color(0xFF3B82F6),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               );
             }).toList(),

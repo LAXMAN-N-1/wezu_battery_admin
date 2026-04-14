@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/media_asset.dart';
 
@@ -9,52 +11,99 @@ final mediaRepositoryProvider = Provider<MediaRepository>((ref) {
 class MediaRepository {
   final ApiClient _apiClient;
 
-  MediaRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
+  MediaRepository([ApiClient? apiClient])
+    : _apiClient = apiClient ?? ApiClient();
 
-  static const String _basePath = '/api/v1/admin/cms/media';
+  static const _cmsMediaPath = '/api/v1/admin/cms/media/';
 
   Future<List<MediaAsset>> getMediaAssets({String? category}) async {
-    final response = await _apiClient.get(
-      _basePath,
-      queryParameters: {if (category != null) 'category': category},
-    );
-    return (response.data as List).map((e) => MediaAsset.fromJson(e)).toList();
+    try {
+      final response = await _apiClient.get(
+        _cmsMediaPath,
+        queryParameters: {if (category != null) 'category': category},
+      );
+      return (response.data as List)
+          .map((e) => MediaAsset.fromJson(e))
+          .toList();
+    } on DioException {
+      // Backward compatibility for older backend builds.
+      final response = await _apiClient.get(
+        '/api/v1/admin/media',
+        queryParameters: {if (category != null) 'category': category},
+      );
+      return (response.data as List)
+          .map((e) => MediaAsset.fromJson(e))
+          .toList();
+    }
   }
 
-  Future<MediaAsset> createMediaAsset({
-    required String fileName,
-    required String fileType,
-    required int fileSizeBytes,
-    required String url,
-    String? altText,
+  Future<MediaAsset> uploadMedia(
+    List<int> bytes,
+    String fileName, {
     String category = 'general',
+    String? altText,
   }) async {
-    final response = await _apiClient.post(
-      '$_basePath/',
-      data: {
-        'file_name': fileName,
-        'file_type': fileType,
-        'file_size_bytes': fileSizeBytes,
-        'url': url,
-        if (altText != null) 'alt_text': altText,
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
         'category': category,
-      },
-    );
-    return MediaAsset.fromJson(response.data);
-  }
-
-  Future<MediaAsset> updateMediaAsset(int id, {String? altText, String? category}) async {
-    final response = await _apiClient.patch(
-      '$_basePath/$id',
-      data: {
         if (altText != null) 'alt_text': altText,
-        if (category != null) 'category': category,
-      },
-    );
-    return MediaAsset.fromJson(response.data);
+      });
+
+      final response = await _apiClient.post(
+        '/api/v1/admin/media/upload',
+        data: formData,
+      );
+      return MediaAsset.fromJson(response.data);
+    } on DioException {
+      final fileSize = bytes.length;
+      final ext = fileName.contains('.')
+          ? fileName.split('.').last.toLowerCase()
+          : 'bin';
+      final mime = _extensionToMimeType(ext);
+
+      final response = await _apiClient.post(
+        _cmsMediaPath,
+        queryParameters: {
+          'file_name': fileName,
+          'file_type': mime,
+          'file_size_bytes': fileSize,
+          'url': fileName, // Use fileName as a placeholder for local path on web
+          'category': category,
+          if (altText != null) 'alt_text': altText,
+        },
+      );
+      return MediaAsset.fromJson(response.data);
+    }
   }
 
   Future<void> deleteMediaAsset(int id) async {
-    await _apiClient.delete('$_basePath/$id');
+    try {
+      await _apiClient.delete('/api/v1/admin/cms/media/$id');
+    } on DioException {
+      await _apiClient.delete('/api/v1/admin/media/$id');
+    }
+  }
+
+  String _extensionToMimeType(String ext) {
+    switch (ext) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'webp':
+        return 'image/webp';
+      case 'gif':
+        return 'image/gif';
+      case 'svg':
+        return 'image/svg+xml';
+      case 'pdf':
+        return 'application/pdf';
+      case 'mp4':
+        return 'video/mp4';
+      default:
+        return 'application/octet-stream';
+    }
   }
 }

@@ -6,8 +6,8 @@ class FAQ {
   final bool isActive;
   final int helpfulCount;
   final int notHelpfulCount;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final List<String> targetAudience;
+  final int displayOrder;
 
   FAQ({
     required this.id,
@@ -17,21 +17,21 @@ class FAQ {
     required this.isActive,
     required this.helpfulCount,
     required this.notHelpfulCount,
-    required this.createdAt,
-    required this.updatedAt,
+    this.targetAudience = const ['All Users'],
+    this.displayOrder = 0,
   });
 
   factory FAQ.fromJson(Map<String, dynamic> json) {
     return FAQ(
-      id: json['id'] ?? 0,
-      question: json['question'] ?? '',
-      answer: json['answer'] ?? '',
-      category: json['category'] ?? 'general',
-      isActive: json['is_active'] ?? true,
-      helpfulCount: json['helpful_count'] ?? 0,
-      notHelpfulCount: json['not_helpful_count'] ?? 0,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : DateTime.now(),
+      id: json['id'] as int,
+      question: json['question'] as String,
+      answer: json['answer'] as String,
+      category: json['category'] as String? ?? 'general',
+      isActive: json['is_active'] as bool? ?? true,
+      helpfulCount: json['helpful_count'] as int? ?? 0,
+      notHelpfulCount: json['not_helpful_count'] as int? ?? 0,
+      targetAudience: (json['target_audience'] as List?)?.map((e) => e as String).toList() ?? ['All Users'],
+      displayOrder: json['display_order'] as int? ?? 0,
     );
   }
 
@@ -41,25 +41,32 @@ class FAQ {
       'answer': answer,
       'category': category,
       'is_active': isActive,
+      'target_audience': targetAudience,
+      'display_order': displayOrder,
     };
   }
 
   FAQ copyWith({
+    int? id,
     String? question,
     String? answer,
     String? category,
     bool? isActive,
+    int? helpfulCount,
+    int? notHelpfulCount,
+    List<String>? targetAudience,
+    int? displayOrder,
   }) {
     return FAQ(
-      id: id,
+      id: id ?? this.id,
       question: question ?? this.question,
       answer: answer ?? this.answer,
       category: category ?? this.category,
       isActive: isActive ?? this.isActive,
-      helpfulCount: helpfulCount,
-      notHelpfulCount: notHelpfulCount,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
+      helpfulCount: helpfulCount ?? this.helpfulCount,
+      notHelpfulCount: notHelpfulCount ?? this.notHelpfulCount,
+      targetAudience: targetAudience ?? this.targetAudience,
+      displayOrder: displayOrder ?? this.displayOrder,
     );
   }
 }

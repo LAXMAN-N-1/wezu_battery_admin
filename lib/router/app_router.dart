@@ -13,10 +13,15 @@ import '../features/notifications/view/automated_triggers_view.dart';
 import '../features/notifications/view/notification_logs_view.dart';
 import '../features/notifications/view/sms_email_config_view.dart';
 import '../features/cms/view/blog_management_view.dart';
+import '../features/cms/view/blog_editor_view.dart';
 import '../features/cms/view/faq_management_view.dart';
 import '../features/cms/view/banner_management_view.dart';
+import '../features/cms/view/banner_editor_view.dart';
 import '../features/cms/view/legal_docs_view.dart';
+import '../features/cms/view/legal_editor_view.dart';
 import '../features/cms/view/media_library_view.dart';
+import '../features/cms/data/models/banner.dart' as model;
+import '../features/cms/data/models/legal_document.dart' as model;
 import '../features/audit/view/audit_dashboard_view.dart';
 import '../features/audit/view/audit_logs_view.dart';
 import '../features/audit/view/fraud_risk_view.dart';
@@ -481,6 +486,22 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'blogs',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BlogManagementView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: BlogEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    pageBuilder: (context, state) {
+                      final blogId = state.pathParameters['id'];
+                      return NoTransitionPage(
+                        child: BlogEditorView(blogId: blogId),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'faqs',
@@ -491,11 +512,43 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'banners',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BannerManagementView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: BannerEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (context, state) {
+                      final banner = state.extra as model.Banner?;
+                      return NoTransitionPage(
+                        child: BannerEditorView(banner: banner),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'legal',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: LegalDocsView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: LegalEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (context, state) {
+                      final doc = state.extra as model.LegalDocument?;
+                      return NoTransitionPage(
+                        child: LegalEditorView(doc: doc),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'media',
@@ -637,9 +690,15 @@ String _getTitle(String location) {
 
   // CMS
   if (location == '/cms/blogs') return 'Blog Management';
+  if (location == '/cms/blogs/new') return 'New Blog Post';
+  if (location.startsWith('/cms/blogs/edit/')) return 'Edit Blog Post';
   if (location == '/cms/faqs') return 'FAQ Management';
   if (location == '/cms/banners') return 'Banner Management';
+  if (location == '/cms/banners/new') return 'New Banner';
+  if (location == '/cms/banners/edit') return 'Edit Banner';
   if (location == '/cms/legal') return 'Legal Documents';
+  if (location == '/cms/legal/new') return 'New Legal Policy';
+  if (location == '/cms/legal/edit') return 'Edit Legal Policy';
 
   // Audit
   if (location == '/audit/dashboard') return 'Audit & Security Dashboard';
