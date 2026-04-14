@@ -412,7 +412,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: DataTable(
+              child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
                 columnSpacing: 24,
                 headingTextStyle: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 13),
                 dataTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -481,7 +481,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
                     ],
                   );
                 }).toList(),
-              ),
+              )),
             ),
           );
         },

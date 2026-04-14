@@ -624,7 +624,7 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
         ),
         const SizedBox(height: 12),
         // Row 2: Filter dropdowns + actions
-        Row(
+        Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             _filterDropdown('Status', _statusFilter, ['All', 'Available', 'Rented', 'Maintenance', 'Retired'], (v) {
               setState(() { _statusFilter = v!; _quickFilter = 'All'; _currentPage = 0; });
@@ -645,7 +645,7 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
               setState(() { _healthFilter = v!; _currentPage = 0; });
               _loadData();
             }),
-            const Spacer(),
+            
             if (_activeFilterCount > 0) ...[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -700,7 +700,7 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
               ? _emptyState()
               : SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: DataTable(
+                  child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
                     headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.02)),
                     dataRowMinHeight: 56,
                     dataRowMaxHeight: 64,
@@ -751,7 +751,7 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
                         ],
                       );
                     }).toList(),
-                  ),
+                  )),
                 ),
     ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(begin: 0.05);
   }
@@ -971,11 +971,11 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
                 border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
                 boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 20, offset: const Offset(0, -4))],
               ),
-              child: Row(children: [
+              child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
                 Text('${_selectedIds.length} selected', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(width: 8),
                 TextButton(onPressed: _clearSelection, child: const Text('Clear', style: TextStyle(color: Colors.white38))),
-                const Spacer(),
+                
                 _bulkBtn('Available', const Color(0xFF22C55E)),
                 const SizedBox(width: 8),
                 _bulkBtn('Maintenance', const Color(0xFFF59E0B)),
@@ -1031,11 +1031,11 @@ class _BatteriesViewState extends State<BatteriesView> with TickerProviderStateM
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
       ),
-      child: Row(
+      child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text('Showing $start–$end of $_totalCount batteries',
               style: const TextStyle(color: Colors.white38, fontSize: 13)),
-          const Spacer(),
+          
           // Page buttons
           ...List.generate(totalPages.clamp(0, 7), (i) {
             final pageIndex = i;

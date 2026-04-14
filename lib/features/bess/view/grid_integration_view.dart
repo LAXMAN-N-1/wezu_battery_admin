@@ -63,7 +63,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
       const SizedBox(height: 24),
 
       // Filters
-      Row(children: [
+      Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
         _filterChip('All', _filterType == null, () { setState(() => _filterType = null); _loadData(); }),
         const SizedBox(width: 8),
         _filterChip('Peak Shaving', _filterType == 'peak_shaving', () { setState(() => _filterType = 'peak_shaving'); _loadData(); }),
@@ -73,7 +73,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
         _filterChip('Freq. Regulation', _filterType == 'frequency_regulation', () { setState(() => _filterType = 'frequency_regulation'); _loadData(); }),
         const SizedBox(width: 8),
         _filterChip('Backup', _filterType == 'backup', () { setState(() => _filterType = 'backup'); _loadData(); }),
-        const Spacer(),
+        
         _statusFilter(),
       ]),
       const SizedBox(height: 24),

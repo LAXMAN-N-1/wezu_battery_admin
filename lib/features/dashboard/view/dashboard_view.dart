@@ -84,7 +84,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               '$greeting 👋',
@@ -94,7 +98,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 color: colors.textPrimary,
               ),
             ),
-            const Spacer(),
+
             ElevatedButton.icon(
               onPressed: _manualRefreshAll,
               icon: Icon(Icons.refresh, size: 18, color: colors.textPrimary),
@@ -493,8 +497,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,7 +525,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   ),
                 ],
               ),
-              const Spacer(),
+
               _buildExportButton(trendsAsync.valueOrNull, colors),
               const SizedBox(width: 12),
               _buildPeriodToggle(colors),
@@ -2352,281 +2359,288 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 32,
-        horizontalMargin: 0,
-        dataRowMinHeight: 40,
-        dataRowMaxHeight: 52,
-        sortColumnIndex: sortColumnIndex,
-        sortAscending: ascending,
-        headingTextStyle: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: colors.textTertiary,
-        ),
-        columns: [
-          const DataColumn(label: Text('Rank')),
-          const DataColumn(label: Text('Location')),
-          DataColumn(
-            label: const Text('Rentals'),
-            onSort: (_, __) {
-              setState(() {
-                _topStationSort =
-                    _topStationSort.startsWith('rentals') &&
-                        _topStationSort.endsWith('desc')
-                    ? 'rentals_asc'
-                    : 'rentals_desc';
-              });
-            },
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columnSpacing: 32,
+          horizontalMargin: 0,
+          dataRowMinHeight: 40,
+          dataRowMaxHeight: 52,
+          sortColumnIndex: sortColumnIndex,
+          sortAscending: ascending,
+          headingTextStyle: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: colors.textTertiary,
           ),
-          DataColumn(
-            label: const Text('Revenue'),
-            onSort: (_, __) {
-              setState(() {
-                _topStationSort =
-                    _topStationSort.startsWith('revenue') &&
-                        _topStationSort.endsWith('desc')
-                    ? 'revenue_asc'
-                    : 'revenue_desc';
-              });
-            },
-          ),
-          DataColumn(
-            label: const Text('Utilization'),
-            onSort: (_, __) {
-              setState(() {
-                _topStationSort =
-                    _topStationSort.startsWith('utilization') &&
-                        _topStationSort.endsWith('desc')
-                    ? 'utilization_asc'
-                    : 'utilization_desc';
-              });
-            },
-          ),
-          const DataColumn(label: Text('Rating')),
-        ],
-        rows: stations.asMap().entries.map((entry) {
-          final index = entry.key;
-          final s = entry.value;
-          return DataRow(
-            cells: [
-              DataCell(
-                Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: colors.accent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        (index + 1).toString(),
-                        style: TextStyle(
-                          color: colors.accent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+          columns: [
+            const DataColumn(label: Text('Rank')),
+            const DataColumn(label: Text('Location')),
+            DataColumn(
+              label: const Text('Rentals'),
+              onSort: (_, __) {
+                setState(() {
+                  _topStationSort =
+                      _topStationSort.startsWith('rentals') &&
+                          _topStationSort.endsWith('desc')
+                      ? 'rentals_asc'
+                      : 'rentals_desc';
+                });
+              },
+            ),
+            DataColumn(
+              label: const Text('Revenue'),
+              onSort: (_, __) {
+                setState(() {
+                  _topStationSort =
+                      _topStationSort.startsWith('revenue') &&
+                          _topStationSort.endsWith('desc')
+                      ? 'revenue_asc'
+                      : 'revenue_desc';
+                });
+              },
+            ),
+            DataColumn(
+              label: const Text('Utilization'),
+              onSort: (_, __) {
+                setState(() {
+                  _topStationSort =
+                      _topStationSort.startsWith('utilization') &&
+                          _topStationSort.endsWith('desc')
+                      ? 'utilization_asc'
+                      : 'utilization_desc';
+                });
+              },
+            ),
+            const DataColumn(label: Text('Rating')),
+          ],
+          rows: stations.asMap().entries.map((entry) {
+            final index = entry.key;
+            final s = entry.value;
+            return DataRow(
+              cells: [
+                DataCell(
+                  Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: colors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          (index + 1).toString(),
+                          style: TextStyle(
+                            color: colors.accent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Tooltip(
-                      padding: const EdgeInsets.all(8),
-                      // Flutter Tooltip asserts that exactly one of message or
-                      // richMessage is non-null. Show the mini sparkline when
-                      // data exists, otherwise fall back to a plain text label.
-                      message: s.sparkline.length < 2
-                          ? (s.name.isNotEmpty ? s.name : s.id)
-                          : null,
-                      richMessage: s.sparkline.length < 2
-                          ? null
-                          : TextSpan(
-                              children: [
-                                WidgetSpan(
-                                  child: SizedBox(
-                                    width: 160,
-                                    height: 60,
-                                    child: LineChart(
-                                      LineChartData(
-                                        titlesData: const FlTitlesData(
-                                          show: false,
-                                        ),
-                                        gridData: const FlGridData(show: false),
-                                        borderData: FlBorderData(show: false),
-                                        lineBarsData: [
-                                          LineChartBarData(
-                                            spots: s.sparkline
-                                                .asMap()
-                                                .entries
-                                                .map(
-                                                  (e) => FlSpot(
-                                                    e.key.toDouble(),
-                                                    e.value,
-                                                  ),
-                                                )
-                                                .toList(),
-                                            isCurved: true,
-                                            color: colors.accent,
-                                            barWidth: 3,
-                                            dotData: const FlDotData(
-                                              show: false,
-                                            ),
-                                            belowBarData: BarAreaData(
-                                              show: true,
-                                              color: colors.accent.withValues(
-                                                alpha: 0.1,
+                      const SizedBox(width: 12),
+                      Tooltip(
+                        padding: const EdgeInsets.all(8),
+                        // Flutter Tooltip asserts that exactly one of message or
+                        // richMessage is non-null. Show the mini sparkline when
+                        // data exists, otherwise fall back to a plain text label.
+                        message: s.sparkline.length < 2
+                            ? (s.name.isNotEmpty ? s.name : s.id)
+                            : null,
+                        richMessage: s.sparkline.length < 2
+                            ? null
+                            : TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    child: SizedBox(
+                                      width: 160,
+                                      height: 60,
+                                      child: LineChart(
+                                        LineChartData(
+                                          titlesData: const FlTitlesData(
+                                            show: false,
+                                          ),
+                                          gridData: const FlGridData(
+                                            show: false,
+                                          ),
+                                          borderData: FlBorderData(show: false),
+                                          lineBarsData: [
+                                            LineChartBarData(
+                                              spots: s.sparkline
+                                                  .asMap()
+                                                  .entries
+                                                  .map(
+                                                    (e) => FlSpot(
+                                                      e.key.toDouble(),
+                                                      e.value,
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                              isCurved: true,
+                                              color: colors.accent,
+                                              barWidth: 3,
+                                              dotData: const FlDotData(
+                                                show: false,
+                                              ),
+                                              belowBarData: BarAreaData(
+                                                show: true,
+                                                color: colors.accent.withValues(
+                                                  alpha: 0.1,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        child: Text(
+                          s.name.isNotEmpty ? s.name : s.id,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    s.location.isNotEmpty ? s.location : s.name,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    NumberFormat('#,###').format(s.rentals),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    _formatCurrency(s.revenue),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: colors.success,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 120,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          children: [
+                            Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: colors.border.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: s.utilization <= 0
+                                      ? 1
+                                      : s.utilization.clamp(1, 100).toInt(),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: colors.success,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(4),
+                                        bottomLeft: Radius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: (() {
+                                    final val = s.chargingPercent > 0
+                                        ? s.chargingPercent
+                                        : 100 -
+                                              s.utilization -
+                                              s.offlinePercent;
+                                    return val <= 0
+                                        ? 1
+                                        : val.clamp(1, 100).toInt();
+                                  })(),
+                                  child: Container(
+                                    height: 8,
+                                    color: colors.accent.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: s.offlinePercent <= 0
+                                      ? 1
+                                      : s.offlinePercent.clamp(1, 100).toInt(),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: colors.textTertiary.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(4),
+                                        bottomRight: Radius.circular(4),
                                       ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                      child: Text(
-                        s.name.isNotEmpty ? s.name : s.id,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text(
+                              '${s.utilization.toInt()}% active',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+
+                            Text(
+                              '${s.availablePercent.toInt()}% avail',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: colors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              DataCell(
-                Text(
-                  s.location.isNotEmpty ? s.location : s.name,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-              DataCell(
-                Text(
-                  NumberFormat('#,###').format(s.rentals),
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-              DataCell(
-                Text(
-                  _formatCurrency(s.revenue),
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: colors.success,
                   ),
                 ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 120,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                DataCell(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Stack(
-                        children: [
-                          Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: colors.border.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: s.utilization <= 0
-                                    ? 1
-                                    : s.utilization.clamp(1, 100).toInt(),
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: colors.success,
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(4),
-                                      bottomLeft: Radius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: (() {
-                                  final val = s.chargingPercent > 0
-                                      ? s.chargingPercent
-                                      : 100 - s.utilization - s.offlinePercent;
-                                  return val <= 0
-                                      ? 1
-                                      : val.clamp(1, 100).toInt();
-                                })(),
-                                child: Container(
-                                  height: 8,
-                                  color: colors.accent.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              Expanded(
-                                flex: s.offlinePercent <= 0
-                                    ? 1
-                                    : s.offlinePercent.clamp(1, 100).toInt(),
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: colors.textTertiary.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    borderRadius: const BorderRadius.only(
-                                      topRight: Radius.circular(4),
-                                      bottomRight: Radius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Text(
-                            '${s.utilization.toInt()}% active',
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${s.availablePercent.toInt()}% avail',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: colors.textTertiary,
-                            ),
-                          ),
-                        ],
+                      const Icon(Icons.star, size: 14, color: Colors.orange),
+                      const SizedBox(width: 4),
+                      Text(
+                        s.rating.toString(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              DataCell(
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.star, size: 14, color: Colors.orange),
-                    const SizedBox(width: 4),
-                    Text(
-                      s.rating.toString(),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }

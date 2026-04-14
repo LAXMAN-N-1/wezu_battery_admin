@@ -355,14 +355,14 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
                     child: Icon(icon, color: color, size: 16),
                   ),
-                  const Spacer(),
+                  
                   if (showArc)
                     SizedBox(
                       width: 32, height: 32,
@@ -392,7 +392,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
   // ANALYTICS CHARTS ROW
   // ==================================================================
   Widget _buildAnalyticsCharts(HealthAnalytics data) {
-    return Row(
+    return Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // Donut Chart
         Expanded(
@@ -459,7 +459,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 Row(
                   children: [
                     Text('Fleet Health Trend — 90 Days', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-                    const Spacer(),
+                    
                     _buildChartRangeChip('30D'),
                     _buildChartRangeChip('60D'),
                     _buildChartRangeChip('90D', selected: true),
@@ -756,7 +756,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         borderRadius: BorderRadius.circular(14),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: DataTable(
+          child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
             headingRowColor: WidgetStateProperty.all(const Color(0xFF0F172A)),
             headingRowHeight: 48,
             dataRowMinHeight: 64,
@@ -775,7 +775,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               DataColumn(label: Text('Actions', style: _headerStyle())),
             ],
             rows: batteries.map((b) => _buildBatteryRow(b)).toList(),
-          ),
+          )),
         ),
       ),
     ).animate().fadeIn(duration: 400.ms);

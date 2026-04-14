@@ -155,7 +155,7 @@ class UserBulkMasterView extends StatelessWidget {
     return Container(
        width: double.infinity,
        decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
-       child: DataTable(
+       child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
           headingTextStyle: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 13),
           dataTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
           columns: const [
@@ -169,7 +169,7 @@ class UserBulkMasterView extends StatelessWidget {
              DataRow(cells: [DataCell(Text('Today, 10:45 AM')), DataCell(Text('Users Export (CSV)', style: TextStyle(fontWeight: FontWeight.bold))), DataCell(Text('Laxman')), DataCell(Text('1,245')), DataCell(Text('Completed', style: TextStyle(color: Colors.green)))]),
              DataRow(cells: [DataCell(Text('Yesterday, 14:20')), DataCell(Text('Dealers Import (Excel)', style: TextStyle(fontWeight: FontWeight.bold))), DataCell(Text('Laxman')), DataCell(Text('45 added, 2 failed')), DataCell(Text('Completed w/ Errors', style: TextStyle(color: Colors.orange)))]),
           ],
-       ),
+       )),
     );
   }
 }

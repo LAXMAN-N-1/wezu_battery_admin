@@ -138,12 +138,12 @@ class _DealerKycViewState extends State<DealerKycView> {
           ),
           const Spacer(),
           // Info
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               const Icon(Icons.person_outline, color: Colors.white38, size: 14),
               const SizedBox(width: 6),
               Text('Dealer #${doc.dealerId}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-              const Spacer(),
+              
               if (doc.uploadedAt != null)
                 Text(DateFormat('MMM dd, yyyy').format(doc.uploadedAt!), style: const TextStyle(color: Colors.white38, fontSize: 12)),
             ],
