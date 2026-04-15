@@ -26,15 +26,20 @@ COPY web/ web/
 COPY assets/ assets/
 COPY analysis_options.yaml ./
 
+# Backend base URL injected at build time for Flutter web.
+# Keep default aligned with production API domain used by dealer/customer apps.
+ARG API_BASE_URL=https://api1.wezutech.com
+
 # 4) Build web — cache .dart_tool between builds for incremental compilation
-#    No API_BASE_URL: on web the app uses same-origin requests (empty baseUrl)
-#    which hit the nginx reverse proxy at /api/ → api1.powerfrill.com.
+#    API_BASE_URL is injected for explicit backend targeting.
+#    nginx /api reverse-proxy remains available as a compatibility fallback.
 #    Note: --web-renderer removed in Flutter 3.41 (CanvasKit is default).
 #    Note: --pwa-strategy removed in Flutter 3.41 (deprecated).
 RUN --mount=type=cache,target=/root/.pub-cache \
     --mount=type=cache,target=/app/.dart_tool \
     flutter build web \
       --release \
+      --dart-define=API_BASE_URL="${API_BASE_URL}" \
       --no-tree-shake-icons
 
 # ─── Stage 2: Lightweight Nginx Runtime (~7 MB) ─────────────────────────────

@@ -58,6 +58,7 @@ class UserRepository {
   Future<PaginatedUsers> getUsers({
     int page = 1,
     int limit = 20,
+    int? cursor,
     String? sortBy,
     String? sortOrder,
     String? role,
@@ -66,7 +67,14 @@ class UserRepository {
   }) async {
     try {
       final skip = page > 1 ? (page - 1) * limit : 0;
-      final queryParams = <String, dynamic>{'skip': skip, 'limit': limit};
+      final queryParams = <String, dynamic>{'limit': limit};
+      
+      if (cursor != null) {
+        queryParams['cursor'] = cursor;
+      } else {
+         queryParams['skip'] = skip;
+      }
+      
       if (fields != null) queryParams['fields'] = fields;
       if (sortBy != null) queryParams['sort_by'] = sortBy;
       if (sortOrder != null) queryParams['sort_order'] = sortOrder;

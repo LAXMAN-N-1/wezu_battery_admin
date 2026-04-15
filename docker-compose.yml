@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        API_BASE_URL: ${API_BASE_URL:-https://api1.wezutech.com}
     restart: unless-stopped
     expose:
       - "80"

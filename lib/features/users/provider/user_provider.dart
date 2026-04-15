@@ -81,9 +81,16 @@ class UserListNotifier extends StateNotifier<UserListState> {
   Future<void> loadUsers({int? page, int? limit}) async {
     state = state.copyWith(isLoading: true);
     try {
+      final targetPage = page ?? state.page;
+      int? cursorToPass;
+      if (targetPage > 1 && targetPage == state.page + 1 && state.users.isNotEmpty) {
+        cursorToPass = state.users.last.id;
+      }
+      
       final response = await _repository.getUsers(
-        page: page ?? state.page,
+        page: targetPage,
         limit: limit ?? state.limit,
+        cursor: cursorToPass,
         role: state.filterRole,
         status: state.filterStatus,
         fields: 'id,full_name,email,phone_number,user_type,status,kyc_status,role_id,created_at,suspension_status',

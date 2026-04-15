@@ -19,7 +19,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 });
 
 class ApiClient {
-  static const _fallbackApiBaseUrl = 'https://api1.powerfrill.com';
+  static const _fallbackApiBaseUrl = 'https://api1.wezutech.com';
   static const accessTokenStorageKey = 'admin_token';
   static const refreshTokenStorageKey = 'admin_refresh_token';
   static const _skipAuthInterceptorKey = 'skipAuthInterceptor';

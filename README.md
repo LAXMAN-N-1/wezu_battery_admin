@@ -5,7 +5,7 @@ Flutter web admin panel deployed with Docker Compose and reverse-proxied by Cool
 ## Production defaults
 
 - Frontend domain: `admin.powerfrill.com`
-- Backend API: `https://api1.powerfrill.com`
+- Backend API: `https://api1.wezutech.com`
 - Container internal port: `80`
 - Public host port mapping: disabled (Coolify proxy should handle ingress)
 
@@ -13,20 +13,20 @@ Flutter web admin panel deployed with Docker Compose and reverse-proxied by Cool
 
 ```bash
 flutter pub get
-flutter run -d chrome --dart-define=API_BASE_URL=https://api1.powerfrill.com
+flutter run -d chrome --dart-define=API_BASE_URL=https://api1.wezutech.com
 ```
 
 ## Build (web)
 
 ```bash
-flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=https://api1.powerfrill.com
+flutter build web --release --pwa-strategy=none --dart-define=API_BASE_URL=https://api1.wezutech.com
 ```
 
 ## Docker image
 
 ```bash
 docker build \
-  --build-arg API_BASE_URL=https://api1.powerfrill.com \
+  --build-arg API_BASE_URL=https://api1.wezutech.com \
   -t wezu-battery-admin:latest .
 ```
 
@@ -44,7 +44,7 @@ docker build \
 Set this in Coolify:
 
 ```env
-API_BASE_URL=https://api1.powerfrill.com
+API_BASE_URL=https://api1.wezutech.com
 ```
 
 ## DNS checklist

@@ -33,13 +33,20 @@ class StationRepository {
   Future<Map<String, dynamic>> getStationsPaginated({
     int skip = 0,
     int limit = 25,
+    int? cursor,
     String? search,
     String? status,
     String? city,
     String? stationType,
     String? fields,
   }) async {
-    final params = <String, dynamic>{'skip': skip, 'limit': limit};
+    final params = <String, dynamic>{'limit': limit};
+    if (cursor != null) {
+      params['cursor'] = cursor;
+    } else {
+      params['skip'] = skip;
+    }
+    
     if (fields != null && fields.isNotEmpty) params['fields'] = fields;
     if (search != null && search.isNotEmpty) params['search'] = search;
     if (status != null && status.isNotEmpty) params['status'] = status;
