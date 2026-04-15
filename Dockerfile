@@ -7,9 +7,12 @@ FROM ghcr.io/cirruslabs/flutter:3.41.0 AS build
 
 WORKDIR /app
 
+# Cap dart2js old-gen heap at 3 GB so it GCs aggressively instead of
+# ballooning and getting OOM-killed on memory-constrained build hosts.
 ENV PUB_CACHE=/root/.pub-cache \
     CI=true \
-    FLUTTER_SUPPRESS_ANALYTICS=true
+    FLUTTER_SUPPRESS_ANALYTICS=true \
+    DART_VM_OPTIONS="--old_gen_heap_size=3072"
 
 # 1) Enable web (skip Android/iOS toolchains)
 RUN flutter config --enable-web --no-enable-android --no-enable-ios \
@@ -35,12 +38,14 @@ ARG API_BASE_URL=https://api1.wezutech.com
 #    nginx /api reverse-proxy remains available as a compatibility fallback.
 #    Note: --web-renderer removed in Flutter 3.41 (CanvasKit is default).
 #    Note: --pwa-strategy removed in Flutter 3.41 (deprecated).
+#    Note: icon tree-shaking is enabled (default) — we only use const Icons.*
+#    constants, so dart2js can safely prune unused glyphs. This also
+#    significantly reduces dart2js peak memory, preventing OOM kills.
 RUN --mount=type=cache,target=/root/.pub-cache \
     --mount=type=cache,target=/app/.dart_tool \
     flutter build web \
       --release \
-      --dart-define=API_BASE_URL="${API_BASE_URL}" \
-      --no-tree-shake-icons
+      --dart-define=API_BASE_URL="${API_BASE_URL}"
 
 # ─── Stage 2: Lightweight Nginx Runtime (~7 MB) ─────────────────────────────
 FROM nginx:1.27-alpine AS runtime
