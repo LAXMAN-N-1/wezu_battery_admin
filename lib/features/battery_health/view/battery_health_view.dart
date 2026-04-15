@@ -13,22 +13,52 @@ import '../widgets/schedule_maintenance_modal.dart';
 // ==================================================================
 // Providers
 // ==================================================================
+class BatteryFilterParams {
+  final String? healthRange;
+  final String? sortBy;
+  final bool? needsAttention;
+  final String? search;
+
+  const BatteryFilterParams({
+    this.healthRange,
+    this.sortBy,
+    this.needsAttention,
+    this.search,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is BatteryFilterParams &&
+          runtimeType == other.runtimeType &&
+          healthRange == other.healthRange &&
+          sortBy == other.sortBy &&
+          needsAttention == other.needsAttention &&
+          search == other.search;
+
+  @override
+  int get hashCode =>
+      healthRange.hashCode ^
+      sortBy.hashCode ^
+      needsAttention.hashCode ^
+      search.hashCode;
+}
 final healthOverviewProvider = FutureProvider<HealthOverview>((ref) {
   return ref.watch(healthRepositoryProvider).getOverview();
 });
 
 final healthBatteriesProvider =
-    FutureProvider.family<List<HealthBattery>, Map<String, dynamic>>((
+    FutureProvider.family<List<HealthBattery>, BatteryFilterParams>((
       ref,
       params,
     ) {
       return ref
           .watch(healthRepositoryProvider)
           .getBatteries(
-            healthRange: params['health_range'],
-            sortBy: params['sort_by'] ?? 'health_desc',
-            needsAttention: params['needs_attention'],
-            search: params['search'],
+            healthRange: params.healthRange,
+            sortBy: params.sortBy ?? 'health_desc',
+            needsAttention: params.needsAttention,
+            search: params.search,
           );
     });
 
@@ -55,12 +85,12 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
   String? _selectedBatteryId;
   bool _showDrawer = false;
 
-  Map<String, dynamic> get _filterParams => {
-    'health_range': _selectedHealthRange,
-    'sort_by': _sortBy,
-    'needs_attention': _needsAttention ? true : null,
-    'search': _searchQuery.isNotEmpty ? _searchQuery : null,
-  };
+  BatteryFilterParams get _filterParams => BatteryFilterParams(
+    healthRange: _selectedHealthRange,
+    sortBy: _sortBy,
+    needsAttention: _needsAttention ? true : null,
+    search: _searchQuery.isNotEmpty ? _searchQuery : null,
+  );
 
   void _refresh() {
     ref.invalidate(healthOverviewProvider);
