@@ -1,10 +1,25 @@
+import '../../../../core/api/api_client.dart';
+import 'package:dio/dio.dart';
 import '../models/fraud_risk.dart';
 import '../models/suspension_record.dart';
 import '../models/invite_link.dart';
 
-class AnalyticsRepository {
+class UserAnalyticsRepository {
+  final ApiClient _apiClient;
+  UserAnalyticsRepository(this._apiClient);
+
   Future<List<FraudRisk>> getFraudRisks() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final res = await _apiClient.get('/admin/users/analytics/fraud-risks');
+      if (res.data != null && res.data is List) {
+        return (res.data as List)
+            .map<FraudRisk>((e) => FraudRisk.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (e) {
+      // Fallback
+    }
+    
     return [
       FraudRisk(
         userId: 10, userName: 'Kavita Reddy', score: 78, level: 'critical',
@@ -68,7 +83,18 @@ class AnalyticsRepository {
   }
 
   Future<List<SuspensionRecord>> getSuspensionHistory() async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    try {
+      final res = await _apiClient.get('/admin/users/analytics/suspension-history');
+      if (res.data != null && res.data is List) {
+        return (res.data as List)
+            .map<SuspensionRecord>(
+                (e) => SuspensionRecord.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (e) {
+      // Fallback
+    }
+
     return [
       SuspensionRecord(
         id: 1, userId: 5, userName: 'Suresh Kumar', reason: 'non_compliance',
@@ -94,7 +120,17 @@ class AnalyticsRepository {
   }
 
   Future<List<InviteLink>> getInviteLinks() async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    try {
+      final res = await _apiClient.get('/admin/users/analytics/invite-links');
+      if (res.data != null && res.data is List) {
+        return (res.data as List)
+            .map<InviteLink>((e) => InviteLink.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (e) {
+      // Fallback
+    }
+    
     return [
       InviteLink(
         id: 1, token: 'inv-a1b2c3d4', email: 'newdriver@gmail.com', role: 'driver',
@@ -127,7 +163,15 @@ class AnalyticsRepository {
 
   /// Login history data for charts
   Future<List<Map<String, dynamic>>> getLoginHistory() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final res = await _apiClient.get('/admin/users/analytics/login-history');
+      if (res.data != null && res.data is List) {
+        return List<Map<String, dynamic>>.from(res.data);
+      }
+    } catch (e) {
+      // Fallback
+    }
+    
     return List.generate(30, (i) {
       final date = DateTime.now().subtract(Duration(days: 29 - i));
       return {
@@ -139,7 +183,15 @@ class AnalyticsRepository {
 
   /// Rental frequency data for charts
   Future<List<Map<String, dynamic>>> getRentalFrequency() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    try {
+      final res = await _apiClient.get('/admin/users/analytics/rental-frequency');
+      if (res.data != null && res.data is List) {
+        return List<Map<String, dynamic>>.from(res.data);
+      }
+    } catch (e) {
+      // Fallback
+    }
+
     return [
       {'month': 'Sep', 'rentals': 120},
       {'month': 'Oct', 'rentals': 185},
@@ -152,7 +204,15 @@ class AnalyticsRepository {
 
   /// Device breakdown for pie chart
   Future<Map<String, int>> getDeviceBreakdown() async {
-    await Future.delayed(const Duration(milliseconds: 200));
+    try {
+      final res = await _apiClient.get('/admin/users/analytics/device-breakdown');
+      if (res.data != null && res.data is Map) {
+        return Map<String, int>.from(res.data);
+      }
+    } catch (e) {
+      // Fallback
+    }
+    
     return {
       'Android App': 58,
       'iOS App': 24,

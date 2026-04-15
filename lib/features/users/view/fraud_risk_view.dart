@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/fraud_risk.dart';
-import '../data/repositories/analytics_repository.dart';
+import '../data/repositories/user_analytics_repository.dart';
+import '../provider/user_provider.dart';
 
-class FraudRiskView extends StatefulWidget {
+class FraudRiskView extends ConsumerStatefulWidget {
   const FraudRiskView({super.key});
 
   @override
-  State<FraudRiskView> createState() => _FraudRiskViewState();
+  ConsumerState<FraudRiskView> createState() => _FraudRiskViewState();
 }
 
-class _FraudRiskViewState extends State<FraudRiskView> {
-  final AnalyticsRepository _repository = AnalyticsRepository();
+class _FraudRiskViewState extends ConsumerState<FraudRiskView> {
+  late UserAnalyticsRepository _repository;
   List<FraudRisk> _risks = [];
   FraudRisk? _selectedRisk;
   bool _isLoading = true;
@@ -20,6 +22,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(userAnalyticsRepositoryProvider);
     _loadData();
   }
 

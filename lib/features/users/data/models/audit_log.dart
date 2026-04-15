@@ -25,6 +25,24 @@ class AuditLog {
     this.afterValue,
   });
 
+  factory AuditLog.fromJson(Map<String, dynamic> json) {
+    return AuditLog(
+      id: json['id'] ?? 0,
+      userId: json['user_id'] ?? 0,
+      userName: json['user_name'] ?? '',
+      action: json['action'] ?? '',
+      module: json['module'] ?? '',
+      details: json['details'] ?? '',
+      ipAddress: json['ip_address'],
+      userAgent: json['user_agent'],
+      timestamp: json['timestamp'] != null
+          ? DateTime.parse(json['timestamp'])
+          : DateTime.now(),
+      beforeValue: json['before_value'],
+      afterValue: json['after_value'],
+    );
+  }
+
   String get actionLabel {
     switch (action) {
       case 'create': return 'Created';

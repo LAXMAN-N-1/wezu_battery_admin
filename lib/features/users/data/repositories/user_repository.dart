@@ -217,12 +217,15 @@ class UserRepository {
   }
 
   Future<List<Map<String, dynamic>>> getCreationHistory() async {
-    // Mocked for the UI since there is no direct endpoint in the provided list
-    await Future.delayed(const Duration(milliseconds: 500));
-    return [
-      {'action': 'User Created', 'user': 'John Doe', 'by': 'Admin', 'date': DateTime.now().subtract(const Duration(days: 1))},
-      {'action': 'User Invited', 'user': 'jane@example.com', 'by': 'Admin', 'date': DateTime.now().subtract(const Duration(days: 2))},
-      {'action': 'User Suspended', 'user': 'Bob Smith', 'by': 'System', 'date': DateTime.now().subtract(const Duration(days: 3))},
-    ];
+    try {
+      final res = await _api.get('/api/v1/admin/users/creation-history');
+      if (res.data != null && res.data is List) {
+        return List<Map<String, dynamic>>.from(res.data);
+      }
+    } catch (e) {
+      print("Error fetching creation history: $e");
+    }
+
+    return [];
   }
 }

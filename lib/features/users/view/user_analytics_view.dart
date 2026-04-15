@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../data/repositories/analytics_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/repositories/user_analytics_repository.dart';
+import '../provider/user_provider.dart';
 
-class UserAnalyticsView extends StatefulWidget {
+class UserAnalyticsView extends ConsumerStatefulWidget {
   const UserAnalyticsView({super.key});
 
   @override
-  State<UserAnalyticsView> createState() => _UserAnalyticsViewState();
+  ConsumerState<UserAnalyticsView> createState() => _UserAnalyticsViewState();
 }
 
-class _UserAnalyticsViewState extends State<UserAnalyticsView> {
-  final AnalyticsRepository _repository = AnalyticsRepository();
+class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
+  late UserAnalyticsRepository _repository;
   List<Map<String, dynamic>> _loginHistory = [];
   List<Map<String, dynamic>> _rentalFrequency = [];
   Map<String, int> _deviceBreakdown = {};
@@ -20,6 +22,7 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(userAnalyticsRepositoryProvider);
     _loadData();
   }
 

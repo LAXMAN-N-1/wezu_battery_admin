@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_themes.dart';
 import 'core/theme/theme_provider.dart';
 import 'router/app_router.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load Environment Variables (graceful fail)
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint("✅ Dotenv loaded successfully");
+  } catch (e) {
+    debugPrint("⚠️ Dotenv load failed: $e");
+  }
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

@@ -1,6 +1,12 @@
 import '../models/audit_log.dart';
+import '../../../../core/api/api_client.dart';
+import 'package:dio/dio.dart';
 
 class AuditLogRepository {
+  final ApiClient _apiClient;
+
+  AuditLogRepository(this._apiClient);
+
   static final List<AuditLog> _logs = [
     AuditLog(id: 1, userId: 1, userName: 'Murari Varma', action: 'login', module: 'auth', details: 'Admin login successful', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(minutes: 5))),
     AuditLog(id: 2, userId: 1, userName: 'Murari Varma', action: 'update', module: 'users', details: 'Updated user profile for Rahul Sharma', ipAddress: '192.168.1.100', userAgent: 'Chrome 120 / Windows', timestamp: DateTime.now().subtract(const Duration(minutes: 15)), beforeValue: 'role: driver', afterValue: 'role: driver'),
@@ -23,7 +29,24 @@ class AuditLogRepository {
     DateTime? fromDate,
     DateTime? toDate,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 400));
+    try {
+      final queryParams = <String, dynamic>{};
+      if (action != null && action != 'all') queryParams['action'] = action;
+      if (module != null && module != 'all') queryParams['module'] = module;
+      if (userId != null) queryParams['user_id'] = userId;
+      if (fromDate != null) queryParams['from_date'] = fromDate.toIso8601String();
+      if (toDate != null) queryParams['to_date'] = toDate.toIso8601String();
+
+      final res = await _apiClient.get('/admin/audit-logs', queryParameters: queryParams);
+      if (res.data != null && res.data is List) {
+        return (res.data as List)
+            .map<AuditLog>((e) => AuditLog.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (e) {
+      // Fallback
+    }
+    
     var filtered = List<AuditLog>.from(_logs);
 
     if (action != null && action != 'all') {

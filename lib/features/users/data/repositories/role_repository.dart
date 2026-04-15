@@ -9,7 +9,7 @@ class RoleRepository {
 
   Future<List<Role>> getRoles() async {
     try {
-      final response = await _api.get('/api/v1/admin/roles/');
+      final response = await _api.get('/api/v1/admin/rbac/roles/');
       final data = response.data as List;
       return data.map((json) => Role.fromJson(json)).toList();
     } catch (e) {
@@ -20,7 +20,7 @@ class RoleRepository {
 
   Future<List<Permission>> getPermissions() async {
     try {
-      final response = await _api.get('/api/v1/admin/roles/permissions');
+      final response = await _api.get('/api/v1/admin/rbac/roles/permissions');
       final data = response.data as List;
       _cachedPermissions = data.map((json) => Permission.fromJson(json)).toList();
       return _cachedPermissions;
@@ -35,7 +35,7 @@ class RoleRepository {
     required String description,
     required List<int> permissionIds,
   }) async {
-    final response = await _api.post('/api/v1/admin/roles/', data: {
+    final response = await _api.post('/api/v1/admin/rbac/roles/', data: {
       'name': name,
       'description': description,
       'category': 'custom',
@@ -50,7 +50,7 @@ class RoleRepository {
     final ids = newPermissionIds ?? 
                 role.permissions.map((p) => p is int ? p : (p as Map<String, dynamic>)['id'] as int).toList();
     
-    final response = await _api.put('/api/v1/admin/roles/${role.id}', data: {
+    final response = await _api.put('/api/v1/admin/rbac/roles/${role.id}', data: {
       'name': role.name,
       'description': role.description,
       'is_active': role.isActive,

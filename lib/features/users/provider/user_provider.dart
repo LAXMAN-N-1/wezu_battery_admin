@@ -1,8 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/user.dart';
 import '../data/repositories/user_repository.dart';
+import '../data/repositories/user_analytics_repository.dart';
+import '../data/repositories/audit_log_repository.dart';
+import '../../../../core/api/api_client.dart';
 
 final userRepositoryProvider = Provider<UserRepository>((ref) => UserRepository());
+
+final userAnalyticsRepositoryProvider = Provider<UserAnalyticsRepository>((ref) {
+  return UserAnalyticsRepository(ref.watch(apiClientProvider));
+});
+
+final auditLogRepositoryProvider = Provider<AuditLogRepository>((ref) {
+  return AuditLogRepository(ref.watch(apiClientProvider));
+});
 
 class UserListState {
   final List<User> users;

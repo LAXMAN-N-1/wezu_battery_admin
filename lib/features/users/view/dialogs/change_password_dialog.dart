@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   final String userName;
-  final Function(String newPassword, bool forceReset) onSubmit;
+  final Future<void> Function(String newPassword, bool forceReset) onSubmit;
 
   const ChangePasswordDialog({super.key, required this.userName, required this.onSubmit});
 
@@ -171,8 +171,15 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       return;
     }
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    widget.onSubmit(_passwordController.text, _forceReset);
-    if (mounted) Navigator.pop(context);
+    
+    try {
+      await widget.onSubmit(_passwordController.text, _forceReset);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        // Let the caller handle showing the error or show it here.
+      }
+    }
   }
 }

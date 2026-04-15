@@ -21,6 +21,24 @@ class InviteLink {
     this.isUsed = false,
   });
 
+  factory InviteLink.fromJson(Map<String, dynamic> json) {
+    return InviteLink(
+      id: json['id'] ?? 0,
+      token: json['token'] ?? '',
+      email: json['email'] ?? '',
+      role: json['role'] ?? '',
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
+      expiresAt: json['expires_at'] != null
+          ? DateTime.parse(json['expires_at'])
+          : DateTime.now().add(const Duration(days: 7)),
+      createdBy: json['created_by'] ?? 'Admin',
+      usedAt: json['used_at'] != null ? DateTime.parse(json['used_at']) : null,
+      isUsed: json['is_used'] ?? false,
+    );
+  }
+
   bool get isExpired => DateTime.now().isAfter(expiresAt);
   
   String get status {

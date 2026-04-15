@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/audit_log.dart';
 import '../data/repositories/audit_log_repository.dart';
+import '../provider/user_provider.dart';
 
-class SessionActivityView extends StatefulWidget {
+class SessionActivityView extends ConsumerStatefulWidget {
   const SessionActivityView({super.key});
 
   @override
-  State<SessionActivityView> createState() => _SessionActivityViewState();
+  ConsumerState<SessionActivityView> createState() => _SessionActivityViewState();
 }
 
-class _SessionActivityViewState extends State<SessionActivityView> {
-  final AuditLogRepository _repository = AuditLogRepository();
+class _SessionActivityViewState extends ConsumerState<SessionActivityView> {
+  late AuditLogRepository _repository;
   List<AuditLog> _logs = [];
   bool _isLoading = true;
   String _actionFilter = 'all';
@@ -23,6 +25,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(auditLogRepositoryProvider);
     _loadData();
   }
 

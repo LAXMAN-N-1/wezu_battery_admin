@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CreateUserDialog extends StatefulWidget {
-  final Function(String fullName, String email, String phone, String password, String role) onSubmit;
+  final Future<void> Function(String fullName, String email, String phone, String password, String role) onSubmit;
 
   const CreateUserDialog({super.key, required this.onSubmit});
 
@@ -180,14 +180,20 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    widget.onSubmit(
-      _nameController.text,
-      _emailController.text,
-      _phoneController.text,
-      _passwordController.text,
-      _selectedRole,
-    );
-    if (mounted) Navigator.pop(context);
+    
+    try {
+      await widget.onSubmit(
+        _nameController.text,
+        _emailController.text,
+        _phoneController.text,
+        _passwordController.text,
+        _selectedRole,
+      );
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }

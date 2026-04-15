@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class SuspendUserDialog extends StatefulWidget {
   final String userName;
-  final Function(String reason, String? notes, int? durationDays) onSubmit;
+  final Future<void> Function(String reason, String? notes, int? durationDays) onSubmit;
 
   const SuspendUserDialog({super.key, required this.userName, required this.onSubmit});
 
@@ -217,8 +217,14 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
 
   void _submit() async {
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    widget.onSubmit(_reason, _notesController.text.isEmpty ? null : _notesController.text, _durationDays);
-    if (mounted) Navigator.pop(context);
+    
+    try {
+      await widget.onSubmit(_reason, _notesController.text.isEmpty ? null : _notesController.text, _durationDays);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }

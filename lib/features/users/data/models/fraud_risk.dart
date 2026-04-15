@@ -23,6 +23,26 @@ class FraudRisk {
     if (score >= 25) return 'medium';
     return 'low';
   }
+
+  factory FraudRisk.fromJson(Map<String, dynamic> json) {
+    return FraudRisk(
+      userId: json['user_id'] ?? 0,
+      userName: json['user_name'] ?? '',
+      score: json['score'] ?? 0,
+      level: json['level'] ?? levelFromScore(json['score'] ?? 0),
+      factors: (json['factors'] as List?)
+              ?.map((e) => FraudFactor.fromJson(e))
+              .toList() ??
+          [],
+      lastUpdated: json['last_updated'] != null
+          ? DateTime.parse(json['last_updated'])
+          : DateTime.now(),
+      history: (json['history'] as List?)
+              ?.map((e) => FraudScoreHistory.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class FraudFactor {
@@ -37,6 +57,15 @@ class FraudFactor {
     required this.contribution,
     required this.severity,
   });
+
+  factory FraudFactor.fromJson(Map<String, dynamic> json) {
+    return FraudFactor(
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      contribution: json['contribution'] ?? 0,
+      severity: json['severity'] ?? 'low',
+    );
+  }
 }
 
 class FraudScoreHistory {
@@ -47,4 +76,11 @@ class FraudScoreHistory {
     required this.date,
     required this.score,
   });
+
+  factory FraudScoreHistory.fromJson(Map<String, dynamic> json) {
+    return FraudScoreHistory(
+      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
+      score: json['score'] ?? 0,
+    );
+  }
 }
