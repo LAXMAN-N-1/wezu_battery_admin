@@ -11,14 +11,16 @@ class BlogRepository {
 
   BlogRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
-  static const String _basePath = '/api/v1/admin/blogs';
+  static const String _basePath = '/api/v1/admin/cms/blogs';
 
-  Future<List<Blog>> getBlogs({String? category, String? status}) async {
+  Future<List<Blog>> getBlogs({String? category, String? status, int skip = 0, int limit = 100}) async {
     final response = await _apiClient.get(
-      _basePath,
+      '$_basePath/',
       queryParameters: {
         if (category != null) 'category': category,
         if (status != null) 'status': status,
+        'skip': skip,
+        'limit': limit,
       },
     );
     return (response.data as List).map((e) => Blog.fromJson(e)).toList();
@@ -31,16 +33,16 @@ class BlogRepository {
 
   Future<Blog> createBlog(Blog blog) async {
     final response = await _apiClient.post(
-      _basePath,
+      '$_basePath/',
       data: blog.toJson(),
     );
     return Blog.fromJson(response.data);
   }
 
-  Future<Blog> updateBlog(int id, Map<String, dynamic> data) async {
-    final response = await _apiClient.patch(
+  Future<Blog> updateBlog(int id, Blog blog) async {
+    final response = await _apiClient.put(
       '$_basePath/$id',
-      data: data,
+      data: blog.toJson(),
     );
     return Blog.fromJson(response.data);
   }

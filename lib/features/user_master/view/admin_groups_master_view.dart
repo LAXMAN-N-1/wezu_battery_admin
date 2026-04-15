@@ -64,7 +64,7 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
                               isActive = val;
                             });
                           },
-                          activeColor: Colors.blueAccent,
+                          activeThumbColor: Colors.blueAccent,
                         )
                       ],
                     )

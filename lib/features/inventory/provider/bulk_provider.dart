@@ -106,7 +106,7 @@ class BulkImportNotifier extends StateNotifier<BulkImportState> {
         isParsing: false,
         dryRunComplete: true,
         validRows: importedCount as int,
-        totalRows: (importedCount as int) + (errorCount as int),
+        totalRows: (importedCount) + (errorCount as int),
         errors: errors,
       );
     } catch (e) {

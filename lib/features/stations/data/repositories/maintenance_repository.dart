@@ -8,6 +8,11 @@ class MaintenanceRepository {
     try {
       final response = await _api.get('/api/v1/admin/stations/maintenance/all');
       final data = response.data;
+      if (data is Map && data['records'] is List) {
+        return (data['records'] as List)
+            .map((e) => MaintenanceRecord.fromJson(e))
+            .toList();
+      }
       if (data is List) {
         return data.map((e) => MaintenanceRecord.fromJson(e)).toList();
       }
@@ -39,14 +44,17 @@ class MaintenanceRepository {
     required double cost,
   }) async {
     try {
-      await _api.post('/api/v1/admin/stations/maintenance/create', data: {
-        'entity_type': 'station',
-        'entity_id': entityId,
-        'technician_id': 1,
-        'maintenance_type': maintenanceType,
-        'description': description,
-        'cost': cost,
-      });
+      await _api.post(
+        '/api/v1/admin/stations/maintenance/create',
+        data: {
+          'entity_type': 'station',
+          'entity_id': entityId,
+          'technician_id': 1,
+          'maintenance_type': maintenanceType,
+          'description': description,
+          'cost': cost,
+        },
+      );
       return true;
     } catch (e) {
       print('Error creating maintenance record: $e');
@@ -56,9 +64,10 @@ class MaintenanceRepository {
 
   Future<bool> updateStatus(int recordId, String newStatus) async {
     try {
-      await _api.put('/api/v1/admin/stations/maintenance/$recordId/status', data: {
-        'status': newStatus,
-      });
+      await _api.put(
+        '/api/v1/admin/stations/maintenance/$recordId/status',
+        queryParameters: {'new_status': newStatus},
+      );
       return true;
     } catch (e) {
       print('Error updating maintenance status: $e');

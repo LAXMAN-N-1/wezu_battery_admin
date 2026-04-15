@@ -9,6 +9,20 @@ class AnalyticsRepository {
 
   static const _base = '/api/v1/admin/analytics';
 
+  Map<String, dynamic> _asMap(
+    dynamic data, {
+    String? listKey,
+    Map<String, dynamic> defaults = const {},
+  }) {
+    if (data is Map) {
+      return {...defaults, ...Map<String, dynamic>.from(data)};
+    }
+    if (listKey != null && data is List) {
+      return {...defaults, listKey: data};
+    }
+    return defaults;
+  }
+
   /// GET /api/v1/admin/analytics/overview
   Future<DashboardOverview> getOverview() async {
     try {
@@ -26,7 +40,9 @@ class AnalyticsRepository {
         '$_base/trends',
         queryParameters: {'period': period},
       );
-      return TrendData.fromJson(response.data is Map ? response.data : {});
+      return TrendData.fromJson(
+        _asMap(response.data, listKey: 'data', defaults: {'period': period}),
+      );
     } catch (e) {
       rethrow;
     }
@@ -56,7 +72,7 @@ class AnalyticsRepository {
   Future<UserBehavior> getUserBehavior() async {
     try {
       final response = await _apiClient.get('$_base/user-behavior');
-      return UserBehavior.fromJson(response.data is Map ? response.data : {});
+      return UserBehavior.fromJson(_asMap(response.data));
     } catch (e) {
       rethrow;
     }
@@ -66,7 +82,9 @@ class AnalyticsRepository {
   Future<DemandForecast> getDemandForecast() async {
     try {
       final response = await _apiClient.get('$_base/demand-forecast');
-      return DemandForecast.fromJson(response.data is Map ? response.data : {});
+      return DemandForecast.fromJson(
+        _asMap(response.data, listKey: 'forecast'),
+      );
     } catch (e) {
       rethrow;
     }
@@ -89,7 +107,9 @@ class AnalyticsRepository {
         '$_base/user-growth',
         queryParameters: {'period': period},
       );
-      return UserGrowth.fromJson(response.data is Map ? response.data : {});
+      return UserGrowth.fromJson(
+        _asMap(response.data, listKey: 'data', defaults: {'period': period}),
+      );
     } catch (e) {
       rethrow;
     }

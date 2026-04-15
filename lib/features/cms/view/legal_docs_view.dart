@@ -1,182 +1,255 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../data/repositories/cms_repository.dart';
+import '../../../core/widgets/admin_ui_components.dart';
+import '../../../core/widgets/glass_components.dart';
+import '../data/models/legal_document.dart';
+import '../provider/cms_providers.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
-class LegalDocsView extends StatefulWidget {
+class LegalDocsView extends ConsumerStatefulWidget {
   const LegalDocsView({super.key});
-  @override State<LegalDocsView> createState() => _LegalDocsViewState();
+
+  @override
+  ConsumerState<LegalDocsView> createState() => _LegalDocsViewState();
 }
 
-class _LegalDocsViewState extends State<LegalDocsView> {
-  final CmsRepository _repo = CmsRepository();
-  List<Map<String, dynamic>> _docs = [];
-  bool _isLoading = true;
-
-  @override void initState() { super.initState(); _loadData(); }
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try { _docs = await _repo.getLegalDocs(); if (mounted) setState(() => _isLoading = false); }
-    catch (e) { if (mounted) setState(() => _isLoading = false); }
-  }
+class _LegalDocsViewState extends ConsumerState<LegalDocsView> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  LegalDocument? _historyDoc;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Legal Documents', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 4),
-          Text('Terms, privacy policies, and legal agreements', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-        ])),
-        ElevatedButton.icon(onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('New Document'),
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-      ]),
-      const SizedBox(height: 24),
-      _isLoading ? const Center(child: CircularProgressIndicator())
-          : Column(children: _docs.map(_buildDocCard).toList()),
-    ]));
-  }
+    final docsAsync = ref.watch(legalProvider);
 
-  Widget _buildDocCard(Map<String, dynamic> doc) {
-    final isActive = doc['is_active'] == true;
-    final forceUpdate = doc['force_update'] == true;
-    return Container(margin: const EdgeInsets.only(bottom: 16), padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isActive ? Colors.blue.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.06))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-            child: const Icon(Icons.description, color: Colors.blue, size: 22)),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(doc['title']?.toString() ?? '', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 4),
-            Row(children: [
-              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(6)),
-                child: Text('v${doc['version'] ?? '1.0'}', style: GoogleFonts.robotoMono(color: Colors.white54, fontSize: 11))),
-              const SizedBox(width: 8),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(6)),
-                child: Text(doc['slug']?.toString() ?? '', style: GoogleFonts.inter(color: Colors.white38, fontSize: 10))),
-            ]),
-          ])),
-          Column(children: [
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-              child: Text(isActive ? 'PUBLISHED' : 'DRAFT', style: TextStyle(color: isActive ? Colors.green : Colors.red, fontSize: 10, fontWeight: FontWeight.bold))),
-            if (forceUpdate) ...[
-              const SizedBox(height: 4),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.warning_amber, size: 12, color: Colors.orange), const SizedBox(width: 4),
-                  Text('FORCE UPDATE', style: GoogleFonts.inter(color: Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
-                ])),
-            ],
-          ]),
-        ]),
-        const SizedBox(height: 14),
-        Container(padding: const EdgeInsets.all(12), width: double.infinity,
-          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(8)),
-          child: Text(
-            (doc['content']?.toString() ?? '').replaceAll(RegExp(r'<[^>]*>'), ''),
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, height: 1.5), maxLines: 3, overflow: TextOverflow.ellipsis)),
-        const SizedBox(height: 12),
-        Row(children: [
-          if (doc['published_at'] != null) ...[
-            Icon(Icons.calendar_today, size: 12, color: Colors.white38), const SizedBox(width: 4),
-            Text('Published: ${_formatDate(doc['published_at'])}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Colors.transparent,
+      endDrawer: _historyDoc != null ? _VersionHistoryDrawer(doc: _historyDoc!) : null,
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PageHeader(
+              title: 'Legal Documents',
+              subtitle: 'Manage versioned legal content and push re-acceptance to users',
+              actionButton: ElevatedButton.icon(
+                onPressed: () => context.push('/cms/legal/new'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('NEW DOCUMENT'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B82F6),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+
+            Expanded(
+              child: GlassContainer(
+                padding: EdgeInsets.zero,
+                child: docsAsync.when(
+                  data: (docs) => _buildDocsTable(docs),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+                ),
+              ),
+            ),
           ],
-          const Spacer(),
-          IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 18), onPressed: () => _showEditDialog(doc)),
-          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), onPressed: () async {
-            await _repo.deleteLegalDoc(doc['id']); _loadData();
-          }),
-        ]),
-      ]));
+        ),
+      ),
+    );
   }
 
-  void _showEditDialog(Map<String, dynamic> doc) {
-    final titleCtrl = TextEditingController(text: doc['title']?.toString());
-    final slugCtrl = TextEditingController(text: doc['slug']?.toString());
-    final versionCtrl = TextEditingController(text: doc['version']?.toString());
-    final contentCtrl = TextEditingController(text: doc['content']?.toString());
-    bool isActive = doc['is_active'] == true;
-    bool forceUpdate = doc['force_update'] == true;
+  Widget _buildDocsTable(List<LegalDocument> docs) {
+    return AdvancedTable(
+      columns: const ['Document Name', 'Version', 'Status', 'Last Updated', 'Updated By', 'Actions'],
+      rows: docs.map((doc) => [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(doc.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 2),
+            Text('/legal/${doc.slug}', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+          ],
+        ),
+        Text('v${doc.version}', style: GoogleFonts.robotoMono(color: Colors.blue.shade200, fontSize: 12)),
+        _statusBadge(doc.status),
+        Text(DateFormat('dd MMM yyyy').format(doc.updatedAt), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        Text(doc.lastUpdatedBy ?? 'System', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blueAccent),
+              onPressed: () => context.push('/cms/legal/edit', extra: doc),
+              tooltip: 'Edit Document',
+            ),
+            IconButton(
+              icon: const Icon(Icons.history, size: 18, color: Colors.amberAccent),
+              onPressed: () {
+                setState(() => _historyDoc = doc);
+                _scaffoldKey.currentState?.openEndDrawer();
+              },
+              tooltip: 'Version History',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+              onPressed: doc.status == 'DRAFT' ? () => _confirmDelete(doc) : null,
+              tooltip: doc.status == 'DRAFT' ? 'Delete' : 'Archived only',
+            ),
+          ],
+        ),
+      ]).toList(),
+      onRowTap: (idx) => context.push('/cms/legal/edit', extra: docs[idx]),
+    );
+  }
 
-    showDialog(context: context, builder: (ctx) => StatefulBuilder(
-      builder: (context, setModalState) => AlertDialog(
+  Widget _statusBadge(String status) {
+    Color color = Colors.grey;
+    if (status == 'PUBLISHED') color = Colors.green;
+    if (status == 'DRAFT') color = Colors.amber;
+    if (status == 'ARCHIVED') color = Colors.red;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), border: Border.all(color: color.withOpacity(0.2)), borderRadius: BorderRadius.circular(4)),
+      child: Text(status, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  void _confirmDelete(LegalDocument doc) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B),
-        title: Text('Edit Legal Document', style: GoogleFonts.outfit(color: Colors.white)),
-        content: SizedBox(width: 650, child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Row(children: [
-            Expanded(flex: 2, child: _field(titleCtrl, 'Document Title')), const SizedBox(width: 10),
-            Expanded(flex: 1, child: _field(slugCtrl, 'Slug')),
-          ]),
-          const SizedBox(height: 10),
-          _field(contentCtrl, 'Content (HTML/Markdown supported)', maxLines: 12),
-          const SizedBox(height: 16),
-          Row(children: [
-            Expanded(child: _field(versionCtrl, 'Version (e.g. 1.2)')),
-            const SizedBox(width: 10),
-            Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
-              title: Text('Published', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
-              value: isActive, activeColor: Colors.green, inactiveTrackColor: Colors.white12,
-              onChanged: (v) => setModalState(() => isActive = v),
-            ))),
-            const SizedBox(width: 10),
-            Expanded(child: Container(decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
-              title: Text('Force App Update', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11)),
-              value: forceUpdate, activeColor: Colors.red, inactiveTrackColor: Colors.white12,
-              onChanged: (v) => setModalState(() => forceUpdate = v),
-            ))),
-          ])
-        ])),
+        title: const Text('Delete Document', style: TextStyle(color: Colors.white)),
+        content: Text('Are you sure you want to delete "${doc.title}"? This action cannot be undone.', style: const TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () async {
-            await _repo.updateLegalDoc(doc['id'], {
-              'title': titleCtrl.text, 'slug': slugCtrl.text, 'version': versionCtrl.text,
-              'content': contentCtrl.text, 'is_active': isActive, 'force_update': forceUpdate
-            });
-            if (ctx.mounted) Navigator.pop(ctx); _loadData();
-          }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)), child: const Text('Save Document')),
-        ])));
-  }
-
-
-  String _formatDate(String ts) {
-    try { final dt = DateTime.parse(ts); return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}'; } catch (_) { return ts; }
-  }
-
-  void _showCreateDialog() {
-    final titleCtrl = TextEditingController();
-    final slugCtrl = TextEditingController();
-    final versionCtrl = TextEditingController(text: '1.0.0');
-    final contentCtrl = TextEditingController();
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1E293B),
-      title: Text('New Legal Document', style: GoogleFonts.outfit(color: Colors.white)),
-      content: SizedBox(width: 500, child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _field(titleCtrl, 'Title'), const SizedBox(height: 10),
-        _field(slugCtrl, 'Slug'), const SizedBox(height: 10),
-        _field(versionCtrl, 'Version'), const SizedBox(height: 10),
-        _field(contentCtrl, 'Content (HTML)', maxLines: 4),
-      ])),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-        ElevatedButton(onPressed: () async {
-          await _repo.createLegalDoc({'title': titleCtrl.text, 'slug': slugCtrl.text, 'version': versionCtrl.text, 'content': contentCtrl.text, 'is_active': true});
-          if (ctx.mounted) Navigator.pop(ctx); _loadData();
-        }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)), child: const Text('Create')),
-      ]));
-  }
-
-  Widget _field(TextEditingController ctrl, String label, {int maxLines = 1}) {
-    return TextField(controller: ctrl, style: const TextStyle(color: Colors.white), maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.white38),
-        filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)));
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+          TextButton(
+            onPressed: () async {
+              await ref.read(legalProvider.notifier).deleteDoc(doc.id);
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text('DELETE', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
   }
 }
+
+class _VersionHistoryDrawer extends StatelessWidget {
+  final LegalDocument doc;
+
+  const _VersionHistoryDrawer({required this.doc});
+
+  @override
+  Widget build(BuildContext context) {
+    final versions = doc.history ?? [];
+
+    return Drawer(
+      width: 400,
+      backgroundColor: const Color(0xFF0F172A),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  Text('Version History', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54)),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white10, height: 1),
+            Expanded(
+              child: versions.isEmpty 
+                ? _buildEmptyState()
+                : ListView.separated(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: versions.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    itemBuilder: (context, index) => _buildVersionCard(context, versions[index]),
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVersionCard(BuildContext context, LegalVersion v) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('v${v.version}', style: GoogleFonts.robotoMono(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+              const Spacer(),
+              _chip('RESTORE', Colors.white10),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(v.publishedBy, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+          Text(
+            DateFormat('dd MMM yyyy, hh:mm a').format(v.publishedAt),
+            style: const TextStyle(color: Colors.white38, fontSize: 11),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {}, // Preview logic
+                child: const Text('PREVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {}, // Restore logic
+                style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+                child: const Text('RESTORE AS DRAFT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history_toggle_off, size: 48, color: Colors.white.withOpacity(0.05)),
+          const SizedBox(height: 16),
+          const Text('No previous versions', style: TextStyle(color: Colors.white24, fontSize: 14)),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String text, Color bg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
+      child: Text(text, style: const TextStyle(color: Colors.white38, fontSize: 9, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+

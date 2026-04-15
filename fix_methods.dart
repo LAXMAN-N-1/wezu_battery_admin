@@ -5,7 +5,7 @@ void fixFile(String path, String appendContent) {
   var content = file.readAsStringSync();
   int lastBraceIndex = content.lastIndexOf('}');
   if (lastBraceIndex != -1) {
-    var newContent = content.substring(0, lastBraceIndex) + appendContent + '\n}\n';
+    var newContent = '${content.substring(0, lastBraceIndex)}$appendContent\n}\n';
     file.writeAsStringSync(newContent);
     print("Fixed $path");
   } else {

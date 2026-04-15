@@ -8,6 +8,10 @@ import 'dialogs/create_user_dialog.dart';
 import 'dialogs/edit_user_dialog.dart';
 import 'dialogs/invite_users_dialog.dart';
 import 'dialogs/suspend_user_dialog.dart';
+import 'dialogs/suspension_dialog.dart';
+import 'dialogs/admin_reset_password_dialog.dart';
+import 'dialogs/ban_user_dialog.dart';
+import 'dialogs/transition_state_dialog.dart';
 
 class UsersView extends ConsumerStatefulWidget {
   const UsersView({super.key});
@@ -23,6 +27,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
   void dispose() { _tabController.dispose(); super.dispose(); }
 
   bool _isMobile(BuildContext ctx) => MediaQuery.of(ctx).size.width < 800;
+  String? _reactivateNotes;
 
   @override
   Widget build(BuildContext context) {
@@ -43,9 +48,9 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
             Expanded(child: _buildActionButton('Create', Icons.person_add, Colors.blue, _showCreateDialog)),
           ]),
         ] else
-          Row(children: [
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
             Text('User Management', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            const Spacer(),
+            
             _buildActionButton('Invite Users', Icons.mail_outline, Colors.green, _showInviteDialog),
             const SizedBox(width: 12),
             _buildActionButton('Create User', Icons.person_add, Colors.blue, _showCreateDialog),
@@ -56,26 +61,26 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
         if (mobile)
           Column(children: [
             Row(children: [
-              Expanded(child: _buildStatCard('Total Users', userState.totalCount.toString(), Icons.people_outline, Colors.blue, true)),
+              Expanded(child: _buildStatCard('Total Users', (userState.summaryData?['total_users'] ?? userState.totalCount).toString(), Icons.people_outline, Colors.blue, true)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatCard('Active', userState.activeUsers.toString(), Icons.check_circle_outline, Colors.green, true)),
+              Expanded(child: _buildStatCard('Active', (userState.summaryData?['active_users'] ?? userState.activeUsers).toString(), Icons.check_circle_outline, Colors.green, true)),
             ]),
             const SizedBox(height: 8),
             Row(children: [
-              Expanded(child: _buildStatCard('Suspended', userState.suspendedUsers.toString(), Icons.block, Colors.red, true)),
+              Expanded(child: _buildStatCard('Suspended', (userState.summaryData?['suspended_users'] ?? userState.suspendedUsers).toString(), Icons.block, Colors.red, true)),
               const SizedBox(width: 8),
-              Expanded(child: _buildStatCard('Pending KYC', userState.pendingKyc.toString(), Icons.verified_user_outlined, Colors.orange, true)),
+              Expanded(child: _buildStatCard('Pending KYC', (userState.summaryData?['pending_kyc'] ?? userState.pendingKyc).toString(), Icons.verified_user_outlined, Colors.orange, true)),
             ]),
           ])
         else
           Row(children: [
-            Expanded(child: _buildStatCard('Total Users', userState.totalCount.toString(), Icons.people_outline, Colors.blue, false)),
+            Expanded(child: _buildStatCard('Total Users', (userState.summaryData?['total_users'] ?? userState.totalCount).toString(), Icons.people_outline, Colors.blue, false)),
             const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Active', userState.activeUsers.toString(), Icons.check_circle_outline, Colors.green, false)),
+            Expanded(child: _buildStatCard('Active', (userState.summaryData?['active_users'] ?? userState.activeUsers).toString(), Icons.check_circle_outline, Colors.green, false)),
             const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Suspended', userState.suspendedUsers.toString(), Icons.block, Colors.red, false)),
+            Expanded(child: _buildStatCard('Suspended', (userState.summaryData?['suspended_users'] ?? userState.suspendedCount).toString(), Icons.block, Colors.red, false)),
             const SizedBox(width: 12),
-            Expanded(child: _buildStatCard('Pending KYC', userState.pendingKyc.toString(), Icons.verified_user_outlined, Colors.orange, false)),
+            Expanded(child: _buildStatCard('Pending KYC', (userState.summaryData?['pending_kyc'] ?? userState.pendingKyc).toString(), Icons.verified_user_outlined, Colors.orange, false)),
           ]),
         const SizedBox(height: 20),
 
@@ -207,11 +212,11 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
             subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(user.email, style: const TextStyle(color: Colors.white54, fontSize: 11)),
               const SizedBox(height: 4),
-              Row(children: [
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
                 _buildStatusBadge(user),
                 const SizedBox(width: 8),
                 _buildKycBadge(user.kycStatus),
-                const Spacer(),
+                
                 _buildRiskBadge(user.riskScore, user.riskLevel),
               ]),
             ]),
@@ -228,6 +233,10 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
                   user.suspensionStatus == 'suspended' ? 'Reactivate' : 'Suspend',
                   user.suspensionStatus == 'suspended' ? Colors.green : Colors.red),
                 _buildPopupItem('reset', Icons.lock_reset, 'Reset Password', Colors.purple),
+                _buildPopupItem('force-logout', Icons.logout, 'Force Logout', Colors.amber),
+                _buildPopupItem('ban', Icons.gavel, 'Ban User', Colors.redAccent),
+                _buildPopupItem('transition', Icons.swap_horiz, 'Transition State', Colors.blueAccent),
+                _buildPopupItem('force-pass-change', Icons.security_update_warning, 'Force Password Change', Colors.deepOrange),
                 const PopupMenuDivider(),
                 _buildPopupItem('delete', Icons.delete_outline, 'Delete', Colors.red),
               ],
@@ -246,7 +255,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SizedBox(width: double.infinity, child: SingleChildScrollView(child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.white.withValues(alpha: 0.1), iconTheme: const IconThemeData(color: Colors.white70)),
-        child: DataTable(
+        child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
           headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
           dataRowMinHeight: 64, dataRowMaxHeight: 64,
           columns: const [
@@ -285,13 +294,17 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
                   user.suspensionStatus == 'suspended' ? 'Reactivate' : 'Suspend',
                   user.suspensionStatus == 'suspended' ? Colors.green : Colors.red),
                 _buildPopupItem('reset', Icons.lock_reset, 'Reset Password', Colors.purple),
+                _buildPopupItem('force-logout', Icons.logout, 'Force Logout', Colors.amber),
+                _buildPopupItem('ban', Icons.gavel, 'Ban User', Colors.redAccent),
+                _buildPopupItem('transition', Icons.swap_horiz, 'Transition State', Colors.blueAccent),
+                _buildPopupItem('force-pass-change', Icons.security_update_warning, 'Force Password Change', Colors.deepOrange),
                 const PopupMenuDivider(),
                 _buildPopupItem('delete', Icons.delete_outline, 'Delete', Colors.red),
               ],
               onSelected: (action) => _handleUserAction(action, user),
             )),
           ])).toList(),
-        ),
+        )),
       ))),
     );
   }
@@ -344,7 +357,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: SizedBox(width: double.infinity, child: SingleChildScrollView(child: Theme(
                 data: Theme.of(context).copyWith(dividerColor: Colors.white.withValues(alpha: 0.1)),
-                child: DataTable(
+                child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
                   headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
                   columns: const [
                     DataColumn(label: Text('Email', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600))),
@@ -375,7 +388,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
                       ])),
                     ]);
                   }).toList(),
-                ),
+                )),
               ))),
             ),
       ),
@@ -522,11 +535,31 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
         onSubmit: (r, n, d) { ref.read(userListProvider.notifier).suspendUser(user.id, reason: r, durationDays: d); _showSnackbar('Suspended'); })); break;
       case 'reactivate': showDialog(context: context, builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B), title: const Text('Reactivate User', style: TextStyle(color: Colors.white)),
-        content: Text('Are you sure you want to reactivate ${user.fullName}?', style: const TextStyle(color: Colors.white70)),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text('Are you sure you want to reactivate ${user.fullName}?', style: const TextStyle(color: Colors.white70)),
+          const SizedBox(height: 16),
+          TextField(
+            onChanged: (v) => _reactivateNotes = v,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: 'Reactivation Notes (optional)',
+              labelStyle: const TextStyle(color: Colors.white54),
+              filled: true, fillColor: Colors.white.withValues(alpha: 0.05),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+        ]),
         actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () { ref.read(userListProvider.notifier).reactivateUser(user.id); Navigator.pop(context); _showSnackbar('Reactivated'); },
+          TextButton(onPressed: () { ref.read(userListProvider.notifier).reactivateUser(user.id, notes: _reactivateNotes); Navigator.pop(context); _showSnackbar('Reactivated'); },
             child: const Text('Reactivate', style: TextStyle(color: Colors.green)))])); break;
-      case 'reset': ref.read(userListProvider.notifier).resetPassword(user.id); _showSnackbar('Password reset initiated'); break;
+      case 'reset': showDialog(context: context, builder: (_) => AdminResetPasswordDialog(userName: user.fullName,
+        onSubmit: (p) { ref.read(userListProvider.notifier).resetPassword(user.id, p); _showSnackbar('Password reset successfully'); })); break;
+      case 'ban': showDialog(context: context, builder: (_) => BanUserDialog(userName: user.fullName,
+        onSubmit: (r) { ref.read(userListProvider.notifier).banUser(user.id, reason: r); _showSnackbar('User banned'); })); break;
+      case 'transition': showDialog(context: context, builder: (_) => TransitionStateDialog(userName: user.fullName, currentStatus: user.suspensionStatus,
+        onSubmit: (s) { ref.read(userListProvider.notifier).transitionState(user.id, s); _showSnackbar('Status updated to $s'); })); break;
+      case 'force-logout': ref.read(userListProvider.notifier).forceLogout(user.id); _showSnackbar('Forced logout initiated'); break;
+      case 'force-pass-change': ref.read(userListProvider.notifier).forcePasswordChange(user.id); _showSnackbar('User forced to change password'); break;
       case 'delete': showDialog(context: context, builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B), title: const Text('Delete User', style: TextStyle(color: Colors.white)),
         content: Text('Delete ${user.fullName}?', style: const TextStyle(color: Colors.white70)),

@@ -11,15 +11,17 @@ class BulkImportExportView extends ConsumerStatefulWidget {
   const BulkImportExportView({super.key});
 
   @override
-  ConsumerState<BulkImportExportView> createState() => _BulkImportExportViewState();
+  ConsumerState<BulkImportExportView> createState() =>
+      _BulkImportExportViewState();
 }
 
-class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> with SingleTickerProviderStateMixin {
+class _BulkImportExportViewState extends ConsumerState<BulkImportExportView>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final InventoryRepository _repository = InventoryRepository();
 
   bool _isDragging = false;
-  
+
   // Export states
   String _exportStatus = 'All';
   String _exportType = 'All';
@@ -68,13 +70,19 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Export downloaded successfully.'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Export downloaded successfully.'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {
@@ -91,7 +99,9 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
         Container(
           margin: const EdgeInsets.only(bottom: 24),
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+            border: Border(
+              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            ),
           ),
           child: TabBar(
             controller: _tabController,
@@ -111,10 +121,7 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: [
-              _buildImportTab(),
-              _buildExportTab(),
-            ],
+            children: [_buildImportTab(), _buildExportTab()],
           ),
         ),
       ],
@@ -134,14 +141,30 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
           children: [
             const Icon(Icons.check_circle, size: 80, color: Colors.greenAccent),
             const SizedBox(height: 24),
-            Text('Successfully Imported!', style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(
+              'Successfully Imported!',
+              style: GoogleFonts.inter(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('${state.validRows} batteries added to inventory.', style: const TextStyle(color: Colors.white70)),
+            Text(
+              '${state.validRows} batteries added to inventory.',
+              style: const TextStyle(color: Colors.white70),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => ref.read(bulkImportProvider.notifier).clearFile(),
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
-              child: const Text('Import Another File', style: TextStyle(color: Colors.white)),
+              onPressed: () =>
+                  ref.read(bulkImportProvider.notifier).clearFile(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+              ),
+              child: const Text(
+                'Import Another File',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
         ),
@@ -164,27 +187,33 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Upload CSV File', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                const Text(
+                  'Upload CSV File',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                const Text('Upload a CSV file containing battery records. You can run validation before final insertion.', style: TextStyle(color: Colors.white54, fontSize: 13)),
+                const Text(
+                  'Upload a CSV file containing battery records. You can run validation before final insertion.',
+                  style: TextStyle(color: Colors.white54, fontSize: 13),
+                ),
                 const SizedBox(height: 24),
-                
+
                 // Dropzone
                 DropTarget(
                   onDragDone: (detail) {
-                    final pFile = PlatformFile(
-                      path: detail.files.first.path,
-                      name: detail.files.first.name,
-                      size: 0,
-                      bytes: null, // Note: For Web, desktop_drop provides `readAsBytes()` on `detail.files.first` but PlatformFile abstraction might need manual bridging
-                    );
                     detail.files.first.readAsBytes().then((bytes) {
                       final fileWithBytes = PlatformFile(
-                         name: detail.files.first.name,
-                         size: bytes.length,
-                         bytes: bytes,
+                        name: detail.files.first.name,
+                        size: bytes.length,
+                        bytes: bytes,
                       );
-                      ref.read(bulkImportProvider.notifier).setFile(fileWithBytes);
+                      ref
+                          .read(bulkImportProvider.notifier)
+                          .setFile(fileWithBytes);
                     });
                   },
                   onDragEntered: (detail) => setState(() => _isDragging = true),
@@ -195,29 +224,52 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
                       width: double.infinity,
                       padding: const EdgeInsets.all(40),
                       decoration: BoxDecoration(
-                        color: _isDragging ? const Color(0xFF3B82F6).withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.02),
+                        color: _isDragging
+                            ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
+                            : Colors.white.withValues(alpha: 0.02),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: _isDragging ? const Color(0xFF3B82F6) : Colors.white.withValues(alpha: 0.1),
+                          color: _isDragging
+                              ? const Color(0xFF3B82F6)
+                              : Colors.white.withValues(alpha: 0.1),
                           width: 2,
-                          style: BorderStyle.solid, // Dash borders need custom painters, solid for now
+                          style: BorderStyle
+                              .solid, // Dash borders need custom painters, solid for now
                         ),
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.cloud_upload_outlined, size: 48, color: _isDragging ? const Color(0xFF3B82F6) : Colors.white24),
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 48,
+                            color: _isDragging
+                                ? const Color(0xFF3B82F6)
+                                : Colors.white24,
+                          ),
                           const SizedBox(height: 16),
                           Text(
-                            state.selectedFile != null ? state.selectedFile!.name : 'Click to browse or drag & drop CSV',
+                            state.selectedFile != null
+                                ? state.selectedFile!.name
+                                : 'Click to browse or drag & drop CSV',
                             style: TextStyle(
-                              color: state.selectedFile != null ? Colors.white : Colors.white54,
-                              fontWeight: state.selectedFile != null ? FontWeight.bold : FontWeight.normal,
+                              color: state.selectedFile != null
+                                  ? Colors.white
+                                  : Colors.white54,
+                              fontWeight: state.selectedFile != null
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                           if (state.selectedFile != null) ...[
                             const SizedBox(height: 8),
-                            Text('${(state.selectedFile!.size / 1024).toStringAsFixed(1)} KB', style: const TextStyle(color: Colors.white38, fontSize: 12)),
-                          ]
+                            Text(
+                              '${(state.selectedFile!.size / 1024).toStringAsFixed(1)} KB',
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -229,40 +281,83 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: Text(state.errorMessage!, style: const TextStyle(color: Colors.redAccent)),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      state.errorMessage!,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
                   ),
 
                 const Spacer(),
-                
+
                 // Action Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     if (state.selectedFile != null)
                       TextButton(
-                        onPressed: () => ref.read(bulkImportProvider.notifier).clearFile(),
-                        child: const Text('Clear', style: TextStyle(color: Colors.white54)),
+                        onPressed: () =>
+                            ref.read(bulkImportProvider.notifier).clearFile(),
+                        child: const Text(
+                          'Clear',
+                          style: TextStyle(color: Colors.white54),
+                        ),
                       ),
                     const SizedBox(width: 16),
                     if (state.selectedFile != null && !state.dryRunComplete)
                       ElevatedButton.icon(
-                        icon: state.isParsing ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.playlist_play, color: Colors.white),
-                        label: Text(state.isParsing ? 'Validating...' : 'Run Validation', style: const TextStyle(color: Colors.white)),
+                        icon: state.isParsing
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.playlist_play,
+                                color: Colors.white,
+                              ),
+                        label: Text(
+                          state.isParsing ? 'Validating...' : 'Run Validation',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                         onPressed: state.isParsing ? null : _runValidation,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF3B82F6),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
                         ),
                       ),
                     if (state.dryRunComplete)
                       ElevatedButton.icon(
-                        icon: state.isUploading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check, color: Colors.white),
-                        label: Text(state.isUploading ? 'Importing...' : 'Confirm Import', style: const TextStyle(color: Colors.white)),
+                        icon: state.isUploading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.check, color: Colors.white),
+                        label: Text(
+                          state.isUploading ? 'Importing...' : 'Confirm Import',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                         onPressed: state.isUploading ? null : _confirmImport,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
                         ),
                       ),
                   ],
@@ -290,49 +385,100 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
                   padding: const EdgeInsets.all(24),
                   child: Row(
                     children: [
-                      const Icon(Icons.fact_check_outlined, color: Colors.white70),
+                      const Icon(
+                        Icons.fact_check_outlined,
+                        color: Colors.white70,
+                      ),
                       const SizedBox(width: 12),
-                      const Text('Validation Results (Dry Run)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white)),
+                      const Text(
+                        'Validation Results (Dry Run)',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
                       const Spacer(),
                       if (state.dryRunComplete) ...[
-                        _buildStatusPill('${state.validRows} Valid', Colors.green),
+                        _buildStatusPill(
+                          '${state.validRows} Valid',
+                          Colors.green,
+                        ),
                         const SizedBox(width: 8),
-                        _buildStatusPill('${state.errors.length} Errors', state.errors.isEmpty ? Colors.grey : Colors.red),
-                      ]
+                        _buildStatusPill(
+                          '${state.errors.length} Errors',
+                          state.errors.isEmpty ? Colors.grey : Colors.red,
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
                 Expanded(
                   child: !state.dryRunComplete
-                      ? const Center(child: Text('Run validation to see results here', style: TextStyle(color: Colors.white24)))
+                      ? const Center(
+                          child: Text(
+                            'Run validation to see results here',
+                            style: TextStyle(color: Colors.white24),
+                          ),
+                        )
                       : state.errors.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.task_alt, size: 48, color: Colors.green.withValues(alpha: 0.5)),
-                                  const SizedBox(height: 16),
-                                  const Text('All rows passed validation!', style: TextStyle(color: Colors.green)),
-                                  const SizedBox(height: 8),
-                                  Text('Ready to import ${state.validRows} batteries.', style: const TextStyle(color: Colors.white54)),
-                                ],
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.task_alt,
+                                size: 48,
+                                color: Colors.green.withValues(alpha: 0.5),
                               ),
-                            )
-                          : ListView.separated(
-                              itemCount: state.errors.length,
-                              separatorBuilder: (context, index) => Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
-                              itemBuilder: (context, index) {
-                                final err = state.errors[index] as Map<String, dynamic>;
-                                final serial = err['serial'] ?? 'Unknown Serial';
-                                final msg = err['error'] ?? 'Unknown Error';
-                                return ListTile(
-                                  leading: const Icon(Icons.error_outline, color: Colors.redAccent),
-                                  title: Text('Serial: $serial', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                                  subtitle: Text(msg, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
-                                );
-                              },
-                            ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'All rows passed validation!',
+                                style: TextStyle(color: Colors.green),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Ready to import ${state.validRows} batteries.',
+                                style: const TextStyle(color: Colors.white54),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: state.errors.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            color: Colors.white.withValues(alpha: 0.05),
+                          ),
+                          itemBuilder: (context, index) {
+                            final err =
+                                state.errors[index] as Map<String, dynamic>;
+                            final serial = err['serial'] ?? 'Unknown Serial';
+                            final msg = err['error'] ?? 'Unknown Error';
+                            return ListTile(
+                              leading: const Icon(
+                                Icons.error_outline,
+                                color: Colors.redAccent,
+                              ),
+                              title: Text(
+                                'Serial: $serial',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              subtitle: Text(
+                                msg,
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -350,7 +496,14 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(text, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -375,7 +528,14 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
               children: [
                 Icon(Icons.download, size: 28, color: Colors.white),
                 SizedBox(width: 16),
-                Text('Export Inventory Data', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(
+                  'Export Inventory Data',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -402,7 +562,13 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
             _buildDropdown(
               label: 'Location',
               value: _exportLocation,
-              items: ['All', 'Warehouse', 'Station', 'With_Customer', 'In_Transit'],
+              items: [
+                'All',
+                'Warehouse',
+                'Station',
+                'With_Customer',
+                'In_Transit',
+              ],
               onChanged: (v) => setState(() => _exportLocation = v!),
             ),
             const SizedBox(height: 40),
@@ -411,14 +577,30 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
               width: double.infinity,
               height: 54,
               child: ElevatedButton.icon(
-                icon: _isExporting 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) 
+                icon: _isExporting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.file_download, color: Colors.white),
-                label: Text(_isExporting ? 'Generating CSV...' : 'Export to CSV', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                label: Text(
+                  _isExporting ? 'Generating CSV...' : 'Export to CSV',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
                 onPressed: _isExporting ? null : _runExport,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3B82F6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -428,11 +610,23 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
     );
   }
 
-  Widget _buildDropdown({required String label, required String value, required List<String> items, required Function(String?) onChanged}) {
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -447,8 +641,18 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView> wit
               isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
               style: const TextStyle(color: Colors.white, fontSize: 15),
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
-              items: items.map((e) => DropdownMenuItem(value: e, child: Text(e.replaceAll('_', ' ')))).toList(),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.white54,
+              ),
+              items: items
+                  .map(
+                    (e) => DropdownMenuItem(
+                      value: e,
+                      child: Text(e.replaceAll('_', ' ')),
+                    ),
+                  )
+                  .toList(),
               onChanged: onChanged,
             ),
           ),

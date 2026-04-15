@@ -647,7 +647,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               side: BorderSide(color: isSelected ? const Color(0xFF3B82F6).withOpacity(0.3) : Colors.white.withOpacity(0.06)),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               onSelected: (_) => setState(() {
-                _selectedHealthRange = isSelected ? null : f['value'] as String?;
+                _selectedHealthRange = isSelected ? null : f['value'];
               }),
             );
           }).toList(),
@@ -708,7 +708,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             Switch(
               value: _needsAttention,
               onChanged: (v) => setState(() => _needsAttention = v),
-              activeColor: const Color(0xFFEF4444),
+              activeThumbColor: const Color(0xFFEF4444),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ],

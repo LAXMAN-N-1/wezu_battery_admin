@@ -11,28 +11,30 @@ class BannerRepository {
 
   BannerRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
+  static const String _basePath = '/api/v1/admin/cms/banners';
+
   Future<List<Banner>> getBanners() async {
-    final response = await _apiClient.get('/api/v1/admin/banners');
+    final response = await _apiClient.get('$_basePath/');
     return (response.data as List).map((e) => Banner.fromJson(e)).toList();
   }
 
   Future<Banner> createBanner(Banner banner) async {
     final response = await _apiClient.post(
-      '/api/v1/admin/banners',
+      '$_basePath/',
       data: banner.toJson(),
     );
     return Banner.fromJson(response.data);
   }
 
-  Future<Banner> updateBanner(int id, Map<String, dynamic> data) async {
+  Future<Banner> updateBanner(int id, Banner banner) async {
     final response = await _apiClient.patch(
-      '/api/v1/admin/banners/$id',
-      data: data,
+      '$_basePath/$id',
+      data: banner.toJson(),
     );
     return Banner.fromJson(response.data);
   }
 
   Future<void> deleteBanner(int id) async {
-    await _apiClient.delete('/api/v1/admin/banners/$id');
+    await _apiClient.delete('$_basePath/$id');
   }
 }

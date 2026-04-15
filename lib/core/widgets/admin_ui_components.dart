@@ -25,44 +25,58 @@ class WezuLogo extends StatelessWidget {
           children: [
             // Outer glow
             Container(
-              width: size * 0.8,
-              height: size * 0.8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (color ?? const Color(0xFF3B82F6)).withOpacity(0.2),
-                    blurRadius: size * 0.5,
-                    spreadRadius: size * 0.1,
+                  width: size * 0.8,
+                  height: size * 0.8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (color ?? const Color(0xFF3B82F6)).withOpacity(
+                          0.2,
+                        ),
+                        blurRadius: size * 0.5,
+                        spreadRadius: size * 0.1,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ).animate(onPlay: (c) => c.repeat(reverse: true))
-             .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.2, 1.2), duration: 2.seconds, curve: Curves.easeInOut),
-            
+                )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scale(
+                  begin: const Offset(0.8, 0.8),
+                  end: const Offset(1.2, 1.2),
+                  duration: 2.seconds,
+                  curve: Curves.easeInOut,
+                ),
+
             // Modern Lightning Bolt Icon (Vector-like)
             Icon(
-              Icons.bolt_rounded,
-              size: size,
-              color: color ?? const Color(0xFF3B82F6),
-            ).animate(onPlay: (c) => c.repeat())
-             .shimmer(duration: 2.seconds, color: Colors.white.withOpacity(0.5))
-             .custom(
-               duration: 3.seconds,
-               curve: Curves.easeInOut,
-               builder: (context, value, child) => Container(
-                 decoration: BoxDecoration(
-                   boxShadow: [
-                     BoxShadow(
-                       color: (color ?? const Color(0xFF3B82F6)).withOpacity(0.5 * value),
-                       blurRadius: 20.0 * value,
-                       spreadRadius: 2.0 * value,
-                     ),
-                   ],
-                 ),
-                 child: child,
-               ),
-             ),
+                  Icons.bolt_rounded,
+                  size: size,
+                  color: color ?? const Color(0xFF3B82F6),
+                )
+                .animate(onPlay: (c) => c.repeat())
+                .shimmer(
+                  duration: 2.seconds,
+                  color: Colors.white.withOpacity(0.5),
+                )
+                .custom(
+                  duration: 3.seconds,
+                  curve: Curves.easeInOut,
+                  builder: (context, value, child) => Container(
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: (color ?? const Color(0xFF3B82F6)).withOpacity(
+                            0.5 * value,
+                          ),
+                          blurRadius: 20.0 * value,
+                          spreadRadius: 2.0 * value,
+                        ),
+                      ],
+                    ),
+                    child: child,
+                  ),
+                ),
           ],
         ),
         if (showText) ...[
@@ -105,61 +119,62 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          width: 200,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: 200,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      value,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6).withOpacity(0.1),
+                      shape: BoxShape.circle,
                     ),
-                    Text(
-                      label,
-                      style: GoogleFonts.inter(
-                        color: Colors.white38,
-                        fontSize: 11,
-                      ),
+                    child: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          value,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          label,
+                          style: GoogleFonts.inter(
+                            color: Colors.white38,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    ).animate(delay: delay)
-     .fadeIn(duration: 800.ms)
-     .slideX(begin: -0.2)
-     .then()
-     .animate(onPlay: (c) => c.repeat(reverse: true))
-     .moveY(begin: -5, end: 5, duration: 3.seconds, curve: Curves.easeInOut);
+        )
+        .animate(delay: delay)
+        .fadeIn(duration: 800.ms)
+        .slideX(begin: -0.2)
+        .then()
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .moveY(begin: -5, end: 5, duration: 3.seconds, curve: Curves.easeInOut);
   }
 }
 
@@ -170,6 +185,11 @@ class AdminTextField extends StatefulWidget {
   final IconData icon;
   final bool obscureText;
   final VoidCallback? onToggleObscure;
+  final ValueChanged<String>? onChanged;
+  final TextInputType? keyboardType;
+  final Iterable<String>? autofillHints;
+  final TextInputAction? textInputAction;
+  final int maxLines;
 
   const AdminTextField({
     super.key,
@@ -179,6 +199,11 @@ class AdminTextField extends StatefulWidget {
     required this.icon,
     this.obscureText = false,
     this.onToggleObscure,
+    this.onChanged,
+    this.keyboardType,
+    this.autofillHints,
+    this.textInputAction,
+    this.maxLines = 1,
   });
 
   @override
@@ -221,15 +246,25 @@ class _AdminTextFieldState extends State<AdminTextField> {
             child: TextField(
               controller: widget.controller,
               obscureText: widget.obscureText,
+              onChanged: widget.onChanged,
+              keyboardType: widget.keyboardType,
+              autofillHints: widget.autofillHints,
+              textInputAction: widget.textInputAction,
               style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
               decoration: InputDecoration(
                 hintText: widget.hint,
                 hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
-                prefixIcon: Icon(widget.icon, color: _isFocused ? const Color(0xFF3B82F6) : Colors.white24, size: 20),
+                prefixIcon: Icon(
+                  widget.icon,
+                  color: _isFocused ? const Color(0xFF3B82F6) : Colors.white24,
+                  size: 20,
+                ),
                 suffixIcon: widget.onToggleObscure != null
                     ? IconButton(
                         icon: Icon(
-                          widget.obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          widget.obscureText
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           color: Colors.white24,
                           size: 20,
                         ),
@@ -238,7 +273,10 @@ class _AdminTextFieldState extends State<AdminTextField> {
                     : null,
                 filled: true,
                 fillColor: const Color(0xFF1F2937),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 16,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
@@ -249,7 +287,10 @@ class _AdminTextFieldState extends State<AdminTextField> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF3B82F6),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -320,10 +361,10 @@ class AdminButton extends StatelessWidget {
               ),
       ),
     ).animate().shimmer(
-          duration: 2.seconds,
-          color: Colors.white.withOpacity(0.1),
-          delay: 1.seconds,
-        );
+      duration: 2.seconds,
+      color: Colors.white.withOpacity(0.1),
+      delay: 1.seconds,
+    );
   }
 }
 
@@ -381,11 +422,17 @@ class StatusBadge extends StatelessWidget {
     Color color;
     Color bgColor;
 
-    if (lowerStatus == 'active' || lowerStatus == 'completed' || lowerStatus == 'resolved') {
+    if (lowerStatus == 'active' ||
+        lowerStatus == 'completed' ||
+        lowerStatus == 'resolved') {
       color = const Color(0xFF22C55E);
-    } else if (lowerStatus == 'maintenance' || lowerStatus == 'pending' || lowerStatus == 'in-progress') {
+    } else if (lowerStatus == 'maintenance' ||
+        lowerStatus == 'pending' ||
+        lowerStatus == 'in-progress') {
       color = const Color(0xFFF59E0B);
-    } else if (lowerStatus == 'inactive' || lowerStatus == 'suspended' || lowerStatus == 'failed') {
+    } else if (lowerStatus == 'inactive' ||
+        lowerStatus == 'suspended' ||
+        lowerStatus == 'failed') {
       color = const Color(0xFFEF4444);
     } else {
       color = const Color(0xFF3B82F6); // Default blue
@@ -404,20 +451,31 @@ class StatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-              boxShadow: [
-                BoxShadow(color: color.withOpacity(0.5), blurRadius: 4, spreadRadius: 1),
-              ],
-            ),
-          ).animate(onPlay: (c) => c.repeat(reverse: true)).fade(duration: 1.seconds, begin: 0.5, end: 1.0),
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.5),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+              )
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .fade(duration: 1.seconds, begin: 0.5, end: 1.0),
           const SizedBox(width: 6),
           Text(
             status.toUpperCase(),
-            style: GoogleFonts.inter(fontSize: 10, color: color, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              color: color,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
         ],
       ),
@@ -453,15 +511,25 @@ class PageHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
-                  style: GoogleFonts.inter(fontSize: 14, color: Colors.white54),
-                  overflow: TextOverflow.ellipsis,
-                ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.1),
+                      subtitle,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white54,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    )
+                    .animate()
+                    .fadeIn(duration: 400.ms, delay: 100.ms)
+                    .slideX(begin: -0.1),
               ],
             ),
           ),
@@ -471,7 +539,10 @@ class PageHeader extends StatelessWidget {
             const SizedBox(width: 16),
           ],
           if (actionButton != null)
-            actionButton!.animate().fadeIn(duration: 400.ms, delay: 200.ms).scale(begin: const Offset(0.9, 0.9)),
+            actionButton!
+                .animate()
+                .fadeIn(duration: 400.ms, delay: 200.ms)
+                .scale(begin: const Offset(0.9, 0.9)),
         ],
       ),
     );
@@ -483,12 +554,18 @@ class AdvancedTable extends StatelessWidget {
   final List<String> columns;
   final List<List<Widget>> rows;
   final Function(int)? onRowTap;
+  final String? sortColumn;
+  final bool sortAscending;
+  final Function(String)? onSort;
 
   const AdvancedTable({
     super.key,
     required this.columns,
     required this.rows,
     this.onRowTap,
+    this.sortColumn,
+    this.sortAscending = true,
+    this.onSort,
   });
 
   @override
@@ -500,9 +577,16 @@ class AdvancedTable extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.inbox_outlined, size: 48, color: Colors.white.withOpacity(0.2)),
+              Icon(
+                Icons.inbox_outlined,
+                size: 48,
+                color: Colors.white.withOpacity(0.2),
+              ),
               const SizedBox(height: 16),
-              Text('No data available', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+              Text(
+                'No data available',
+                style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+              ),
             ],
           ),
         ),
@@ -511,13 +595,15 @@ class AdvancedTable extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double effectiveMaxWidth = constraints.maxWidth == double.infinity 
-            ? MediaQuery.of(context).size.width 
+        final double effectiveMaxWidth = constraints.maxWidth == double.infinity
+            ? MediaQuery.of(context).size.width
             : constraints.maxWidth;
         final totalMinContentWidth = (columns.length * 120.0) + 32.0;
-        final actualWidth = effectiveMaxWidth > totalMinContentWidth ? effectiveMaxWidth : totalMinContentWidth;
+        final actualWidth = effectiveMaxWidth > totalMinContentWidth
+            ? effectiveMaxWidth
+            : totalMinContentWidth;
         final colWidth = actualWidth / columns.length;
-        
+
         final header = Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -526,12 +612,39 @@ class AdvancedTable extends StatelessWidget {
           ),
           child: Row(
             children: columns.map((col) {
+              final isSorted = sortColumn == col;
               return SizedBox(
-                width: colWidth - (32 / columns.length), // Adjusting for padding
-                child: Text(
-                  col.toUpperCase(),
-                  style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                  overflow: TextOverflow.ellipsis,
+                width: colWidth - (32 / columns.length),
+                child: MouseRegion(
+                  cursor: onSort != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                  child: GestureDetector(
+                    onTap: () => onSort?.call(col),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            col.toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: isSorted ? Colors.white : Colors.white38,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isSorted) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                            size: 12,
+                            color: const Color(0xFF3B82F6),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               );
             }).toList(),
@@ -546,19 +659,23 @@ class AdvancedTable extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 border: idx < rows.length - 1
-                    ? Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04)))
+                    ? Border(
+                        bottom: BorderSide(
+                          color: Colors.white.withOpacity(0.04),
+                        ),
+                      )
                     : null,
               ),
               child: Row(
                 children: rowWidgets.map((w) {
-                   return SizedBox(
-                     width: colWidth - (32 / columns.length),
-                     child: w,
-                   );
+                  return SizedBox(
+                    width: colWidth - (32 / columns.length),
+                    child: w,
+                  );
                 }).toList(),
               ),
             );
-            
+
             final widget = onRowTap != null
                 ? InkWell(
                     onTap: () => onRowTap!(idx),
@@ -566,8 +683,11 @@ class AdvancedTable extends StatelessWidget {
                     child: rowContent,
                   )
                 : rowContent;
-            
-            return widget.animate().fadeIn(duration: 300.ms, delay: (idx * 50).ms).slideX(begin: 0.05);
+
+            return widget
+                .animate()
+                .fadeIn(duration: 300.ms, delay: (idx * 50).ms)
+                .slideX(begin: 0.05);
           }).toList(),
         );
 
@@ -578,26 +698,19 @@ class AdvancedTable extends StatelessWidget {
             if (constraints.maxHeight == double.infinity)
               rowsList
             else
-              Expanded(
-                child: SingleChildScrollView(
-                  child: rowsList,
-                ),
-              ),
+              Expanded(child: SingleChildScrollView(child: rowsList)),
           ],
         );
 
         if (actualWidth > effectiveMaxWidth) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: actualWidth,
-              child: tableContent,
-            ),
+            child: SizedBox(width: actualWidth, child: tableContent),
           );
         }
 
         return tableContent;
-      }
+      },
     );
   }
 }

@@ -1,5 +1,6 @@
 /// Data models for all analytics API responses.
 /// Each model has a `fromJson` factory for safe parsing with fallback defaults.
+library;
 
 // ─────────────────────────────────────────────
 // Overview KPIs  (/api/v1/admin/analytics/overview)
@@ -74,7 +75,7 @@ class DashboardOverview {
       }
     }
 
-    KpiMetric _extract(
+    KpiMetric extract(
       String key,
       String fallbackLabel,
       dynamic fallbackValue,
@@ -101,20 +102,20 @@ class DashboardOverview {
     }
 
     return DashboardOverview(
-      totalRevenue: _extract('total_revenue', 'Total Revenue', 0),
-      activeRentals: _extract('active_rentals', 'Active Rentals', 0),
-      totalUsers: _extract('total_users', 'Total Users', 0),
-      fleetUtilization: _extract('fleet_utilization', 'Fleet Utilization', 0),
-      activeStations: _extract('active_stations', 'Active Stations', 0),
-      activeDealers: _extract('active_dealers', 'Active Dealers', 0),
-      avgBatteryHealth: _extract(
+      totalRevenue: extract('total_revenue', 'Total Revenue', 0),
+      activeRentals: extract('active_rentals', 'Active Rentals', 0),
+      totalUsers: extract('total_users', 'Total Users', 0),
+      fleetUtilization: extract('fleet_utilization', 'Fleet Utilization', 0),
+      activeStations: extract('active_stations', 'Active Stations', 0),
+      activeDealers: extract('active_dealers', 'Active Dealers', 0),
+      avgBatteryHealth: extract(
         'avg_battery_health',
         'Avg. Battery Health',
         0,
       ),
-      openTickets: _extract('open_tickets', 'Open Tickets', 0),
-      revenuePerRental: _extract('revenue_per_rental', 'Revenue per Rental', 0),
-      avgSessionDuration: _extract('avg_session_duration', 'Avg. Session', 0),
+      openTickets: extract('open_tickets', 'Open Tickets', 0),
+      revenuePerRental: extract('revenue_per_rental', 'Revenue per Rental', 0),
+      avgSessionDuration: extract('avg_session_duration', 'Avg. Session', 0),
       allMetrics: metrics,
     );
   }

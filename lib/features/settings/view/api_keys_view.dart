@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/models/settings_models.dart';
 import '../data/repositories/settings_repository.dart';
@@ -61,7 +60,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
             ]),
             const SizedBox(height: 4), Text(key.serviceName.toUpperCase(), style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
           ])),
-          Switch(value: key.isActive, activeColor: Colors.green, onChanged: (val) async {
+          Switch(value: key.isActive, activeThumbColor: Colors.green, onChanged: (val) async {
             await _repo.updateApiKey(key.id, isActive: val); _loadData();
           }),
         ]),

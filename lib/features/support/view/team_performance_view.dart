@@ -288,8 +288,9 @@ class _TeamPerformanceViewState extends State<TeamPerformanceView> {
 
   Widget _buildAgentCard(AgentPerformance agent, int rank) {
     Color rankColor;
-    if (rank == 1) rankColor = Colors.amber;
-    else if (rank == 2) rankColor = Colors.grey[400]!;
+    if (rank == 1) {
+      rankColor = Colors.amber;
+    } else if (rank == 2) rankColor = Colors.grey[400]!;
     else if (rank == 3) rankColor = Colors.orange[800]!;
     else rankColor = Colors.white24;
 

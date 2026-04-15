@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,15 +32,32 @@ class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    final response = await _userRepo.getUsers(status: 'suspended');
-    final users = response.users;
-    final history = await _analyticsRepo.getSuspensionHistory();
-    setState(() {
-      _suspendedUsers = users;
-      _history = history;
-      _isLoading = false;
-    });
+    
+    final userRepo = ref.read(userRepositoryProvider);
+    final analyticsRepo = ref.read(analyticsRepositoryProvider);
+    
+    try {
+      final response = await userRepo.getUsers(status: 'suspended');
+      final users = response.users;
+      final history = await analyticsRepo.getSuspensionHistory();
+      
+      if (mounted) {
+        setState(() {
+          _suspendedUsers = users;
+          _history = history;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   @override
@@ -63,6 +81,7 @@ class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
                   border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.block, color: Colors.red, size: 18),
                     const SizedBox(width: 8),
@@ -108,7 +127,7 @@ class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: Colors.red.withValues(alpha: 0.2),
-                    child: Text(user.fullName[0], style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: Text(user.fullName.isNotEmpty ? user.fullName[0] : '?', style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -145,7 +164,7 @@ class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
                   const SizedBox(width: 16),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      await _userRepo.reactivateUser(user.id);
+                      await ref.read(userRepositoryProvider).reactivateUser(user.id);
                       _loadData();
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(

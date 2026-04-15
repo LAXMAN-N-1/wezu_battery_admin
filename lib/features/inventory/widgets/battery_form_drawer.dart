@@ -19,7 +19,7 @@ class _BatteryFormDrawerState extends State<BatteryFormDrawer> {
   final InventoryRepository _repository = InventoryRepository();
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
-  int _currentSection = 0;
+  final int _currentSection = 0;
 
   bool get isEditing => widget.battery != null;
 
@@ -421,7 +421,7 @@ class _BatteryFormDrawerState extends State<BatteryFormDrawer> {
         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: DropdownButtonFormField<String>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.white38, fontSize: 13), border: InputBorder.none),
         dropdownColor: const Color(0xFF1E293B),
         style: const TextStyle(color: Colors.white, fontSize: 14),

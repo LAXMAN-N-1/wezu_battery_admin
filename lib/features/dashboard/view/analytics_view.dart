@@ -16,7 +16,7 @@ class AnalyticsView extends ConsumerStatefulWidget {
 }
 
 class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
-  String _stationMetric = 'revenue'; // revenue | rentals | utilization
+  final String _stationMetric = 'revenue'; // revenue | rentals | utilization
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,10 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 IconButton(
                   onPressed: _manualRefreshAll,
                   tooltip: 'Refresh data',
-                  icon: Icon(Icons.refresh_outlined, color: colors.textSecondary),
+                  icon: Icon(
+                    Icons.refresh_outlined,
+                    color: colors.textSecondary,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
@@ -88,7 +91,8 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
             ),
           ),
           selected: isSelected,
-          onSelected: (_) => ref.read(analyticsPeriodProvider.notifier).state = p,
+          onSelected: (_) =>
+              ref.read(analyticsPeriodProvider.notifier).state = p,
           selectedColor: colors.accent,
           backgroundColor: colors.scaffoldBg.withValues(alpha: 0.4),
           side: BorderSide(color: colors.border),
@@ -158,10 +162,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                SizedBox(
-                  height: 220,
-                  child: _buildHeatmap(data, colors),
-                ),
+                SizedBox(height: 220, child: _buildHeatmap(data, colors)),
               ],
             ),
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -207,8 +208,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
             SessionBucket(range: '15-20m', count: 120),
             SessionBucket(range: '20m+', count: 80),
           ];
-    final maxY = buckets.map((b) => b.count).fold<int>(0,
-        (prev, element) => element > prev ? element : prev);
+    final maxY = buckets
+        .map((b) => b.count)
+        .fold<int>(0, (prev, element) => element > prev ? element : prev);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,11 +230,14 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               maxY: (maxY * 1.2).toDouble(),
               titlesData: FlTitlesData(
                 leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -242,7 +247,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                         return Text(
                           buckets[idx].range,
                           style: TextStyle(
-                              color: colors.textTertiary, fontSize: 10),
+                            color: colors.textTertiary,
+                            fontSize: 10,
+                          ),
                         );
                       }
                       return const SizedBox();
@@ -260,8 +267,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                       toY: entry.value.count.toDouble(),
                       color: colors.accent,
                       width: 12,
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(8)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(8),
+                      ),
                     ),
                   ],
                 );
@@ -290,8 +298,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
         const SizedBox(height: 8),
         ...cohorts.entries.map((e) {
           final percent = e.value;
-          final barColor =
-              e.key.toLowerCase().contains('return') ? colors.secondary : colors.success;
+          final barColor = e.key.toLowerCase().contains('return')
+              ? colors.secondary
+              : colors.success;
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Column(
@@ -301,9 +310,13 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(e.key, style: TextStyle(color: colors.textSecondary)),
-                    Text('${percent.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                            color: barColor, fontWeight: FontWeight.bold)),
+                    Text(
+                      '${percent.toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        color: barColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -330,17 +343,16 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
       // build 7x24 from peak hours if provided, else default
       matrix = List.generate(7, (day) {
         return List.generate(
-            24,
-            (hour) => (hour >= 8 && hour <= 21)
-                ? ((data.peakHours['$hour:00'] ?? 20) as num).toInt()
-                : 5);
+          24,
+          (hour) => (hour >= 8 && hour <= 21)
+              ? ((data.peakHours['$hour:00'] ?? 20) as num).toInt()
+              : 5,
+        );
       });
     }
     final maxVal = matrix
         .expand((row) => row)
         .fold<int>(0, (prev, e) => e > prev ? e : prev);
-    final dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
     Color cellColor(int value) {
       final intensity = maxVal == 0 ? 0.05 : (value / maxVal).clamp(0.05, 1.0);
       return colors.accent.withValues(alpha: intensity * 0.8);
@@ -434,94 +446,102 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           Expanded(
             child: growthAsync.when(
               data: (data) {
-                if (data.points.length < 2) return const Center(child: Text('Not enough growth data', style: TextStyle(color: Colors.white38)));
+                if (data.points.length < 2) {
+                  return const Center(
+                    child: Text(
+                      'Not enough growth data',
+                      style: TextStyle(color: Colors.white38),
+                    ),
+                  );
+                }
                 return LineChart(
                   key: const ValueKey('analytics_user_growth_chart'),
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    horizontalInterval: data.points.isEmpty
-                        ? 1
-                        : (data.points
-                                    .map((p) => p.totalUsers.toDouble())
-                                    .reduce((a, b) => a > b ? a : b) /
-                                4)
-                            .clamp(1, double.infinity),
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: colors.border.withValues(alpha: 0.2),
-                      strokeWidth: 1,
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      horizontalInterval: data.points.isEmpty
+                          ? 1
+                          : (data.points
+                                        .map((p) => p.totalUsers.toDouble())
+                                        .reduce((a, b) => a > b ? a : b) /
+                                    4)
+                                .clamp(1, double.infinity),
+                      getDrawingHorizontalLine: (value) => FlLine(
+                        color: colors.border.withValues(alpha: 0.2),
+                        strokeWidth: 1,
+                      ),
+                      drawVerticalLine: false,
                     ),
-                    drawVerticalLine: false,
-                  ),
-                  titlesData: FlTitlesData(
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (value, meta) {
-                          if (value % 1 != 0) return const SizedBox();
-                          final idx = value.toInt();
-                          if (idx < 0 || idx >= data.points.length)
-                            return const SizedBox();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              data.points[idx].period.split(' ').last,
-                              style: TextStyle(
-                                color: colors.textSecondary,
-                                fontSize: 10,
+                    titlesData: FlTitlesData(
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            if (value % 1 != 0) return const SizedBox();
+                            final idx = value.toInt();
+                            if (idx < 0 || idx >= data.points.length) {
+                              return const SizedBox();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                data.points[idx].period.split(' ').last,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: 10,
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: data.points.asMap().entries.map((e) {
+                          final returning = e.value.returningUsers.toDouble();
+                          return FlSpot(e.key.toDouble(), returning);
+                        }).toList(),
+                        isCurved: true,
+                        color: colors.secondary,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: colors.secondary.withValues(alpha: 0.1),
+                        ),
+                      ),
+                      LineChartBarData(
+                        spots: data.points.asMap().entries.map((e) {
+                          final total =
+                              (e.value.returningUsers + e.value.newUsers)
+                                  .toDouble();
+                          return FlSpot(e.key.toDouble(), total);
+                        }).toList(),
+                        isCurved: true,
+                        color: colors.accent,
+                        barWidth: 4,
+                        isStrokeCapRound: true,
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: colors.accent.withValues(alpha: 0.12),
+                        ),
+                      ),
+                    ],
                   ),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: data.points.asMap().entries.map((e) {
-                        final returning = e.value.returningUsers.toDouble();
-                        return FlSpot(e.key.toDouble(), returning);
-                      }).toList(),
-                      isCurved: true,
-                      color: colors.secondary,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: colors.secondary.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    LineChartBarData(
-                      spots: data.points.asMap().entries.map((e) {
-                        final total =
-                            (e.value.returningUsers + e.value.newUsers)
-                                .toDouble();
-                        return FlSpot(e.key.toDouble(), total);
-                      }).toList(),
-                      isCurved: true,
-                      color: colors.accent,
-                      barWidth: 4,
-                      isStrokeCapRound: true,
-                      dotData: const FlDotData(show: false),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        color: colors.accent.withValues(alpha: 0.12),
-                      ),
-                    ),
-                  ],
-                ),
-              );
+                );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, s) => Text('Error: $e'),
@@ -637,10 +657,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     );
   }
 
-  Widget _buildRevenueSection(
-    BuildContext context,
-    AppColorsExtension colors,
-  ) {
+  Widget _buildRevenueSection(BuildContext context, AppColorsExtension colors) {
     final stationRevenueAsync = ref.watch(revenueByStationProvider);
     final batteryRevenueAsync = ref.watch(revenueByBatteryTypeProvider);
 
@@ -761,13 +778,15 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     );
   }
 
-
-
   Widget _buildStationBarChart(
     StationRevenueData data,
     AppColorsExtension colors,
   ) {
-    if (data.stations.isEmpty) return const Center(child: Text('No station data', style: TextStyle(color: Colors.white38)));
+    if (data.stations.isEmpty) {
+      return const Center(
+        child: Text('No station data', style: TextStyle(color: Colors.white38)),
+      );
+    }
     final displayData = data.stations.take(8).toList();
 
     double metricValue(StationRevenue r) {
@@ -783,7 +802,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
 
     final sorted = List<StationRevenue>.from(displayData)
       ..sort((a, b) => metricValue(b).compareTo(metricValue(a)));
-    final rawMaxY = displayData.isEmpty ? 10.0 : math.max(metricValue(sorted.first) * 1.15, 1.0);
+    final rawMaxY = displayData.isEmpty
+        ? 10.0
+        : math.max(metricValue(sorted.first) * 1.15, 1.0);
     // Round up to a nice multiple to avoid label collisions at the top
     final interval = _calculateInterval(rawMaxY);
     final maxY = ((rawMaxY / interval).ceil() * interval).toDouble();
@@ -818,7 +839,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     TextSpan(
                       text:
                           'Avg Session: ${displayData[groupIndex].avgSessionDuration.toStringAsFixed(1)}m',
-                  ),
+                    ),
                 ],
               );
             },
@@ -838,7 +859,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     meta: meta,
                     space: 12,
                     angle: 0,
-                    child: Container(
+                    child: SizedBox(
                       width: 60,
                       child: Text(
                         label,
@@ -880,8 +901,12 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               },
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: FlGridData(
           show: true,
@@ -903,10 +928,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    barColor,
-                    barColor.withValues(alpha: 0.7),
-                  ],
+                  colors: [barColor, barColor.withValues(alpha: 0.7)],
                 ),
                 width: 32, // Thicker bars as requested
                 borderRadius: const BorderRadius.vertical(
@@ -924,14 +946,26 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     BatteryTypeRevenueData data,
     AppColorsExtension colors,
   ) {
-    if (data.types.isEmpty && data.stationMix.isEmpty) return const Center(child: Text('No battery revenue data', style: TextStyle(color: Colors.white38)));
+    if (data.types.isEmpty && data.stationMix.isEmpty) {
+      return const Center(
+        child: Text(
+          'No battery revenue data',
+          style: TextStyle(color: Colors.white38),
+        ),
+      );
+    }
     // Prefer station-level stacked composition if available
     if (data.stationMix.isNotEmpty) {
       final stations = data.stationMix.take(5).toList();
-      final rawMaxY = stations
-              .map<double>((s) =>
-                  s.batteryMix.fold(0, (prev, b) => prev + b.revenue))
-              .fold<double>(0, (prev, element) => element > prev ? element : prev) *
+      final rawMaxY =
+          stations
+              .map<double>(
+                (s) => s.batteryMix.fold(0, (prev, b) => prev + b.revenue),
+              )
+              .fold<double>(
+                0,
+                (prev, element) => element > prev ? element : prev,
+              ) *
           1.15;
       final interval = _calculateInterval(rawMaxY);
       final maxY = ((rawMaxY / interval).ceil() * interval).toDouble();
@@ -947,8 +981,10 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               tooltipBorder: BorderSide(color: colors.border),
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final station = stations[groupIndex];
-                final total = station.batteryMix
-                    .fold<double>(0, (prev, b) => prev + b.revenue);
+                final total = station.batteryMix.fold<double>(
+                  0,
+                  (prev, b) => prev + b.revenue,
+                );
                 return BarTooltipItem(
                   '${station.stationName}\n',
                   GoogleFonts.inter(
@@ -956,12 +992,16 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     fontWeight: FontWeight.bold,
                   ),
                   children: station.batteryMix
-                      .map((b) => TextSpan(
-                            text:
-                                '${b.type}: ${_formatCurrency(b.revenue)} (${(b.revenue / total * 100).toStringAsFixed(1)}%)\n',
-                            style: TextStyle(
-                                color: colors.textSecondary, fontSize: 11),
-                          ))
+                      .map(
+                        (b) => TextSpan(
+                          text:
+                              '${b.type}: ${_formatCurrency(b.revenue)} (${(b.revenue / total * 100).toStringAsFixed(1)}%)\n',
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      )
                       .toList(),
                 );
               },
@@ -981,7 +1021,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                       meta: meta,
                       space: 12,
                       angle: 0,
-                      child: Container(
+                      child: SizedBox(
                         width: 60,
                         child: Text(
                           label,
@@ -1007,16 +1047,24 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 reservedSize: 45,
                 interval: interval,
                 getTitlesWidget: (value, meta) {
-                   if (value > maxY * 0.99) return const SizedBox();
-                   return Text(
+                  if (value > maxY * 0.99) return const SizedBox();
+                  return Text(
                     _compactNumber(value),
-                    style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.inter(
+                      color: colors.textTertiary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   );
                 },
               ),
             ),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
           ),
           gridData: FlGridData(
             show: true,
@@ -1040,8 +1088,8 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 mix.type.contains('LFP')
                     ? Colors.orange
                     : mix.type.toLowerCase().contains('nimh')
-                        ? colors.secondary
-                        : colors.success,
+                    ? colors.secondary
+                    : colors.success,
               );
             }).toList();
 
@@ -1053,7 +1101,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                   width: 40, // Perfected width
                   rodStackItems: stacks,
                   borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(10), bottom: Radius.circular(4)),
+                    top: Radius.circular(10),
+                    bottom: Radius.circular(4),
+                  ),
                 ),
               ],
             );
@@ -1064,9 +1114,14 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
 
     // Fallback: aggregated types
     final displayData = data.types;
-    final maxValue = displayData.isEmpty ? 10000.0 : displayData.map((e) => e.revenue).reduce(math.max);
+    final maxValue = displayData.isEmpty
+        ? 10000.0
+        : displayData.map((e) => e.revenue).reduce(math.max);
     // Align to 10k increments for Y axis
-    final maxY = ((maxValue / 10000).ceil() * 10000).toDouble().clamp(30000.0, 80000.0);
+    final maxY = ((maxValue / 10000).ceil() * 10000).toDouble().clamp(
+      30000.0,
+      80000.0,
+    );
 
     return BarChart(
       key: const ValueKey('analytics_battery_revenue_chart'),
@@ -1093,7 +1148,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                     meta: meta,
                     space: 12,
                     angle: 0,
-                    child: Container(
+                    child: SizedBox(
                       width: 60,
                       child: Text(
                         label,
@@ -1120,12 +1175,20 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               interval: 10000,
               getTitlesWidget: (value, meta) => Text(
                 _compactNumber(value),
-                style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 10, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                  color: colors.textTertiary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
         ),
         gridData: FlGridData(
           show: true,
@@ -1147,10 +1210,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    barColor,
-                    barColor.withValues(alpha: 0.7),
-                  ],
+                  colors: [barColor, barColor.withValues(alpha: 0.7)],
                 ),
                 width: 32,
                 borderRadius: const BorderRadius.vertical(
@@ -1187,13 +1247,15 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
     if (maxY <= 100) return 20.0;
     if (maxY <= 1000) return 200.0;
     if (maxY <= 10000) return 2000.0;
-    
+
     // For revenue values in Lakhs (0.2L, 0.5L, 1.0L steps)
     if (maxY <= 200000) return 20000.0; // 0.2L intervals for 0-2L range
     if (maxY <= 500000) return 50000.0; // 0.5L intervals for 0-5L range
     if (maxY <= 1000000) return 100000.0; // 1L intervals for 0-10L range
-    
-    double magnitude = math.pow(10, (math.log(maxY) / math.ln10).floor()).toDouble();
+
+    double magnitude = math
+        .pow(10, (math.log(maxY) / math.ln10).floor())
+        .toDouble();
     double interval = magnitude / 5;
     if (interval < 1) return 1.0;
     return interval;
@@ -1212,22 +1274,14 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
   }
 
   void _manualRefreshAll() {
+    // One trigger update is enough because providers watch this state.
     ref.read(dashboardRefreshTriggerProvider.notifier).state++;
-    ref.invalidate(revenueByStationProvider);
-    ref.invalidate(revenueByBatteryTypeProvider);
-    ref.invalidate(userBehaviorProvider);
-    ref.invalidate(conversionFunnelProvider);
-    ref.invalidate(userGrowthProvider);
-    ref.invalidate(revenueByRegionProvider);
-    ref.invalidate(demandForecastProvider);
-    ref.invalidate(inventoryStatusProvider);
-    ref.invalidate(trendDataProvider);
     ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
   }
 
   Future<void> _handleExport(BuildContext context) async {
     final stationData = ref.read(revenueByStationProvider).valueOrNull;
-    
+
     if (stationData == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No data available to export')),
@@ -1237,7 +1291,14 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
 
     // Prepare CSV rows
     List<List<dynamic>> rows = [
-      ['Station Name', 'Revenue', 'Rentals', 'Utilization (%)', 'Avg Session (m)', 'Share (%)']
+      [
+        'Station Name',
+        'Revenue',
+        'Rentals',
+        'Utilization (%)',
+        'Avg Session (m)',
+        'Share (%)',
+      ],
     ];
 
     for (var s in stationData.stations) {
@@ -1261,7 +1322,11 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   'Analytics exported successfully',
@@ -1271,7 +1336,9 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
             ),
             backgroundColor: context.appColors.success,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             margin: const EdgeInsets.all(20),
             duration: const Duration(seconds: 3),
           ),

@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
-import '../data/models/kyc_model.dart';
+import '../data/models/kyc_document.dart';
 import '../data/repositories/kyc_repository.dart';
+import '../../../core/api/api_client.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class KYCDocumentsView extends StatefulWidget {
   const KYCDocumentsView({super.key});
@@ -14,8 +16,8 @@ class KYCDocumentsView extends StatefulWidget {
 }
 
 class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerProviderStateMixin {
-  final KYCRepository _repository = KYCRepository();
-  List<KYCDocument> _documents = [];
+  final KycRepository _repository = KycRepository(ApiClient());
+  List<KycDocument> _documents = [];
   KYCStats _stats = const KYCStats(totalDocuments: 0, totalPending: 0, totalVerified: 0, totalRejected: 0, pendingUsers: 0);
   bool _isLoading = true;
   String _statusFilter = 'all';
@@ -59,7 +61,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
       setState(() {
         _stats = results[0] as KYCStats;
         final docsData = results[1] as Map<String, dynamic>;
-        _documents = docsData['documents'] as List<KYCDocument>;
+        _documents = docsData['documents'] as List<KycDocument>;
         _isLoading = false;
       });
     } catch (e) {
@@ -74,7 +76,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
         status: _statusFilter == 'all' ? null : _statusFilter,
       );
       setState(() {
-        _documents = docsData['documents'] as List<KYCDocument>;
+        _documents = docsData['documents'] as List<KycDocument>;
         _isLoading = false;
       });
     } catch (e) {
@@ -312,7 +314,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     }
   }
 
-  Future<void> _approveDocument(KYCDocument doc) async {
+  Future<void> _approveDocument(KycDocument doc) async {
     final success = await _repository.approveDocument(doc.id);
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -322,7 +324,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     }
   }
 
-  void _showRejectDialog(KYCDocument doc) {
+  void _showRejectDialog(KycDocument doc) {
     final reasonController = TextEditingController();
     showDialog(
       context: context,
@@ -386,7 +388,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView> with SingleTickerPr
     );
   }
 
-  void _showDocumentDetail(KYCDocument doc) {
+  void _showDocumentDetail(KycDocument doc) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

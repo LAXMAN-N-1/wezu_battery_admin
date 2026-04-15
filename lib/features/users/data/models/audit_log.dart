@@ -1,5 +1,5 @@
 class AuditLog {
-  final int id;
+  final String id;
   final int userId;
   final String userName;
   final String action; // 'create', 'update', 'delete', 'login', 'logout', 'suspend', 'reactivate', 'permission_change'
@@ -10,6 +10,7 @@ class AuditLog {
   final DateTime timestamp;
   final String? beforeValue;
   final String? afterValue;
+  final Map<String, dynamic>? metadata;
 
   const AuditLog({
     required this.id,
@@ -23,6 +24,7 @@ class AuditLog {
     required this.timestamp,
     this.beforeValue,
     this.afterValue,
+    this.metadata,
   });
 
   factory AuditLog.fromJson(Map<String, dynamic> json) {
@@ -44,7 +46,7 @@ class AuditLog {
   }
 
   String get actionLabel {
-    switch (action) {
+    switch (action.toLowerCase()) {
       case 'create': return 'Created';
       case 'update': return 'Updated';
       case 'delete': return 'Deleted';

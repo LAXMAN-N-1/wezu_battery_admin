@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/provider/auth_provider.dart';
@@ -13,10 +13,15 @@ import '../features/notifications/view/automated_triggers_view.dart';
 import '../features/notifications/view/notification_logs_view.dart';
 import '../features/notifications/view/sms_email_config_view.dart';
 import '../features/cms/view/blog_management_view.dart';
+import '../features/cms/view/blog_editor_view.dart';
 import '../features/cms/view/faq_management_view.dart';
 import '../features/cms/view/banner_management_view.dart';
+import '../features/cms/view/banner_editor_view.dart';
 import '../features/cms/view/legal_docs_view.dart';
+import '../features/cms/view/legal_editor_view.dart';
 import '../features/cms/view/media_library_view.dart';
+import '../features/cms/data/models/banner.dart' as model;
+import '../features/cms/data/models/legal_document.dart' as model;
 import '../features/audit/view/audit_dashboard_view.dart';
 import '../features/audit/view/audit_logs_view.dart';
 import '../features/audit/view/security_events_view.dart';
@@ -30,7 +35,15 @@ import '../features/inventory/view/bulk_import_export_view.dart';
 import '../features/inventory/view/audit_trail_view.dart';
 import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
+import '../features/users/view/users_view.dart';
+import '../features/users/view/kyc_verification_view.dart';
+import '../features/users/view/kyc_dashboard_view.dart';
+import '../features/users/view/roles_permissions_view.dart';
+import '../features/users/view/suspended_accounts_view.dart';
+import '../features/users/view/user_analytics_view.dart';
 import '../features/users/view/fraud_risk_view.dart';
+import '../features/users/view/bulk_operations_view.dart';
+import '../features/users/view/session_activity_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/finance/view/transactions_view.dart';
 import '../features/finance/view/settlements_view.dart';
@@ -71,32 +84,32 @@ import '../features/user_master/view/admin_groups_master_view.dart';
 import '../features/user_master/view/access_logs_master_view.dart';
 import '../features/user_master/view/user_bulk_master_view.dart';
 import '../core/widgets/admin_layout.dart';
-import '../core/widgets/placeholder_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/dashboard',
-    debugLogDiagnostics: true,
+    debugLogDiagnostics: kDebugMode,
     redirect: (context, state) {
       final isLoggingIn = state.matchedLocation == '/login';
-      
+
+      if (authState.isLoading) {
+        return isLoggingIn ? null : '/login';
+      }
+
       if (!authState.isAuthenticated && !isLoggingIn) {
         return '/login';
       }
-      
+
       if (authState.isAuthenticated && isLoggingIn) {
         return '/dashboard';
       }
-      
+
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginView(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginView()),
       ShellRoute(
         builder: (context, state, child) {
           return AdminLayout(
@@ -110,60 +123,116 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/dashboard',
-            pageBuilder: (context, state) => const NoTransitionPage(child: DashboardView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DashboardView()),
             routes: [
               GoRoute(
                 path: 'analytics',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: AnalyticsView(),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: AnalyticsView()),
+              ),
+            ],
+          ),
+
+          // ==========================================
+          // 2. USERS (RAMA Legacy)
+          // ==========================================
+          GoRoute(
+            path: '/users',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: UsersView()),
+            routes: [
+              GoRoute(
+                path: 'kyc',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: KycVerificationView(),
+                ),
+              ),
+              GoRoute(
+                path: 'kyc-dashboard',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: KycDashboardView(),
+                ),
+              ),
+              GoRoute(
+                path: 'roles',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: RolesPermissionsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'suspended',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: SuspendedAccountsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'analytics',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: UserAnalyticsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'fraud',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: FraudRiskView(),
+                ),
+              ),
+              GoRoute(
+                path: 'bulk',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: BulkOperationsView(),
+                ),
+              ),
+              GoRoute(
+                path: 'activity',
+                pageBuilder: (context, state) => NoTransitionPage(
+                  child: SessionActivityView(),
                 ),
               ),
             ],
           ),
 
           // ==========================================
-          // 2. USER MASTER
+          // 2.5 USER MASTER (MAIN)
           // ==========================================
           GoRoute(
             path: '/user-master',
-            pageBuilder: (context, state) => const NoTransitionPage(child: UsersMasterListView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: UsersMasterListView()),
             routes: [
               GoRoute(
                 path: 'edit',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: UserMasterFormView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: UserMasterFormView()),
               ),
               GoRoute(
                 path: 'roles',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: RolesPermissionsMasterView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: RolesPermissionsMasterView()),
               ),
               GoRoute(
                 path: 'groups',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: AdminGroupsMasterView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: AdminGroupsMasterView()),
               ),
               GoRoute(
                 path: 'logs',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: AccessLogsMasterView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: AccessLogsMasterView()),
               ),
               GoRoute(
                 path: 'bulk',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: UserBulkMasterView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: UserBulkMasterView()),
               ),
             ],
           ),
-          
+
           GoRoute(
             path: '/locations',
-            pageBuilder: (context, state) => const NoTransitionPage(child: LocationView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: LocationView()),
           ),
 
           // ==========================================
@@ -171,31 +240,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/fleet/batteries',
-            pageBuilder: (context, state) => const NoTransitionPage(child: BatteriesView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BatteriesView()),
           ),
           GoRoute(
             path: '/fleet/stock',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: StockLevelsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: StockLevelsView()),
           ),
           GoRoute(
             path: '/fleet/health',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BatteryHealthView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BatteryHealthView()),
           ),
           GoRoute(
             path: '/fleet/audit',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AuditTrailView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AuditTrailView()),
           ),
           GoRoute(
             path: '/fleet/bulk',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BulkImportExportView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BulkImportExportView()),
           ),
 
           // ==========================================
@@ -203,25 +269,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/stations',
-            pageBuilder: (context, state) => const NoTransitionPage(child: StationsView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: StationsView()),
             routes: [
               GoRoute(
                 path: 'map',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: StationMapView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: StationMapView()),
               ),
               GoRoute(
                 path: 'performance',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: StationPerformanceView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: StationPerformanceView()),
               ),
               GoRoute(
                 path: 'maintenance',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: StationMaintenanceView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: StationMaintenanceView()),
               ),
             ],
           ),
@@ -231,33 +295,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/dealers',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: DealersView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DealersView()),
             routes: [
               GoRoute(
                 path: 'registrations',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerOnboardingView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DealerOnboardingView()),
               ),
               GoRoute(
                 path: 'kyc',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerKycView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DealerKycView()),
               ),
               GoRoute(
                 path: 'commissions',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerCommissionsView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DealerCommissionsView()),
               ),
               GoRoute(
                 path: 'documents',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: DealerDocumentsView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DealerDocumentsView()),
               ),
             ],
           ),
@@ -267,33 +326,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/rentals/active',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ActiveRentalsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ActiveRentalsView()),
           ),
           GoRoute(
             path: '/rentals/history',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: RentalHistoryView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: RentalHistoryView()),
           ),
           GoRoute(
             path: '/rentals/swaps',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BatterySwapsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BatterySwapsView()),
           ),
           GoRoute(
             path: '/rentals/purchases',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: PurchaseOrdersView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: PurchaseOrdersView()),
           ),
           GoRoute(
             path: '/rentals/late-fees',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: LateFeesView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: LateFeesView()),
           ),
 
           // ==========================================
@@ -301,23 +355,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/finance',
-            pageBuilder: (context, state) => const NoTransitionPage(child: FinanceView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: FinanceView()),
             routes: [
               GoRoute(
                 path: 'transactions',
-                pageBuilder: (context, state) => const NoTransitionPage(child: TransactionsView()),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: TransactionsView()),
               ),
               GoRoute(
                 path: 'settlements',
-                pageBuilder: (context, state) => const NoTransitionPage(child: SettlementsView()),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SettlementsView()),
               ),
               GoRoute(
                 path: 'invoices',
-                pageBuilder: (context, state) => const NoTransitionPage(child: InvoicesView()),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: InvoicesView()),
               ),
               GoRoute(
                 path: 'profit',
-                pageBuilder: (context, state) => const NoTransitionPage(child: ProfitAnalysisView()),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ProfitAnalysisView()),
               ),
             ],
           ),
@@ -327,23 +386,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/logistics/orders',
-            pageBuilder: (context, state) => const NoTransitionPage(child: DeliveryOrdersView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DeliveryOrdersView()),
           ),
           GoRoute(
             path: '/logistics/tracking',
-            pageBuilder: (context, state) => const NoTransitionPage(child: LiveTrackingView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: LiveTrackingView()),
           ),
           GoRoute(
             path: '/logistics/drivers',
-            pageBuilder: (context, state) => const NoTransitionPage(child: DriversView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DriversView()),
           ),
           GoRoute(
             path: '/logistics/routes',
-            pageBuilder: (context, state) => const NoTransitionPage(child: RoutePlannerView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: RoutePlannerView()),
           ),
           GoRoute(
             path: '/logistics/returns',
-            pageBuilder: (context, state) => const NoTransitionPage(child: ReturnsView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ReturnsView()),
           ),
 
           // ==========================================
@@ -351,27 +415,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/fleet-ops/iot',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: IoTDashboardView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: IoTDashboardView()),
           ),
           GoRoute(
             path: '/fleet-ops/geofence',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: GeofencingView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: GeofencingView()),
           ),
           GoRoute(
             path: '/fleet-ops/telematics',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: TelematicsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: TelematicsView()),
           ),
           GoRoute(
             path: '/fleet-ops/alerts',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AlertsAlarmsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AlertsAlarmsView()),
           ),
 
           // ==========================================
@@ -379,27 +439,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/bess',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BessOverviewView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BessOverviewView()),
             routes: [
               GoRoute(
                 path: 'monitoring',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: EnergyMonitoringView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: EnergyMonitoringView()),
               ),
               GoRoute(
                 path: 'grid',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: GridIntegrationView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: GridIntegrationView()),
               ),
               GoRoute(
                 path: 'reports',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BessReportsView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BessReportsView()),
               ),
             ],
           ),
@@ -409,19 +465,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/support/tickets',
-            pageBuilder: (context, state) => const NoTransitionPage(child: SupportView()),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SupportView()),
           ),
           GoRoute(
             path: '/support/knowledge',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: KnowledgeBaseView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: KnowledgeBaseView()),
           ),
           GoRoute(
             path: '/support/performance',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: TeamPerformanceView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: TeamPerformanceView()),
           ),
 
           // ==========================================
@@ -429,33 +484,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/notifications',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SendPushView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SendPushView()),
             routes: [
               GoRoute(
                 path: 'send',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: SendPushView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SendPushView()),
               ),
               GoRoute(
                 path: 'triggers',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: AutomatedTriggersView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: AutomatedTriggersView()),
               ),
               GoRoute(
                 path: 'logs',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: NotificationLogsView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: NotificationLogsView()),
               ),
               GoRoute(
                 path: 'config',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: SmsEmailConfigView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SmsEmailConfigView()),
               ),
             ],
           ),
@@ -465,39 +515,81 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/cms',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BlogManagementView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BlogManagementView()),
             routes: [
               GoRoute(
                 path: 'blogs',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BlogManagementView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BlogManagementView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: BlogEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    pageBuilder: (context, state) {
+                      final blogId = state.pathParameters['id'];
+                      return NoTransitionPage(
+                        child: BlogEditorView(blogId: blogId),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'faqs',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: FaqManagementView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: FaqManagementView()),
               ),
               GoRoute(
                 path: 'banners',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BannerManagementView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BannerManagementView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: BannerEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (context, state) {
+                      final banner = state.extra as model.Banner?;
+                      return NoTransitionPage(
+                        child: BannerEditorView(banner: banner),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'legal',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: LegalDocsView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: LegalDocsView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: LegalEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (context, state) {
+                      final doc = state.extra as model.LegalDocument?;
+                      return NoTransitionPage(
+                        child: LegalEditorView(doc: doc),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'media',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: MediaLibraryView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: MediaLibraryView()),
               ),
             ],
           ),
@@ -507,33 +599,28 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/audit/dashboard',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AuditDashboardView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AuditDashboardView()),
           ),
           GoRoute(
             path: '/audit/logs',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: AuditLogsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AuditLogsView()),
           ),
           GoRoute(
             path: '/audit/fraud',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: FraudRiskView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: FraudRiskView()),
           ),
           GoRoute(
             path: '/audit/security-events',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SecurityEventsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SecurityEventsView()),
           ),
           GoRoute(
             path: '/audit/security',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: SecuritySettingsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SecuritySettingsView()),
           ),
 
           // ==========================================
@@ -541,27 +628,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ==========================================
           GoRoute(
             path: '/settings',
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: GeneralSettingsView(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: GeneralSettingsView()),
             routes: [
               GoRoute(
                 path: 'features',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: FeatureFlagsView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: FeatureFlagsView()),
               ),
               GoRoute(
                 path: 'api-keys',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: ApiKeysView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: ApiKeysView()),
               ),
               GoRoute(
                 path: 'health',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: SystemHealthView(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SystemHealthView()),
               ),
             ],
           ),
@@ -650,9 +733,15 @@ String _getTitle(String location) {
 
   // CMS
   if (location == '/cms/blogs') return 'Blog Management';
+  if (location == '/cms/blogs/new') return 'New Blog Post';
+  if (location.startsWith('/cms/blogs/edit/')) return 'Edit Blog Post';
   if (location == '/cms/faqs') return 'FAQ Management';
   if (location == '/cms/banners') return 'Banner Management';
+  if (location == '/cms/banners/new') return 'New Banner';
+  if (location == '/cms/banners/edit') return 'Edit Banner';
   if (location == '/cms/legal') return 'Legal Documents';
+  if (location == '/cms/legal/new') return 'New Legal Policy';
+  if (location == '/cms/legal/edit') return 'Edit Legal Policy';
 
   // Audit
   if (location == '/audit/dashboard') return 'Audit & Security Dashboard';

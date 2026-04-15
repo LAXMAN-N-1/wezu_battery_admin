@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
@@ -40,7 +41,8 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._apiClient) : super(AuthState()) {
+  AuthNotifier(this._apiClient) : super(AuthState(isLoading: true)) {
+    _apiClient.registerSessionExpiredCallback(_onSessionExpired);
     _checkStatus();
   }
 
@@ -49,24 +51,68 @@ class AuthNotifier extends StateNotifier<AuthState> {
   static const _adminRoles = <String>{'admin', 'super_admin', 'superadmin'};
 
   Future<void> _checkStatus() async {
-    state = state.copyWith(isLoading: true);
-    final token = await _apiClient.storage.read(key: 'admin_token');
+    final token = await _apiClient.getValidAccessToken();
 
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       state = state.copyWith(isLoading: false, isAuthenticated: true);
       return;
     }
 
-    state = state.copyWith(isLoading: false, isAuthenticated: false);
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+    );
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> _onSessionExpired() async {
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+      error: 'Your session has expired. Please log in again.',
+    );
+  }
+
+  Future<String?> getValidAccessToken() async {
+    return _apiClient.getValidAccessToken();
+  }
+
+  Future<String?> refreshAccessToken() async {
+    return _apiClient.refreshAccessToken();
+  }
+
+  Future<void> clearSessionAndRedirect() async {
+    await _apiClient.clearSession(notifyListeners: false);
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+      error: 'Your session has expired. Please log in again.',
+    );
+  }
+
+  Future<void> login(String credential, String password) async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final username = email.trim();
+    final normalizedCredential = credential.trim();
+    final normalizedPassword = password.trim();
+
+    if (normalizedCredential.isEmpty || normalizedPassword.isEmpty) {
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: false,
+        error: 'Enter your login credential and password.',
+        user: null,
+      );
+      return;
+    }
 
     try {
-      final result = await _authenticate(username, password);
+      final result = await _authenticate(
+        normalizedCredential,
+        normalizedPassword,
+      );
       await _persistSession(result);
 
       state = state.copyWith(
@@ -100,36 +146,84 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _apiClient.storage.delete(key: 'admin_token');
-    await _apiClient.storage.delete(key: 'admin_refresh_token');
-
-    state = state.copyWith(isAuthenticated: false, error: null, user: null);
+    await _apiClient.clearSession(notifyListeners: false);
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      error: null,
+      user: null,
+    );
   }
 
-  Future<_AuthResult> _authenticate(String username, String password) async {
-    final attempts = <Future<_AuthResult> Function()>[
-      () => _loginWithJson(
-        path: '/api/v1/auth/admin/login',
-        payload: {'username': username, 'password': password},
-        allowAdminRoleRetry: false,
-      ),
-      () => _loginWithJson(
-        path: '/api/v1/auth/login',
-        payload: {'username': username, 'password': password},
-      ),
-      () => _loginWithJson(
-        path: '/api/v1/auth/login',
-        payload: {'email': username, 'password': password},
-      ),
-      () => _loginWithToken(username, password),
-    ];
+  Future<_AuthResult> _authenticate(String credential, String password) async {
+    final attempts =
+        <
+          ({
+            String path,
+            Map<String, dynamic> payload,
+            bool allowAdminRoleRetry,
+            bool isFormEncoded,
+          })
+        >[
+          (
+            path: '/api/v1/auth/admin/login',
+            payload: {'username': credential, 'password': password},
+            allowAdminRoleRetry: false,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/token',
+            payload: {
+              'username': credential,
+              'password': password,
+              'grant_type': 'password',
+            },
+            allowAdminRoleRetry: false,
+            isFormEncoded: true,
+          ),
+          (
+            path: '/api/v1/auth/admin/login',
+            payload: {'email': credential, 'password': password},
+            allowAdminRoleRetry: false,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/login',
+            payload: {'credential': credential, 'password': password},
+            allowAdminRoleRetry: true,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/login',
+            payload: {'username': credential, 'password': password},
+            allowAdminRoleRetry: true,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/login',
+            payload: {'email': credential, 'password': password},
+            allowAdminRoleRetry: true,
+            isFormEncoded: false,
+          ),
+        ];
 
     DioException? lastError;
 
     for (final attempt in attempts) {
       try {
-        return await attempt();
+        if (attempt.isFormEncoded) {
+          return await _loginWithForm(
+            path: attempt.path,
+            payload: attempt.payload,
+          );
+        }
+        return await _loginWithJson(
+          path: attempt.path,
+          payload: attempt.payload,
+          allowAdminRoleRetry: attempt.allowAdminRoleRetry,
+        );
       } on DioException catch (e) {
+        _logLoginFailure(e, endpoint: attempt.path);
         if (_shouldTryNextEndpoint(e)) {
           lastError = e;
           continue;
@@ -145,37 +239,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
     throw const _AuthFailure('Unable to sign in right now. Please try again.');
   }
 
+  Future<_AuthResult> _loginWithForm({
+    required String path,
+    required Map<String, dynamic> payload,
+  }) async {
+    final response = await _apiClient.post(
+      path,
+      data: payload,
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
+
+    return _parseAuthResponse(
+      response: response,
+      path: path,
+      payload: payload,
+      allowAdminRoleRetry: false,
+    );
+  }
+
   Future<_AuthResult> _loginWithJson({
     required String path,
     required Map<String, dynamic> payload,
     bool allowAdminRoleRetry = true,
   }) async {
-    final response = await _apiClient.post(path, data: payload);
+    final response = await _apiClient.post(
+      path,
+      data: payload,
+      options: Options(contentType: Headers.jsonContentType),
+    );
 
     return _parseAuthResponse(
       response: response,
       path: path,
       payload: payload,
       allowAdminRoleRetry: allowAdminRoleRetry,
-    );
-  }
-
-  Future<_AuthResult> _loginWithToken(String username, String password) async {
-    final response = await _apiClient.post(
-      '/api/v1/auth/token',
-      data: {
-        'username': username,
-        'password': password,
-        'grant_type': 'password',
-      },
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-
-    return _parseAuthResponse(
-      response: response,
-      path: '/api/v1/auth/token',
-      payload: const {},
-      allowAdminRoleRetry: false,
     );
   }
 
@@ -197,7 +294,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
             (currentRole != null && !_isAdminRole(currentRole)))) {
       final retriedPayload = <String, dynamic>{...payload, 'role': adminRole};
 
-      final retriedResponse = await _apiClient.post(path, data: retriedPayload);
+      final retriedResponse = await _apiClient.post(
+        path,
+        data: retriedPayload,
+        options: Options(contentType: Headers.jsonContentType),
+      );
 
       return _parseAuthResponse(
         response: retriedResponse,
@@ -208,6 +309,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     final accessToken = data['access_token']?.toString();
+    final refreshToken = data['refresh_token']?.toString();
     if (accessToken == null || accessToken.isEmpty) {
       if (data['requires_role_selection'] == true) {
         final roles = _extractRoles(data);
@@ -221,34 +323,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
       throw _AuthFailure(
         data['message']?.toString() ??
             data['detail']?.toString() ??
+            data['error']?.toString() ??
             'Login failed',
       );
+    }
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      throw const _AuthFailure('Login failed: refresh token missing.');
     }
 
     _ensureAdminAccess(data);
 
     return _AuthResult(
       accessToken: accessToken,
-      refreshToken: data['refresh_token']?.toString(),
+      refreshToken: refreshToken,
       user: _extractUser(data),
     );
   }
 
   Future<void> _persistSession(_AuthResult result) async {
-    await _apiClient.storage.write(
-      key: 'admin_token',
-      value: result.accessToken,
+    await _apiClient.writeAuthValue(
+      ApiClient.accessTokenStorageKey,
+      result.accessToken,
     );
-
-    if (result.refreshToken != null && result.refreshToken!.isNotEmpty) {
-      await _apiClient.storage.write(
-        key: 'admin_refresh_token',
-        value: result.refreshToken,
-      );
-      return;
-    }
-
-    await _apiClient.storage.delete(key: 'admin_refresh_token');
+    await _apiClient.writeAuthValue(
+      ApiClient.refreshTokenStorageKey,
+      result.refreshToken,
+    );
   }
 
   bool _shouldTryNextEndpoint(DioException error) {
@@ -257,21 +358,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
         statusCode == 405 ||
         statusCode == 415 ||
         statusCode == 422 ||
+        statusCode == 500 ||
+        statusCode == 502 ||
+        statusCode == 503 ||
+        statusCode == 504 ||
         statusCode == 501;
   }
 
   String _extractErrorMessage(DioException error) {
+    return ApiErrorHandler.getReadableMessage(error);
+  }
+
+  void _logLoginFailure(DioException error, {required String endpoint}) {
+    final statusCode = error.response?.statusCode;
     final responseData = error.response?.data;
-
-    if (responseData is Map && responseData['detail'] != null) {
-      return responseData['detail'].toString();
-    }
-
-    if (responseData is Map && responseData['message'] != null) {
-      return responseData['message'].toString();
-    }
-
-    return 'Unable to sign in right now. Please try again.';
+    debugPrint(
+      '[Auth] login failed endpoint=$endpoint statusCode=$statusCode responseData=$responseData',
+    );
   }
 
   Map<String, dynamic> _normalizeResponseData(dynamic data) {
@@ -389,10 +492,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 class _AuthResult {
-  const _AuthResult({required this.accessToken, this.refreshToken, this.user});
+  const _AuthResult({
+    required this.accessToken,
+    required this.refreshToken,
+    this.user,
+  });
 
   final String accessToken;
-  final String? refreshToken;
+  final String refreshToken;
   final Map<String, dynamic>? user;
 }
 

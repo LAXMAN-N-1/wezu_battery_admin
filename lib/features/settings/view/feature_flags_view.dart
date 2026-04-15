@@ -37,7 +37,7 @@ class _FeatureFlagsViewState extends State<FeatureFlagsView> {
     return Container(padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        ..._flags.map((f) => _flagRow(f)).toList(),
+        ..._flags.map((f) => _flagRow(f)),
       ]));
   }
 
@@ -60,7 +60,7 @@ class _FeatureFlagsViewState extends State<FeatureFlagsView> {
             const SizedBox(height: 4), Text(flag.description!, style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
           ],
         ])),
-        Switch(value: flag.isEnabled, activeColor: Colors.green, onChanged: (val) async {
+        Switch(value: flag.isEnabled, activeThumbColor: Colors.green, onChanged: (val) async {
           await _repo.toggleFeatureFlag(flag.id, val); _loadData();
         }),
       ]));

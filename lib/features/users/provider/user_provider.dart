@@ -24,6 +24,8 @@ class UserListState {
   final int totalCount;
   final int page;
   final int limit;
+  final Map<String, dynamic>? summaryData;
+  final List<User> suspendedUsers;
 
   UserListState({
     this.users = const [],
@@ -34,6 +36,8 @@ class UserListState {
     this.totalCount = 0,
     this.page = 1,
     this.limit = 20,
+    this.summaryData,
+    this.suspendedUsers = const [],
   });
 
   UserListState copyWith({
@@ -45,6 +49,8 @@ class UserListState {
     int? totalCount,
     int? page,
     int? limit,
+    Map<String, dynamic>? summaryData,
+    List<User>? suspendedUsers,
   }) {
     return UserListState(
       users: users ?? this.users,
@@ -55,6 +61,8 @@ class UserListState {
       totalCount: totalCount ?? this.totalCount,
       page: page ?? this.page,
       limit: limit ?? this.limit,
+      summaryData: summaryData ?? this.summaryData,
+      suspendedUsers: suspendedUsers ?? this.suspendedUsers,
     );
   }
 
@@ -76,7 +84,7 @@ class UserListState {
   }
 
   int get activeUsers => users.where((u) => u.isActive && u.suspensionStatus != 'suspended').length;
-  int get suspendedUsers => users.where((u) => u.suspensionStatus == 'suspended').length;
+  int get suspendedCount => users.where((u) => u.suspensionStatus == 'suspended').length;
   int get pendingKyc => users.where((u) => u.kycStatus == 'pending').length;
 }
 
@@ -90,21 +98,49 @@ class UserListNotifier extends StateNotifier<UserListState> {
   Future<void> loadUsers({int? page, int? limit}) async {
     state = state.copyWith(isLoading: true);
     try {
+      final p = page ?? state.page;
+      final l = limit ?? state.limit;
+      final skip = (p - 1) * l;
+      
       final response = await _repository.getUsers(
-        page: page ?? state.page,
-        limit: limit ?? state.limit,
-        role: state.filterRole,
+        skip: skip,
+        limit: l,
+        search: state.searchQuery,
         status: state.filterStatus,
+        userType: state.filterRole,
       );
       state = state.copyWith(
         users: response.users,
         totalCount: response.totalCount,
-        page: response.page,
-        limit: response.limit,
+        page: p,
+        limit: l,
         isLoading: false,
       );
+      
+      // Load summary in background if not loaded
+      if (state.summaryData == null) {
+        loadSummary();
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> loadSummary() async {
+    try {
+      final summary = await _repository.getUsersSummary();
+      state = state.copyWith(summaryData: summary);
+    } catch (e) {
+      print('Error loading user summary: $e');
+    }
+  }
+
+  Future<void> loadSuspendedUsers({int skip = 0, int limit = 100}) async {
+    try {
+      final response = await _repository.getSuspendedUsers(skip: skip, limit: limit, search: state.searchQuery);
+      state = state.copyWith(suspendedUsers: response.users);
+    } catch (e) {
+      print('Error loading suspended users: $e');
     }
   }
 
@@ -137,7 +173,7 @@ class UserListNotifier extends StateNotifier<UserListState> {
       email: email,
       phoneNumber: phoneNumber,
       password: password,
-      roleName: role,
+      roleName: role ?? 'customer',
     );
     await loadUsers();
   }
@@ -167,8 +203,8 @@ class UserListNotifier extends StateNotifier<UserListState> {
     await loadUsers();
   }
 
-  Future<void> reactivateUser(int userId) async {
-    await _repository.reactivateUser(userId);
+  Future<void> reactivateUser(int userId, {String? notes}) async {
+    await _repository.reactivateUser(userId, notes: notes);
     await loadUsers();
   }
 
@@ -177,9 +213,31 @@ class UserListNotifier extends StateNotifier<UserListState> {
     await loadUsers();
   }
 
-  Future<void> resetPassword(int userId) async {
-    // Generate random pass or trigger flow
-    await _repository.changePassword(userId, 'Temporary123!', true);
+  Future<void> resetPassword(int userId, String newPassword) async {
+    await _repository.adminResetPassword(userId, newPassword);
+  }
+
+  Future<void> forceLogout(int userId) async {
+    await _repository.forceLogoutUser(userId);
+  }
+
+  Future<void> banUser(int userId, {String reason = 'Violation of terms'}) async {
+    await _repository.banUser(userId, reason: reason);
+    await loadUsers();
+  }
+
+  Future<void> unbanUser(int userId) async {
+    await _repository.unbanUser(userId);
+    await loadUsers();
+  }
+
+  Future<void> forcePasswordChange(int userId) async {
+    await _repository.forcePasswordChange(userId);
+  }
+
+  Future<void> transitionState(int userId, String newStatus) async {
+    await _repository.transitionUserState(userId, newStatus);
+    await loadUsers();
   }
 
   Future<void> deleteUser(int userId) async {

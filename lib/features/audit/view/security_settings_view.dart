@@ -79,7 +79,7 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
         Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
         const SizedBox(height: 4), Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
       ])),
-      Switch(value: value, activeColor: Colors.blue, onChanged: onChanged),
+      Switch(value: value, activeThumbColor: Colors.blue, onChanged: onChanged),
     ]));
   }
 

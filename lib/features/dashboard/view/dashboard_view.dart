@@ -20,6 +20,8 @@ class DashboardView extends ConsumerStatefulWidget {
 }
 
 class _DashboardViewState extends ConsumerState<DashboardView> {
+  static const Duration _autoRefreshInterval = Duration(seconds: 60);
+
   String _revenueSort = 'Revenue High-Low';
   int? _expandedActivity;
   final Set<int> _readActivities = {};
@@ -30,8 +32,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   @override
   void initState() {
     super.initState();
-    // Start 10s auto-refresh
-    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    // Auto-refresh at a safer interval to avoid backend request spikes.
+    _refreshTimer = Timer.periodic(_autoRefreshInterval, (timer) {
       if (mounted) {
         _manualRefreshAll();
       }
@@ -165,21 +167,8 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   void _manualRefreshAll() {
-    // bump trigger to force refresh of all dashboard providers
+    // One trigger update is enough because all dashboard providers watch it.
     ref.read(dashboardRefreshTriggerProvider.notifier).state++;
-    ref.invalidate(dashboardOverviewProvider);
-    ref.invalidate(trendDataProvider);
-    ref.invalidate(conversionFunnelProvider);
-    ref.invalidate(batteryHealthProvider);
-    ref.invalidate(revenueByRegionProvider);
-    ref.invalidate(revenueByStationProvider);
-    ref.invalidate(revenueByBatteryTypeProvider);
-    ref.invalidate(recentActivityProvider);
-    ref.invalidate(topStationsProvider);
-    ref.invalidate(userGrowthProvider);
-    ref.invalidate(userBehaviorProvider);
-    ref.invalidate(inventoryStatusProvider);
-    ref.invalidate(demandForecastProvider);
     ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
   }
 
@@ -491,6 +480,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 
   Widget _buildTrendsChart(AppColorsExtension colors) {
     final trendsAsync = ref.watch(trendDataProvider);
+    final period = ref.watch(trendPeriodProvider);
 
     return Container(
       height: 480,
@@ -519,7 +509,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Last 30 days performance',
+                    _trendSubtitle(period),
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: colors.textTertiary,
@@ -565,12 +555,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         ...availableMetrics.map((metric) {
           final isActive = activeMetrics.contains(metric.key);
           return InkWell(
-            onLongPress: metric.canDelete ? () {
-              _deleteMetric(metric.key);
-            } : null,
-            onSecondaryTap: metric.canDelete ? () {
-              _deleteMetric(metric.key);
-            } : null,
+            onLongPress: metric.canDelete
+                ? () {
+                    _deleteMetric(metric.key);
+                  }
+                : null,
+            onSecondaryTap: metric.canDelete
+                ? () {
+                    _deleteMetric(metric.key);
+                  }
+                : null,
             onTap: () {
               ref.read(trendActiveMetricsProvider.notifier).update((state) {
                 final newState = Set<String>.from(state);
@@ -612,7 +606,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                       ),
                       if (metric.canDelete)
                         Positioned(
-                          child: Icon(Icons.close, size: 8, color: colors.cardBg),
+                          child: Icon(
+                            Icons.close,
+                            size: 8,
+                            color: colors.cardBg,
+                          ),
                         ),
                     ],
                   ),
@@ -622,14 +620,16 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                      color: isActive ? colors.textPrimary : colors.textTertiary,
+                      color: isActive
+                          ? colors.textPrimary
+                          : colors.textTertiary,
                     ),
                   ),
                 ],
               ),
             ),
           );
-        }).toList(),
+        }),
         // Add Button
         Material(
           color: Colors.transparent,
@@ -653,6 +653,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
 
   Widget _buildPeriodToggle(AppColorsExtension colors) {
     final period = ref.watch(trendPeriodProvider);
+    final normalizedPeriod = period.toLowerCase();
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -664,12 +665,20 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         mainAxisSize: MainAxisSize.min,
         children: ['Daily', 'Weekly', 'Monthly'].map((p) {
           final isSelected =
-              (p == 'Daily' && period == 'Today') ||
-              (p == 'Weekly' && period == '7D') ||
-              (p == 'Monthly' && period == '30D');
+              (p == 'Daily' &&
+                  const {
+                    'today',
+                    '1d',
+                    '24h',
+                    'daily',
+                  }.contains(normalizedPeriod)) ||
+              (p == 'Weekly' &&
+                  const {'7d', 'week', 'weekly'}.contains(normalizedPeriod)) ||
+              (p == 'Monthly' &&
+                  const {'30d', 'month', 'monthly'}.contains(normalizedPeriod));
           return GestureDetector(
             onTap: () => ref.read(trendPeriodProvider.notifier).state =
-                p == 'Daily' ? 'Today' : (p == 'Weekly' ? '7D' : '30D'),
+                p == 'Daily' ? 'today' : (p == 'Weekly' ? '7d' : '30d'),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -690,6 +699,20 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         }).toList(),
       ),
     );
+  }
+
+  String _trendSubtitle(String period) {
+    final normalized = period.toLowerCase();
+    if (const {'today', '1d', '24h', 'daily'}.contains(normalized)) {
+      return 'Today performance';
+    }
+    if (const {'7d', 'week', 'weekly'}.contains(normalized)) {
+      return 'Last 7 days performance';
+    }
+    if (const {'90d', 'quarter'}.contains(normalized)) {
+      return 'Last 90 days performance';
+    }
+    return 'Last 30 days performance';
   }
 
   Widget _buildExportButton(TrendData? data, AppColorsExtension colors) {
@@ -767,8 +790,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   Widget _buildTrendGraph(TrendData data, AppColorsExtension colors) {
-    if (data.points.isEmpty)
+    if (data.points.isEmpty) {
       return const Center(child: Text('No data available'));
+    }
 
     final activeSet = ref.watch(trendActiveMetricsProvider);
     final availableMetrics = ref.watch(trendAvailableMetricsProvider);
@@ -845,7 +869,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               interval: horizontalInterval,
               reservedSize: 32,
               getTitlesWidget: (value, meta) {
-                if (value == 0)
+                if (value == 0) {
                   return Text(
                     '0',
                     style: GoogleFonts.inter(
@@ -854,6 +878,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                       fontWeight: FontWeight.w600,
                     ),
                   );
+                }
                 if (value % 4000 == 0) {
                   return Text(
                     '${(value / 1000).toInt()}k',
@@ -875,11 +900,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             double val = _getMetricValue(e.value, m.key);
             return FlSpot(e.key.toDouble() + 1, val);
           }).toList();
-          return _createTrendLine(
-            spots,
-            m.color,
-            isStatic: m.isStatic,
-          );
+          return _createTrendLine(spots, m.color, isStatic: m.isStatic);
         }).toList(),
         lineTouchData: LineTouchData(
           getTouchedSpotIndicator: (barData, spotIndexes) {
@@ -1486,7 +1507,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${percentAvailable.toStringAsFixed(1)}% available • ${inUse} in use',
+                          '${percentAvailable.toStringAsFixed(1)}% available • $inUse in use',
                           style: GoogleFonts.inter(
                             fontSize: 11,
                             color: colors.textTertiary,
@@ -1602,8 +1623,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               showTitles: true,
               getTitlesWidget: (value, meta) {
                 final idx = value.toInt();
-                if (idx < 0 || idx >= data.points.length)
+                if (idx < 0 || idx >= data.points.length) {
                   return const SizedBox();
+                }
                 final label = data.points[idx].date.split('-').last;
                 return Padding(
                   padding: const EdgeInsets.only(top: 6.0),
@@ -1684,7 +1706,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final rawMaxY = displayData.isEmpty
         ? 10000.0
         : displayData.map((e) => e.revenue).reduce(math.max) * 1.15;
-    
+
     final interval = _calculateInterval(rawMaxY);
     final finalMaxY = ((rawMaxY / interval).ceil() * interval).toDouble();
 
@@ -1758,7 +1780,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 );
               }).toList(),
               titlesData: _getBarTitles(
-                displayData.map((e) => e.stationName.substring(0, math.min(3, e.stationName.length)).toUpperCase()).toList(),
+                displayData
+                    .map(
+                      (e) => e.stationName
+                          .substring(0, math.min(3, e.stationName.length))
+                          .toUpperCase(),
+                    )
+                    .toList(),
                 colors,
                 interval,
               ),
@@ -1788,7 +1816,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     final rawMaxY = displayData.isEmpty
         ? 10000.0
         : displayData.map((e) => e.revenue).reduce(math.max) * 1.15;
-        
+
     final interval = _calculateInterval(rawMaxY);
     final finalMaxY = ((rawMaxY / interval).ceil() * interval).toDouble();
 
@@ -1859,7 +1887,13 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 );
               }).toList(),
               titlesData: _getBarTitles(
-                displayData.map((e) => e.type.substring(0, math.min(3, e.type.length)).toUpperCase()).toList(),
+                displayData
+                    .map(
+                      (e) => e.type
+                          .substring(0, math.min(3, e.type.length))
+                          .toUpperCase(),
+                    )
+                    .toList(),
                 colors,
                 interval,
               ),
@@ -1893,7 +1927,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     return palette[index % palette.length];
   }
 
-  FlTitlesData _getBarTitles(List<String> labels, AppColorsExtension colors, double interval) {
+  FlTitlesData _getBarTitles(
+    List<String> labels,
+    AppColorsExtension colors,
+    double interval,
+  ) {
     return FlTitlesData(
       show: true,
       bottomTitles: AxisTitles(
@@ -1909,7 +1947,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
               meta: meta,
               space: 12,
               angle: 0, // No rotation as requested
-              child: Container(
+              child: SizedBox(
                 width: 60,
                 child: Text(
                   label,
@@ -1961,13 +1999,15 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     if (maxY <= 100) return 20.0;
     if (maxY <= 1000) return 200.0;
     if (maxY <= 10000) return 2000.0;
-    
+
     // For revenue values in Lakhs (0.2L, 0.5L, 1.0L steps)
     if (maxY <= 200000) return 20000.0; // 0.2L intervals for 0-2L range
     if (maxY <= 500000) return 50000.0; // 0.5L intervals for 0-5L range
     if (maxY <= 1000000) return 100000.0; // 1L intervals for 0-10L range
-    
-    double magnitude = math.pow(10, (math.log(maxY) / math.ln10).floor()).toDouble();
+
+    double magnitude = math
+        .pow(10, (math.log(maxY) / math.ln10).floor())
+        .toDouble();
     double interval = magnitude / 5;
     if (interval < 1) return 1.0;
     return interval;
@@ -2017,7 +2057,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -2798,9 +2838,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
       final l = n / 100000;
       return '${l % 1 == 0 ? l.toInt() : l.toStringAsFixed(1)}L';
     }
-    if (n >= 10000) { // 20k -> 0.2L
-       final l = n / 100000;
-       return '${l % 1 == 0 ? l.toInt() : l.toStringAsFixed(1)}L';
+    if (n >= 10000) {
+      // 20k -> 0.2L
+      final l = n / 100000;
+      return '${l % 1 == 0 ? l.toInt() : l.toStringAsFixed(1)}L';
     }
     if (n >= 1000) {
       final k = n / 1000;
@@ -2810,9 +2851,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
   }
 
   void _deleteMetric(String key) {
-    ref.read(trendAvailableMetricsProvider.notifier).update((state) => 
-      state.where((m) => m.key != key).toList()
-    );
+    ref
+        .read(trendAvailableMetricsProvider.notifier)
+        .update((state) => state.where((m) => m.key != key).toList());
     ref.read(trendActiveMetricsProvider.notifier).update((state) {
       final newState = Set<String>.from(state);
       newState.remove(key);
@@ -2828,7 +2869,7 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         .toList();
 
     List<List<dynamic>> rows = [
-      ['Date', ...activeMetrics.map((m) => m.label)]
+      ['Date', ...activeMetrics.map((m) => m.label)],
     ];
 
     for (var p in data.points) {
@@ -2849,7 +2890,11 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+                const Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   'Trend data exported successfully',
@@ -2859,7 +2904,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
             ),
             backgroundColor: const Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             margin: const EdgeInsets.all(20),
             duration: const Duration(seconds: 3),
           ),
@@ -2868,7 +2915,10 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -2888,7 +2938,9 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
         // Deterministic mock data for custom series
         // Use hash of key + date to get a stable value between 1000 and 7000
         final combined = '$key${p.date}';
-        final hash = combined.split('').fold<int>(0, (prev, char) => prev + char.codeUnitAt(0));
+        final hash = combined
+            .split('')
+            .fold<int>(0, (prev, char) => prev + char.codeUnitAt(0));
         return 1000.0 + (hash % 6000).toDouble();
     }
   }
@@ -2921,21 +2973,34 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                 style: GoogleFonts.inter(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Series Name (e.g., Station Load)',
-                  hintStyle: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+                  hintStyle: GoogleFonts.inter(
+                    color: Colors.white38,
+                    fontSize: 14,
+                  ),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.05),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    borderSide: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    borderSide: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF3B82F6),
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -2957,11 +3022,18 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                   ElevatedButton(
                     onPressed: () {
                       if (seriesName.trim().isEmpty) return;
-                      
-                      final newKey = seriesName.toLowerCase().replaceAll(' ', '_');
-                      final randomColor = Colors.primaries[seriesName.length % Colors.primaries.length];
-                      
-                      ref.read(trendAvailableMetricsProvider.notifier).update((state) {
+
+                      final newKey = seriesName.toLowerCase().replaceAll(
+                        ' ',
+                        '_',
+                      );
+                      final randomColor =
+                          Colors.primaries[seriesName.length %
+                              Colors.primaries.length];
+
+                      ref.read(trendAvailableMetricsProvider.notifier).update((
+                        state,
+                      ) {
                         return [
                           ...state,
                           TrendMetric(
@@ -2972,17 +3044,22 @@ class _DashboardViewState extends ConsumerState<DashboardView> {
                           ),
                         ];
                       });
-                      
-                      ref.read(trendActiveMetricsProvider.notifier).update((state) {
+
+                      ref.read(trendActiveMetricsProvider.notifier).update((
+                        state,
+                      ) {
                         return {...state, newKey};
                       });
-                      
+
                       Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
