@@ -76,9 +76,9 @@ class ApiClient {
   ApiClient._internal() {
     final baseOptions = BaseOptions(
       baseUrl: _resolvedApiBaseUrl(),
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 60),
+      sendTimeout: const Duration(seconds: 60),
       headers: {
         'Accept': 'application/json',
         // Accept-Encoding & Connection are forbidden headers in browsers
@@ -438,8 +438,8 @@ class ApiClient {
         data: {'refresh_token': refreshToken},
         options: Options(
           contentType: Headers.jsonContentType,
-          sendTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
           headers: {
             'Accept': 'application/json',
             'Authorization': 'Bearer $refreshToken',
