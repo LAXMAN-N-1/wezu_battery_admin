@@ -25,6 +25,7 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
     setState(() => _isLoading = true);
     final stats = await _repo.getOrderStats();
     final data = await _repo.getOrders(status: _statusFilter);
+    if (!mounted) return;
     setState(() { _stats = stats; _orders = data['orders'] ?? []; _isLoading = false; });
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/models/audit_models.dart';
 import '../data/repositories/audit_repository.dart';
@@ -11,6 +12,7 @@ class AuditLogsView extends StatefulWidget {
 class _AuditLogsViewState extends State<AuditLogsView> {
   final AuditRepository _repo = AuditRepository();
   List<AuditLogItem> _logs = [];
+  List<String> _availableActions = [];
   bool _isLoading = true;
   String? _filterAction;
   int _skip = 0;
@@ -19,23 +21,81 @@ class _AuditLogsViewState extends State<AuditLogsView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
+      if (_availableActions.isEmpty) {
+        final stats = await _repo.getAuditStats();
+        final Map<String, dynamic> byAction = stats['by_action'] ?? {};
+        if (byAction.isNotEmpty) {
+          _availableActions = byAction.keys.toList()..sort();
+        }
+      }
+
       final res = await _repo.getAuditLogs(action: _filterAction, skip: _skip);
-      setState(() { _logs = res['items'] as List<AuditLogItem>; _isLoading = false; });
-    } catch (e) { setState(() => _isLoading = false); }
+      setState(() {
+        _logs = res['items'] as List<AuditLogItem>;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('System Audit Logs', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-      const SizedBox(height: 4),
-      Text('Track and monitor all administrative actions', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-      const SizedBox(height: 24),
-      Row(children: [
-        _buildFilter('Action', _filterAction, ['login', 'create', 'update', 'delete', 'suspend', 'resolve'], (v) {
-          setState(() { _filterAction = v; _skip = 0; }); _loadData();
-        }),
-      ]),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextButton.icon(
+            onPressed: () => context.go('/settings/health'),
+            icon: const Icon(Icons.arrow_back, size: 16, color: Colors.blue),
+            label: Text(
+              'Back to System Health',
+              style: GoogleFonts.inter(
+                color: Colors.blue,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'System Audit Logs',
+            style: GoogleFonts.outfit(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Track and monitor all administrative actions',
+            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              _buildFilter(
+                'Action',
+                _filterAction,
+                _availableActions.isNotEmpty
+                    ? _availableActions
+                    : ['login', 'create', 'update', 'delete', 'suspend', 'resolve'],
+                (v) {
+                  setState(() {
+                    _filterAction = v;
+                    _skip = 0;
+                  });
+                  _loadData();
+                },
+              ),
+            ],
+          ),
       const SizedBox(height: 16),
       _isLoading ? const Center(child: CircularProgressIndicator()) : _buildLogsTable(),
       const SizedBox(height: 16),
@@ -49,13 +109,31 @@ class _AuditLogsViewState extends State<AuditLogsView> {
   }
 
   Widget _buildFilter(String label, String? value, List<String> items, Function(String?) onChanged) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
-      child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
-        value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-        dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-        items: [DropdownMenuItem(value: null, child: Text('All $label')), ...items.map((i) => DropdownMenuItem(value: i, child: Text(i.toUpperCase())))],
-        onChanged: onChanged)));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String?>(
+          value: value,
+          isDense: true,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          focusColor: Colors.transparent,
+          hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
+          dropdownColor: const Color(0xFF1E293B),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 20),
+          items: [
+            DropdownMenuItem(value: null, child: Text('All $label')),
+            ...items.map((i) => DropdownMenuItem(value: i, child: Text(i.toUpperCase()))),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
   }
 
   Widget _buildLogsTable() {

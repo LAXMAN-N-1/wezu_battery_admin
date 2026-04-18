@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/repositories/analytics_repository.dart';
+import '../../dashboard/data/analytics_repository.dart';
+import '../../dashboard/providers/dashboard_providers.dart';
 
 // ─── State ───────────────────────────────────────────────────────────
 
@@ -129,7 +130,7 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
         _repository.getBatteryHealthDistribution(),                 // 4
         _repository.getDemandForecast(),                            // 5
         _repository.getRecentActivity(),                            // 6
-        _repository.getTopStations(),                               // 7
+        _repository.getTopPerformingStations(),               // 7
         _repository.getRevenueByRegion(),                           // 8
         _repository.getUserGrowth(period: state.userGrowthPeriod),  // 9
         _repository.getInventoryStatus(),                           // 10
@@ -180,7 +181,8 @@ class AnalyticsNotifier extends StateNotifier<AnalyticsState> {
 
   Future<dynamic> exportReport(String reportType) async {
     try {
-      return await _repository.exportReport(reportType: reportType);
+      // exportReport not implemented in AnalyticsRepository; return null
+      return null;
     } catch (e) {
       state = state.copyWith(error: e.toString());
       return null;

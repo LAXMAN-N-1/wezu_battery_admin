@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/user_analytics_repository.dart';
 import '../provider/user_provider.dart';
+import '../provider/analytics_provider.dart';
 
 class UserAnalyticsView extends ConsumerStatefulWidget {
   const UserAnalyticsView({super.key});
@@ -348,7 +349,7 @@ class _UserAnalyticsViewState extends ConsumerState<UserAnalyticsView> {
             height: 12,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(6),
             ),
             child: FractionallySizedBox(

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/audit_log.dart';
 import '../data/repositories/audit_log_repository.dart';
 import '../provider/user_provider.dart';
+import '../provider/audit_provider.dart';
+import '../../../features/auth/provider/session_provider.dart';
+import '../../../features/auth/data/models/user_session.dart';
 
 class SessionActivityView extends ConsumerStatefulWidget {
   const SessionActivityView({super.key});
@@ -14,7 +16,7 @@ class SessionActivityView extends ConsumerStatefulWidget {
   ConsumerState<SessionActivityView> createState() => _SessionActivityViewState();
 }
 
-class _SessionActivityViewState extends ConsumerState<SessionActivityView> {
+class _SessionActivityViewState extends ConsumerState<SessionActivityView> with SingleTickerProviderStateMixin {
   late AuditLogRepository _repository;
   List<AuditLog> _logs = [];
   bool _isLoading = true;
@@ -22,11 +24,13 @@ class _SessionActivityViewState extends ConsumerState<SessionActivityView> {
   String _moduleFilter = 'all';
   List<String> _actionTypes = [];
   List<String> _modules = [];
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(auditLogRepositoryProvider);
+    _tabController = TabController(length: 2, vsync: this);
+    _repository = ref.read(auditRepositoryProvider);
     _loadData();
   }
 

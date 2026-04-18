@@ -199,6 +199,7 @@ const List<MenuSection> _menuSections = [
     label: 'Settings',
     children: [
       MenuItem(label: 'General', route: '/settings'),
+      MenuItem(label: 'Feature Flags', route: '/settings/features'),
       MenuItem(label: 'API Keys', route: '/settings/api-keys'),
       MenuItem(label: 'System Health', route: '/settings/health'),
     ],
@@ -266,7 +267,7 @@ class AdminLayout extends ConsumerWidget {
                     ),
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
-                      BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                      BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
                     ],
                   ),
                   child: const Icon(Icons.bolt, color: Colors.white, size: 22),
@@ -324,7 +325,7 @@ class AdminLayout extends ConsumerWidget {
                 style: GoogleFonts.inter(color: Colors.red.shade300, fontWeight: FontWeight.w500, fontSize: 13),
               ),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              hoverColor: Colors.red.withOpacity(0.05),
+              hoverColor: Colors.red.withValues(alpha: 0.05),
             ),
           ),
         ],
@@ -393,8 +394,8 @@ class AdminLayout extends ConsumerWidget {
                   )
                 : null,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            tileColor: isActive && !isExpanded ? Colors.blue.withOpacity(0.08) : Colors.transparent,
-            hoverColor: Colors.white.withOpacity(0.03),
+            tileColor: isActive && !isExpanded ? colors.accent.withValues(alpha: 0.1) : Colors.transparent,
+            hoverColor: Colors.white.withValues(alpha: 0.03),
           ),
         ),
 
@@ -436,14 +437,14 @@ class AdminLayout extends ConsumerWidget {
         title: Text(
           item.label,
           style: GoogleFonts.inter(
-            color: isActive ? Colors.blue.shade300 : Colors.white54,
+            color: isActive ? colors.accent : Colors.white54,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
             fontSize: 12,
           ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: isActive ? Colors.blue.withOpacity(0.06) : Colors.transparent,
-        hoverColor: Colors.white.withOpacity(0.03),
+        tileColor: isActive ? colors.accent.withValues(alpha: 0.08) : Colors.transparent,
+        hoverColor: Colors.white.withValues(alpha: 0.03),
       ),
     );
   }
@@ -468,15 +469,17 @@ class AdminLayout extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
           ],
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              color: colors.textPrimary,
-              fontSize: isDesktop ? 17 : 15,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.inter(
+                color: colors.textPrimary,
+                fontSize: isDesktop ? 17 : 15,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
           IconButton(
             onPressed: () => ref.read(themeProvider.notifier).toggle(),
             icon: Icon(

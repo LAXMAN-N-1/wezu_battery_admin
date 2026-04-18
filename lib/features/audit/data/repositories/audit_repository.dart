@@ -24,6 +24,16 @@ class AuditRepository {
     return r.data;
   }
 
+  Future<Map<String, dynamic>> getSecurityDashboard() async {
+    final r = await _apiClient.get('$_base/dashboard');
+    return r.data;
+  }
+
+  Future<List<Map<String, dynamic>>> getFraudAlerts() async {
+    final r = await _apiClient.get('$_base/fraud-alerts');
+    return List<Map<String, dynamic>>.from(r.data);
+  }
+
   Future<Map<String, dynamic>> getSecurityEvents({String? severity, String? eventType, bool? isResolved, int skip = 0}) async {
     final r = await _apiClient.get('$_base/security-events', queryParameters: {
       'skip': skip.toString(),

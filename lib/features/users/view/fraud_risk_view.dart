@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/fraud_risk.dart';
 import '../data/repositories/user_analytics_repository.dart';
 import '../provider/user_provider.dart';
+import '../provider/fraud_provider.dart';
 
 class FraudRiskView extends ConsumerStatefulWidget {
   const FraudRiskView({super.key});
@@ -14,17 +16,22 @@ class FraudRiskView extends ConsumerStatefulWidget {
   ConsumerState<FraudRiskView> createState() => _FraudRiskViewState();
 }
 
-class _FraudRiskViewState extends ConsumerState<FraudRiskView> {
-  late UserAnalyticsRepository _repository;
-  List<FraudRisk> _risks = [];
-  FraudRisk? _selectedRisk;
-  bool _isLoading = true;
+class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final TextEditingController _panController = TextEditingController();
+  final TextEditingController _panNameController = TextEditingController();
+  final TextEditingController _gstController = TextEditingController();
+  final TextEditingController _gstBusinessController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(userAnalyticsRepositoryProvider);
-    _loadData();
+    _tabController = TabController(length: 5, vsync: this);
+  }
+
+  void _loadData() {
+    // Data is loaded via fraudProvider
   }
 
   @override
@@ -533,7 +540,7 @@ class _FraudRiskViewState extends ConsumerState<FraudRiskView> {
               DropdownButtonFormField<String>(
                 dropdownColor: const Color(0xFF1E293B),
                 style: const TextStyle(color: Colors.white),
-                value: selectedType,
+                initialValue: selectedType,
                 items: const [
                   DropdownMenuItem(value: 'ip', child: Text('IP Address')),
                   DropdownMenuItem(value: 'device', child: Text('Device ID')),

@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -28,63 +30,112 @@ class ApiClient {
   Future<void> Function()? _sessionExpiredCallback;
   bool _sessionExpiredNotified = false;
 
+  ApiClient._internal() {
+    final baseOptions = BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
+
+    dio = Dio(baseOptions);
+    _refreshDio = Dio(baseOptions);
+
+    dio.interceptors.add(AuthInterceptor(this));
+    dio.interceptors.add(RetryInterceptor(dio: dio));
+
+    // Add detailed API logging only in debug mode.
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(requestBody: true, responseBody: true),
+      );
+    }
+  }
+
+  static final ApiClient _instance = ApiClient._internal();
+
+  factory ApiClient() => _instance;
+
   // Dynamic base URL from .env (falls back to localhost for dev)
   static String get baseUrl =>
       dotenv.env['API_ROOT_URL'] ?? 'http://127.0.0.1:8000';
 
-  ApiClient() {
-    dio = Dio(
-      BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
-    );
+  void registerSessionExpiredCallback(Future<void> Function()? callback) {
+    _sessionExpiredCallback = callback;
+  }
 
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await storage.read(key: 'admin_token');
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          return handler.next(options);
-        },
-        onError: (DioException e, handler) async {
-          if (e.response?.statusCode == 401) {
-            // Attempt token refresh before giving up
-            final refreshToken = await storage.read(key: 'admin_refresh_token');
-            if (refreshToken != null) {
-              try {
-                final response = await Dio().post(
-                  '$baseUrl/api/v1/auth/refresh',
-                  data: {'refresh_token': refreshToken},
-                );
-                final newToken = response.data['access_token'];
-                final newRefresh = response.data['refresh_token'];
+  Future<String?> getValidAccessToken({bool allowRefresh = true}) async {
+    final token = await readAuthValue(accessTokenStorageKey);
+    if (!TokenUtils.isExpired(token)) {
+      return token;
+    }
 
-                await storage.write(key: 'admin_token', value: newToken);
-                if (newRefresh != null) {
-                  await storage.write(key: 'admin_refresh_token', value: newRefresh);
-                }
+    if (!allowRefresh) {
+      return null;
+    }
 
-                e.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-                final retryResponse = await dio.fetch(e.requestOptions);
-                return handler.resolve(retryResponse);
-              } catch (_) {
-                // Refresh failed — clear tokens
-                await storage.delete(key: 'admin_token');
-                await storage.delete(key: 'admin_refresh_token');
-              }
-            }
-          }
-          return handler.next(e);
-        },
-      ),
+    return refreshAccessToken();
+  }
+
+  Future<String?> refreshAccessToken() async {
+    final inFlight = _refreshCompleter;
+    if (inFlight != null) {
+      return inFlight.future;
+    }
+
+    final completer = Completer<String?>();
+    _refreshCompleter = completer;
+
+    try {
+      final refreshedToken = await _refreshAccessTokenInternal();
+      completer.complete(refreshedToken);
+    } catch (e, stackTrace) {
+      completer.completeError(e, stackTrace);
+      rethrow;
+    } finally {
+      _refreshCompleter = null;
+    }
+
+    return completer.future;
+  }
+
+  Future<void> clearSession({bool notifyListeners = false}) async {
+    await deleteAuthValue(accessTokenStorageKey);
+    await deleteAuthValue(refreshTokenStorageKey);
+
+    if (notifyListeners) {
+      await _notifySessionExpired();
+    }
+  }
+
+  Future<Response<dynamic>> retryRequest(
+    RequestOptions requestOptions,
+    String token,
+  ) async {
+    final headers = Map<String, dynamic>.from(requestOptions.headers);
+    headers['Authorization'] = 'Bearer $token';
+
+    final extra = Map<String, dynamic>.from(requestOptions.extra);
+    extra[_skipAuthInterceptorKey] = true;
+
+    final options = Options(
+      method: requestOptions.method,
+      headers: headers,
+      responseType: requestOptions.responseType,
+      contentType: requestOptions.contentType,
+      sendTimeout: requestOptions.sendTimeout,
+      receiveTimeout: requestOptions.receiveTimeout,
+      extra: extra,
+      followRedirects: requestOptions.followRedirects,
+      maxRedirects: requestOptions.maxRedirects,
+      receiveDataWhenStatusError: requestOptions.receiveDataWhenStatusError,
+      listFormat: requestOptions.listFormat,
+      requestEncoder: requestOptions.requestEncoder,
+      responseDecoder: requestOptions.responseDecoder,
+      validateStatus: requestOptions.validateStatus,
     );
 
     return dio.request<dynamic>(
@@ -506,3 +557,54 @@ class AuthInterceptor extends Interceptor {
     handler.next(err);
   }
 }
+
+class RetryInterceptor extends Interceptor {
+  final Dio dio;
+  final int maxRetries;
+  final List<int> retryableStatuses;
+
+  RetryInterceptor({
+    required this.dio,
+    this.maxRetries = 2,
+    this.retryableStatuses = const [502, 503, 504],
+  });
+
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    final options = err.requestOptions;
+    final retryCount = options.extra['retryCount'] as int? ?? 0;
+
+    // We retry on specific server errors or total connection failure
+    final isRetryableStatus = retryableStatuses.contains(err.response?.statusCode);
+    final isConnectionIssue = err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.receiveTimeout;
+
+    final shouldRetry = retryCount < maxRetries &&
+        err.type != DioExceptionType.cancel &&
+        (isRetryableStatus || isConnectionIssue);
+
+    if (shouldRetry) {
+      final nextRetryCount = retryCount + 1;
+      options.extra['retryCount'] = nextRetryCount;
+
+      // Exponential backoff: 1s, 2s
+      final delayMs = pow(2, retryCount) * 1000;
+      await Future.delayed(Duration(milliseconds: delayMs.toInt()));
+
+      debugPrint(
+        '[RetryInterceptor] Retrying ${options.path} (Attempt $nextRetryCount/$maxRetries) due to: ${err.type} ${err.response?.statusCode}',
+      );
+
+      try {
+        final response = await dio.fetch<dynamic>(options);
+        return handler.resolve(response);
+      } on DioException catch (e) {
+        return super.onError(e, handler);
+      }
+    }
+
+    return super.onError(err, handler);
+  }
+}
+
