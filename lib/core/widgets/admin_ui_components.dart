@@ -1,4 +1,4 @@
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,60 +24,36 @@ class WezuLogo extends StatelessWidget {
         Stack(
           alignment: Alignment.center,
           children: [
-            // Outer glow
+            // Outer glow (static — no repeating animation)
             Container(
-                  width: size * 0.8,
-                  height: size * 0.8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 
-                          0.2,
-                        ),
-                        blurRadius: size * 0.5,
-                        spreadRadius: size * 0.1,
-                      ),
-                    ],
+              width: size * 0.8,
+              height: size * 0.8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 0.2),
+                    blurRadius: size * 0.5,
+                    spreadRadius: size * 0.1,
                   ),
-                )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(
-                  begin: const Offset(0.8, 0.8),
-                  end: const Offset(1.2, 1.2),
-                  duration: 2.seconds,
-                  curve: Curves.easeInOut,
-                ),
+                ],
+              ),
+            ).animate().scale(
+              begin: const Offset(0.8, 0.8),
+              end: const Offset(1.0, 1.0),
+              duration: 1.seconds,
+              curve: Curves.easeOut,
+            ),
 
-            // Modern Lightning Bolt Icon (Vector-like)
+            // Lightning Bolt Icon (one-shot shimmer)
             Icon(
-                  Icons.bolt_rounded,
-                  size: size,
-                  color: color ?? const Color(0xFF3B82F6),
-                )
-                .animate(onPlay: (c) => c.repeat())
-                .shimmer(
-                  duration: 2.seconds,
-                  color: Colors.white.withValues(alpha: 0.5),
-                )
-                .custom(
-                  duration: 3.seconds,
-                  curve: Curves.easeInOut,
-                  builder: (context, value, child) => Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 
-                            0.5 * value,
-                          ),
-                          blurRadius: 20.0 * value,
-                          spreadRadius: 2.0 * value,
-                        ),
-                      ],
-                    ),
-                    child: child,
-                  ),
-                ),
+              Icons.bolt_rounded,
+              size: size,
+              color: color ?? const Color(0xFF3B82F6),
+            ).animate().shimmer(
+              duration: 2.seconds,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
           ],
         ),
         if (showText) ...[
@@ -119,63 +95,54 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              width: 200,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.03),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          value,
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          label,
-                          style: GoogleFonts.inter(
-                            color: Colors.white38,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
+                ),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: Colors.white38,
+                    fontSize: 11,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        )
-        .animate(delay: delay)
-        .fadeIn(duration: 800.ms)
-        .slideX(begin: -0.2)
-        .then()
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .moveY(begin: -5, end: 5, duration: 3.seconds, curve: Curves.easeInOut);
+        ],
+      ),
+    )
+    .animate(delay: delay)
+    .fadeIn(duration: 800.ms)
+    .slideX(begin: -0.2);
   }
 }
 
@@ -470,9 +437,7 @@ class StatusBadge extends StatelessWidget {
                     ),
                   ],
                 ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .fade(duration: 1.seconds, begin: 0.5, end: 1.0),
+              ),
           const SizedBox(width: 6),
           Text(
             status.toUpperCase(),
@@ -525,10 +490,7 @@ class RealDataBadge extends StatelessWidget {
                     ),
                   ],
                 ),
-              )
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .fade(duration: 1.seconds, begin: 0.4, end: 1.0)
-              .scale(begin: const Offset(0.8, 0.8), end: const Offset(1.2, 1.2)),
+              ),
           const SizedBox(width: 6),
           Text(
             'REAL DATA',

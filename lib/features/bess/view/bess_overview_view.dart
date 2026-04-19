@@ -146,11 +146,11 @@ class _BessOverviewViewState extends State<BessOverviewView> {
         ]),
         const SizedBox(height: 20),
         // SoC Progress
-        Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Text('State of Charge', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
-              
+              const SizedBox(width: 8),
               Text('${unit.soc.toStringAsFixed(1)}%', style: GoogleFonts.outfit(color: socColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ]),
             const SizedBox(height: 8),

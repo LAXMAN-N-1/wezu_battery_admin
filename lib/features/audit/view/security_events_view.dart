@@ -85,18 +85,22 @@ class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Security Event Console', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 4),
-            Text('Real-time threat monitoring, live log streaming, and incident prioritization', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-          ],
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Security Event Console', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text('Real-time threat monitoring, live log streaming, and incident prioritization', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14), overflow: TextOverflow.ellipsis),
+            ],
+          ),
         ),
-        Row(
+        const SizedBox(width: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
           children: [
             _statusBadge('FIREWALL: ACTIVE', Colors.blueAccent),
-            const SizedBox(width: 12),
             _statusBadge('THREAT LEVEL: LOW', Colors.greenAccent),
           ],
         ),
@@ -205,10 +209,14 @@ class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 16,
+        runSpacing: 12,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _circle(Colors.redAccent),
               const SizedBox(width: 6),
@@ -216,10 +224,13 @@ class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
               const SizedBox(width: 6),
               _circle(Colors.greenAccent),
               const SizedBox(width: 16),
-              Text('security@wezu: ~/logs/live_stream.log', style: GoogleFonts.sourceCodePro(color: Colors.white38, fontSize: 13)),
+              Flexible(
+                child: Text('security@wezu: ~/logs/live_stream.log', style: GoogleFonts.sourceCodePro(color: Colors.white38, fontSize: 13), overflow: TextOverflow.ellipsis),
+              ),
             ],
           ),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextButton.icon(
                 onPressed: () => setState(() => _terminalLogs.clear()),
@@ -244,7 +255,7 @@ class _SecurityEventsViewState extends ConsumerState<SecurityEventsView> {
       decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
       child: Row(
         children: [
-          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)).animate(onPlay: (c) => c.repeat()).fadeOut(duration: 1.seconds),
+          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)).animate().fadeIn(duration: 1.seconds),
           const SizedBox(width: 6),
           Text('REC', style: GoogleFonts.robotoMono(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
         ],

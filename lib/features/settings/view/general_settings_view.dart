@@ -160,12 +160,7 @@ class _GeneralSettingsViewState extends ConsumerState<GeneralSettingsView> {
     return Stack(
       children: [
         child,
-        const Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _StickySaveBar(),
-        ),
+        const _StickySaveBar(),
       ],
     );
   }
@@ -1785,7 +1780,7 @@ class _ShimmerBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
     )
-        .animate(onPlay: (c) => c.repeat())
+        .animate()
         .shimmer(
           duration: 1500.ms,
           color: Colors.white.withValues(alpha: 0.06),
@@ -6069,7 +6064,7 @@ class _StickySaveBar extends ConsumerWidget {
                               ),
                             ],
                           ),
-                        ).animate(onPlay: (c) => c.repeat()).fade(duration: 1000.ms),
+                        ).animate().fade(duration: 1000.ms),
                         const SizedBox(width: 12),
                         if (!isMobile || MediaQuery.of(context).size.width > 350)
                           Flexible(

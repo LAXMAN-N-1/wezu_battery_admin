@@ -160,17 +160,34 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
         final suspended = summary['suspended_count'] as int? ?? 0;
         final pending = summary['pending_count'] as int? ?? 0;
 
+        final isNarrow = MediaQuery.of(context).size.width < 1200;
+        final cards = [
+          _premiumStatCard('Total Users', '$total', Icons.people_alt_outlined, const Color(0xFF3B82F6), null, 'All'),
+          _premiumStatCard('Active Users', '$active', Icons.how_to_reg_outlined, const Color(0xFF22C55E), null, 'Active'),
+          _premiumStatCard('Inactive / Suspended', '${inactive + suspended}', Icons.person_off_outlined, const Color(0xFFF59E0B), null, 'Suspended'),
+          _premiumStatCard('Pending Approval', '$pending', Icons.hourglass_empty_rounded, const Color(0xFF8B5CF6), null, 'Pending'),
+          _premiumStatCard('Online Right Now', '${(active * 0.1).round()}', Icons.wifi_tethering_rounded, const Color(0xFF14B8A6), 'Sessions active', null),
+        ];
+
+        if (isNarrow) {
+          return Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            children: cards.map((c) => SizedBox(width: 200, child: c)).toList(),
+          ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.05);
+        }
+
         return Row(
           children: [
-            Expanded(child: _premiumStatCard('Total Users', '$total', Icons.people_alt_outlined, const Color(0xFF3B82F6), null, 'All')),
+            Expanded(child: cards[0]),
             const SizedBox(width: 14),
-            Expanded(child: _premiumStatCard('Active Users', '$active', Icons.how_to_reg_outlined, const Color(0xFF22C55E), null, 'Active')),
+            Expanded(child: cards[1]),
             const SizedBox(width: 14),
-            Expanded(child: _premiumStatCard('Inactive / Suspended', '${inactive + suspended}', Icons.person_off_outlined, const Color(0xFFF59E0B), null, 'Suspended')),
+            Expanded(child: cards[2]),
             const SizedBox(width: 14),
-            Expanded(child: _premiumStatCard('Pending Approval', '$pending', Icons.hourglass_empty_rounded, const Color(0xFF8B5CF6), null, 'Pending')),
+            Expanded(child: cards[3]),
             const SizedBox(width: 14),
-            Expanded(child: _premiumStatCard('Online Right Now', '${(active * 0.1).round()}', Icons.wifi_tethering_rounded, const Color(0xFF14B8A6), 'Sessions active', null)),
+            Expanded(child: cards[4]),
           ],
         ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.05);
       },
