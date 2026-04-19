@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../features/auth/provider/auth_provider.dart';
 import '../features/auth/view/login_view.dart';
+import '../features/auth/provider/auth_provider.dart';
 import '../features/dashboard/view/dashboard_view.dart';
 import '../features/bess/view/bess_overview_view.dart';
 import '../features/bess/view/energy_monitoring_view.dart';
@@ -24,8 +24,10 @@ import '../features/cms/data/models/banner.dart' as model;
 import '../features/cms/data/models/legal_document.dart' as model;
 import '../features/audit/view/audit_dashboard_view.dart';
 import '../features/audit/view/audit_logs_view.dart';
+import '../features/audit/view/fraud_risk_view.dart';
 import '../features/audit/view/security_events_view.dart';
 import '../features/audit/view/security_settings_view.dart';
+import '../features/audit/view/fraud_dashboard_view.dart';
 import '../features/settings/view/general_settings_view.dart';
 import '../features/settings/view/feature_flags_view.dart';
 import '../features/settings/view/api_keys_view.dart';
@@ -41,14 +43,8 @@ import '../features/users/view/kyc_dashboard_view.dart';
 import '../features/users/view/roles_permissions_view.dart';
 import '../features/users/view/suspended_accounts_view.dart';
 import '../features/users/view/user_analytics_view.dart';
-import '../features/users/view/fraud_risk_view.dart';
 import '../features/users/view/bulk_operations_view.dart';
 import '../features/users/view/session_activity_view.dart';
-import '../features/finance/view/finance_view.dart';
-import '../features/finance/view/transactions_view.dart';
-import '../features/finance/view/settlements_view.dart';
-import '../features/finance/view/invoices_view.dart';
-import '../features/finance/view/profit_analysis_view.dart';
 import '../features/logistics/view/delivery_orders_view.dart';
 import '../features/logistics/view/live_tracking_view.dart';
 import '../features/logistics/view/drivers_view.dart';
@@ -85,13 +81,27 @@ import '../features/user_master/view/access_logs_master_view.dart';
 import '../features/user_master/view/user_bulk_master_view.dart';
 import '../core/widgets/admin_layout.dart';
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+  RouterNotifier(this._ref) {
+    _ref.listen(authProvider, (previous, next) {
+      if (previous?.isAuthenticated != next.isAuthenticated || 
+          previous?.isLoading != next.isLoading) {
+        notifyListeners();
+      }
+    });
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final notifier = RouterNotifier(ref);
 
   return GoRouter(
-    initialLocation: '/dashboard',
+    initialLocation: '/login',
     debugLogDiagnostics: kDebugMode,
+    refreshListenable: notifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isLoggingIn = state.matchedLocation == '/login';
 
       if (authState.isLoading) {
@@ -351,37 +361,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 7. FINANCE
-          // ==========================================
-          GoRoute(
-            path: '/finance',
-            pageBuilder: (context, state) =>
-                const NoTransitionPage(child: FinanceView()),
-            routes: [
-              GoRoute(
-                path: 'transactions',
-                pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: TransactionsView()),
-              ),
-              GoRoute(
-                path: 'settlements',
-                pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: SettlementsView()),
-              ),
-              GoRoute(
-                path: 'invoices',
-                pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: InvoicesView()),
-              ),
-              GoRoute(
-                path: 'profit',
-                pageBuilder: (context, state) =>
-                    const NoTransitionPage(child: ProfitAnalysisView()),
-              ),
-            ],
-          ),
-
-          // ==========================================
           // 8. LOGISTICS
           // ==========================================
           GoRoute(
@@ -610,10 +589,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/audit/fraud',
             pageBuilder: (context, state) =>
-                const NoTransitionPage(child: FraudRiskView()),
+                const NoTransitionPage(child: FraudDashboardView()),
           ),
           GoRoute(
-            path: '/audit/security-events',
+            path: '/audit/events',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SecurityEventsView()),
           ),
@@ -694,13 +673,6 @@ String _getTitle(String location) {
   if (location == '/rentals/purchases') return 'Purchase Orders';
   if (location == '/rentals/late-fees') return 'Late Fees';
 
-  // Finance
-  if (location == '/finance') return 'Revenue Dashboard';
-  if (location == '/finance/transactions') return 'Transactions';
-  if (location == '/finance/settlements') return 'Settlements';
-  if (location == '/finance/invoices') return 'Invoices';
-  if (location == '/finance/profit') return 'Profit Analysis';
-
   // Logistics
   if (location == '/logistics/orders') return 'Delivery Orders';
   if (location == '/logistics/tracking') return 'Live Tracking';
@@ -746,8 +718,9 @@ String _getTitle(String location) {
   // Audit
   if (location == '/audit/dashboard') return 'Audit & Security Dashboard';
   if (location == '/audit/logs') return 'System Audit Logs';
-  if (location == '/audit/security-events') return 'Security Events';
-  if (location == '/audit/security') return 'Security Settings';
+  if (location == '/audit/fraud') return 'Fraud & Risk Analysis';
+  if (location == '/audit/events') return 'Security Events';
+  if (location == '/audit/security') return 'Platform Security Settings';
 
   // Settings
   if (location == '/settings') return 'General Settings';

@@ -40,7 +40,7 @@ class _ChecklistTemplateListDialogState extends ConsumerState<ChecklistTemplateL
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Icon(Icons.checklist_rtl, color: Colors.orangeAccent, size: 28),
                 const SizedBox(width: 12),
@@ -48,7 +48,7 @@ class _ChecklistTemplateListDialogState extends ConsumerState<ChecklistTemplateL
                   'Maintenance Checklists',
                   style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
-                const Spacer(),
+                
                 IconButton(
                   icon: const Icon(Icons.close, color: Colors.white38),
                   onPressed: () => Navigator.pop(context),

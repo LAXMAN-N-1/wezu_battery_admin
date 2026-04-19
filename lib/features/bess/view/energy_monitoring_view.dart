@@ -141,9 +141,9 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
     return Container(
       decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(padding: const EdgeInsets.all(16), child: Row(children: [
+        Padding(padding: const EdgeInsets.all(16), child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
           Text('Energy Logs (${_logs.length} records)', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-          const Spacer(),
+          
           Text('Showing last $_hours hours', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
         ])),
         SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(

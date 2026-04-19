@@ -219,14 +219,14 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
               const SizedBox(height: 16),
               const Divider(color: Colors.white12),
               const SizedBox(height: 12),
-              Row(
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                     child: Text(article.category.toUpperCase(), style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
-                  const Spacer(),
+                  
                   const Icon(Icons.thumb_up_alt_outlined, size: 14, color: Colors.green),
                   const SizedBox(width: 6),
                   Text('${article.helpfulCount}', style: const TextStyle(color: Colors.white70, fontSize: 13)),

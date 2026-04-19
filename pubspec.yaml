@@ -71,6 +71,7 @@ dependencies:
   rrule: ^0.2.18
   html_editor_enhanced: ^2.5.0
   flutter_quill: ^11.5.0
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   flutter_test:

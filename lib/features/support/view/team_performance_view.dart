@@ -178,10 +178,10 @@ class _TeamPerformanceViewState extends State<TeamPerformanceView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Ticket Volume Trend (14 Days)', style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-              const Spacer(),
+              
               Row(
                 children: [
                   Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFF3B82F6), shape: BoxShape.circle)),

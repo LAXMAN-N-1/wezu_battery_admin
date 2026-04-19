@@ -13,12 +13,13 @@ class FAQRepository {
 
   static const String _basePath = '/api/v1/admin/cms/faqs';
 
-  Future<List<FAQ>> getFaqs({String? category, bool? isActive, int skip = 0, int limit = 100}) async {
+  Future<List<FAQ>> getFaqs({String? category, bool? isActive, String? search, int skip = 0, int limit = 100}) async {
     final response = await _apiClient.get(
       '$_basePath/',
       queryParameters: {
         if (category != null) 'category': category,
         if (isActive != null) 'is_active': isActive,
+        if (search != null && search.isNotEmpty) 'q': search,
         'skip': skip,
         'limit': limit,
       },

@@ -171,320 +171,289 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView>
       );
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 1200;
+
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Upload / Status Panel
+          Expanded(
+            flex: 2,
+            child: _buildUploadPanel(state),
+          ),
+          const SizedBox(width: 24),
+          // Validation Results Panel
+          Expanded(
+            flex: 3,
+            child: _buildValidationPanel(state),
+          ),
+        ],
+      );
+    }
+
+    return Column(
       children: [
-        // Upload / Status Panel
-        Expanded(
-          flex: 2,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        _buildUploadPanel(state),
+        const SizedBox(height: 24),
+        _buildValidationPanel(state),
+      ],
+    );
+  }
+
+  Widget _buildUploadPanel(BulkImportState state) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Upload CSV File',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Upload a CSV file containing battery records. You can run validation before final insertion.',
+            style: TextStyle(color: Colors.white54, fontSize: 13),
+          ),
+          const SizedBox(height: 24),
+
+          // Dropzone
+          DropTarget(
+            onDragDone: (detail) {
+              detail.files.first.readAsBytes().then((bytes) {
+                final fileWithBytes = PlatformFile(
+                  name: detail.files.first.name,
+                  size: bytes.length,
+                  bytes: bytes,
+                );
+                ref.read(bulkImportProvider.notifier).setFile(fileWithBytes);
+              });
+            },
+            onDragEntered: (detail) => setState(() => _isDragging = true),
+            onDragExited: (detail) => setState(() => _isDragging = false),
+            child: GestureDetector(
+              onTap: _pickFile,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: _isDragging
+                      ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.02),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _isDragging
+                        ? const Color(0xFF3B82F6)
+                        : Colors.white.withValues(alpha: 0.1),
+                    width: 2,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.cloud_upload_outlined,
+                      size: 48,
+                      color: _isDragging ? const Color(0xFF3B82F6) : Colors.white24,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      state.selectedFile != null
+                          ? state.selectedFile!.name
+                          : 'Click to browse or drag & drop CSV',
+                      style: TextStyle(
+                        color: state.selectedFile != null ? Colors.white : Colors.white54,
+                        fontWeight: state.selectedFile != null ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    if (state.selectedFile != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '${(state.selectedFile!.size / 1024).toStringAsFixed(1)} KB',
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          if (state.errorMessage != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                state.errorMessage!,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
+            ),
+
+          const SizedBox(height: 16),
+
+          // Action Buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (state.selectedFile != null)
+                TextButton(
+                  onPressed: () => ref.read(bulkImportProvider.notifier).clearFile(),
+                  child: const Text('Clear', style: TextStyle(color: Colors.white54)),
+                ),
+              if (state.selectedFile != null) const SizedBox(width: 16),
+              if (state.selectedFile != null && !state.dryRunComplete)
+                ElevatedButton.icon(
+                  icon: state.isParsing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.playlist_play, color: Colors.white),
+                  label: Text(
+                    state.isParsing ? 'Validating...' : 'Run Validation',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  onPressed: state.isParsing ? null : _runValidation,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  ),
+                ),
+              if (state.dryRunComplete)
+                ElevatedButton.icon(
+                  icon: state.isUploading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.check, color: Colors.white),
+                  label: Text(
+                    state.isUploading ? 'Importing...' : 'Confirm Import',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  onPressed: state.isUploading ? null : _confirmImport,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildValidationPanel(BulkImportState state) {
+    return Container(
+      height: 500, // Fixed height for vertical scroll within validation
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Row(
               children: [
+                const Icon(Icons.fact_check_outlined, color: Colors.white70),
+                const SizedBox(width: 12),
                 const Text(
-                  'Upload CSV File',
+                  'Validation Results (Dry Run)',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Upload a CSV file containing battery records. You can run validation before final insertion.',
-                  style: TextStyle(color: Colors.white54, fontSize: 13),
-                ),
-                const SizedBox(height: 24),
-
-                // Dropzone
-                DropTarget(
-                  onDragDone: (detail) {
-                    detail.files.first.readAsBytes().then((bytes) {
-                      final fileWithBytes = PlatformFile(
-                        name: detail.files.first.name,
-                        size: bytes.length,
-                        bytes: bytes,
-                      );
-                      ref
-                          .read(bulkImportProvider.notifier)
-                          .setFile(fileWithBytes);
-                    });
-                  },
-                  onDragEntered: (detail) => setState(() => _isDragging = true),
-                  onDragExited: (detail) => setState(() => _isDragging = false),
-                  child: GestureDetector(
-                    onTap: _pickFile,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(40),
-                      decoration: BoxDecoration(
-                        color: _isDragging
-                            ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
-                            : Colors.white.withValues(alpha: 0.02),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _isDragging
-                              ? const Color(0xFF3B82F6)
-                              : Colors.white.withValues(alpha: 0.1),
-                          width: 2,
-                          style: BorderStyle
-                              .solid, // Dash borders need custom painters, solid for now
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.cloud_upload_outlined,
-                            size: 48,
-                            color: _isDragging
-                                ? const Color(0xFF3B82F6)
-                                : Colors.white24,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            state.selectedFile != null
-                                ? state.selectedFile!.name
-                                : 'Click to browse or drag & drop CSV',
-                            style: TextStyle(
-                              color: state.selectedFile != null
-                                  ? Colors.white
-                                  : Colors.white54,
-                              fontWeight: state.selectedFile != null
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                          ),
-                          if (state.selectedFile != null) ...[
+                if (state.dryRunComplete) ...[
+                  const Spacer(),
+                  _buildStatusPill('${state.validRows} Valid', Colors.green),
+                  const SizedBox(width: 8),
+                  _buildStatusPill('${state.errors.length} Errors', state.errors.isEmpty ? Colors.grey : Colors.red),
+                ],
+              ],
+            ),
+          ),
+          Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
+          Expanded(
+            child: !state.dryRunComplete
+                ? const Center(
+                    child: Text(
+                      'Run validation to see results here',
+                      style: TextStyle(color: Colors.white24),
+                    ),
+                  )
+                : state.errors.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.task_alt, size: 48, color: Colors.green.withValues(alpha: 0.5)),
+                            const SizedBox(height: 16),
+                            const Text('All rows passed validation!', style: TextStyle(color: Colors.green)),
                             const SizedBox(height: 8),
                             Text(
-                              '${(state.selectedFile!.size / 1024).toStringAsFixed(1)} KB',
-                              style: const TextStyle(
-                                color: Colors.white38,
-                                fontSize: 12,
-                              ),
+                              'Ready to import ${state.validRows} batteries.',
+                              style: const TextStyle(color: Colors.white54),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                if (state.errorMessage != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      state.errorMessage!,
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ),
-
-                const Spacer(),
-
-                // Action Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (state.selectedFile != null)
-                      TextButton(
-                        onPressed: () =>
-                            ref.read(bulkImportProvider.notifier).clearFile(),
-                        child: const Text(
-                          'Clear',
-                          style: TextStyle(color: Colors.white54),
                         ),
-                      ),
-                    const SizedBox(width: 16),
-                    if (state.selectedFile != null && !state.dryRunComplete)
-                      ElevatedButton.icon(
-                        icon: state.isParsing
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.playlist_play,
+                      )
+                    : ListView.separated(
+                        itemCount: state.errors.length,
+                        separatorBuilder: (context, index) => Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
+                        itemBuilder: (context, index) {
+                          final err = state.errors[index] as Map<String, dynamic>;
+                          final serial = err['serial'] ?? 'Unknown Serial';
+                          final msg = err['error'] ?? 'Unknown Error';
+                          return ListTile(
+                            leading: const Icon(Icons.error_outline, color: Colors.redAccent),
+                            title: Text(
+                              'Serial: $serial',
+                              style: const TextStyle(
                                 color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
-                        label: Text(
-                          state.isParsing ? 'Validating...' : 'Run Validation',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        onPressed: state.isParsing ? null : _runValidation,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
-                        ),
+                            ),
+                            subtitle: Text(msg, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                          );
+                        },
                       ),
-                    if (state.dryRunComplete)
-                      ElevatedButton.icon(
-                        icon: state.isUploading
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.check, color: Colors.white),
-                        label: Text(
-                          state.isUploading ? 'Importing...' : 'Confirm Import',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                        onPressed: state.isUploading ? null : _confirmImport,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
           ),
-        ),
-
-        const SizedBox(width: 24),
-
-        // Validation Results Panel
-        Expanded(
-          flex: 3,
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.fact_check_outlined,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Validation Results (Dry Run)',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (state.dryRunComplete) ...[
-                        _buildStatusPill(
-                          '${state.validRows} Valid',
-                          Colors.green,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatusPill(
-                          '${state.errors.length} Errors',
-                          state.errors.isEmpty ? Colors.grey : Colors.red,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
-                Expanded(
-                  child: !state.dryRunComplete
-                      ? const Center(
-                          child: Text(
-                            'Run validation to see results here',
-                            style: TextStyle(color: Colors.white24),
-                          ),
-                        )
-                      : state.errors.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.task_alt,
-                                size: 48,
-                                color: Colors.green.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'All rows passed validation!',
-                                style: TextStyle(color: Colors.green),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Ready to import ${state.validRows} batteries.',
-                                style: const TextStyle(color: Colors.white54),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: state.errors.length,
-                          separatorBuilder: (context, index) => Divider(
-                            height: 1,
-                            color: Colors.white.withValues(alpha: 0.05),
-                          ),
-                          itemBuilder: (context, index) {
-                            final err =
-                                state.errors[index] as Map<String, dynamic>;
-                            final serial = err['serial'] ?? 'Unknown Serial';
-                            final msg = err['error'] ?? 'Unknown Error';
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.error_outline,
-                                color: Colors.redAccent,
-                              ),
-                              title: Text(
-                                'Serial: $serial',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              subtitle: Text(
-                                msg,
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

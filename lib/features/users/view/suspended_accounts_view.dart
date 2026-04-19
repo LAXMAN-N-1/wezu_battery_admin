@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/repositories/user_analytics_repository.dart';
 import '../data/models/user.dart';
@@ -17,8 +16,6 @@ class SuspendedAccountsView extends ConsumerStatefulWidget {
 }
 
 class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
-  late UserRepository _userRepo;
-  late UserAnalyticsRepository _analyticsRepo;
   List<User> _suspendedUsers = [];
   List<SuspensionRecord> _history = [];
   bool _isLoading = true;
@@ -26,8 +23,6 @@ class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
   @override
   void initState() {
     super.initState();
-    _userRepo = ref.read(userRepositoryProvider);
-    _analyticsRepo = ref.read(userAnalyticsRepositoryProvider);
     _loadData();
   }
 
