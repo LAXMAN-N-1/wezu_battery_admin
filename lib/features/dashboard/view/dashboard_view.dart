@@ -460,8 +460,8 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             mainAxisSpacing: 24,
             crossAxisSpacing: 24,
             childAspectRatio: screenWidth > 1400
-                ? 3.5
-                : (screenWidth > 1000 ? 3.0 : 2.6),
+                ? 1.4
+                : (screenWidth > 1000 ? 1.25 : 1.15),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
@@ -541,8 +541,8 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             mainAxisSpacing: 24,
             crossAxisSpacing: 24,
             childAspectRatio: screenWidth > 1400
-                ? 3.5
-                : (screenWidth > 1000 ? 3.0 : 2.6),
+                ? 1.4
+                : (screenWidth > 1000 ? 1.25 : 1.15),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: List.generate(

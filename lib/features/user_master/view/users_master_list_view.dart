@@ -89,7 +89,6 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
               const SizedBox(height: 20),
               _buildTableCard(usersAsync),
               const SizedBox(height: 16),
-              // Optional: Add Pagination controls here if backend provides total_count
             ],
           ),
         ),
@@ -113,7 +112,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
               gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF2563EB)]),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(color: Colors.blue.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
+                BoxShadow(color: const Color(0xFF3B82F6).withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
               ],
             ),
             child: ElevatedButton.icon(
@@ -152,7 +151,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
   Widget _buildStatsRow(AsyncValue<Map<String, dynamic>> summaryAsync) {
     return summaryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error loading stats: $err', style: const TextStyle(color: Colors.red))),
+      error: (err, _) => Center(child: Text('Error loading stats: $err', style: const TextStyle(color: Color(0xFFEF4444)))),
       data: (summary) {
         final total = summary['total_users'] as int? ?? 0;
         final active = summary['active_count'] as int? ?? 0;
@@ -257,10 +256,10 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
               onSelected: (selected) {
                 if (selected) _applyFilter('role', filter);
               },
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
+              backgroundColor: const Color(0xFF1E293B),
               selectedColor: const Color(0xFF3B82F6).withValues(alpha: 0.8),
               side: BorderSide(
-                color: isSelected ? Colors.blueAccent : Colors.white.withValues(alpha: 0.1),
+                color: isSelected ? const Color(0xFF3B82F6) : Colors.white.withValues(alpha: 0.06),
               ),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             ),
@@ -283,7 +282,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Row(
         children: [
@@ -323,8 +322,8 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
                 _searchController.clear();
                 _searchQuery = '';
               },
-              icon: const Icon(Icons.clear, size: 16, color: Colors.redAccent),
-              label: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
+              icon: const Icon(Icons.clear, size: 16, color: Color(0xFFEF4444)),
+              label: const Text('Clear', style: TextStyle(color: Color(0xFFEF4444))),
             ),
           ],
         ],
@@ -338,7 +337,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -364,13 +363,8 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
   // DATA TABLE
   // ===================================
   Widget _buildTableCard(AsyncValue<Map<String, dynamic>> usersAsync) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
       child: usersAsync.when(
         loading: () => const Padding(
           padding: EdgeInsets.all(40),
@@ -378,7 +372,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
         ),
         error: (error, __) => Padding(
           padding: const EdgeInsets.all(40),
-          child: Center(child: Text('Error: $error', style: const TextStyle(color: Colors.red))),
+          child: Center(child: Text('Error: $error', style: const TextStyle(color: Color(0xFFEF4444)))),
         ),
         data: (data) {
           final usersJson = data['items'] as List<dynamic>? ?? [];
@@ -399,141 +393,86 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
             );
           }
 
-          return Theme(
-            data: Theme.of(context).copyWith(
-              dividerColor: Colors.white.withValues(alpha: 0.05),
-              dataTableTheme: DataTableThemeData(
-                headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.02)),
-                dataRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
-                  if (states.contains(WidgetState.hovered)) return Colors.white.withValues(alpha: 0.02);
-                  return null; // Use default value for other states
-                }),
-              ),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columnSpacing: 24,
-                headingTextStyle: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 13),
-                dataTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                columns: const [
-                  DataColumn(label: Text('User ID')),
-                  DataColumn(label: Text('Full Name')),
-                  DataColumn(label: Text('Email')),
-                  DataColumn(label: Text('Role')),
-                  DataColumn(label: Text('Station / Region')),
-                  DataColumn(label: Text('Status')),
-                  DataColumn(label: Text('Last Login')),
-                  DataColumn(label: Text('Actions')),
-                ],
-                rows: users.map((user) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(user.id.padRight(8).substring(0, 8).trim().toUpperCase(), style: const TextStyle(color: Colors.white54, fontFamily: 'monospace'))),
-                      DataCell(
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 12,
-                              backgroundColor: Colors.blue.withValues(alpha: 0.2),
-                              backgroundImage: user.profilePhotoUrl != null ? NetworkImage(user.profilePhotoUrl!) : null,
-                              child: user.profilePhotoUrl == null
-                                  ? Text(user.fullName[0].toUpperCase(), style: const TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.bold))
-                                  : null,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(user.fullName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                          ],
-                        ),
+          return AdvancedTable(
+            columns: const ['User ID', 'Full Name', 'Email', 'Role', 'Station / Region', 'Status', 'Last Login', 'Actions'],
+            rows: users.map((user) {
+              return [
+                Text(user.id.padRight(8).substring(0, 8).trim().toUpperCase(), style: const TextStyle(color: Colors.white54, fontFamily: 'monospace', fontSize: 12)),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                      backgroundImage: user.profilePhotoUrl != null ? NetworkImage(user.profilePhotoUrl!) : null,
+                      child: user.profilePhotoUrl == null
+                          ? Text(user.fullName[0].toUpperCase(), style: const TextStyle(color: Color(0xFF3B82F6), fontSize: 11, fontWeight: FontWeight.bold))
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(user.fullName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500))),
+                  ],
+                ),
+                Text(user.email, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                _buildRoleBadge(user.roleName),
+                Text(user.assignedStationName ?? 'Global', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                StatusBadge(status: user.status.name),
+                Text(DateFormat('MMM dd, yyyy HH:mm').format(user.lastLogin), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF3B82F6)),
+                      tooltip: 'Edit User',
+                      onPressed: () => context.go('/user-master/edit?id=${user.id}'),
+                    ),
+                    if (user.status == UserStatus.active)
+                      IconButton(
+                        icon: const Icon(Icons.block_outlined, size: 18, color: Color(0xFFF59E0B)),
+                        tooltip: 'Suspend Account',
+                        onPressed: () {
+                          // Suspend logic
+                        },
                       ),
-                      DataCell(Text(user.email, style: const TextStyle(color: Colors.white70))),
-                      DataCell(_buildRoleBadge(user.roleName)),
-                      DataCell(Text(user.assignedStationName ?? 'Global', style: const TextStyle(color: Colors.white54))),
-                      DataCell(_buildStatusBadge(user.status)),
-                      DataCell(Text(DateFormat('MMM dd, yyyy HH:mm').format(user.lastLogin), style: const TextStyle(color: Colors.white54))),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue),
-                              tooltip: 'Edit User',
-                              onPressed: () => context.go('/user-master/edit?id=${user.id}'),
-                            ),
-                            if (user.status == UserStatus.active)
-                              IconButton(
-                                icon: const Icon(Icons.block_outlined, size: 18, color: Colors.orange),
-                                tooltip: 'Suspend Account',
-                                onPressed: () {
-                                  // Suspend logic
-                                },
-                              ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                              tooltip: 'Delete User',
-                              onPressed: () {
-                                // Delete logic
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 18, color: Color(0xFFEF4444)),
+                      tooltip: 'Delete User',
+                      onPressed: () {
+                        // Delete logic
+                      },
+                    ),
+                  ],
+                ),
+              ];
+            }).toList(),
           );
         },
       ),
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
   }
 
-  Widget _buildStatusBadge(UserStatus status) {
-    Color color;
-    switch (status) {
-      case UserStatus.active: color = Colors.green; break;
-      case UserStatus.inactive: color = Colors.grey; break;
-      case UserStatus.suspended: color = Colors.red; break;
-      case UserStatus.pending: color = Colors.orange; break;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        status.name.toUpperCase(),
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
   Widget _buildRoleBadge(String roleName) {
     Color color;
     if (roleName.contains('Admin')) {
-      color = Colors.redAccent;
+      color = const Color(0xFF8B5CF6);
     } else if (roleName.contains('Manager')) {
-      color = Colors.blueAccent;
+      color = const Color(0xFF3B82F6);
     } else if (roleName.contains('Dealer')) {
-      color = Colors.greenAccent;
+      color = const Color(0xFF22C55E);
     } else if (roleName.contains('Support')) {
-      color = Colors.orangeAccent;
+      color = const Color(0xFFF59E0B);
     } else {
       color = Colors.grey;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         roleName,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/notification_models.dart';
 import '../data/repositories/notification_repository.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 class NotificationLogsView extends StatefulWidget {
   const NotificationLogsView({super.key});
@@ -35,17 +37,17 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('Notification Logs', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-      const SizedBox(height: 4),
-      Text('Delivery audit trail for all notifications', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-      const SizedBox(height: 24),
+      PageHeader(
+        title: 'Notification Logs',
+        subtitle: 'Delivery audit trail for all notifications',
+      ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
       if (_stats.isNotEmpty) _buildStatsRow(),
       const SizedBox(height: 24),
       Row(children: [
         _buildFilter('Channel', _filterChannel, ['push', 'sms', 'email'], (v) { setState(() => _filterChannel = v); _loadData(); }),
         const SizedBox(width: 12),
         _buildFilter('Status', _filterStatus, ['sent', 'delivered', 'opened', 'failed'], (v) { setState(() => _filterStatus = v); _loadData(); }),
-      ]),
+      ]).animate().fadeIn(duration: 400.ms, delay: 100.ms),
       const SizedBox(height: 16),
       _isLoading ? const Center(child: CircularProgressIndicator()) : _buildLogsTable(),
     ]));
@@ -54,27 +56,33 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
   Widget _buildStatsRow() {
     return Wrap(spacing: 16, runSpacing: 16, children: [
       _statCard('Total', '${_stats['total'] ?? 0}', Icons.notifications, const Color(0xFF3B82F6)),
-      _statCard('Delivered', '${_stats['delivered'] ?? 0}', Icons.check_circle, const Color(0xFF10B981)),
+      _statCard('Delivered', '${_stats['delivered'] ?? 0}', Icons.check_circle, const Color(0xFF22C55E)),
       _statCard('Opened', '${_stats['opened'] ?? 0}', Icons.visibility, const Color(0xFF8B5CF6)),
       _statCard('Failed', '${_stats['failed'] ?? 0}', Icons.error, const Color(0xFFEF4444)),
-      _statCard('Delivery Rate', '${(_stats['delivery_rate'] as num?)?.toStringAsFixed(1) ?? 0}%', Icons.speed, const Color(0xFF10B981)),
+      _statCard('Delivery Rate', '${(_stats['delivery_rate'] as num?)?.toStringAsFixed(1) ?? 0}%', Icons.speed, const Color(0xFF22C55E)),
       _statCard('Open Rate', '${(_stats['open_rate'] as num?)?.toStringAsFixed(1) ?? 0}%', Icons.trending_up, const Color(0xFF8B5CF6)),
-    ]);
+    ]).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05);
   }
 
   Widget _statCard(String title, String value, IconData icon, Color color) {
-    return Container(width: 160, padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.15))),
+    return AdvancedCard(
+      width: 160,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, color: color, size: 18), const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, color: color, size: 18),
+        ),
+        const SizedBox(height: 8),
         Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
         Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
-      ]));
+      ]),
+    );
   }
 
   Widget _buildFilter(String label, String? value, List<String> items, Function(String?) onChanged) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
         value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
         dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -83,41 +91,27 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
   }
 
   Widget _buildLogsTable() {
-    return Container(
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
-      child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
-        showCheckboxColumn: false,
-        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.03)),
-        columns: const [
-          DataColumn(label: Text('Title', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('User', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Channel', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Status', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Sent At', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Delivered', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Opened', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Error', style: TextStyle(color: Colors.white70))),
-        ],
-        rows: _logs.map((l) {
-          final statusColor = l.status == 'delivered' ? Colors.green : l.status == 'opened' ? Colors.purple : l.status == 'failed' ? Colors.red : Colors.blue;
-          final channelColor = l.channel == 'push' ? Colors.blue : l.channel == 'sms' ? Colors.green : Colors.orange;
-          return DataRow(
-            onSelectChanged: (_) => _showLogDetails(l),
-            cells: [
-            DataCell(SizedBox(width: 150, child: Text(l.title, style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis))),
-            DataCell(Text(l.userId != null ? 'User #${l.userId}' : '—', style: const TextStyle(color: Colors.white54, fontSize: 12))),
-            DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: channelColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text(l.channel.toUpperCase(), style: TextStyle(color: channelColor, fontSize: 10, fontWeight: FontWeight.bold)))),
-            DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text(l.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)))),
-            DataCell(Text(_formatTs(l.sentAt), style: const TextStyle(color: Colors.white54, fontSize: 12))),
-            DataCell(Text(l.deliveredAt != null ? '✓' : '—', style: TextStyle(color: l.deliveredAt != null ? Colors.green : Colors.white24))),
-            DataCell(Text(l.openedAt != null ? '✓' : '—', style: TextStyle(color: l.openedAt != null ? Colors.purple : Colors.white24))),
-            DataCell(SizedBox(width: 120, child: Text(l.errorMessage ?? '—', style: TextStyle(color: l.errorMessage != null ? Colors.red : Colors.white24, fontSize: 11), overflow: TextOverflow.ellipsis))),
-          ]);
-        }).toList())));
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
+      child: _logs.isEmpty
+          ? const SizedBox(height: 300, child: Center(child: Text('No notification logs found.', style: TextStyle(color: Colors.white54))))
+          : AdvancedTable(
+              columns: const ['Title', 'User', 'Channel', 'Status', 'Sent At', 'Delivered', 'Opened', 'Error'],
+              rows: _logs.map((l) {
+                return [
+                  Text(l.title, style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis),
+                  Text(l.userId != null ? 'User #${l.userId}' : '—', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  StatusBadge(status: l.channel),
+                  StatusBadge(status: l.status == 'delivered' ? 'Completed' : l.status == 'failed' ? 'Failed' : l.status == 'opened' ? 'Active' : 'Pending'),
+                  Text(_formatTs(l.sentAt), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text(l.deliveredAt != null ? '✓' : '—', style: TextStyle(color: l.deliveredAt != null ? const Color(0xFF22C55E) : Colors.white24)),
+                  Text(l.openedAt != null ? '✓' : '—', style: TextStyle(color: l.openedAt != null ? const Color(0xFF8B5CF6) : Colors.white24)),
+                  Text(l.errorMessage ?? '—', style: TextStyle(color: l.errorMessage != null ? const Color(0xFFEF4444) : Colors.white24, fontSize: 11), overflow: TextOverflow.ellipsis),
+                ];
+              }).toList(),
+              onRowTap: (i) => _showLogDetails(_logs[i]),
+            ),
+    ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05);
   }
 
   String _formatTs(String ts) {
@@ -130,7 +124,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
       child: Container(width: 600, decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Padding(padding: const EdgeInsets.all(24), child: Row(children: [
-            Icon(l.channel == 'push' ? Icons.notification_important : l.channel == 'sms' ? Icons.sms : Icons.email, color: Colors.blue),
+            Icon(l.channel == 'push' ? Icons.notification_important : l.channel == 'sms' ? Icons.sms : Icons.email, color: const Color(0xFF3B82F6)),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Log Payload Inspector', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
@@ -138,16 +132,16 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
             ])),
             IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(ctx)),
           ])),
-          Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+          Divider(color: Colors.white.withValues(alpha: 0.06), height: 1),
           Flexible(child: SingleChildScrollView(padding: const EdgeInsets.all(32), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _detailRow('Status', l.status.toUpperCase(), isPill: true, pillColor: l.status == 'delivered' ? Colors.green : l.status == 'failed' ? Colors.red : l.status == 'opened' ? Colors.purple : Colors.blue),
+            _detailRow('Status', l.status.toUpperCase(), isPill: true, pillColor: l.status == 'delivered' ? const Color(0xFF22C55E) : l.status == 'failed' ? const Color(0xFFEF4444) : l.status == 'opened' ? const Color(0xFF8B5CF6) : const Color(0xFF3B82F6)),
             _detailRow('Recipient User ID', l.userId?.toString() ?? 'SYSTEM BROADCAST'),
             _detailRow('Message Title', l.title),
             _detailRow('Message Body / Template', l.message),
             const SizedBox(height: 16),
             Text('Timestamps', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(12)),
               child: Column(children: [
                 _tsRow('Dispatched', l.sentAt),
                 _tsRow('Delivered to Device', l.deliveredAt),
@@ -155,16 +149,16 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
               ])),
             if (l.errorMessage != null) ...[
               const SizedBox(height: 24),
-              Text('Failure Reason', style: GoogleFonts.inter(color: Colors.red.withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Failure Reason', style: GoogleFonts.inter(color: const Color(0xFFEF4444).withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.red.withValues(alpha: 0.2))),
-                child: Text(l.errorMessage!, style: GoogleFonts.robotoMono(color: Colors.red, fontSize: 12))),
+              Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.2))),
+                child: Text(l.errorMessage!, style: GoogleFonts.robotoMono(color: const Color(0xFFEF4444), fontSize: 12))),
             ],
             const SizedBox(height: 24),
             Text('Raw Metadata JSON', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white12)),
-              child: Text('{\n  "payload": {\n    "routing": "${l.channel}",\n    "target_id": ${l.userId},\n    "priority": "high"\n  }\n}', style: GoogleFonts.robotoMono(color: Colors.green.shade300, fontSize: 12))),
+            Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
+              child: Text('{\n  "payload": {\n    "routing": "${l.channel}",\n    "target_id": ${l.userId},\n    "priority": "high"\n  }\n}', style: GoogleFonts.robotoMono(color: const Color(0xFF22C55E), fontSize: 12))),
           ]))),
         ]),
       )
@@ -174,11 +168,11 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
   Widget _tsRow(String label, String? ts) {
     return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
       Expanded(child: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12))),
-      Text(ts ?? 'Pending', style: GoogleFonts.robotoMono(color: ts == null ? Colors.amber : Colors.white, fontSize: 12)),
+      Text(ts ?? 'Pending', style: GoogleFonts.robotoMono(color: ts == null ? const Color(0xFFF59E0B) : Colors.white, fontSize: 12)),
     ]));
   }
 
-  Widget _detailRow(String label, String val, {bool isPill = false, Color pillColor = Colors.blue}) {
+  Widget _detailRow(String label, String val, {bool isPill = false, Color pillColor = const Color(0xFF3B82F6)}) {
     return Padding(padding: const EdgeInsets.only(bottom: 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
       const SizedBox(height: 4),
@@ -187,4 +181,3 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
     ]));
   }
 }
-

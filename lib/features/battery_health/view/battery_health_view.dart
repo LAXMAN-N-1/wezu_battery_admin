@@ -9,6 +9,7 @@ import '../data/repositories/health_repository.dart';
 import '../widgets/health_detail_drawer.dart';
 import '../widgets/record_reading_modal.dart';
 import '../widgets/schedule_maintenance_modal.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 // ==================================================================
 // Providers
@@ -1206,37 +1207,12 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(const Color(0xFF0F172A)),
-            headingRowHeight: 48,
-            dataRowMinHeight: 64,
-            dataRowMaxHeight: 72,
-            columnSpacing: 24,
-            horizontalMargin: 20,
-            columns: [
-              DataColumn(label: Text('Battery Serial', style: _headerStyle())),
-              DataColumn(label: Text('Health Score', style: _headerStyle())),
-              DataColumn(label: Text('Health Bar', style: _headerStyle())),
-              DataColumn(label: Text('Degradation', style: _headerStyle())),
-              DataColumn(label: Text('Last Reading', style: _headerStyle())),
-              DataColumn(label: Text('Voltage / Temp', style: _headerStyle())),
-              DataColumn(label: Text('Status', style: _headerStyle())),
-              DataColumn(label: Text('Maintenance', style: _headerStyle())),
-              DataColumn(label: Text('Actions', style: _headerStyle())),
-            ],
-            rows: batteries.map((b) => _buildBatteryRow(b)).toList(),
-          ),
-        ),
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
+      child: AdvancedTable(
+        columns: const ['Battery Serial', 'Health Score', 'Health Bar', 'Degradation', 'Last Reading', 'Voltage / Temp', 'Status', 'Maintenance', 'Actions'],
+        rows: batteries.map((b) => _buildBatteryRow(b)).toList(),
+        onRowTap: (i) => _openDrawer(batteries[i].id),
       ),
     ).animate().fadeIn(duration: 400.ms);
   }
@@ -1248,296 +1224,123 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     letterSpacing: 0.5,
   );
 
-  DataRow _buildBatteryRow(HealthBattery b) {
+  List<Widget> _buildBatteryRow(HealthBattery b) {
     final healthColor = b.healthPercentage > 80
         ? const Color(0xFF10B981)
         : b.healthPercentage > 50
         ? const Color(0xFFF59E0B)
         : const Color(0xFFEF4444);
 
-    final isCritical = b.healthPercentage <= 30;
-    final isDegrading = b.degradationRate > 3;
-
-    return DataRow(
-      color: WidgetStateProperty.all(
-        isCritical
-            ? const Color(0xFFEF4444).withValues(alpha: 0.04)
-            : isDegrading
-            ? const Color(0xFFF59E0B).withValues(alpha: 0.03)
-            : Colors.transparent,
+    return [
+      // Serial
+      InkWell(
+        onTap: () => _openDrawer(b.id),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.qr_code_rounded, color: Colors.white24, size: 14),
+                const SizedBox(width: 6),
+                Text(b.serialNumber, style: GoogleFonts.jetBrainsMono(color: const Color(0xFF3B82F6), fontSize: 13, fontWeight: FontWeight.w500)),
+              ],
+            ),
+            if (b.manufacturer != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 20),
+                child: Text(b.manufacturer!, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
+              ),
+          ],
+        ),
       ),
-      cells: [
-        // Serial
-        DataCell(
-          InkWell(
-            onTap: () => _openDrawer(b.id),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.qr_code_rounded,
-                      color: Colors.white24,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      b.serialNumber,
-                      style: GoogleFonts.jetBrainsMono(
-                        color: const Color(0xFF3B82F6),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                if (b.manufacturer != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: Text(
-                      b.manufacturer!,
-                      style: GoogleFonts.inter(
-                        color: Colors.white24,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
 
-        // Health Score with mini gauge
-        DataCell(
-          Row(
-            children: [
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      value: b.healthPercentage / 100,
-                      strokeWidth: 3,
-                      backgroundColor: healthColor.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation(healthColor),
-                    ),
-                    Text(
-                      '${b.healthPercentage.toInt()}',
-                      style: GoogleFonts.inter(
-                        color: healthColor,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${b.healthPercentage.toStringAsFixed(1)}%',
-                style: GoogleFonts.outfit(
-                  color: healthColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Health Bar
-        DataCell(
+      // Health Score with mini gauge
+      Row(
+        children: [
           SizedBox(
-            width: 120,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(5),
-                  child: LinearProgressIndicator(
-                    value: b.healthPercentage / 100,
-                    minHeight: 8,
-                    backgroundColor: Colors.white.withValues(alpha: 0.06),
-                    valueColor: AlwaysStoppedAnimation(healthColor),
-                  ),
-                ),
-              ],
-            ),
+            width: 36, height: 36,
+            child: Stack(alignment: Alignment.center, children: [
+              CircularProgressIndicator(value: b.healthPercentage / 100, strokeWidth: 3, backgroundColor: healthColor.withValues(alpha: 0.1), valueColor: AlwaysStoppedAnimation(healthColor)),
+              Text('${b.healthPercentage.toInt()}', style: GoogleFonts.inter(color: healthColor, fontSize: 9, fontWeight: FontWeight.bold)),
+            ]),
           ),
-        ),
+          const SizedBox(width: 8),
+          Text('${b.healthPercentage.toStringAsFixed(1)}%', style: GoogleFonts.outfit(color: healthColor, fontSize: 15, fontWeight: FontWeight.bold)),
+        ],
+      ),
 
-        // Degradation Rate
-        DataCell(
-          Row(
-            children: [
-              Icon(
-                b.degradationRate > 0
-                    ? Icons.trending_down_rounded
-                    : Icons.trending_flat_rounded,
-                color: b.degradationRate > 3
-                    ? const Color(0xFFEF4444)
-                    : b.degradationRate > 1
-                    ? const Color(0xFFF59E0B)
-                    : const Color(0xFF10B981),
-                size: 16,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                b.degradationRate > 0 ? '${b.degradationRate}%/mo' : 'Stable',
-                style: GoogleFonts.inter(
-                  color: b.degradationRate > 3
-                      ? const Color(0xFFEF4444)
-                      : b.degradationRate > 1
-                      ? const Color(0xFFF59E0B)
-                      : const Color(0xFF10B981),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+      // Health Bar
+      SizedBox(
+        width: 120,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: LinearProgressIndicator(value: b.healthPercentage / 100, minHeight: 8, backgroundColor: Colors.white.withValues(alpha: 0.06), valueColor: AlwaysStoppedAnimation(healthColor)),
+        ),
+      ),
+
+      // Degradation Rate
+      Row(
+        children: [
+          Icon(
+            b.degradationRate > 0 ? Icons.trending_down_rounded : Icons.trending_flat_rounded,
+            color: b.degradationRate > 3 ? const Color(0xFFEF4444) : b.degradationRate > 1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+            size: 16,
           ),
-        ),
-
-        // Last Reading
-        DataCell(
+          const SizedBox(width: 4),
           Text(
-            b.lastReadingAt != null
-                ? _formatRelativeDate(b.lastReadingAt!)
-                : 'No readings',
-            style: GoogleFonts.inter(
-              color: b.lastReadingAt == null
-                  ? const Color(0xFFEF4444).withValues(alpha: 0.7)
-                  : Colors.white54,
-              fontSize: 12,
-            ),
+            b.degradationRate > 0 ? '${b.degradationRate}%/mo' : 'Stable',
+            style: GoogleFonts.inter(color: b.degradationRate > 3 ? const Color(0xFFEF4444) : b.degradationRate > 1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600),
           ),
-        ),
+        ],
+      ),
 
-        // Voltage / Temp
-        DataCell(
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.bolt_rounded,
-                    color: Colors.amber.withValues(alpha: 0.6),
-                    size: 13,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    b.voltage != null
-                        ? '${b.voltage!.toStringAsFixed(1)}V'
-                        : '--',
-                    style: GoogleFonts.inter(
-                      color: Colors.white54,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  Icon(
-                    Icons.thermostat_rounded,
-                    color: (b.temperature ?? 0) > 45
-                        ? const Color(0xFFEF4444)
-                        : Colors.cyan.withValues(alpha: 0.6),
-                    size: 13,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    b.temperature != null
-                        ? '${b.temperature!.toStringAsFixed(1)}°C'
-                        : '--',
-                    style: GoogleFonts.inter(
-                      color: (b.temperature ?? 0) > 45
-                          ? const Color(0xFFEF4444)
-                          : Colors.white54,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+      // Last Reading
+      Text(
+        b.lastReadingAt != null ? _formatRelativeDate(b.lastReadingAt!) : 'No readings',
+        style: GoogleFonts.inter(color: b.lastReadingAt == null ? const Color(0xFFEF4444).withValues(alpha: 0.7) : Colors.white54, fontSize: 12),
+      ),
+
+      // Voltage / Temp
+      Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.bolt_rounded, color: Colors.amber.withValues(alpha: 0.6), size: 13),
+            const SizedBox(width: 3),
+            Text(b.voltage != null ? '${b.voltage!.toStringAsFixed(1)}V' : '--', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+          ]),
+          const SizedBox(height: 2),
+          Row(children: [
+            Icon(Icons.thermostat_rounded, color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.cyan.withValues(alpha: 0.6), size: 13),
+            const SizedBox(width: 3),
+            Text(b.temperature != null ? '${b.temperature!.toStringAsFixed(1)}°C' : '--', style: GoogleFonts.inter(color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.white54, fontSize: 11)),
+          ]),
+        ],
+      ),
+
+      // Status
+      StatusBadge(status: b.healthStatus),
+
+      // Maintenance
+      _buildMaintenanceCell(b),
+
+      // Actions
+      Row(
+        children: [
+          IconButton(onPressed: () => _openDrawer(b.id), icon: const Icon(Icons.info_outline_rounded, size: 18), color: Colors.white38, tooltip: 'View health profile'),
+          IconButton(
+            onPressed: () { showDialog(context: context, builder: (_) => ScheduleMaintenanceModal(batteryId: b.id, batterySerial: b.serialNumber, onSuccess: _refresh)); },
+            icon: const Icon(Icons.calendar_month_rounded, size: 18), color: Colors.white38, tooltip: 'Schedule maintenance',
           ),
-        ),
-
-        // Status Chip
-        DataCell(
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: healthColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              b.healthStatus.toUpperCase(),
-              style: GoogleFonts.inter(
-                color: healthColor,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
-            ),
+          IconButton(
+            onPressed: () { showDialog(context: context, builder: (_) => RecordReadingModal(batteryId: b.id, batterySerial: b.serialNumber, onSuccess: _refresh)); },
+            icon: const Icon(Icons.bar_chart_rounded, size: 18), color: Colors.white38, tooltip: 'Record reading',
           ),
-        ),
-
-        // Maintenance
-        DataCell(_buildMaintenanceCell(b)),
-
-        // Actions
-        DataCell(
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => _openDrawer(b.id),
-                icon: const Icon(Icons.info_outline_rounded, size: 18),
-                color: Colors.white38,
-                tooltip: 'View health profile',
-              ),
-              IconButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => ScheduleMaintenanceModal(
-                      batteryId: b.id,
-                      batterySerial: b.serialNumber,
-                      onSuccess: _refresh,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                color: Colors.white38,
-                tooltip: 'Schedule maintenance',
-              ),
-              IconButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => RecordReadingModal(
-                      batteryId: b.id,
-                      batterySerial: b.serialNumber,
-                      onSuccess: _refresh,
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.bar_chart_rounded, size: 18),
-                color: Colors.white38,
-                tooltip: 'Record reading',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+        ],
+      ),
+    ];
   }
 
   Widget _buildMaintenanceCell(HealthBattery b) {

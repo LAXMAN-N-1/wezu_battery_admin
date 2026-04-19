@@ -6,6 +6,7 @@ class User {
   final String role; // 'admin', 'customer', 'driver', 'dealer', 'supervisor', 'support'
   final String kycStatus; // 'verified', 'pending', 'rejected', 'not_submitted'
   final bool isActive;
+  final String backendStatus; // 'active', 'suspended', 'deleted', 'pending_verification'
   final DateTime joinedAt;
   final DateTime lastActive;
   final String? profileImageUrl;
@@ -29,7 +30,11 @@ class User {
     return 'low';
   }
 
+  /// Derives suspension status from the backend `status` field first,
+  /// then falls back to `isActive` + `suspensionReason`.
   String get suspensionStatus {
+    if (backendStatus == 'suspended') return 'suspended';
+    if (backendStatus == 'deleted') return 'deleted';
     if (isActive) return 'active';
     if (suspensionReason != null) return 'suspended';
     return 'inactive';
@@ -43,6 +48,7 @@ class User {
     required this.role,
     required this.kycStatus,
     required this.isActive,
+    this.backendStatus = 'active',
     required this.joinedAt,
     required this.lastActive,
     this.profileImageUrl,
@@ -76,6 +82,12 @@ class User {
   }
 
   factory User.fromJson(Map<String, dynamic> json) {
+    // Backend sends 'deletion_reason' for suspension reason (field reuse)
+    final suspensionReason = json['suspension_reason']
+        ?? json['deletion_reason'];
+    // Backend sends 'status' as the canonical state enum
+    final rawStatus = (json['status'] ?? 'active').toString().toLowerCase();
+
     return User(
       id: json['id'] as int,
       fullName: json['full_name'] ?? 'Unknown User',
@@ -84,6 +96,7 @@ class User {
       role: _parseRole(json),
       kycStatus: json['kyc_status'] ?? 'not_submitted',
       isActive: json['is_active'] ?? true,
+      backendStatus: rawStatus,
       joinedAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
@@ -92,7 +105,7 @@ class User {
           : (json['last_active'] != null ? DateTime.parse(json['last_active']) : DateTime.now()),
       profileImageUrl: json['profile_picture'] ?? json['profile_image_url'],
       address: json['address'],
-      suspensionReason: json['suspension_reason'],
+      suspensionReason: suspensionReason,
       suspendedAt: json['suspended_at'] != null ? DateTime.parse(json['suspended_at']) : null,
       suspendedUntil: json['suspended_until'] != null ? DateTime.parse(json['suspended_until']) : null,
       invitedBy: json['invited_by'],
@@ -113,6 +126,7 @@ class User {
       'role': role,
       'kyc_status': kycStatus,
       'is_active': isActive,
+      'status': backendStatus,
       'created_at': joinedAt.toIso8601String(),
       'last_active': lastActive.toIso8601String(),
       'profile_image_url': profileImageUrl,
@@ -137,6 +151,7 @@ class User {
     String? role,
     String? kycStatus,
     bool? isActive,
+    String? backendStatus,
     DateTime? joinedAt,
     DateTime? lastActive,
     String? profileImageUrl,
@@ -159,6 +174,7 @@ class User {
       role: role ?? this.role,
       kycStatus: kycStatus ?? this.kycStatus,
       isActive: isActive ?? this.isActive,
+      backendStatus: backendStatus ?? this.backendStatus,
       joinedAt: joinedAt ?? this.joinedAt,
       lastActive: lastActive ?? this.lastActive,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,

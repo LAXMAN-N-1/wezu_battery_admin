@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/role.dart';
 import '../data/repositories/role_repository.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 class RolesPermissionsView extends StatefulWidget {
   const RolesPermissionsView({super.key});
@@ -48,71 +50,51 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
         // Header
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text(
-                'Roles & Permissions',
-                style: GoogleFonts.outfit(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          child: PageHeader(
+            title: 'Roles & Permissions',
+            subtitle: 'Manage system roles and their access levels',
+            actionButton: ElevatedButton.icon(
+              onPressed: () => _showCreateRoleDialog(),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                'Create Role',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
               ),
-
-              ElevatedButton.icon(
-                onPressed: () => _showCreateRoleDialog(),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'Create Role',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3B82F6),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-            ],
+            ),
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
         const SizedBox(height: 16),
 
         // Tabs
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: const Color(0xFF1E293B),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
           ),
           child: TabBar(
             controller: _tabController,
             indicator: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.15),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            labelColor: Colors.blue,
+            labelColor: const Color(0xFF3B82F6),
             unselectedLabelColor: Colors.white54,
-            labelStyle: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
+            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
             tabs: const [
               Tab(text: 'Roles'),
               Tab(text: 'Permission Matrix'),
               Tab(text: 'Audit Log'),
             ],
           ),
-        ),
+        ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
         const SizedBox(height: 16),
 
         Expanded(
@@ -137,14 +119,9 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
       itemCount: _roles.length,
       itemBuilder: (context, index) {
         final role = _roles[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: AdvancedCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -154,7 +131,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: _roleColor(role.name).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.shield_outlined,
@@ -180,20 +157,19 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                             if (role.isSystem) ...[
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
                                 ),
                                 child: Text(
                                   'SYSTEM',
                                   style: GoogleFonts.inter(
-                                    color: Colors.blue,
+                                    color: const Color(0xFF3B82F6),
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ),
@@ -202,20 +178,14 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                         ),
                         Text(
                           role.description,
-                          style: GoogleFonts.inter(
-                            color: Colors.white54,
-                            fontSize: 13,
-                          ),
+                          style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
                   Text(
                     '${role.permissions.length} permissions',
-                    style: GoogleFonts.inter(
-                      color: Colors.white38,
-                      fontSize: 12,
-                    ),
+                    style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
                   ),
                   const SizedBox(width: 12),
                   Switch(
@@ -224,16 +194,12 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                       await _repository.updateRole(role.copyWith(isActive: v));
                       _loadData();
                     },
-                    activeThumbColor: Colors.blue,
+                    activeThumbColor: const Color(0xFF3B82F6),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => _showEditRoleDialog(role),
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      color: Colors.blue,
-                      size: 18,
-                    ),
+                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF3B82F6), size: 18),
                   ),
                 ],
               ),
@@ -244,38 +210,31 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                 children:
                     role.permissions.take(8).map((p) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(6),
+                          color: Colors.white.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                         ),
                         child: Text(
                           p is Map ? p['name'] : p.toString(),
-                          style: GoogleFonts.firaCode(
-                            color: Colors.white54,
-                            fontSize: 10,
-                          ),
+                          style: GoogleFonts.firaCode(color: Colors.white54, fontSize: 10),
                         ),
                       );
                     }).toList()..addAll(
                       role.permissions.length > 8
                           ? [
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.2)),
                                 ),
                                 child: Text(
                                   '+${role.permissions.length - 8} more',
                                   style: GoogleFonts.inter(
-                                    color: Colors.blue,
+                                    color: const Color(0xFF3B82F6),
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -287,7 +246,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
               ),
             ],
           ),
-        );
+        ),
+        ).animate(delay: (index * 50).ms).fadeIn(duration: 300.ms).slideX(begin: 0.05);
       },
     );
   }
@@ -297,135 +257,107 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
-        children: categories.map((category) {
+        children: categories.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final category = entry.value;
           final perms = _repository.getPermissionsByCategory(category);
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-            ),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: AdvancedCard(
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Text(
                     category,
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
+                Divider(color: Colors.white.withValues(alpha: 0.04), height: 1),
+                // Custom grid matching AdvancedTable style
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(
-                        Colors.white.withValues(alpha: 0.03),
-                      ),
-                      columns: [
-                        DataColumn(
-                          label: SizedBox(
-                            width: 160,
-                            child: Text(
-                              'Permission',
-                              style: GoogleFonts.inter(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
+                  child: Column(
+                    children: [
+                      // Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.03),
                         ),
-                        ..._roles.map(
-                          (r) => DataColumn(
-                            label: SizedBox(
-                              width: 80,
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 180,
+                              child: Text('PERMISSION', style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                            ),
+                            ..._roles.map((r) => SizedBox(
+                              width: 90,
                               child: Text(
                                 r.name,
-                                style: GoogleFonts.inter(
-                                  color: _roleColor(r.name),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: GoogleFonts.inter(color: _roleColor(r.name), fontSize: 11, fontWeight: FontWeight.w600),
                                 textAlign: TextAlign.center,
                               ),
-                            ),
-                          ),
+                            )),
+                          ],
                         ),
-                      ],
-                      rows: perms.map((perm) {
-                        return DataRow(
-                          cells: [
-                            DataCell(
+                      ),
+                      // Rows
+                      ...perms.asMap().entries.map((permEntry) {
+                        final perm = permEntry.value;
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            border: permEntry.key < perms.length - 1
+                                ? Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.04)))
+                                : null,
+                          ),
+                          child: Row(
+                            children: [
                               SizedBox(
-                                width: 160,
+                                width: 180,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      perm.name,
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      perm.description,
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white38,
-                                        fontSize: 10,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                    Text(perm.name, style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                                    Text(perm.description, style: GoogleFonts.inter(color: Colors.white38, fontSize: 10), overflow: TextOverflow.ellipsis),
                                   ],
                                 ),
                               ),
-                            ),
-                            ..._roles.map((role) {
-                              bool hasPermission = false;
-                              for (var p in role.permissions) {
-                                if (p is int && p == perm.id) {
-                                  hasPermission = true;
+                              ..._roles.map((role) {
+                                bool hasPermission = false;
+                                for (var p in role.permissions) {
+                                  if (p is int && p == perm.id) hasPermission = true;
+                                  if (p is Map && p['id'] == perm.id) hasPermission = true;
                                 }
-                                if (p is Map && p['id'] == perm.id) {
-                                  hasPermission = true;
-                                }
-                              }
-                              return DataCell(
-                                Center(
-                                  child: Checkbox(
-                                    value: hasPermission,
-                                    onChanged: (v) async {
-                                      await _repository.togglePermission(
-                                        role,
-                                        perm.id,
-                                      );
-                                      _loadData();
-                                    },
-                                    activeColor: Colors.green,
-                                    side: const BorderSide(
-                                      color: Colors.white24,
+                                return SizedBox(
+                                  width: 90,
+                                  child: Center(
+                                    child: Checkbox(
+                                      value: hasPermission,
+                                      onChanged: (v) async {
+                                        await _repository.togglePermission(role, perm.id);
+                                        _loadData();
+                                      },
+                                      activeColor: const Color(0xFF22C55E),
+                                      side: const BorderSide(color: Colors.white24),
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          ],
+                                );
+                              }),
+                            ],
+                          ),
                         );
-                      }).toList(),
-                    ),
+                      }),
+                    ],
                   ),
                 ),
               ],
             ),
-          );
+          ),
+          ).animate(delay: (idx * 80).ms).fadeIn(duration: 300.ms).slideY(begin: 0.05);
         }).toList(),
       ),
     );
@@ -438,28 +370,28 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
         'action': 'Removed finance.manage from Supervisor',
         'time': '8 hours ago',
         'icon': Icons.remove_circle_outline,
-        'color': Colors.red,
+        'color': const Color(0xFFEF4444),
       },
       {
         'admin': 'Murari Varma',
         'action': 'Added kyc.approve to Support role',
         'time': '2 days ago',
         'icon': Icons.add_circle_outline,
-        'color': Colors.green,
+        'color': const Color(0xFF22C55E),
       },
       {
         'admin': 'System',
         'action': 'Created custom role "Auditor"',
         'time': '5 days ago',
         'icon': Icons.add,
-        'color': Colors.blue,
+        'color': const Color(0xFF3B82F6),
       },
       {
         'admin': 'Deepak Verma',
         'action': 'Toggled users.suspend for Supervisor role',
         'time': '1 week ago',
         'icon': Icons.swap_horiz,
-        'color': Colors.amber,
+        'color': const Color(0xFFF59E0B),
       },
     ];
 
@@ -468,20 +400,16 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
       itemCount: auditEntries.length,
       itemBuilder: (context, index) {
         final entry = auditEntries[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(12),
-          ),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: AdvancedCard(
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: (entry['color'] as Color).withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   entry['icon'] as IconData,
@@ -496,17 +424,11 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                   children: [
                     Text(
                       entry['action'] as String,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 13,
-                      ),
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
                     ),
                     Text(
                       'by ${entry['admin']}',
-                      style: GoogleFonts.inter(
-                        color: Colors.white38,
-                        fontSize: 11,
-                      ),
+                      style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
                     ),
                   ],
                 ),
@@ -517,7 +439,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
               ),
             ],
           ),
-        );
+        ),
+        ).animate(delay: (index * 50).ms).fadeIn(duration: 300.ms).slideX(begin: 0.05);
       },
     );
   }
@@ -528,7 +451,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF0F172A),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           width: 440,
@@ -539,11 +462,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
             children: [
               Text(
                 'Create Custom Role',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               TextField(
@@ -553,11 +472,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                   labelText: 'Role Name',
                   labelStyle: GoogleFonts.inter(color: Colors.white54),
                   filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                  fillColor: Colors.white.withValues(alpha: 0.03),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 14),
@@ -568,11 +484,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                   labelText: 'Description',
                   labelStyle: GoogleFonts.inter(color: Colors.white54),
                   filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                  fillColor: Colors.white.withValues(alpha: 0.03),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 24),
@@ -582,18 +495,11 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.15),
-                        ),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.inter(color: Colors.white70),
-                      ),
+                      child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -610,19 +516,11 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                         if (mounted) Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: const Color(0xFF3B82F6),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text(
-                        'Create',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: Text('Create', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -643,10 +541,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) => Dialog(
-          backgroundColor: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
             width: 440,
             padding: const EdgeInsets.all(32),
@@ -656,11 +552,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
               children: [
                 Text(
                   'Edit Role: ${role.name}',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -670,11 +562,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                     labelText: 'Role Name',
                     labelStyle: GoogleFonts.inter(color: Colors.white54),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.05),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    fillColor: Colors.white.withValues(alpha: 0.03),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -685,19 +574,13 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                     labelText: 'Description',
                     labelStyle: GoogleFonts.inter(color: Colors.white54),
                     filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.05),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
+                    fillColor: Colors.white.withValues(alpha: 0.03),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                   ),
                 ),
                 const SizedBox(height: 14),
                 SwitchListTile(
-                  title: Text(
-                    'Active',
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
-                  ),
+                  title: Text('Active', style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
                   value: isActive,
                   onChanged: (v) => setState(() => isActive = v),
                   contentPadding: EdgeInsets.zero,
@@ -709,18 +592,11 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.15),
-                          ),
+                          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.inter(color: Colors.white70),
-                        ),
+                        child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -735,26 +611,16 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                               isActive: isActive,
                             ),
                           );
-                          if (!context.mounted || !mounted) {
-                            return;
-                          }
+                          if (!context.mounted || !mounted) return;
                           _loadData();
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: const Color(0xFF3B82F6),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text(
-                          'Update',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: Text('Update', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -770,17 +636,17 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
   Color _roleColor(String name) {
     switch (name.toLowerCase()) {
       case 'admin':
-        return Colors.purple;
+        return const Color(0xFF8B5CF6);
       case 'supervisor':
-        return Colors.indigo;
+        return const Color(0xFF6366F1);
       case 'support':
-        return Colors.teal;
+        return const Color(0xFF14B8A6);
       case 'dealer':
-        return Colors.orange;
+        return const Color(0xFFF59E0B);
       case 'customer':
-        return Colors.green;
+        return const Color(0xFF22C55E);
       default:
-        return Colors.blue;
+        return const Color(0xFF3B82F6);
     }
   }
 }

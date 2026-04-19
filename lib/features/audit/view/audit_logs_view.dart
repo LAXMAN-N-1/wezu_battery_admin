@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/audit_models.dart';
 import '../data/repositories/audit_repository.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 class AuditLogsView extends StatefulWidget {
   const AuditLogsView({super.key});
@@ -27,15 +29,15 @@ class _AuditLogsViewState extends State<AuditLogsView> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('System Audit Logs', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-      const SizedBox(height: 4),
-      Text('Track and monitor all administrative actions', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-      const SizedBox(height: 24),
+      PageHeader(
+        title: 'System Audit Logs',
+        subtitle: 'Track and monitor all administrative actions',
+      ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
       Row(children: [
         _buildFilter('Action', _filterAction, ['login', 'create', 'update', 'delete', 'suspend', 'resolve'], (v) {
           setState(() { _filterAction = v; _skip = 0; }); _loadData();
         }),
-      ]),
+      ]).animate().fadeIn(duration: 400.ms, delay: 100.ms),
       const SizedBox(height: 16),
       _isLoading ? const Center(child: CircularProgressIndicator()) : _buildLogsTable(),
       const SizedBox(height: 16),
@@ -49,8 +51,8 @@ class _AuditLogsViewState extends State<AuditLogsView> {
   }
 
   Widget _buildFilter(String label, String? value, List<String> items, Function(String?) onChanged) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
         value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
         dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -59,38 +61,29 @@ class _AuditLogsViewState extends State<AuditLogsView> {
   }
 
   Widget _buildLogsTable() {
-    return Container(
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
-      child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
-        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.03)),
-        columns: const [
-          DataColumn(label: Text('Timestamp', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('User ID', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Action', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Resource Type', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Resource ID', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Details', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('IP / User Agent', style: TextStyle(color: Colors.white70))),
-        ],
-        rows: _logs.map((l) {
-          final actionColor = l.action == 'create' ? Colors.green : l.action == 'delete' ? Colors.red : l.action == 'update' ? Colors.blue : Colors.orange;
-          return DataRow(cells: [
-            DataCell(Text(_formatTs(l.timestamp), style: const TextStyle(color: Colors.white54, fontSize: 12))),
-            DataCell(Text(l.userId?.toString() ?? 'System', style: const TextStyle(color: Colors.white, fontSize: 13))),
-            DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: actionColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text(l.action.toUpperCase(), style: TextStyle(color: actionColor, fontSize: 10, fontWeight: FontWeight.bold)))),
-            DataCell(Text(l.resourceType.toUpperCase(), style: const TextStyle(color: Colors.white54, fontSize: 12))),
-            DataCell(Text(l.resourceId ?? '—', style: const TextStyle(color: Colors.white, fontSize: 13))),
-            DataCell(SizedBox(width: 250, child: Text(l.details, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis, maxLines: 2))),
-            DataCell(Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(l.ipAddress ?? '—', style: const TextStyle(color: Colors.blueAccent, fontSize: 11)),
-              SizedBox(width: 150, child: Text(l.userAgent ?? '—', style: const TextStyle(color: Colors.white38, fontSize: 10), overflow: TextOverflow.ellipsis)),
-            ])),
-          ]);
-        }).toList(),
-      )),
-    );
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
+      child: _logs.isEmpty
+          ? const SizedBox(height: 300, child: Center(child: Text('No audit logs found.', style: TextStyle(color: Colors.white54))))
+          : AdvancedTable(
+              columns: const ['Timestamp', 'User ID', 'Action', 'Resource Type', 'Resource ID', 'Details', 'IP / User Agent'],
+              rows: _logs.map((l) {
+                final actionColor = l.action == 'create' ? const Color(0xFF22C55E) : l.action == 'delete' ? const Color(0xFFEF4444) : l.action == 'update' ? const Color(0xFF3B82F6) : const Color(0xFFF59E0B);
+                return [
+                  Text(_formatTs(l.timestamp), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text(l.userId?.toString() ?? 'System', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  StatusBadge(status: l.action),
+                  Text(l.resourceType.toUpperCase(), style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, letterSpacing: 0.5)),
+                  Text(l.resourceId ?? '—', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  Text(l.details, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis, maxLines: 2),
+                  Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(l.ipAddress ?? '—', style: const TextStyle(color: Color(0xFF3B82F6), fontSize: 11)),
+                    Text(l.userAgent ?? '—', style: const TextStyle(color: Colors.white38, fontSize: 10), overflow: TextOverflow.ellipsis),
+                  ]),
+                ];
+              }).toList(),
+            ),
+    ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05);
   }
 
   String _formatTs(String ts) {

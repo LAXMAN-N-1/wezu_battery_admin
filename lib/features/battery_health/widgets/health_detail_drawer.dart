@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../data/models/health_models.dart';
 import '../data/repositories/health_repository.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 final batteryDetailProvider =
     FutureProvider.family<HealthBatteryDetail, String>((ref, batteryId) {
@@ -1189,75 +1190,23 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
               style: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
             )
           else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(
-                  const Color(0xFF0F172A),
-                ),
-                headingRowHeight: 40,
-                dataRowMinHeight: 36,
-                dataRowMaxHeight: 40,
-                columnSpacing: 16,
-                columns: [
-                  DataColumn(label: Text('Date', style: _tinyHeader())),
-                  DataColumn(label: Text('Health%', style: _tinyHeader())),
-                  DataColumn(label: Text('Voltage', style: _tinyHeader())),
-                  DataColumn(label: Text('Temp', style: _tinyHeader())),
-                  DataColumn(label: Text('Resistance', style: _tinyHeader())),
-                  DataColumn(label: Text('Cycles', style: _tinyHeader())),
-                  DataColumn(label: Text('Source', style: _tinyHeader())),
-                ],
+            AdvancedCard(
+              padding: EdgeInsets.zero,
+              child: AdvancedTable(
+                columns: const ['Date', 'Health%', 'Voltage', 'Temp', 'Resistance', 'Cycles', 'Source'],
                 rows: d.snapshots.reversed.map((s) {
-                  return DataRow(
-                    cells: [
-                      DataCell(
-                        Text(
-                          s.recordedAt.length > 10
-                              ? s.recordedAt.substring(0, 10)
-                              : s.recordedAt,
-                          style: _tinyCell(),
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          '${s.healthPercentage.toStringAsFixed(1)}%',
-                          style: _tinyCell(),
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          s.voltage != null
-                              ? '${s.voltage!.toStringAsFixed(1)}V'
-                              : '--',
-                          style: _tinyCell(),
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          s.temperature != null
-                              ? '${s.temperature!.toStringAsFixed(1)}°C'
-                              : '--',
-                          style: _tinyCell(),
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          s.internalResistance != null
-                              ? '${s.internalResistance!.toStringAsFixed(1)}mΩ'
-                              : '--',
-                          style: _tinyCell(),
-                        ),
-                      ),
-                      DataCell(
-                        Text(
-                          s.chargeCycles?.toString() ?? '--',
-                          style: _tinyCell(),
-                        ),
-                      ),
-                      DataCell(_statusBadge(s.snapshotType, Colors.white24)),
-                    ],
-                  );
+                  return [
+                    Text(
+                      s.recordedAt.length > 10 ? s.recordedAt.substring(0, 10) : s.recordedAt,
+                      style: _tinyCell(),
+                    ),
+                    Text('${s.healthPercentage.toStringAsFixed(1)}%', style: _tinyCell()),
+                    Text(s.voltage != null ? '${s.voltage!.toStringAsFixed(1)}V' : '--', style: _tinyCell()),
+                    Text(s.temperature != null ? '${s.temperature!.toStringAsFixed(1)}°C' : '--', style: _tinyCell()),
+                    Text(s.internalResistance != null ? '${s.internalResistance!.toStringAsFixed(1)}mΩ' : '--', style: _tinyCell()),
+                    Text(s.chargeCycles?.toString() ?? '--', style: _tinyCell()),
+                    _statusBadge(s.snapshotType, Colors.white24),
+                  ];
                 }).toList(),
               ),
             ),

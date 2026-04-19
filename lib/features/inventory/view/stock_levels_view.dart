@@ -6,6 +6,7 @@ import '../data/models/stock.dart';
 import 'station_stock_detail_view.dart';
 import '../widgets/stock_map_view.dart';
 import '../widgets/reorder_modal.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 // Riverpod Providers for this screen
 final stockOverviewProvider = FutureProvider.autoDispose<StockOverview>((ref) {
@@ -658,263 +659,52 @@ class StockLevelsView extends ConsumerWidget {
   }
 
   Widget _buildListView(List<dynamic> items, {required BuildContext context}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(
-          const Color(0xFF0F172A).withValues(alpha: 0.5),
-        ),
-        dataRowMaxHeight: 65,
-        dataRowMinHeight: 65,
-        columns: const [
-          DataColumn(
-            label: Text(
-              'Station',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Available',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Rented',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Service',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Utilization',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              'Health',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-          DataColumn(
-            label: Text(
-              '',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-          ),
-        ],
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
+      child: AdvancedTable(
+        columns: const ['Station', 'Available', 'Rented', 'Service', 'Utilization', 'Health', ''],
         rows: items.map((item) {
           if (item is StationStock) {
             final s = item;
             final isCritical = s.isLowStock;
-            final color = isCritical
-                ? Colors.red
-                : (s.utilizationPercentage > 70 ? Colors.green : Colors.amber);
-
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      Icon(Icons.storefront, size: 16, color: color),
-                      const SizedBox(width: 8),
-                      Text(
-                        s.stationName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${s.availableCount}',
-                    style: TextStyle(
-                      color: isCritical ? Colors.redAccent : Colors.white,
-                      fontWeight: isCritical
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${s.rentedCount}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${s.maintenanceCount}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 60,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: LinearProgressIndicator(
-                            value: s.utilizationPercentage / 100,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.1,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(color),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${s.utilizationPercentage.toInt()}%',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: color.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      isCritical ? 'LOW STOCK' : 'HEALTHY',
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            StationStockDetailView(stationId: s.stationId),
-                      ),
-                    ),
-                    child: const Text('Details'),
-                  ),
-                ),
-              ],
-            );
+            final color = isCritical ? Colors.red : (s.utilizationPercentage > 70 ? Colors.green : Colors.amber);
+            return [
+              Row(children: [
+                Icon(Icons.storefront, size: 16, color: color),
+                const SizedBox(width: 8),
+                Text(s.stationName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ]),
+              Text('${s.availableCount}', style: TextStyle(color: isCritical ? Colors.redAccent : Colors.white, fontWeight: isCritical ? FontWeight.bold : FontWeight.normal)),
+              Text('${s.rentedCount}', style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
+              Text('${s.maintenanceCount}', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                SizedBox(width: 60, child: ClipRRect(borderRadius: BorderRadius.circular(2), child: LinearProgressIndicator(value: s.utilizationPercentage / 100, backgroundColor: Colors.white.withValues(alpha: 0.1), valueColor: AlwaysStoppedAnimation<Color>(color), minHeight: 6))),
+                const SizedBox(width: 8),
+                Text('${s.utilizationPercentage.toInt()}%', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+              ]),
+              StatusBadge(status: isCritical ? 'LOW STOCK' : 'HEALTHY'),
+              TextButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StationStockDetailView(stationId: s.stationId))), child: const Text('Details')),
+            ];
           } else if (item is LocationStock) {
             final l = item;
-            final color = l.locationType == 'WAREHOUSE'
-                ? Colors.blue
-                : Colors.purple;
-            final icon = l.locationType == 'WAREHOUSE'
-                ? Icons.warehouse
-                : Icons.build_circle;
-
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      Icon(icon, size: 16, color: color),
-                      const SizedBox(width: 8),
-                      Text(
-                        l.locationName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${l.availableCount}',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '-',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${l.maintenanceCount}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '-',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: color.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      l.locationType.replaceAll('_', ' '),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  TextButton(onPressed: () {}, child: const Text('Inventory')),
-                ),
-              ],
-            );
+            final color = l.locationType == 'WAREHOUSE' ? Colors.blue : Colors.purple;
+            final icon = l.locationType == 'WAREHOUSE' ? Icons.warehouse : Icons.build_circle;
+            return [
+              Row(children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 8),
+                Text(l.locationName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              ]),
+              Text('${l.availableCount}', style: const TextStyle(color: Colors.white)),
+              Text('-', style: TextStyle(color: Colors.white.withValues(alpha: 0.3))),
+              Text('${l.maintenanceCount}', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+              Text('-', style: TextStyle(color: Colors.white.withValues(alpha: 0.3))),
+              StatusBadge(status: l.locationType.replaceAll('_', ' ')),
+              TextButton(onPressed: () {}, child: const Text('Inventory')),
+            ];
           }
-          return const DataRow(cells: []);
-        }).toList(),
+          return <Widget>[];
+        }).where((row) => row.isNotEmpty).toList(),
       ),
     );
   }

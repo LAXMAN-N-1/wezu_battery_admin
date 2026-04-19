@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/bess_models.dart';
 import '../data/repositories/bess_repository.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 class GridIntegrationView extends StatefulWidget {
   const GridIntegrationView({super.key});
@@ -42,21 +44,17 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Grid Integration', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 4),
-          Text('Peak shaving, load shifting, and grid event management', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
-        ])),
-        ElevatedButton.icon(
+      PageHeader(
+        title: 'Grid Integration',
+        subtitle: 'Peak shaving, load shifting, and grid event management',
+        actionButton: ElevatedButton.icon(
           onPressed: _showCreateDialog,
           icon: const Icon(Icons.add, size: 18),
           label: const Text('New Grid Event'),
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
-      ]),
-      const SizedBox(height: 24),
+      ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1),
 
       // Summary stats
       _buildSummaryCards(),
@@ -75,7 +73,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
         _filterChip('Backup', _filterType == 'backup', () { setState(() => _filterType = 'backup'); _loadData(); }),
         const Spacer(),
         _statusFilter(),
-      ]),
+      ]).animate().fadeIn(duration: 400.ms, delay: 150.ms),
       const SizedBox(height: 24),
 
       _isLoading ? const Center(child: CircularProgressIndicator()) : _buildEventsTable(),
@@ -91,40 +89,41 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
 
     return Wrap(spacing: 16, runSpacing: 16, children: [
       _summaryCard('Total Events', '${_events.length}', Icons.grid_on, const Color(0xFF3B82F6)),
-      _summaryCard('Revenue Earned', '₹${totalRevenue.toStringAsFixed(0)}', Icons.currency_rupee, const Color(0xFF10B981)),
+      _summaryCard('Revenue Earned', '₹${totalRevenue.toStringAsFixed(0)}', Icons.currency_rupee, const Color(0xFF22C55E)),
       _summaryCard('Energy Traded', '${totalEnergy.toStringAsFixed(0)} kWh', Icons.swap_horiz, const Color(0xFFF59E0B)),
       _summaryCard('Active / Scheduled', '$active / $scheduled', Icons.schedule, const Color(0xFF8B5CF6)),
-    ]);
+    ]).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05);
   }
 
   Widget _summaryCard(String title, String value, IconData icon, Color color) {
-    return Container(width: 220, padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(14), border: Border.all(color: color.withValues(alpha: 0.15))),
+    return AdvancedCard(
+      width: 220,
       child: Row(children: [
         Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, color: color, size: 20)),
         const SizedBox(width: 14),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
-        ]),
-      ]));
+        ])),
+      ]),
+    );
   }
 
   Widget _filterChip(String label, bool selected, VoidCallback onTap) {
     return GestureDetector(onTap: onTap, child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
+        color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.4) : Colors.transparent)),
+        border: Border.all(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06))),
       child: Text(label, style: GoogleFonts.inter(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
     ));
   }
 
   Widget _statusFilter() {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
         value: _filterStatus, hint: Text('All Status', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
         dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
@@ -140,46 +139,35 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
   }
 
   Widget _buildEventsTable() {
-    return Container(
-      decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
-      child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
-        headingRowColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.03)),
-        columns: const [
-          DataColumn(label: Text('Type', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Unit', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Status', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Start', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Power (kW)', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Energy (kWh)', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Revenue', style: TextStyle(color: Colors.white70))),
-          DataColumn(label: Text('Operator', style: TextStyle(color: Colors.white70))),
-        ],
-        rows: _events.map((e) {
-          final unit = _units.where((u) => u.id == e.bessUnitId).firstOrNull;
-          final statusColor = e.status == 'completed' ? Colors.green : e.status == 'active' ? Colors.blue : e.status == 'scheduled' ? Colors.amber : Colors.grey;
-          return DataRow(cells: [
-            DataCell(_typeBadge(e.eventType)),
-            DataCell(Text(unit?.name ?? '—', style: const TextStyle(color: Colors.white))),
-            DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-              child: Text(e.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)))),
-            DataCell(Text(_formatTs(e.startTime), style: const TextStyle(color: Colors.white54, fontSize: 12))),
-            DataCell(Text(e.actualPowerKw?.toStringAsFixed(1) ?? e.targetPowerKw.toStringAsFixed(1), style: const TextStyle(color: Colors.white))),
-            DataCell(Text(e.energyKwh?.toStringAsFixed(1) ?? '—', style: const TextStyle(color: Colors.white54))),
-            DataCell(Text(e.revenueEarned != null ? '₹${e.revenueEarned!.toStringAsFixed(0)}' : '—', style: TextStyle(color: e.revenueEarned != null ? Colors.green : Colors.white38))),
-            DataCell(Text(e.gridOperator ?? '—', style: const TextStyle(color: Colors.white54))),
-          ]);
-        }).toList(),
-      )),
-    );
+    return AdvancedCard(
+      padding: EdgeInsets.zero,
+      child: _events.isEmpty
+          ? const SizedBox(height: 300, child: Center(child: Text('No grid events found.', style: TextStyle(color: Colors.white54))))
+          : AdvancedTable(
+              columns: const ['Type', 'Unit', 'Status', 'Start', 'Power (kW)', 'Energy (kWh)', 'Revenue', 'Operator'],
+              rows: _events.map((e) {
+                final unit = _units.where((u) => u.id == e.bessUnitId).firstOrNull;
+                return [
+                  _typeBadge(e.eventType),
+                  Text(unit?.name ?? '—', style: const TextStyle(color: Colors.white)),
+                  StatusBadge(status: e.status),
+                  Text(_formatTs(e.startTime), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text(e.actualPowerKw?.toStringAsFixed(1) ?? e.targetPowerKw.toStringAsFixed(1), style: const TextStyle(color: Colors.white)),
+                  Text(e.energyKwh?.toStringAsFixed(1) ?? '—', style: const TextStyle(color: Colors.white54)),
+                  Text(e.revenueEarned != null ? '₹${e.revenueEarned!.toStringAsFixed(0)}' : '—', style: TextStyle(color: e.revenueEarned != null ? const Color(0xFF22C55E) : Colors.white38)),
+                  Text(e.gridOperator ?? '—', style: const TextStyle(color: Colors.white54)),
+                ];
+              }).toList(),
+            ),
+    ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05);
   }
 
   Widget _typeBadge(String type) {
-    final color = type == 'peak_shaving' ? Colors.orange : type == 'load_shifting' ? Colors.blue : type == 'frequency_regulation' ? Colors.purple : Colors.teal;
+    final color = type == 'peak_shaving' ? const Color(0xFFF59E0B) : type == 'load_shifting' ? const Color(0xFF3B82F6) : type == 'frequency_regulation' ? const Color(0xFF8B5CF6) : const Color(0xFF14B8A6);
     final label = type.replaceAll('_', ' ');
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-      child: Text(label.toUpperCase(), style: GoogleFonts.inter(color: color, fontSize: 10, fontWeight: FontWeight.bold)));
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))),
+      child: Text(label.toUpperCase(), style: GoogleFonts.inter(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)));
   }
 
   String _formatTs(String ts) {
@@ -188,7 +176,8 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
 
   void _showCreateDialog() {
     showDialog(context: context, builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: const Color(0xFF0F172A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text('New Grid Event', style: GoogleFonts.outfit(color: Colors.white)),
       content: Text('Grid event creation coming soon.', style: GoogleFonts.inter(color: Colors.white54)),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],

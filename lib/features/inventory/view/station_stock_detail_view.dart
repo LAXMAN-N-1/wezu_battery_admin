@@ -550,185 +550,34 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(
-            const Color(0xFF0F172A).withValues(alpha: 0.5),
-          ),
-          columns: const [
-            DataColumn(
-              label: Text(
-                'Serial Number',
-                style: TextStyle(color: Colors.white54),
-              ),
-            ),
-            DataColumn(
-              label: Text('Status', style: TextStyle(color: Colors.white54)),
-            ),
-            DataColumn(
-              label: Text('Health', style: TextStyle(color: Colors.white54)),
-            ),
-            DataColumn(
-              label: Text('Type', style: TextStyle(color: Colors.white54)),
-            ),
-            DataColumn(
-              label: Text(
-                'Last Updated',
-                style: TextStyle(color: Colors.white54),
-              ),
-            ),
-            DataColumn(
-              label: Text('Actions', style: TextStyle(color: Colors.white54)),
-            ),
-          ],
+      child: AdvancedCard(
+        padding: EdgeInsets.zero,
+        child: AdvancedTable(
+          columns: const ['Serial Number', 'Status', 'Health', 'Type', 'Last Updated', 'Actions'],
           rows: batteries.map((b) {
             final status = b['status'];
-            final color = status == 'available'
-                ? Colors.green
-                : (status == 'rented' ? const Color(0xFF3B82F6) : Colors.amber);
-            final health = b['health_percentage'] != null
-                ? (b['health_percentage'] as num).toDouble()
-                : 100.0;
-            final healthColor = health > 80
-                ? Colors.green
-                : (health > 50 ? Colors.amber : Colors.red);
-
-            return DataRow(
-              cells: [
-                DataCell(
-                  InkWell(
-                    onTap: () => _showBatteryDialog(context, b),
-                    child: Text(
-                      b['serial_number'] ?? 'Unknown',
-                      style: const TextStyle(
-                        color: Color(0xFF3B82F6),
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          status.toUpperCase(),
-                          style: TextStyle(
-                            color: color,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 60,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: LinearProgressIndicator(
-                            value: health / 100,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.1,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              healthColor,
-                            ),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${health.toInt()}%',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    b['type'] ?? 'Li-ion',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    b['updated_at'] != null
-                        ? DateFormat(
-                            'MMM d, HH:mm',
-                          ).format(DateTime.parse(b['updated_at']))
-                        : 'N/A',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.info_outline,
-                          size: 18,
-                          color: Colors.white54,
-                        ),
-                        onPressed: () => _showBatteryDialog(context, b),
-                        tooltip: 'View Details',
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_forward,
-                          size: 18,
-                          color: Color(0xFF3B82F6),
-                        ),
-                        onPressed: () {
-                          // Location transfer logic here
-                        },
-                        tooltip: 'Transfer Location',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
+            final health = b['health_percentage'] != null ? (b['health_percentage'] as num).toDouble() : 100.0;
+            final healthColor = health > 80 ? Colors.green : (health > 50 ? Colors.amber : Colors.red);
+            return [
+              InkWell(
+                onTap: () => _showBatteryDialog(context, b),
+                child: Text(b['serial_number'] ?? 'Unknown', style: const TextStyle(color: Color(0xFF3B82F6), fontFamily: 'monospace', fontWeight: FontWeight.bold)),
+              ),
+              StatusBadge(status: status ?? 'unknown'),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                SizedBox(width: 60, child: ClipRRect(borderRadius: BorderRadius.circular(2), child: LinearProgressIndicator(value: health / 100, backgroundColor: Colors.white.withValues(alpha: 0.1), valueColor: AlwaysStoppedAnimation<Color>(healthColor), minHeight: 6))),
+                const SizedBox(width: 8),
+                Text('${health.toInt()}%', style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
+              ]),
+              Text(b['type'] ?? 'Li-ion', style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
+              Text(b['updated_at'] != null ? DateFormat('MMM d, HH:mm').format(DateTime.parse(b['updated_at'])) : 'N/A', style: TextStyle(color: Colors.white.withValues(alpha: 0.5))),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                IconButton(icon: const Icon(Icons.info_outline, size: 18, color: Colors.white54), onPressed: () => _showBatteryDialog(context, b), tooltip: 'View Details'),
+                IconButton(icon: const Icon(Icons.arrow_forward, size: 18, color: Color(0xFF3B82F6)), onPressed: () {}, tooltip: 'Transfer Location'),
+              ]),
+            ];
           }).toList(),
+          onRowTap: (i) => _showBatteryDialog(context, batteries[i]),
         ),
       ),
     );
@@ -1048,119 +897,23 @@ class _StationStockDetailViewState extends ConsumerState<StationStockDetailView>
   Widget _buildReorderHistoryTab(StationStockDetail detail) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(
-            const Color(0xFF0F172A).withValues(alpha: 0.5),
-          ),
-          columns: const [
-            DataColumn(
-              label: Text('Date', style: TextStyle(color: Colors.white54)),
-            ),
-            DataColumn(
-              label: Text('Quantity', style: TextStyle(color: Colors.white54)),
-            ),
-            DataColumn(
-              label: Text('Status', style: TextStyle(color: Colors.white54)),
-            ),
-            DataColumn(
-              label: Text('Trigger', style: TextStyle(color: Colors.white54)),
-            ),
-          ],
+      child: AdvancedCard(
+        padding: EdgeInsets.zero,
+        child: AdvancedTable(
+          columns: const ['Date', 'Quantity', 'Status', 'Trigger'],
           rows: [
-            DataRow(
-              cells: [
-                DataCell(
-                  Text(
-                    DateFormat(
-                      'MMM d, yyyy',
-                    ).format(DateTime.now().subtract(const Duration(days: 15))),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                const DataCell(
-                  Text('20 units', style: TextStyle(color: Colors.white)),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.green.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: const Text(
-                      'DELIVERED',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const DataCell(
-                  Text(
-                    'Automated (Stock < 10)',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-              ],
-            ),
-            DataRow(
-              cells: [
-                DataCell(
-                  Text(
-                    DateFormat(
-                      'MMM d, yyyy',
-                    ).format(DateTime.now().subtract(const Duration(days: 45))),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                const DataCell(
-                  Text('10 units', style: TextStyle(color: Colors.white)),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.green.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: const Text(
-                      'DELIVERED',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const DataCell(
-                  Text(
-                    'Manual Request',
-                    style: TextStyle(color: Colors.white54),
-                  ),
-                ),
-              ],
-            ),
+            [
+              Text(DateFormat('MMM d, yyyy').format(DateTime.now().subtract(const Duration(days: 15))), style: const TextStyle(color: Colors.white)),
+              const Text('20 units', style: TextStyle(color: Colors.white)),
+              const StatusBadge(status: 'DELIVERED'),
+              const Text('Automated (Stock < 10)', style: TextStyle(color: Colors.white54)),
+            ],
+            [
+              Text(DateFormat('MMM d, yyyy').format(DateTime.now().subtract(const Duration(days: 45))), style: const TextStyle(color: Colors.white)),
+              const Text('10 units', style: TextStyle(color: Colors.white)),
+              const StatusBadge(status: 'DELIVERED'),
+              const Text('Manual Request', style: TextStyle(color: Colors.white54)),
+            ],
           ],
         ),
       ),

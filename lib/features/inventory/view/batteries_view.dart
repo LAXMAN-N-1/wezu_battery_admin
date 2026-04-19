@@ -1169,163 +1169,29 @@ class _BatteriesViewState extends State<BatteriesView>
             )
           : _batteries.isEmpty
           ? _emptyState()
-          : SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(
-                  Colors.white.withValues(alpha: 0.02),
-                ),
-                dataRowMinHeight: 56,
-                dataRowMaxHeight: 64,
-                columnSpacing: 20,
-                horizontalMargin: 16,
-                columns: [
-                  DataColumn(
-                    label: Checkbox(
-                      value: _allSelected,
-                      onChanged: (_) => _toggleSelectAll(),
-                      activeColor: const Color(0xFF3B82F6),
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
+          : AdvancedTable(
+              columns: const ['✓', 'Battery Serial', 'Status', 'Location', 'Type', 'Health', 'Cycles', 'Last Updated', 'Warranty', 'Actions'],
+              rows: _batteries.map((b) {
+                final selected = _selectedIds.contains(b.id);
+                return [
+                  Checkbox(
+                    value: selected,
+                    onChanged: (_) => _toggleSelection(b.id),
+                    activeColor: const Color(0xFF3B82F6),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                   ),
-                  const DataColumn(
-                    label: Text(
-                      'Battery Serial',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Status',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Location',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Type',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Health',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Cycles',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Last Updated',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Warranty',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const DataColumn(
-                    label: Text(
-                      'Actions',
-                      style: TextStyle(
-                        color: Colors.white54,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-                rows: _batteries.map((b) {
-                  final selected = _selectedIds.contains(b.id);
-                  return DataRow(
-                    selected: selected,
-                    color: WidgetStateProperty.resolveWith((states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return const Color(0xFF3B82F6).withValues(alpha: 0.06);
-                      }
-                      if (states.contains(WidgetState.hovered)) {
-                        return Colors.white.withValues(alpha: 0.02);
-                      }
-                      return null;
-                    }),
-                    cells: [
-                      DataCell(
-                        Checkbox(
-                          value: selected,
-                          onChanged: (_) => _toggleSelection(b.id),
-                          activeColor: const Color(0xFF3B82F6),
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.3),
-                          ),
-                        ),
-                      ),
-                      DataCell(_buildSerialCell(b)),
-                      DataCell(_buildStatusCell(b)),
-                      DataCell(_buildLocationCell(b)),
-                      DataCell(_buildTypeCell(b)),
-                      DataCell(_buildHealthCell(b.healthPercentage)),
-                      DataCell(
-                        Text(
-                          '${b.cycleCount}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      DataCell(_buildLastUpdatedCell(b)),
-                      DataCell(_buildWarrantyCell(b)),
-                      DataCell(_buildActionsCell(b)),
-                    ],
-                  );
-                }).toList(),
-              ),
+                  _buildSerialCell(b),
+                  _buildStatusCell(b),
+                  _buildLocationCell(b),
+                  _buildTypeCell(b),
+                  _buildHealthCell(b.healthPercentage),
+                  Text('${b.cycleCount}', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  _buildLastUpdatedCell(b),
+                  _buildWarrantyCell(b),
+                  _buildActionsCell(b),
+                ];
+              }).toList(),
+              onRowTap: (i) => _openDetailDrawer(_batteries[i]),
             ),
     ).animate().fadeIn(duration: 500.ms, delay: 300.ms).slideY(begin: 0.05);
   }

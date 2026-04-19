@@ -165,6 +165,7 @@ class UserListNotifier extends StateNotifier<UserListState> {
 
     try {
       await _repository.toggleUserActive(userId);
+      await loadUsers(); // Reload from server to stay in sync
     } catch (e) {
       state = state.copyWith(users: prevUsers);
       rethrow;
@@ -174,12 +175,17 @@ class UserListNotifier extends StateNotifier<UserListState> {
   Future<void> suspendUser(int userId, {required String reason, int? durationDays}) async {
     final prevUsers = state.users;
     state = state.copyWith(users: state.users.map((u) {
-      if (u.id == userId) return u.copyWith(suspensionReason: reason, isActive: false);
+      if (u.id == userId) return u.copyWith(
+        suspensionReason: reason,
+        isActive: false,
+        backendStatus: 'suspended',
+      );
       return u;
     }).toList());
 
     try {
       await _repository.suspendUser(userId, reason: reason, durationDays: durationDays);
+      await loadUsers(); // Reload from server to stay in sync
     } catch (e) {
       state = state.copyWith(users: prevUsers);
       rethrow;
@@ -190,14 +196,18 @@ class UserListNotifier extends StateNotifier<UserListState> {
     final prevUsers = state.users;
     state = state.copyWith(users: state.users.map((u) {
       if (u.id == userId) {
-        // Optimistically set active
-        return u.copyWith(isActive: true);
+        return u.copyWith(
+          isActive: true,
+          backendStatus: 'active',
+          suspensionReason: null,
+        );
       }
       return u;
     }).toList());
 
     try {
       await _repository.reactivateUser(userId);
+      await loadUsers(); // Reload from server to stay in sync
     } catch (e) {
       state = state.copyWith(users: prevUsers);
       rethrow;
@@ -220,7 +230,6 @@ class UserListNotifier extends StateNotifier<UserListState> {
   }
 
   Future<void> resetPassword(int userId) async {
-    // Generate random pass or trigger flow
     await _repository.changePassword(userId, 'Temporary123!', true);
   }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../providers/navigation_provider.dart';
 import '../theme/app_themes.dart';
 import '../theme/theme_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
@@ -20,6 +19,13 @@ class AdminLayout extends ConsumerStatefulWidget {
 }
 
 class _AdminLayoutState extends ConsumerState<AdminLayout> {
+  bool _sidebarCollapsed = false;
+
+  static const double _expandedWidth = 270.0;
+  static const double _collapsedWidth = 72.0;
+  static const Duration _animDuration = Duration(milliseconds: 250);
+  static const Curve _animCurve = Curves.easeInOutCubic;
+
   @override
   Widget build(BuildContext context) {
     final isDesktop = Responsive.isDesktop(context);
@@ -27,7 +33,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
 
     return Scaffold(
       backgroundColor: colors.scaffoldBg,
-      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context)),
+      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context, forceExpanded: true)),
       body: Row(
         children: [
           if (isDesktop) _buildSidebar(context),
@@ -44,16 +50,17 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
     );
   }
 
-  Widget _buildSidebar(BuildContext context) {
+  Widget _buildSidebar(BuildContext context, {bool forceExpanded = false}) {
     final colors = context.appColors;
     final menuSections = ref.watch(sidebarMenuProvider);
-    
-    // Natively read the current path from GoRouter's state
-    // We remove query params to just match the base path
     final currentRoute = GoRouterState.of(context).uri.path;
-    
-    return Container(
-      width: 270,
+    final collapsed = forceExpanded ? false : _sidebarCollapsed;
+    final targetWidth = collapsed ? _collapsedWidth : _expandedWidth;
+
+    return AnimatedContainer(
+      duration: _animDuration,
+      curve: _animCurve,
+      width: targetWidth,
       decoration: BoxDecoration(
         color: colors.sidebarBg,
         border: Border(
@@ -62,10 +69,66 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
       ),
       child: Column(
         children: [
-          // Logo header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Row(
+          // Logo header — must match _buildHeader height (72px)
+          _buildSidebarHeader(colors, collapsed),
+          Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
+
+          // Scrollable menu
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.symmetric(
+                horizontal: collapsed ? 8 : 12,
+                vertical: 4,
+              ),
+              children: [
+                for (final section in menuSections)
+                  _SectionWidget(
+                    section: section,
+                    currentRoute: currentRoute,
+                    collapsed: collapsed,
+                  ),
+              ],
+            ),
+          ),
+
+          // Collapse toggle
+          if (!forceExpanded) ...[
+            Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
+            _buildCollapseToggle(colors, collapsed),
+          ],
+
+          // Sign out
+          Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
+          _buildSignOutButton(colors, collapsed),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarHeader(AppColorsExtension colors, bool collapsed) {
+    return Container(
+      height: 72,
+      padding: EdgeInsets.symmetric(horizontal: collapsed ? 0 : 24),
+      alignment: Alignment.center,
+      child: collapsed
+          ? Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade600, Colors.blue.shade400],
+                ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.bolt, color: Colors.white, size: 22),
+            )
+          : Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -85,72 +148,106 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
                   child: const Icon(Icons.bolt, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'WEZU Energy',
-                      style: GoogleFonts.outfit(
-                        color: colors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'WEZU Energy',
+                        style: GoogleFonts.outfit(
+                          color: colors.textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Text(
-                      'Admin Portal',
-                      style: GoogleFonts.inter(
-                        color: colors.textTertiary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
+                      Text(
+                        'Admin Portal',
+                        style: GoogleFonts.inter(
+                          color: colors.textTertiary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
-          const SizedBox(height: 8),
+    );
+  }
 
-          // Scrollable menu
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              children: [
-                for (final section in menuSections) ...[
-                  _SectionWidget(section: section, currentRoute: currentRoute),
-                ],
-              ],
+  Widget _buildCollapseToggle(AppColorsExtension colors, bool collapsed) {
+    return Tooltip(
+      message: collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      preferBelow: false,
+      child: InkWell(
+        onTap: () => setState(() => _sidebarCollapsed = !_sidebarCollapsed),
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          child: AnimatedRotation(
+            turns: collapsed ? 0.5 : 0.0,
+            duration: _animDuration,
+            child: Icon(
+              Icons.chevron_left_rounded,
+              color: colors.textTertiary,
+              size: 22,
             ),
           ),
+        ),
+      ),
+    );
+  }
 
-          // Sign out
-          Divider(color: colors.border.withValues(alpha: 0.1), height: 1),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: ListTile(
-              onTap: () => ref.read(authProvider.notifier).logout(),
-              dense: true,
-              leading: Icon(
+  Widget _buildSignOutButton(AppColorsExtension colors, bool collapsed) {
+    if (collapsed) {
+      return Tooltip(
+        message: 'Sign Out',
+        preferBelow: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: InkWell(
+            onTap: () => ref.read(authProvider.notifier).logout(),
+            borderRadius: BorderRadius.circular(10),
+            hoverColor: Colors.red.withValues(alpha: 0.05),
+            child: SizedBox(
+              height: 40,
+              width: 40,
+              child: Icon(
                 Icons.logout_outlined,
                 color: Colors.red.shade300,
                 size: 18,
               ),
-              title: Text(
-                'Sign Out',
-                style: GoogleFonts.inter(
-                  color: Colors.red.shade300,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              hoverColor: Colors.red.withValues(alpha: 0.05),
             ),
           ),
-        ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: ListTile(
+        onTap: () => ref.read(authProvider.notifier).logout(),
+        dense: true,
+        leading: Icon(
+          Icons.logout_outlined,
+          color: Colors.red.shade300,
+          size: 18,
+        ),
+        title: Text(
+          'Sign Out',
+          style: GoogleFonts.inter(
+            color: Colors.red.shade300,
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        hoverColor: Colors.red.withValues(alpha: 0.05),
       ),
     );
   }
@@ -267,8 +364,13 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
 class _SectionWidget extends ConsumerStatefulWidget {
   final MenuSection section;
   final String currentRoute;
+  final bool collapsed;
 
-  const _SectionWidget({required this.section, required this.currentRoute});
+  const _SectionWidget({
+    required this.section,
+    required this.currentRoute,
+    this.collapsed = false,
+  });
 
   @override
   ConsumerState<_SectionWidget> createState() => _SectionWidgetState();
@@ -303,6 +405,59 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
 
   @override
   Widget build(BuildContext context) {
+    if (widget.collapsed) {
+      return _buildCollapsedItem(context);
+    }
+    return _buildExpandedItem(context);
+  }
+
+  // ── Collapsed mode: icon-only with tooltip ──
+  Widget _buildCollapsedItem(BuildContext context) {
+    final colors = context.appColors;
+    final isActive = _isSectionActive();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Tooltip(
+        message: widget.section.label,
+        preferBelow: false,
+        waitDuration: const Duration(milliseconds: 400),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            hoverColor: colors.accent.withValues(alpha: 0.08),
+            onTap: () {
+              if (widget.section.route != null) {
+                context.go(widget.section.route!);
+              } else if (widget.section.children.isNotEmpty) {
+                context.go(widget.section.children.first.route);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 42,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: isActive
+                    ? colors.accent.withValues(alpha: 0.12)
+                    : Colors.transparent,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                widget.section.icon,
+                color: isActive ? colors.accent : colors.textTertiary,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Expanded mode: full labels + children ──
+  Widget _buildExpandedItem(BuildContext context) {
     final colors = context.appColors;
     final isActive = _isSectionActive();
 
@@ -322,8 +477,6 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                   setState(() {
                     _expanded = !_expanded;
                   });
-                  // Optional: Automatically navigate to first child when expanding?
-                  // Doing so might feel too aggressive if they just want to see the menu.
                 } else if (widget.section.route != null) {
                   context.go(widget.section.route!);
                 }
@@ -353,6 +506,7 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                           fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                           fontSize: 13,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (widget.section.children.length > 1)

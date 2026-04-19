@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../data/models/role.dart';
 import '../../data/providers/user_master_providers.dart';
+import '../../../../../core/widgets/admin_ui_components.dart';
 
 class PermissionMatrixTab extends ConsumerStatefulWidget {
   const PermissionMatrixTab({super.key});
@@ -55,11 +57,11 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
 
     return rolesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error loading roles: $err', style: const TextStyle(color: Colors.red))),
+      error: (err, _) => Center(child: Text('Error loading roles: $err', style: const TextStyle(color: Color(0xFFEF4444)))),
       data: (roles) {
         return modulesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Error loading modules: $err', style: const TextStyle(color: Colors.red))),
+          error: (err, _) => Center(child: Text('Error loading modules: $err', style: const TextStyle(color: Color(0xFFEF4444)))),
           data: (modules) {
             // Use up to 6 roles for display (to fit the screen)
             final displayRoles = roles.length > 6 ? roles.sublist(0, 6) : roles;
@@ -68,12 +70,8 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
             
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                ),
+              child: AdvancedCard(
+                padding: EdgeInsets.zero,
                 child: Column(
                   children: [
                     Padding(
@@ -81,17 +79,20 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('System Permission Matrix', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Click on cells to toggle: None (Gray) → Read-Only (Blue) → Full Control (Green). Showing ${displayRoles.length} of ${roles.length} roles.',
-                                style: const TextStyle(color: Colors.white54, fontSize: 13),
-                              ),
-                            ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('System Permission Matrix', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Click on cells to toggle: None (Gray) → Read-Only (Blue) → Full Control (Green). Showing ${displayRoles.length} of ${roles.length} roles.',
+                                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                ),
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 16),
                           ElevatedButton.icon(
                             onPressed: () async {
                               // Show loading
@@ -140,7 +141,7 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Permissions Matrix saved successfully!'), backgroundColor: Colors.green),
+                                    const SnackBar(content: Text('Permissions Matrix saved successfully!'), backgroundColor: Color(0xFF22C55E)),
                                   );
                                   // Refetch roles to update UI
                                   ref.invalidate(rolesProvider);
@@ -149,19 +150,19 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to save matrix: $e'), backgroundColor: Colors.red),
+                                    SnackBar(content: Text('Failed to save matrix: $e'), backgroundColor: const Color(0xFFEF4444)),
                                   );
                                 }
                               }
                             },
                             icon: const Icon(Icons.save, size: 18, color: Colors.white),
                             label: const Text('Save Matrix', style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                           ),
                         ],
                       ),
                     ),
-                    const Divider(color: Colors.white10, height: 1),
+                    Divider(color: Colors.white.withValues(alpha: 0.04), height: 1),
                     // Legend
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -169,100 +170,14 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                         children: [
                           _legendItem(Colors.grey, 'NONE'),
                           const SizedBox(width: 20),
-                          _legendItem(Colors.blue, 'READ'),
+                          _legendItem(const Color(0xFF3B82F6), 'READ'),
                           const SizedBox(width: 20),
-                          _legendItem(Colors.green, 'FULL'),
+                          _legendItem(const Color(0xFF22C55E), 'FULL'),
                         ],
                       ),
                     ),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Theme(
-                        data: Theme.of(context).copyWith(
-                          dataTableTheme: DataTableThemeData(
-                            headingRowColor: WidgetStateProperty.all(const Color(0xFF0F172A)),
-                            dataRowColor: WidgetStateProperty.resolveWith<Color?>((Set<WidgetState> states) {
-                              if (states.contains(WidgetState.hovered)) return Colors.white.withValues(alpha: 0.02);
-                              return null;
-                            }),
-                          ),
-                        ),
-                        child: DataTable(
-                          columnSpacing: 24,
-                          headingTextStyle: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 12),
-                          dataTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                          columns: [
-                            const DataColumn(label: SizedBox(width: 160, child: Text('Modules / Features'))),
-                            ...displayRoles.map((r) => DataColumn(
-                              label: SizedBox(
-                                width: 90,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      _displayRoleName(r.name),
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(fontSize: 11),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )),
-                          ],
-                          rows: modules.map((mRecord) {
-                            final moduleLabel = mRecord['label'] as String? ?? mRecord['module'] as String? ?? 'Other';
-                            return DataRow(
-                              cells: [
-                                DataCell(
-                                  SizedBox(
-                                    width: 160,
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.extension_outlined, size: 16, color: Colors.white38),
-                                        const SizedBox(width: 8),
-                                        Flexible(child: Text(moduleLabel, style: const TextStyle(fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                ...displayRoles.map((role) {
-                                  final state = matrix[moduleLabel]?[role.name] ?? 0;
-                                  return DataCell(
-                                    Center(
-                                      child: InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            matrix[moduleLabel]![role.name] = (state + 1) % 3;
-                                          });
-                                        },
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          width: 80,
-                                          height: 28,
-                                          decoration: BoxDecoration(
-                                            color: _getColor(state).withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: _getColor(state).withValues(alpha: 0.5)),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            _getLabel(state),
-                                            style: TextStyle(color: _getColor(state), fontSize: 11, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
+                    // Build custom matrix grid instead of DataTable for consistency
+                    _buildMatrixGrid(displayRoles, modules),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -271,6 +186,101 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildMatrixGrid(List<Role> displayRoles, List<Map<String, dynamic>> modules) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        children: [
+          // Header row
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 180,
+                  child: Text('MODULES / FEATURES', style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                ),
+                ...displayRoles.map((r) => SizedBox(
+                  width: 100,
+                  child: Text(
+                    _displayRoleName(r.name).toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Data rows
+          ...modules.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final mRecord = entry.value;
+            final moduleLabel = mRecord['label'] as String? ?? mRecord['module'] as String? ?? 'Other';
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                border: idx < modules.length - 1
+                    ? Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.04)))
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 180,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.extension_outlined, size: 16, color: Colors.white38),
+                        const SizedBox(width: 8),
+                        Flexible(child: Text(moduleLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
+                      ],
+                    ),
+                  ),
+                  ...displayRoles.map((role) {
+                    final state = matrix[moduleLabel]?[role.name] ?? 0;
+                    return SizedBox(
+                      width: 100,
+                      child: Center(
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              matrix[moduleLabel]![role.name] = (state + 1) % 3;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 80,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: _getColor(state).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: _getColor(state).withValues(alpha: 0.5)),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              _getLabel(state),
+                              style: TextStyle(color: _getColor(state), fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ).animate(delay: (idx * 30).ms).fadeIn(duration: 300.ms).slideX(begin: 0.03);
+          }),
+        ],
+      ),
     );
   }
 
@@ -294,8 +304,8 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
 
   Color _getColor(int state) {
     if (state == 0) return Colors.grey;
-    if (state == 1) return Colors.blue;
-    return Colors.green;
+    if (state == 1) return const Color(0xFF3B82F6);
+    return const Color(0xFF22C55E);
   }
 
   String _getLabel(int state) {
