@@ -32,7 +32,7 @@ class WezuLogo extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: (color ?? const Color(0xFF3B82F6)).withOpacity(
+                        color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 
                           0.2,
                         ),
                         blurRadius: size * 0.5,
@@ -58,7 +58,7 @@ class WezuLogo extends StatelessWidget {
                 .animate(onPlay: (c) => c.repeat())
                 .shimmer(
                   duration: 2.seconds,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 )
                 .custom(
                   duration: 3.seconds,
@@ -67,7 +67,7 @@ class WezuLogo extends StatelessWidget {
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: (color ?? const Color(0xFF3B82F6)).withOpacity(
+                          color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 
                             0.5 * value,
                           ),
                           blurRadius: 20.0 * value,
@@ -91,7 +91,7 @@ class WezuLogo extends StatelessWidget {
               color: Colors.white,
               shadows: [
                 Shadow(
-                  color: (color ?? const Color(0xFF3B82F6)).withOpacity(0.5),
+                  color: (color ?? const Color(0xFF3B82F6)).withValues(alpha: 0.5),
                   blurRadius: 10,
                 ),
               ],
@@ -127,16 +127,16 @@ class StatCard extends StatelessWidget {
               width: 200,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.1),
+                      color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
@@ -237,7 +237,7 @@ class _AdminTextFieldState extends State<AdminTextField> {
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF3B82F6).withOpacity(0.1),
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
                         blurRadius: 10,
                         spreadRadius: 2,
                       ),
@@ -254,7 +254,7 @@ class _AdminTextFieldState extends State<AdminTextField> {
               style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
               decoration: InputDecoration(
                 hintText: widget.hint,
-                hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
                 prefixIcon: Icon(
                   widget.icon,
                   color: _isFocused ? const Color(0xFF3B82F6) : Colors.white24,
@@ -280,11 +280,11 @@ class _AdminTextFieldState extends State<AdminTextField> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -306,18 +306,23 @@ class AdminButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final double? width;
+  final double? height;
 
   const AdminButton({
     super.key,
     required this.label,
     this.onPressed,
     this.isLoading = false,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 52,
+      width: width ?? double.infinity,
+      height: height ?? 52,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         gradient: const LinearGradient(
@@ -327,7 +332,7 @@ class AdminButton extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3B82F6).withOpacity(0.3),
+            color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -338,8 +343,9 @@ class AdminButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
+          padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(height != null && height! < 40 ? 8 : 12),
           ),
         ),
         child: isLoading
@@ -355,11 +361,15 @@ class AdminButton extends StatelessWidget {
                 label,
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                  fontSize: height != null && height! < 40 ? 12 : 15,
                   color: Colors.white,
                 ),
               ),
       ),
+    ).animate().shimmer(
+      duration: 2.seconds,
+      color: Colors.white.withValues(alpha: 0.1),
+      delay: 1.seconds,
     );
   }
 }
@@ -392,10 +402,10 @@ class AdvancedCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -434,14 +444,14 @@ class StatusBadge extends StatelessWidget {
       color = const Color(0xFF3B82F6); // Default blue
     }
 
-    bgColor = color.withOpacity(0.15);
+    bgColor = color.withValues(alpha: 0.15);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -454,7 +464,7 @@ class StatusBadge extends StatelessWidget {
                   color: color,
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.5),
+                      color: color.withValues(alpha: 0.5),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),
@@ -856,3 +866,4 @@ class AdvancedTable extends StatelessWidget {
     );
   }
 }
+

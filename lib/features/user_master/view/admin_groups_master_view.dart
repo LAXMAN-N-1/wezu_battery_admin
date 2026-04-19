@@ -53,10 +53,10 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
+                    Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         const Text('Active', style: TextStyle(color: Colors.white)),
-                        const Spacer(),
+                        
                         Switch(
                           value: isActive,
                           onChanged: (val) {

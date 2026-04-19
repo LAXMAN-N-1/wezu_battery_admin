@@ -156,6 +156,8 @@ class ApiClient {
 
     final path = options.path.toLowerCase();
     return path.contains('/api/v1/auth/login') ||
+        path.contains('/api/v1/auth/token') ||
+        path.contains('/auth/token') ||
         path.contains('/api/v1/auth/admin/login') ||
         path.contains('/api/v1/auth/refresh') ||
         path.contains('/api/v1/auth/token/refresh') ||

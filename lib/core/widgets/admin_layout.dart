@@ -7,6 +7,7 @@ import '../theme/app_themes.dart';
 import '../theme/theme_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
 import '../utils/responsive.dart';
+import '../../router/app_router.dart';
 
 /// Menu section data model
 class MenuSection {
@@ -104,18 +105,7 @@ const List<MenuSection> _menuSections = [
       MenuItem(label: 'Late Fees', route: '/rentals/late-fees'),
     ],
   ),
-  MenuSection(
-    id: 'finance',
-    icon: Icons.account_balance_outlined,
-    label: 'Finance',
-    children: [
-      MenuItem(label: 'Revenue Dashboard', route: '/finance'),
-      MenuItem(label: 'Transactions', route: '/finance/transactions'),
-      MenuItem(label: 'Settlements', route: '/finance/settlements'),
-      MenuItem(label: 'Invoices', route: '/finance/invoices'),
-      MenuItem(label: 'Profit Analysis', route: '/finance/profit'),
-    ],
-  ),
+
   MenuSection(
     id: 'logistics',
     icon: Icons.local_shipping_outlined,
@@ -188,8 +178,10 @@ const List<MenuSection> _menuSections = [
     icon: Icons.shield_outlined,
     label: 'Audit & Security',
     children: [
+      MenuItem(label: 'Dashboard', route: '/audit/dashboard'),
       MenuItem(label: 'Audit Logs', route: '/audit/logs'),
-      MenuItem(label: 'Fraud Detection', route: '/audit/fraud'),
+      MenuItem(label: 'Fraud & Risk', route: '/audit/fraud'),
+      MenuItem(label: 'Security Events', route: '/audit/events'),
       MenuItem(label: 'Security Settings', route: '/audit/security'),
     ],
   ),
@@ -218,6 +210,12 @@ class AdminLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Sync sidebar selection with current route
+    ref.listen(routerProvider, (_, next) {
+      final route = next.routerDelegate.currentConfiguration.uri.toString();
+      ref.read(selectedRouteProvider.notifier).state = route;
+    });
+
     final isDesktop = Responsive.isDesktop(context);
 
     final colors = context.appColors;

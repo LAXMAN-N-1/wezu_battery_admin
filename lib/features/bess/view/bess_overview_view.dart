@@ -86,10 +86,10 @@ class _BessOverviewViewState extends State<BessOverviewView> {
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
+        Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
           Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 20)),
-          const Spacer(),
+          
           Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
@@ -146,11 +146,11 @@ class _BessOverviewViewState extends State<BessOverviewView> {
         ]),
         const SizedBox(height: 20),
         // SoC Progress
-        Row(children: [
+        Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Text('State of Charge', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
-              const Spacer(),
+              
               Text('${unit.soc.toStringAsFixed(1)}%', style: GoogleFonts.outfit(color: socColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ]),
             const SizedBox(height: 8),

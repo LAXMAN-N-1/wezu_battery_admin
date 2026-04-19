@@ -566,7 +566,7 @@ class _StatusCardState extends State<_StatusCard>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 // Pulsing status ring
                 AnimatedBuilder(
@@ -607,7 +607,7 @@ class _StatusCardState extends State<_StatusCard>
                     );
                   },
                 ),
-                const Spacer(),
+                
                 // Maintenance badge
                 if (ms != null && ms.isActive)
                   Flexible(
@@ -1072,7 +1072,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -1085,7 +1085,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                                   style: const TextStyle(color: Colors.redAccent, fontSize: 9, fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              const Spacer(),
+                              
                               Text(
                                 DateFormat('HH:mm').format(a.createdAt),
                                 style: const TextStyle(color: Colors.white24, fontSize: 10),
@@ -1126,13 +1126,13 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       ),
                       child: Column(
                         children: [
-                          Row(
+                          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               Text(
                                 '${queueResponse.currentQueue.length} Batteries',
                                 style: GoogleFonts.inter(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
                               ),
-                              const Spacer(),
+                              
                               Text(
                                 'Capacity: ${queueResponse.capacity}',
                                 style: GoogleFonts.inter(color: Colors.white24, fontSize: 11),
@@ -1249,7 +1249,7 @@ class _TimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = Color(event.status.colorValue);
     return IntrinsicHeight(
-      child: Row(
+      child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           SizedBox(
             width: 24,
@@ -1308,7 +1308,7 @@ class _TimelineRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  
                   Text(
                     DateFormat('HH:mm').format(event.timestamp),
                     style: GoogleFonts.inter(

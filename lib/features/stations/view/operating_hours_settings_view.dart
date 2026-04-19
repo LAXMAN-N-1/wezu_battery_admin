@@ -164,7 +164,7 @@ class _OperatingHoursSettingsViewState
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
+      child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           SizedBox(
             width: 100,
@@ -183,7 +183,7 @@ class _OperatingHoursSettingsViewState
             onChanged: (val) => _toggleDay(day),
             activeThumbColor: Colors.blue,
           ),
-          const Spacer(),
+          
           if (schedule.isOpen) ...[
             _timeButton(schedule.open, () => _selectTime(day, true)),
             Padding(

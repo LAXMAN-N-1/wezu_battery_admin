@@ -659,7 +659,7 @@ class StockLevelsView extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: DataTable(
+      child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
         headingRowColor: WidgetStateProperty.all(
           const Color(0xFF0F172A).withValues(alpha: 0.5),
         ),
@@ -910,7 +910,7 @@ class StockLevelsView extends ConsumerWidget {
           }
           return const DataRow(cells: []);
         }).toList(),
-      ),
+      )),
     );
   }
 }
@@ -1242,7 +1242,7 @@ class _StationStockCard extends StatelessWidget {
             // Bottom info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
+              child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Icon(
                     Icons.inventory_2_outlined,
@@ -1257,7 +1257,7 @@ class _StationStockCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
-                  const Spacer(),
+                  
                   Icon(
                     Icons.access_time,
                     size: 14,

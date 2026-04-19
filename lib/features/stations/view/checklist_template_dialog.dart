@@ -94,7 +94,7 @@ class _ChecklistTemplateDialogState extends ConsumerState<ChecklistTemplateDialo
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   const Icon(Icons.assignment_add, color: Colors.blue, size: 28),
                   const SizedBox(width: 12),
@@ -102,7 +102,7 @@ class _ChecklistTemplateDialogState extends ConsumerState<ChecklistTemplateDialo
                     widget.initialTemplate == null ? 'New Checklist Template' : 'Edit Template',
                     style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                  const Spacer(),
+                  
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white38),
                     onPressed: () => Navigator.pop(context),
@@ -143,10 +143,10 @@ class _ChecklistTemplateDialogState extends ConsumerState<ChecklistTemplateDialo
                       ),
                       
                       const SizedBox(height: 32),
-                      Row(
+                      Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text('Tasks', style: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 18)),
-                          const Spacer(),
+                          
                           TextButton.icon(
                             icon: const Icon(Icons.add, size: 18),
                             label: const Text('Add Task'),
