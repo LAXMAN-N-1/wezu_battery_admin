@@ -246,7 +246,7 @@ class UserListNotifier extends StateNotifier<UserListState> {
   }
 }
 
-final userListProvider = StateNotifierProvider<UserListNotifier, UserListState>((ref) {
+final userListProvider = StateNotifierProvider.autoDispose<UserListNotifier, UserListState>((ref) {
   return UserListNotifier(ref.watch(userRepositoryProvider));
 });
 
@@ -333,6 +333,6 @@ class InviteListNotifier extends StateNotifier<InviteListState> {
   }
 }
 
-final inviteListProvider = StateNotifierProvider<InviteListNotifier, InviteListState>((ref) {
+final inviteListProvider = StateNotifierProvider.autoDispose<InviteListNotifier, InviteListState>((ref) {
   return InviteListNotifier(ref.watch(userRepositoryProvider));
 });

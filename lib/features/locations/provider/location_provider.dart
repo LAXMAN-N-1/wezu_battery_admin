@@ -34,7 +34,7 @@ class LocationState {
   }
 }
 
-final locationProvider = StateNotifierProvider<LocationNotifier, LocationState>((ref) {
+final locationProvider = StateNotifierProvider.autoDispose<LocationNotifier, LocationState>((ref) {
   return LocationNotifier(ref.read(locationRepositoryProvider));
 });
 

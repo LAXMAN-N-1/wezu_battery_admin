@@ -7,7 +7,7 @@ import '../data/models/station_specs.dart';
 import '../data/providers/stations_provider.dart';
 import '../../../core/widgets/placeholder_screen.dart';
 
-final stationSpecsProvider = FutureProvider.family<StationSpecs, int>((
+final stationSpecsProvider = FutureProvider.autoDispose.family<StationSpecs, int>((
   ref,
   stationId,
 ) async {

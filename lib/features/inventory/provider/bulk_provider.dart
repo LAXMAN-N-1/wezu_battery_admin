@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/inventory_repository.dart';
 import 'package:file_picker/file_picker.dart';
 
-final bulkImportProvider = StateNotifierProvider<BulkImportNotifier, BulkImportState>((ref) {
+final bulkImportProvider = StateNotifierProvider.autoDispose<BulkImportNotifier, BulkImportState>((ref) {
   final repository = InventoryRepository();
   return BulkImportNotifier(repository);
 });

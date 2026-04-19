@@ -44,12 +44,12 @@ class BatteryFilterParams {
       needsAttention.hashCode ^
       search.hashCode;
 }
-final healthOverviewProvider = FutureProvider<HealthOverview>((ref) {
+final healthOverviewProvider = FutureProvider.autoDispose<HealthOverview>((ref) {
   return ref.watch(healthRepositoryProvider).getOverview();
 });
 
 final healthBatteriesProvider =
-    FutureProvider.family<List<HealthBattery>, BatteryFilterParams>((
+    FutureProvider.autoDispose.family<List<HealthBattery>, BatteryFilterParams>((
       ref,
       params,
     ) {
@@ -63,11 +63,11 @@ final healthBatteriesProvider =
           );
     });
 
-final healthAlertsProvider = FutureProvider<List<HealthAlert>>((ref) {
+final healthAlertsProvider = FutureProvider.autoDispose<List<HealthAlert>>((ref) {
   return ref.watch(healthRepositoryProvider).getAlerts();
 });
 
-final healthAnalyticsProvider = FutureProvider<HealthAnalytics>((ref) {
+final healthAnalyticsProvider = FutureProvider.autoDispose<HealthAnalytics>((ref) {
   return ref.watch(healthRepositoryProvider).getAnalytics();
 });
 

@@ -6,7 +6,7 @@ final adminGroupRepositoryProvider = Provider<AdminGroupRepository>((ref) {
   return AdminGroupRepository();
 });
 
-final adminGroupsProvider = FutureProvider<List<AdminGroupModel>>((ref) async {
+final adminGroupsProvider = FutureProvider.autoDispose<List<AdminGroupModel>>((ref) async {
   final repo = ref.watch(adminGroupRepositoryProvider);
   return repo.getGroups();
 });

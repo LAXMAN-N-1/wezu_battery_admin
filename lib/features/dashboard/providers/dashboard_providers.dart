@@ -41,7 +41,7 @@ final dashboardBootstrapPeriodProvider = Provider<String>((ref) {
   return ref.watch(analyticsPeriodProvider);
 });
 
-final dashboardBootstrapProvider = FutureProvider<DashboardBootstrapData>((
+final dashboardBootstrapProvider = FutureProvider.autoDispose<DashboardBootstrapData>((
   ref,
 ) async {
   _watchAnyRefresh(ref);
@@ -54,7 +54,7 @@ final dashboardBootstrapProvider = FutureProvider<DashboardBootstrapData>((
 // Data providers — manually refreshed via dashboardRefreshTriggerProvider
 // ─────────────────────────────────────────────
 
-final dashboardOverviewProvider = FutureProvider<DashboardOverview>((
+final dashboardOverviewProvider = FutureProvider.autoDispose<DashboardOverview>((
   ref,
 ) async {
   _watchLightRefresh(ref);
@@ -76,7 +76,7 @@ final dashboardOverviewProvider = FutureProvider<DashboardOverview>((
 
 final trendPeriodProvider = StateProvider<String>((ref) => '30d');
 
-final trendDataProvider = FutureProvider<TrendData>((ref) async {
+final trendDataProvider = FutureProvider.autoDispose<TrendData>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(trendPeriodProvider);
@@ -90,7 +90,7 @@ final trendDataProvider = FutureProvider<TrendData>((ref) async {
   return repo.getTrends(period: period);
 });
 
-final conversionFunnelProvider = FutureProvider<ConversionFunnel>((ref) async {
+final conversionFunnelProvider = FutureProvider.autoDispose<ConversionFunnel>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   try {
@@ -101,7 +101,7 @@ final conversionFunnelProvider = FutureProvider<ConversionFunnel>((ref) async {
   }
 });
 
-final batteryHealthProvider = FutureProvider<BatteryHealthDistribution>((
+final batteryHealthProvider = FutureProvider.autoDispose<BatteryHealthDistribution>((
   ref,
 ) async {
   _watchHeavyRefresh(ref);
@@ -114,7 +114,7 @@ final batteryHealthProvider = FutureProvider<BatteryHealthDistribution>((
   }
 });
 
-final revenueByRegionProvider = FutureProvider<RevenueByRegion>((ref) async {
+final revenueByRegionProvider = FutureProvider.autoDispose<RevenueByRegion>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   // Wait for bootstrap to finish before firing extra requests
@@ -125,7 +125,7 @@ final revenueByRegionProvider = FutureProvider<RevenueByRegion>((ref) async {
 
 final userGrowthPeriodProvider = StateProvider<String>((ref) => 'monthly');
 
-final userGrowthProvider = FutureProvider<UserGrowth>((ref) async {
+final userGrowthProvider = FutureProvider.autoDispose<UserGrowth>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(userGrowthPeriodProvider);
@@ -134,7 +134,7 @@ final userGrowthProvider = FutureProvider<UserGrowth>((ref) async {
   return repo.getUserGrowth(period: period);
 });
 
-final inventoryStatusProvider = FutureProvider<InventoryStatus>((ref) async {
+final inventoryStatusProvider = FutureProvider.autoDispose<InventoryStatus>((ref) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   try {
@@ -145,7 +145,7 @@ final inventoryStatusProvider = FutureProvider<InventoryStatus>((ref) async {
   }
 });
 
-final demandForecastProvider = FutureProvider<DemandForecast>((ref) async {
+final demandForecastProvider = FutureProvider.autoDispose<DemandForecast>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   try {
@@ -156,7 +156,7 @@ final demandForecastProvider = FutureProvider<DemandForecast>((ref) async {
   }
 });
 
-final userBehaviorProvider = FutureProvider<UserBehavior>((ref) async {
+final userBehaviorProvider = FutureProvider.autoDispose<UserBehavior>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   // Wait for bootstrap to finish before firing extra requests.
@@ -168,7 +168,7 @@ final analyticsPeriodProvider = StateProvider<String>((ref) => '30d');
 
 final stationSortProvider = StateProvider<String>((ref) => 'Revenue High-Low');
 
-final revenueByStationProvider = FutureProvider<StationRevenueData>((
+final revenueByStationProvider = FutureProvider.autoDispose<StationRevenueData>((
   ref,
 ) async {
   _watchHeavyRefresh(ref);
@@ -184,7 +184,7 @@ final revenueByStationProvider = FutureProvider<StationRevenueData>((
   return repo.getRevenueByStation(period: period);
 });
 
-final revenueByBatteryTypeProvider = FutureProvider<BatteryTypeRevenueData>((
+final revenueByBatteryTypeProvider = FutureProvider.autoDispose<BatteryTypeRevenueData>((
   ref,
 ) async {
   _watchHeavyRefresh(ref);
@@ -196,7 +196,7 @@ final revenueByBatteryTypeProvider = FutureProvider<BatteryTypeRevenueData>((
 });
 final activityFilterProvider = StateProvider<String>((ref) => 'all');
 
-final recentActivityProvider = FutureProvider<RecentActivityData>((ref) async {
+final recentActivityProvider = FutureProvider.autoDispose<RecentActivityData>((ref) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final type = ref.watch(activityFilterProvider);
@@ -209,7 +209,7 @@ final recentActivityProvider = FutureProvider<RecentActivityData>((ref) async {
   return repo.getRecentActivity(type: type == 'all' ? null : type);
 });
 
-final topStationsProvider = FutureProvider<TopStationsData>((ref) async {
+final topStationsProvider = FutureProvider.autoDispose<TopStationsData>((ref) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   try {

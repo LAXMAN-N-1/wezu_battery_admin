@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/api/api_client.dart';
 import '../../../core/widgets/api_error_handler.dart';
 
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authProvider = StateNotifierProvider.autoDispose<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
 });
 

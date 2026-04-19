@@ -10,8 +10,7 @@ import '../widgets/battery_detail_drawer.dart';
 import '../widgets/reorder_modal.dart';
 import 'stock_levels_view.dart';
 
-final stationDetailProvider = FutureProvider.family
-    .autoDispose<StationStockDetail, int>((ref, stationId) {
+final stationDetailProvider = FutureProvider.autoDispose.family<StationStockDetail, int>((ref, stationId) {
       ref.keepAlive();
       return ref.watch(stockRepositoryProvider).getStationDetail(stationId);
     });

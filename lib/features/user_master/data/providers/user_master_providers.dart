@@ -9,7 +9,7 @@ final userMasterRepositoryProvider = Provider<UserMasterRepository>((ref) {
 });
 
 // --- User Providers ---
-final usersProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
+final usersProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   return repo.getUsers(
     search: params['search'] as String?,
@@ -21,7 +21,7 @@ final usersProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dy
 });
 
 // Stable-key version: prevents infinite re-fetch caused by Map identity changing on every widget rebuild
-final usersProviderByKey = FutureProvider.family<Map<String, dynamic>, String>((ref, queryKey) async {
+final usersProviderByKey = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, queryKey) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   final uri = Uri(query: queryKey);
   final params = uri.queryParameters;
@@ -34,25 +34,25 @@ final usersProviderByKey = FutureProvider.family<Map<String, dynamic>, String>((
   );
 });
 
-final userSummaryProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final userSummaryProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   return repo.getUserSummary();
 });
 
 // --- Role Providers ---
-final rolesProvider = FutureProvider<List<Role>>((ref) async {
+final rolesProvider = FutureProvider.autoDispose<List<Role>>((ref) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   return repo.getRoles();
 });
 
 // --- Permission Providers ---
-final permissionModulesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final permissionModulesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   return repo.getPermissionModules();
 });
 
 // --- Access Logs Provider ---
-final accessLogsProvider = FutureProvider.family<List<AccessLog>, Map<String, dynamic>>((ref, params) async {
+final accessLogsProvider = FutureProvider.autoDispose.family<List<AccessLog>, Map<String, dynamic>>((ref, params) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   return repo.getAccessLogs(
     skip: params['skip'] as int? ?? 0,

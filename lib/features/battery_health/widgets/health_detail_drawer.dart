@@ -9,7 +9,7 @@ import '../data/repositories/health_repository.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 
 final batteryDetailProvider =
-    FutureProvider.family<HealthBatteryDetail, String>((ref, batteryId) {
+    FutureProvider.autoDispose.family<HealthBatteryDetail, String>((ref, batteryId) {
       return ref.watch(healthRepositoryProvider).getBatteryDetail(batteryId);
     });
 

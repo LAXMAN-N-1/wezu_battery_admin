@@ -78,7 +78,7 @@ class AlertsNotifier extends StateNotifier<List<StatusAlert>> {
   void dismissAll() => state = [];
 }
 
-final alertsProvider = StateNotifierProvider<AlertsNotifier, List<StatusAlert>>(
+final alertsProvider = StateNotifierProvider.autoDispose<AlertsNotifier, List<StatusAlert>>(
   (_) => AlertsNotifier(),
 );
 
@@ -153,14 +153,14 @@ class MaintenanceNotifier extends StateNotifier<Map<int, MaintenanceSchedule>> {
 }
 
 final maintenanceProvider =
-    StateNotifierProvider<MaintenanceNotifier, Map<int, MaintenanceSchedule>>(
+    StateNotifierProvider.autoDispose<MaintenanceNotifier, Map<int, MaintenanceSchedule>>(
       (ref) => MaintenanceNotifier(ref.read(apiClientProvider)),
     );
 
 // -------------------------------------------------------
 // Status history provider (last 50 events)
 // -------------------------------------------------------
-final statusHistoryProvider = FutureProvider<List<StationStatusEvent>>((
+final statusHistoryProvider = FutureProvider.autoDispose<List<StationStatusEvent>>((
   ref,
 ) async {
   final service = ref.read(stationStatusServiceProvider);
@@ -170,7 +170,7 @@ final statusHistoryProvider = FutureProvider<List<StationStatusEvent>>((
 // -------------------------------------------------------
 // Backend error logs provider — polls /admin/monitoring/errors
 // -------------------------------------------------------
-final errorLogsProvider = FutureProvider<List<BackendErrorLog>>((ref) async {
+final errorLogsProvider = FutureProvider.autoDispose<List<BackendErrorLog>>((ref) async {
   final service = ref.read(stationStatusServiceProvider);
   return service.fetchErrorLogs(limit: 30);
 });
