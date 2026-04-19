@@ -112,7 +112,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       children: [
         SelectionArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(0),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

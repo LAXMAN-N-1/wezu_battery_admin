@@ -26,29 +26,27 @@ class ApiClient {
   static const _skipAuthInterceptorKey = 'skipAuthInterceptor';
   static const _tokenInvalidLiterals = {'null', 'undefined', 'nil'};
   static const _tokenFailureKeywords = {
-    'token',
-    'jwt',
-    'bearer',
-    'expired',
-    'invalid',
+    'token expired',
+    'token has expired',
+    'jwt expired',
     'invalid token',
     'invalid_token',
-    'signature',
-    'unauthorized',
-    'unauthenticated',
+    'invalid jwt',
+    'signature has expired',
     'not authenticated',
-    'authentication',
+    'could not validate credentials',
+    'token is invalid',
+    'token revoked',
   };
   static const _forbiddenTokenFailureKeywords = {
-    'token',
-    'jwt',
-    'bearer',
-    'expired',
+    'token expired',
+    'token has expired',
     'invalid token',
     'invalid_token',
-    'signature',
+    'jwt expired',
     'not authenticated',
-    'authentication credentials',
+    'authentication credentials were not provided',
+    'could not validate credentials',
   };
   static const _enforceNoTrailingSlash = bool.fromEnvironment(
     'API_ENFORCE_NO_TRAILING_SLASH',
@@ -393,23 +391,22 @@ class ApiClient {
 
   bool isLikelyAuthFailure(DioException error, {bool includeForbidden = true}) {
     final statusCode = error.response?.statusCode;
+    // Only 401 is a definitive auth failure.
     if (statusCode == 401) {
       return true;
     }
 
-    if (statusCode == 400) {
-      return _responseMentionsTokenFailure(
-        error.response?.data,
-        keywords: _tokenFailureKeywords,
-      );
-    }
-
+    // 403 may indicate an expired/revoked token, but only if the
+    // response body contains specific auth-failure phrases.
     if (includeForbidden && statusCode == 403) {
       return _responseMentionsTokenFailure(
         error.response?.data,
         keywords: _forbiddenTokenFailureKeywords,
       );
     }
+
+    // 400 is NOT treated as auth failure — it's typically validation errors
+    // and should never trigger token refresh or logout.
     return false;
   }
 
