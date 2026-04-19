@@ -32,9 +32,7 @@ class _RolesPermissionsMasterViewState extends State<RolesPermissionsMasterView>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -86,7 +84,6 @@ class _RolesPermissionsMasterViewState extends State<RolesPermissionsMasterView>
             ),
           ),
         ],
-      ),
     );
   }
 }

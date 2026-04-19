@@ -570,9 +570,7 @@ class _BatteriesViewState extends State<BatteriesView>
   // =========================================================================
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
+    return Stack(
         children: [
           RefreshIndicator(
             onRefresh: _loadData,
@@ -600,8 +598,7 @@ class _BatteriesViewState extends State<BatteriesView>
           // Bulk Action Bar
           _buildBulkActionBar(),
         ],
-      ),
-    );
+      );
   }
 
   // =========================================================================

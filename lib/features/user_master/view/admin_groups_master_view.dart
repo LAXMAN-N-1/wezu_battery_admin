@@ -109,9 +109,7 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
   Widget build(BuildContext context) {
     final groupsAsync = ref.watch(adminGroupsProvider);
     
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +153,6 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
             ),
           ],
         ),
-      ),
     );
   }
 

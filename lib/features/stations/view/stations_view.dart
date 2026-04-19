@@ -102,9 +102,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
     final stationsAsync = ref.watch(stationsProvider);
     final isMobile = MediaQuery.of(context).size.width < 1100;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: Row(
+    return Row(
         children: [
           // Main Content
           Expanded(
@@ -262,7 +260,6 @@ class _StationsViewState extends ConsumerState<StationsView> {
               child: _buildDetailPanel(),
             ),
         ],
-      ),
     );
   }
 

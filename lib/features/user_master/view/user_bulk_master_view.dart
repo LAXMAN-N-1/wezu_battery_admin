@@ -9,9 +9,7 @@ class UserBulkMasterView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,7 +33,6 @@ class UserBulkMasterView extends StatelessWidget {
             _buildRecentOpsTable(),
           ],
         ),
-      ),
     );
   }
 

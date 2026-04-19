@@ -41,7 +41,14 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
             child: Column(
               children: [
                 _buildHeader(context, widget.title, isDesktop),
-                Expanded(child: widget.child),
+                Expanded(
+                  child: Container(
+                    color: colors.scaffoldBg,
+                    clipBehavior: Clip.hardEdge,
+                    decoration: const BoxDecoration(),
+                    child: widget.child,
+                  ),
+                ),
               ],
             ),
           ),

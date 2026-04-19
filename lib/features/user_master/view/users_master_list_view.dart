@@ -65,9 +65,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
     final usersAsync = ref.watch(usersProviderByKey(queryKey));
     final summaryAsync = ref.watch(userSummaryProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: RefreshIndicator(
+    return RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(usersProviderByKey);
           ref.invalidate(usersProvider);
@@ -92,7 +90,6 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
             ],
           ),
         ),
-      ),
     );
   }
 

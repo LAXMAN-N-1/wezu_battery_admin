@@ -57,9 +57,7 @@ class StockLevelsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewMode = ref.watch(stockViewModeProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      body: CustomScrollView(
+    return CustomScrollView(
         slivers: [
           // Header
           SliverToBoxAdapter(
@@ -114,8 +112,7 @@ class StockLevelsView extends ConsumerWidget {
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
-      ),
-    );
+      );
   }
 
   Widget _buildViewToggle(WidgetRef ref, String currentMode) {
