@@ -13,6 +13,7 @@ import 'dio_adapter_stub.dart'
 import '../utils/token_utils.dart';
 import '../widgets/api_error_handler.dart';
 import 'retry_interceptor.dart';
+import 'error_formatting_interceptor.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   return ApiClient();
@@ -94,6 +95,7 @@ class ApiClient {
 
     dio.interceptors.add(AuthInterceptor(this));
     dio.interceptors.add(RetryInterceptor(dio: dio));
+    dio.interceptors.add(ErrorFormattingInterceptor());
 
     // Add detailed API logging only in debug mode.
     if (kDebugMode) {
