@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker buildx:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(curl -sS -o /tmp/dash.json -w \"HTTP %{http_code}\\\\n\" \"https://api1.wezutech.com/api/v1/admin/analytics/dashboard?period=30d\")",
+      "Read(//tmp/**)",
+      "Bash(flutter analyze:*)"
+    ]
+  }
+}

@@ -7,227 +7,35 @@ import '../theme/app_themes.dart';
 import '../theme/theme_provider.dart';
 import '../../features/auth/provider/auth_provider.dart';
 import '../utils/responsive.dart';
+import '../config/menu_config.dart';
 
-/// Menu section data model
-class MenuSection {
-  final String id;
-  final IconData icon;
-  final String label;
-  final String? route; // null = has children, no direct route
-  final List<MenuItem> children;
-
-  const MenuSection({
-    required this.id,
-    required this.icon,
-    required this.label,
-    this.route,
-    this.children = const [],
-  });
-}
-
-class MenuItem {
-  final String label;
-  final String route;
-
-  const MenuItem({required this.label, required this.route});
-}
-
-/// All sidebar sections
-const List<MenuSection> _menuSections = [
-  MenuSection(
-    id: 'dashboard',
-    icon: Icons.dashboard_outlined,
-    label: 'Dashboard',
-    route: '/dashboard',
-    children: [
-      MenuItem(label: 'Overview', route: '/dashboard'),
-      MenuItem(label: 'Analytics', route: '/dashboard/analytics'),
-    ],
-  ),
-  MenuSection(
-    id: 'user-master',
-    icon: Icons.people_outline,
-    label: 'User Master',
-    children: [
-      MenuItem(label: 'All Users', route: '/user-master'),
-      MenuItem(label: 'Add / Edit User', route: '/user-master/edit'),
-      MenuItem(label: 'Roles & Permissions', route: '/user-master/roles'),
-      MenuItem(label: 'Admin Groups', route: '/user-master/groups'),
-      MenuItem(label: 'Access Logs', route: '/user-master/logs'),
-      MenuItem(label: 'Bulk Import/Export', route: '/user-master/bulk'),
-    ],
-  ),
-  MenuSection(
-    id: 'fleet',
-    icon: Icons.battery_charging_full_outlined,
-    label: 'Fleet & Inventory',
-    children: [
-      MenuItem(label: 'All Batteries', route: '/fleet/batteries'),
-      MenuItem(label: 'Stock Levels', route: '/fleet/stock'),
-      MenuItem(label: 'Battery Health', route: '/fleet/health'),
-      MenuItem(label: 'Audit Trail', route: '/fleet/audit'),
-      MenuItem(label: 'Bulk Import/Export', route: '/fleet/bulk'),
-    ],
-  ),
-  MenuSection(
-    id: 'stations',
-    icon: Icons.ev_station_outlined,
-    label: 'Stations',
-    children: [
-      MenuItem(label: 'All Stations', route: '/stations'),
-      MenuItem(label: 'Station Map', route: '/stations/map'),
-      MenuItem(label: 'Performance', route: '/stations/performance'),
-      MenuItem(label: 'Maintenance', route: '/stations/maintenance'),
-    ],
-  ),
-  MenuSection(
-    id: 'dealers',
-    icon: Icons.handshake_outlined,
-    label: 'Dealers',
-    children: [
-      MenuItem(label: 'All Dealers', route: '/dealers'),
-      MenuItem(label: 'Registrations', route: '/dealers/registrations'),
-      MenuItem(label: 'KYC & Verification', route: '/dealers/kyc'),
-      MenuItem(label: 'Commissions', route: '/dealers/commissions'),
-      MenuItem(label: 'Documents', route: '/dealers/documents'),
-    ],
-  ),
-  MenuSection(
-    id: 'rentals',
-    icon: Icons.receipt_long_outlined,
-    label: 'Rentals & Orders',
-    children: [
-      MenuItem(label: 'Active Rentals', route: '/rentals/active'),
-      MenuItem(label: 'Rental History', route: '/rentals/history'),
-      MenuItem(label: 'Battery Swaps', route: '/rentals/swaps'),
-      MenuItem(label: 'Purchase Orders', route: '/rentals/purchases'),
-      MenuItem(label: 'Late Fees', route: '/rentals/late-fees'),
-    ],
-  ),
-  MenuSection(
-    id: 'finance',
-    icon: Icons.account_balance_outlined,
-    label: 'Finance',
-    children: [
-      MenuItem(label: 'Revenue Dashboard', route: '/finance'),
-      MenuItem(label: 'Transactions', route: '/finance/transactions'),
-      MenuItem(label: 'Settlements', route: '/finance/settlements'),
-      MenuItem(label: 'Invoices', route: '/finance/invoices'),
-      MenuItem(label: 'Profit Analysis', route: '/finance/profit'),
-    ],
-  ),
-  MenuSection(
-    id: 'logistics',
-    icon: Icons.local_shipping_outlined,
-    label: 'Logistics',
-    children: [
-      MenuItem(label: 'Delivery Orders', route: '/logistics/orders'),
-      MenuItem(label: 'Live Tracking', route: '/logistics/tracking'),
-      MenuItem(label: 'Drivers', route: '/logistics/drivers'),
-      MenuItem(label: 'Route Planner', route: '/logistics/routes'),
-      MenuItem(label: 'Returns', route: '/logistics/returns'),
-    ],
-  ),
-  MenuSection(
-    id: 'fleet-ops',
-    icon: Icons.settings_remote_outlined,
-    label: 'Fleet Operations',
-    children: [
-      MenuItem(label: 'IoT Dashboard', route: '/fleet-ops/iot'),
-      MenuItem(label: 'Geofencing', route: '/fleet-ops/geofence'),
-      MenuItem(label: 'Telematics', route: '/fleet-ops/telematics'),
-      MenuItem(label: 'Alerts & Alarms', route: '/fleet-ops/alerts'),
-    ],
-  ),
-  MenuSection(
-    id: 'bess',
-    icon: Icons.bolt_outlined,
-    label: 'BESS',
-    children: [
-      MenuItem(label: 'BESS Overview', route: '/bess'),
-      MenuItem(label: 'Energy Monitoring', route: '/bess/monitoring'),
-      MenuItem(label: 'Grid Integration', route: '/bess/grid'),
-      MenuItem(label: 'Reports', route: '/bess/reports'),
-    ],
-  ),
-  MenuSection(
-    id: 'support',
-    icon: Icons.support_agent_outlined,
-    label: 'Support',
-    children: [
-      MenuItem(label: 'Tickets', route: '/support/tickets'),
-      MenuItem(label: 'Knowledge Base', route: '/support/knowledge'),
-      MenuItem(label: 'Team Performance', route: '/support/performance'),
-    ],
-  ),
-  MenuSection(
-    id: 'notifications',
-    icon: Icons.notifications_active_outlined,
-    label: 'Notifications',
-    children: [
-      MenuItem(label: 'Send Push', route: '/notifications/send'),
-      MenuItem(label: 'Automated Triggers', route: '/notifications/triggers'),
-      MenuItem(label: 'Notification Logs', route: '/notifications/logs'),
-      MenuItem(label: 'SMS & Email Config', route: '/notifications/config'),
-    ],
-  ),
-  MenuSection(
-    id: 'cms',
-    icon: Icons.article_outlined,
-    label: 'CMS',
-    children: [
-      MenuItem(label: 'Blog Posts', route: '/cms/blogs'),
-      MenuItem(label: 'FAQ Management', route: '/cms/faqs'),
-      MenuItem(label: 'App Banners', route: '/cms/banners'),
-      MenuItem(label: 'Legal Documents', route: '/cms/legal'),
-      MenuItem(label: 'Media Library', route: '/cms/media'),
-    ],
-  ),
-  MenuSection(
-    id: 'audit',
-    icon: Icons.shield_outlined,
-    label: 'Audit & Security',
-    children: [
-      MenuItem(label: 'Audit Logs', route: '/audit/logs'),
-      MenuItem(label: 'Fraud Detection', route: '/audit/fraud'),
-      MenuItem(label: 'Security Settings', route: '/audit/security'),
-    ],
-  ),
-  MenuSection(
-    id: 'settings',
-    icon: Icons.settings_outlined,
-    label: 'Settings',
-    children: [
-      MenuItem(label: 'General', route: '/settings'),
-      MenuItem(label: 'API Keys', route: '/settings/api-keys'),
-      MenuItem(label: 'System Health', route: '/settings/health'),
-    ],
-  ),
-];
-
-class AdminLayout extends ConsumerWidget {
+class AdminLayout extends ConsumerStatefulWidget {
   final Widget child;
   final String title;
 
   const AdminLayout({super.key, required this.child, required this.title});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDesktop = Responsive.isDesktop(context);
+  ConsumerState<AdminLayout> createState() => _AdminLayoutState();
+}
 
+class _AdminLayoutState extends ConsumerState<AdminLayout> {
+  @override
+  Widget build(BuildContext context) {
+    final isDesktop = Responsive.isDesktop(context);
     final colors = context.appColors;
 
     return Scaffold(
       backgroundColor: colors.scaffoldBg,
-      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context, ref)),
+      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context)),
       body: Row(
         children: [
-          if (isDesktop) _buildSidebar(context, ref),
+          if (isDesktop) _buildSidebar(context),
           Expanded(
             child: Column(
               children: [
-                _buildHeader(context, ref, title, isDesktop),
-                Expanded(child: child),
+                _buildHeader(context, widget.title, isDesktop),
+                Expanded(child: widget.child),
               ],
             ),
           ),
@@ -236,11 +44,14 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context, WidgetRef ref) {
-    final currentRoute = ref.watch(selectedRouteProvider);
-    final expandedSections = ref.watch(expandedSectionsProvider);
-
+  Widget _buildSidebar(BuildContext context) {
     final colors = context.appColors;
+    final menuSections = ref.watch(sidebarMenuProvider);
+    
+    // Natively read the current path from GoRouter's state
+    // We remove query params to just match the base path
+    final currentRoute = GoRouterState.of(context).uri.path;
+    
     return Container(
       width: 270,
       decoration: BoxDecoration(
@@ -306,14 +117,8 @@ class AdminLayout extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               children: [
-                for (final section in _menuSections) ...[
-                  _buildSection(
-                    ref,
-                    section,
-                    currentRoute,
-                    expandedSections,
-                    context,
-                  ),
+                for (final section in menuSections) ...[
+                  _SectionWidget(section: section, currentRoute: currentRoute),
                 ],
               ],
             ),
@@ -350,160 +155,17 @@ class AdminLayout extends ConsumerWidget {
     );
   }
 
-  Widget _buildSection(
-    WidgetRef ref,
-    MenuSection section,
-    String currentRoute,
-    Set<String> expandedSections,
-    BuildContext context,
-  ) {
-    final bool isExpanded = expandedSections.contains(section.id);
-    final bool isSectionActive =
-        currentRoute.startsWith('/${section.id}') ||
-        section.children.any((c) => currentRoute == c.route) ||
-        (section.route != null && currentRoute == section.route);
-
-    // For dashboard, handle the direct route matching
-    if (section.id == 'dashboard') {
-      final isDashActive = currentRoute.startsWith('/dashboard');
-      return _buildSectionTile(ref, section, isDashActive, isExpanded, context);
-    }
-
-    return _buildSectionTile(
-      ref,
-      section,
-      isSectionActive,
-      isExpanded,
-      context,
-    );
-  }
-
-  Widget _buildSectionTile(
-    WidgetRef ref,
-    MenuSection section,
-    bool isActive,
-    bool isExpanded,
-    BuildContext context,
-  ) {
-    final colors = context.appColors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section header
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 1),
-          child: ListTile(
-            onTap: () {
-              if (section.children.isNotEmpty) {
-                ref.read(expandedSectionsProvider.notifier).toggle(section.id);
-                // Navigate to first child
-                if (!isExpanded && section.children.isNotEmpty) {
-                  final firstRoute = section.children.first.route;
-                  ref.read(selectedRouteProvider.notifier).state = firstRoute;
-                  GoRouter.of(ref.context).go(firstRoute);
-                }
-              } else if (section.route != null) {
-                ref.read(selectedRouteProvider.notifier).state = section.route!;
-                GoRouter.of(ref.context).go(section.route!);
-              }
-            },
-            dense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            leading: Icon(
-              section.icon,
-              color: isActive ? colors.accent : colors.textTertiary,
-              size: 19,
-            ),
-            title: Text(
-              section.label,
-              style: GoogleFonts.inter(
-                color: isActive ? colors.textPrimary : colors.textSecondary,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                fontSize: 13,
-              ),
-            ),
-            trailing: section.children.length > 1
-                ? Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: colors.textTertiary,
-                    size: 18,
-                  )
-                : null,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            tileColor: isActive && !isExpanded
-                ? Colors.blue.withValues(alpha: 0.08)
-                : Colors.transparent,
-            hoverColor: Colors.white.withValues(alpha: 0.03),
-          ),
-        ),
-
-        // Submenu children
-        if (isExpanded && section.children.length > 1)
-          Padding(
-            padding: const EdgeInsets.only(left: 20, bottom: 4),
-            child: Column(
-              children: section.children.map((item) {
-                final isChildActive =
-                    ref.watch(selectedRouteProvider) == item.route;
-                return _buildChildItem(ref, item, isChildActive, context);
-              }).toList(),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildChildItem(
-    WidgetRef ref,
-    MenuItem item,
-    bool isActive,
-    BuildContext context,
-  ) {
-    final colors = context.appColors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0.5),
-      child: ListTile(
-        onTap: () {
-          ref.read(selectedRouteProvider.notifier).state = item.route;
-          GoRouter.of(ref.context).go(item.route);
-        },
-        dense: true,
-        visualDensity: const VisualDensity(vertical: -3),
-        contentPadding: const EdgeInsets.only(left: 24),
-        leading: Container(
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? colors.accent : colors.border,
-          ),
-        ),
-        title: Text(
-          item.label,
-          style: GoogleFonts.inter(
-            color: isActive ? Colors.blue.shade300 : Colors.white54,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            fontSize: 12,
-          ),
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        tileColor: isActive
-            ? Colors.blue.withValues(alpha: 0.06)
-            : Colors.transparent,
-        hoverColor: Colors.white.withValues(alpha: 0.03),
-      ),
-    );
-  }
-
   Widget _buildHeader(
     BuildContext context,
-    WidgetRef ref,
     String title,
     bool isDesktop,
   ) {
     final colors = context.appColors;
+    final user = ref.watch(authProvider).user;
+    final userName = user?['first_name'] ?? user?['name'] ?? 'Admin';
+    final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
+    final userRole = user?['role'] ?? user?['current_role'] ?? 'Administrator';
+
     return Container(
       height: 72,
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
@@ -527,7 +189,7 @@ class AdminLayout extends ConsumerWidget {
           Text(
             title,
             style: GoogleFonts.inter(
-              color: colors.textPrimary,
+               color: colors.textPrimary,
               fontSize: isDesktop ? 17 : 15,
               fontWeight: FontWeight.w600,
             ),
@@ -564,9 +226,9 @@ class AdminLayout extends ConsumerWidget {
           CircleAvatar(
             radius: 16,
             backgroundColor: Colors.blue.shade600,
-            child: const Text(
-              "L",
-              style: TextStyle(
+            child: Text(
+              userInitial,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -579,7 +241,7 @@ class AdminLayout extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Laxman",
+                userName,
                 style: GoogleFonts.inter(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -587,15 +249,201 @@ class AdminLayout extends ConsumerWidget {
                 ),
               ),
               Text(
-                "Super Admin",
+                 userRole.toString().replaceAll('_', ' ').toUpperCase(),
                 style: GoogleFonts.inter(
                   color: colors.textTertiary,
-                  fontSize: 11,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SectionWidget extends ConsumerStatefulWidget {
+  final MenuSection section;
+  final String currentRoute;
+
+  const _SectionWidget({required this.section, required this.currentRoute});
+
+  @override
+  ConsumerState<_SectionWidget> createState() => _SectionWidgetState();
+}
+
+class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTickerProviderStateMixin {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = _isSectionActive();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SectionWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Auto-expand if a new route makes this section active
+    if (!_expanded && _isSectionActive()) {
+      _expanded = true;
+    }
+  }
+
+  bool _isSectionActive() {
+    if (widget.section.id == 'dashboard') {
+      return widget.currentRoute == '/dashboard' || widget.currentRoute.startsWith('/dashboard/');
+    }
+    return widget.currentRoute.startsWith('/${widget.section.id}') ||
+           widget.section.children.any((c) => widget.currentRoute == c.route) ||
+           (widget.section.route != null && widget.currentRoute == widget.section.route);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final isActive = _isSectionActive();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              hoverColor: colors.accent.withValues(alpha: 0.05),
+              onTap: () {
+                if (widget.section.children.isNotEmpty) {
+                  setState(() {
+                    _expanded = !_expanded;
+                  });
+                  // Optional: Automatically navigate to first child when expanding?
+                  // Doing so might feel too aggressive if they just want to see the menu.
+                } else if (widget.section.route != null) {
+                  context.go(widget.section.route!);
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: isActive && !_expanded
+                      ? colors.accent.withValues(alpha: 0.1)
+                      : Colors.transparent,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      widget.section.icon,
+                      color: isActive ? colors.accent : colors.textTertiary,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.section.label,
+                        style: GoogleFonts.inter(
+                          color: isActive ? colors.textPrimary : colors.textSecondary,
+                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    if (widget.section.children.length > 1)
+                      AnimatedRotation(
+                        turns: _expanded ? 0.5 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.expand_more,
+                          color: colors.textTertiary,
+                          size: 18,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Submenu children via implicitly animated clip
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            height: (_expanded && widget.section.children.length > 1) ? null : 0,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 20, bottom: 4, top: 2),
+              child: Column(
+                children: widget.section.children.map((item) {
+                  final isChildActive = widget.currentRoute == item.route;
+                  return _buildChildItem(item, isChildActive, context);
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildChildItem(
+    MenuItem item,
+    bool isActive,
+    BuildContext context,
+  ) {
+    final colors = context.appColors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: colors.accent.withValues(alpha: 0.05),
+          onTap: () {
+            context.go(item.route);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: isActive
+                  ? colors.accent.withValues(alpha: 0.06)
+                  : Colors.transparent,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isActive ? colors.accent : colors.border.withValues(alpha: 0.5),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: GoogleFonts.inter(
+                      color: isActive ? colors.accent : colors.textSecondary,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
