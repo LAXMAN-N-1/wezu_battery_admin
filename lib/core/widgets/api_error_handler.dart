@@ -29,6 +29,8 @@ class ApiErrorHandler {
         return 'Too many requests. Please wait a moment and try again.';
       case 500:
         return 'Server error. Please try again later.';
+      case 504:
+        return 'The server is taking longer than usual to respond. Please try again in a moment.';
       case null:
         if (error.type == DioExceptionType.cancel) {
           return 'Your session has expired. Please log in again.';

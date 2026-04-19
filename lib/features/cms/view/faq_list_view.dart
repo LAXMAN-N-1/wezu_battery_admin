@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import '../data/models/faq.dart';
 import '../data/repositories/faq_repository.dart';
 
@@ -12,7 +11,7 @@ class FaqListView extends StatefulWidget {
 }
 
 class _FaqListViewState extends State<FaqListView> {
-  final FaqRepository _repository = FaqRepository();
+  final FAQRepository _repository = FAQRepository();
   List<FAQ> _faqs = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -29,7 +28,7 @@ class _FaqListViewState extends State<FaqListView> {
     try {
       final faqs = await _repository.getFaqs(
         category: _filterCategory,
-        q: _searchQuery.isEmpty ? null : _searchQuery,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
       );
       setState(() {
         _faqs = faqs;
@@ -193,7 +192,7 @@ class _FaqListViewState extends State<FaqListView> {
             onChanged: (val) {
               // TODO: Update status
             },
-            activeColor: Colors.green,
+            activeThumbColor: Colors.green,
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.white38),
@@ -225,7 +224,7 @@ class _FaqListViewState extends State<FaqListView> {
                   _buildStat(Icons.thumb_down_alt_outlined, Colors.red, faq.notHelpfulCount.toString()),
                   
                   Text(
-                    'Last updated: ${DateFormat('MMM d, y').format(faq.updatedAt)}',
+                    'FAQ ID: ${faq.id}',
                     style: const TextStyle(color: Colors.white24, fontSize: 11),
                   ),
                 ],
