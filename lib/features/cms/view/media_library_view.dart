@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../data/models/media_asset.dart';
 import '../data/cms_providers.dart';
+import '../provider/cms_providers.dart';
 // import '../../../core/widgets/admin_ui_components.dart';
 
 class MediaLibraryView extends ConsumerStatefulWidget {
@@ -396,7 +397,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
                           _sectionLabel('Category'),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            initialValue: category,
+                            value: category,
                             dropdownColor: const Color(0xFF1E293B),
                             style: const TextStyle(color: Colors.white, fontSize: 13),
                             decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
@@ -417,7 +418,7 @@ class _MediaLibraryViewState extends ConsumerState<MediaLibraryView> {
                       const SizedBox(width: 16),
                       ElevatedButton(
                         onPressed: () async {
-                          await ref.read(mediaRepositoryProvider).createMediaAsset(
+                          await ref.read(cmsRepositoryProvider).createMediaAsset(
                             fileName: nameCtrl.text.isNotEmpty ? nameCtrl.text : 'Asset_${DateTime.now().millisecondsSinceEpoch}',
                             fileType: 'image/jpeg',
                             fileSizeBytes: 0,

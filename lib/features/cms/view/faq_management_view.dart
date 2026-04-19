@@ -370,8 +370,6 @@ class _FaqManagementViewState extends ConsumerState<FaqManagementView> {
                             isActive: isActive,
                             helpfulCount: faq?.helpfulCount ?? 0,
                             notHelpfulCount: faq?.notHelpfulCount ?? 0,
-                            createdAt: faq?.createdAt ?? DateTime.now(),
-                            updatedAt: DateTime.now(),
                           );
                           if (faq == null) {
                             await ref.read(faqRepositoryProvider).createFaq(data);

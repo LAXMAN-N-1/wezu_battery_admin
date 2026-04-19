@@ -510,7 +510,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'edit/:id',
                     pageBuilder: (context, state) {
-                      final blogId = state.pathParameters['id'];
+                      final blogId = int.tryParse(state.pathParameters['id'] ?? '');
                       return NoTransitionPage(
                         child: BlogEditorView(blogId: blogId),
                       );

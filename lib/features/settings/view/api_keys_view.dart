@@ -114,7 +114,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
         ElevatedButton(onPressed: () async {
-          await _repo.createApiKey(svcCtrl.text, nameCtrl.text, valCtrl.text, env);
+          await _repo.createApiKey(serviceName: svcCtrl.text, keyName: nameCtrl.text, keyValue: valCtrl.text, environment: env);
           if (ctx.mounted) Navigator.pop(ctx); _loadData();
         }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)), child: const Text('Save Key')),
       ]));
