@@ -178,6 +178,7 @@ class _BatteriesViewState extends State<BatteriesView>
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
       setState(() {
         _searchQuery = query;
         _currentPage = 0;
