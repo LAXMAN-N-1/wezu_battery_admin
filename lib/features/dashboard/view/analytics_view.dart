@@ -84,7 +84,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
         return ChoiceChip(
           label: Text(
             p.toUpperCase(),
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: isSelected ? Colors.white : colors.textSecondary,
@@ -191,7 +191,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
           ),
           Text(
             label,
-            style: GoogleFonts.inter(fontSize: 12, color: colors.textSecondary),
+            style: TextStyle(fontSize: 12, color: colors.textSecondary),
           ),
         ],
       ),
@@ -217,7 +217,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
       children: [
         Text(
           'Session Duration Histogram',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             color: colors.textPrimary,
           ),
@@ -290,7 +290,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
       children: [
         Text(
           'Cohort Breakdown',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             color: colors.textPrimary,
           ),
@@ -363,7 +363,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
       children: [
         Text(
           'Peak Traffic Heatmap',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
             color: colors.textPrimary,
           ),
@@ -592,7 +592,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                             Expanded(
                               child: Text(
                                 s.name,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w500,
                                   color: colors.textPrimary,
                                 ),
@@ -602,7 +602,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                             const SizedBox(width: 8),
                             Text(
                               '${s.count}',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: colors.accent,
                               ),
@@ -749,7 +749,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                   if (subtitle != null)
                     Text(
                       subtitle,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 11,
                         color: colors.textTertiary,
                       ),
@@ -821,7 +821,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               return BarTooltipItem(
                 '${displayData[groupIndex].stationName}\n',
-                GoogleFonts.inter(
+                TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
@@ -863,7 +863,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                       width: 60,
                       child: Text(
                         label,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: colors.textTertiary,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -891,7 +891,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                   space: 8,
                   child: Text(
                     _compactNumber(value),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: colors.textTertiary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -987,7 +987,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 );
                 return BarTooltipItem(
                   '${station.stationName}\n',
-                  GoogleFonts.inter(
+                  TextStyle(
                     color: colors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1025,7 +1025,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                         width: 60,
                         child: Text(
                           label,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: colors.textTertiary,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -1050,7 +1050,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                   if (value > maxY * 0.99) return const SizedBox();
                   return Text(
                     _compactNumber(value),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: colors.textTertiary,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -1152,7 +1152,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                       width: 60,
                       child: Text(
                         label,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: colors.textTertiary,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -1175,7 +1175,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
               interval: 10000,
               getTitlesWidget: (value, meta) => Text(
                 _compactNumber(value),
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: colors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
@@ -1330,7 +1330,7 @@ class _AnalyticsViewState extends ConsumerState<AnalyticsView> {
                 const SizedBox(width: 12),
                 Text(
                   'Analytics exported successfully',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
               ],
             ),

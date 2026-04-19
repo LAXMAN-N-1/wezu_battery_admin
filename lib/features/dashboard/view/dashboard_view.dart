@@ -123,7 +123,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               icon: Icon(Icons.refresh, size: 18, color: colors.textPrimary),
               label: Text(
                 'Refresh',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
                 ),
@@ -157,7 +157,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             const SizedBox(width: 8),
             Text(
               'All systems operational',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 13,
                 color: colors.textSecondary.withValues(alpha: 0.8),
                 fontWeight: FontWeight.w500,
@@ -176,7 +176,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               const SizedBox(width: 8),
               Text(
                 'Updated ${DateFormat('h:mm a').format(lastRefresh)}',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 13,
                   color: colors.textSecondary.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w500,
@@ -603,7 +603,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                   const SizedBox(height: 4),
                   Text(
                     _trendSubtitle(period),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 13,
                       color: colors.textTertiary,
                       fontWeight: FontWeight.w500,
@@ -710,7 +710,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                   const SizedBox(width: 8),
                   Text(
                     metric.label,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                       color: isActive
@@ -781,7 +781,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               ),
               child: Text(
                 p,
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected ? Colors.white : colors.textSecondary,
@@ -834,21 +834,21 @@ class _DashboardViewState extends ConsumerState<DashboardView>
           value: 'csv',
           child: Text(
             'Export CSV',
-            style: GoogleFonts.inter(fontSize: 13, color: colors.textPrimary),
+            style: TextStyle(fontSize: 13, color: colors.textPrimary),
           ),
         ),
         PopupMenuItem(
           value: 'png',
           child: Text(
             'Download PNG',
-            style: GoogleFonts.inter(fontSize: 13, color: colors.textPrimary),
+            style: TextStyle(fontSize: 13, color: colors.textPrimary),
           ),
         ),
         PopupMenuItem(
           value: 'pdf',
           child: Text(
             'Save as PDF',
-            style: GoogleFonts.inter(fontSize: 13, color: colors.textPrimary),
+            style: TextStyle(fontSize: 13, color: colors.textPrimary),
           ),
         ),
       ],
@@ -870,7 +870,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             const SizedBox(width: 8),
             Text(
               'Export',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: colors.textSecondary,
@@ -944,7 +944,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     padding: const EdgeInsets.only(top: 12),
                     child: Text(
                       'Day $day',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: colors.textTertiary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -965,7 +965,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                 if (value == 0) {
                   return Text(
                     '0',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: colors.textTertiary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -975,7 +975,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                 if (value % 4000 == 0) {
                   return Text(
                     '${(value / 1000).toInt()}k',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: colors.textTertiary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -1065,7 +1065,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     TextSpan(
                       text:
                           '${m.label}: $displayVal${i == activeMetrics.length - 1 ? '' : '\n'}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: m.color,
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
@@ -1146,7 +1146,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
           ),
           Text(
             'Overall network performance',
-            style: GoogleFonts.inter(fontSize: 13, color: colors.textTertiary),
+            style: TextStyle(fontSize: 13, color: colors.textTertiary),
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -1187,7 +1187,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                             Expanded(
                               child: Text(
                                 'Action Required: ${poorBucket.percentage.toStringAsFixed(0)}% batteries below 80% health. Schedule maintenance soon.',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: colors.danger,
                                   fontWeight: FontWeight.w600,
@@ -1293,7 +1293,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                   ),
                   Text(
                     'Stations',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: colors.textTertiary,
@@ -1326,7 +1326,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
       ),
       child: Text(
         category,
-        style: GoogleFonts.inter(
+        style: TextStyle(
           color: Colors.white,
           fontSize: 11,
           fontWeight: FontWeight.w700,
@@ -1374,7 +1374,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     const SizedBox(width: 4),
                     Text(
                       '${stage.dropOffRate.toStringAsFixed(1)}% drop-off',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 10,
                         color: colors.danger,
                         fontWeight: FontWeight.w700,
@@ -1425,7 +1425,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       children: [
                         Text(
                           stage.name,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: colors.textPrimary,
@@ -1482,7 +1482,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       children: [
                         Text(
                           '${stage.conversionRate.toStringAsFixed(1)}% Conv.',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 10,
                             color: colors.textTertiary,
                             fontWeight: FontWeight.w500,
@@ -1490,7 +1490,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                         ),
                         Text(
                           '${(percentage * 100).toStringAsFixed(0)}% of total',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: stageColor,
@@ -1572,14 +1572,14 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                           children: [
                             Text(
                               item.category,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: colors.textPrimary,
                               ),
                             ),
                             Text(
                               '${item.total} units',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 color: colors.textTertiary,
                                 fontSize: 12,
                               ),
@@ -1601,7 +1601,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                         const SizedBox(height: 4),
                         Text(
                           '${percentAvailable.toStringAsFixed(1)}% available • $inUse in use',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             fontSize: 11,
                             color: colors.textTertiary,
                           ),
@@ -1639,7 +1639,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
         ),
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 11, color: colors.textTertiary),
+          style: TextStyle(fontSize: 11, color: colors.textTertiary),
         ),
       ],
     );
@@ -1704,7 +1704,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               reservedSize: 42,
               getTitlesWidget: (value, meta) => Text(
                 value.toStringAsFixed(0),
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 11,
                   color: colors.textTertiary,
                 ),
@@ -1834,7 +1834,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       children: [
                         TextSpan(
                           text: '13\n', // Mock additional metric like in image
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -1941,7 +1941,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       children: [
                         TextSpan(
                           text: '13\n', // Mock additional metric
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -2044,7 +2044,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                 width: 60,
                 child: Text(
                   label,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: colors.textTertiary,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -2070,7 +2070,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               space: 8,
               child: Text(
                 _compactNumber(value),
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: colors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w600, // Unified with Trend style
@@ -2159,7 +2159,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
             color: isActive ? colors.textPrimary : colors.textTertiary,
@@ -2260,7 +2260,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                           Expanded(
                             child: Text(
                               item.title,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                                 color: colors.textPrimary,
@@ -2282,7 +2282,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                             ),
                             child: Text(
                               item.type.toUpperCase(),
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 color: item.severity == 'critical'
@@ -2294,7 +2294,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                           const SizedBox(width: 8),
                           Text(
                             item.time,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 11,
                               color: colors.textTertiary,
                             ),
@@ -2304,7 +2304,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       const SizedBox(height: 4),
                       Text(
                         item.description,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 12,
                           color: colors.textSecondary,
                         ),
@@ -2330,7 +2330,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                                       children: [
                                         Text(
                                           '${e.key}: ',
-                                          style: GoogleFonts.inter(
+                                          style: TextStyle(
                                             fontSize: 11,
                                             color: colors.textSecondary,
                                             fontWeight: FontWeight.w600,
@@ -2339,7 +2339,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                                         Expanded(
                                           child: Text(
                                             e.value.toString(),
-                                            style: GoogleFonts.inter(
+                                            style: TextStyle(
                                               fontSize: 11,
                                               color: colors.textPrimary,
                                             ),
@@ -2452,7 +2452,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
         dataRowMaxHeight: 52,
         sortColumnIndex: sortColumnIndex,
         sortAscending: ascending,
-        headingTextStyle: GoogleFonts.inter(
+        headingTextStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: colors.textTertiary,
@@ -2581,7 +2581,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                             ),
                       child: Text(
                         s.name.isNotEmpty ? s.name : s.id,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           color: colors.textPrimary,
@@ -2606,7 +2606,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               DataCell(
                 Text(
                   _formatCurrency(s.revenue),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: colors.success,
@@ -2739,7 +2739,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             color: colors.textSecondary,
             size: 20,
           ),
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontSize: 12,
             color: colors.textPrimary,
             fontWeight: FontWeight.w500,
@@ -2825,7 +2825,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                             const SizedBox(width: 4),
                             Text(
                               'On-demand',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: colors.info,
@@ -2840,7 +2840,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 12,
                         color: colors.textTertiary,
                       ),
@@ -2894,7 +2894,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 12,
                           color: colors.textTertiary,
                         ),
@@ -2991,7 +2991,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                 const SizedBox(width: 12),
                 Text(
                   'Trend data exported successfully',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  style: TextStyle(fontWeight: FontWeight.w500),
                 ),
               ],
             ),

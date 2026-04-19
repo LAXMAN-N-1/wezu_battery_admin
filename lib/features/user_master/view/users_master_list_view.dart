@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -220,7 +219,7 @@ class _UsersMasterListViewState extends ConsumerState<UsersMasterListView> with 
               tween: IntTween(begin: 0, end: int.tryParse(value) ?? 0),
               duration: const Duration(milliseconds: 900),
               builder: (context, val, _) {
-                return Text('$val', style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white));
+                return Text('$val', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: Colors.white));
               },
             ),
             const SizedBox(height: 4),

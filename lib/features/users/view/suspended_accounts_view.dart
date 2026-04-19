@@ -101,7 +101,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                     const SizedBox(width: 8),
                     Text(
                       '${_suspendedUsers.length} Active Suspensions',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.red,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -143,7 +143,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                   const SizedBox(height: 12),
                   Text(
                     'No currently suspended accounts',
-                    style: GoogleFonts.inter(color: Colors.white54),
+                    style: TextStyle(color: Colors.white54),
                   ),
                 ],
               ),
@@ -179,7 +179,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                         children: [
                           Text(
                             user.fullName,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
@@ -187,7 +187,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                           ),
                           Text(
                             user.email,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white54,
                               fontSize: 12,
                             ),
@@ -205,7 +205,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                               ),
                               child: Text(
                                 'Reason: ${user.suspensionReason!.replaceAll('_', ' ').toUpperCase()}',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   color: Colors.red.shade300,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -221,7 +221,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                         if (user.suspendedAt != null)
                           Text(
                             'Since ${DateFormat('MMM d, y').format(user.suspendedAt!)}',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white38,
                               fontSize: 11,
                             ),
@@ -229,7 +229,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                         if (user.suspendedUntil != null)
                           Text(
                             'Until ${DateFormat('MMM d, y').format(user.suspendedUntil!)}',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.orange,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
@@ -320,7 +320,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                           children: [
                             Text(
                               record.userName,
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -355,7 +355,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                         ),
                         Text(
                           '${record.reasonLabel} — by ${record.suspendedBy}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white54,
                             fontSize: 12,
                           ),
@@ -363,7 +363,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                         if (record.notes != null)
                           Text(
                             record.notes!,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white38,
                               fontSize: 11,
                             ),
@@ -373,7 +373,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                   ),
                   Text(
                     DateFormat('MMM d, y').format(record.suspendedAt),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white38,
                       fontSize: 11,
                     ),

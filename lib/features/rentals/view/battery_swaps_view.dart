@@ -146,7 +146,7 @@ class _BatterySwapsViewState extends State<BatterySwapsView> {
           _infoRow('Rental ID', '${s.rentalId}'),
           _infoRow('Time', DateFormat('MMM dd, yyyy HH:mm').format(s.createdAt)),
           const Divider(color: Colors.white12, height: 24),
-          Text('BATTERY EXCHANGE', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+          Text('BATTERY EXCHANGE', style: TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
           const SizedBox(height: 16),
           Row(children: [
             Expanded(child: _socCard('Old Battery', s.oldBatteryId, s.oldBatterySoc, const Color(0xFFEF4444))),
@@ -208,7 +208,7 @@ class _BatterySwapsViewState extends State<BatterySwapsView> {
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+            Text(title, style: TextStyle(color: Colors.white54, fontSize: 11)),
           ])),
         ]),
       ),

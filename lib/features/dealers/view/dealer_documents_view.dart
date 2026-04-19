@@ -208,7 +208,7 @@ class _DealerDocumentsViewState extends State<DealerDocumentsView> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(docType.replaceAll('_', ' ').toUpperCase(), style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(docType.replaceAll('_', ' ').toUpperCase(), style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 4),
               Text(doc['business_name'] ?? 'Unknown', style: const TextStyle(color: Colors.white54, fontSize: 12)),
               if (uploadedAt != null)
@@ -246,7 +246,7 @@ class _DealerDocumentsViewState extends State<DealerDocumentsView> {
               child: Center(child: Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: color))),
             ),
             const SizedBox(width: 12),
-            Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+            Text(label, style: TextStyle(color: Colors.white54, fontSize: 13)),
           ],
         ),
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
@@ -190,7 +189,7 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
                       children: [
                         Row(
                           children: [
-                            Expanded(child: Text(article.question, style: GoogleFonts.inter(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
+                            Expanded(child: Text(article.question, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
                             if (!article.isActive)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -331,7 +330,7 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
             children: [
               Text(
                 widget.article == null ? 'New Article' : 'Edit Article',
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               TextFormField(

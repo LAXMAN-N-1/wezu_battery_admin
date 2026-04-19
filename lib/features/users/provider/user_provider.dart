@@ -175,11 +175,13 @@ class UserListNotifier extends StateNotifier<UserListState> {
   Future<void> suspendUser(int userId, {required String reason, int? durationDays}) async {
     final prevUsers = state.users;
     state = state.copyWith(users: state.users.map((u) {
-      if (u.id == userId) return u.copyWith(
+      if (u.id == userId) {
+        return u.copyWith(
         suspensionReason: reason,
         isActive: false,
         backendStatus: 'suspended',
       );
+      }
       return u;
     }).toList());
 

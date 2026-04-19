@@ -91,7 +91,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
             ),
             labelColor: const Color(0xFF3B82F6),
             unselectedLabelColor: Colors.white54,
-            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: mobile ? 11 : 13),
+            labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: mobile ? 11 : 13),
             isScrollable: mobile,
             tabs: [
               Tab(text: 'All Users (${userState.totalCount})'),
@@ -178,7 +178,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
               ),
               Text(
                 'Page ${state.page} of ${(state.totalCount / state.limit).ceil()}',
-                style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right, color: Colors.white70),
@@ -562,7 +562,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+              Text(title, style: TextStyle(color: Colors.white54, fontSize: 14)),
             ],
           ),
         ),
@@ -580,7 +580,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Text(value, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
       const SizedBox(width: 6),
-      Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+      Text(label, style: TextStyle(color: Colors.white54, fontSize: 11)),
     ]));
 
   Widget _buildFilterDropdown({String? value, required String hint, required List<String?> items, required List<String> labels, required Function(String?) onChanged}) =>
@@ -589,7 +589,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       child: DropdownButtonHideUnderline(child: DropdownButton<String>(
         value: value, hint: Text(hint, style: const TextStyle(color: Colors.white54, fontSize: 13)),
         dropdownColor: const Color(0xFF1E293B), icon: const Icon(Icons.filter_list, color: Colors.white54, size: 18),
-        style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        style: TextStyle(color: Colors.white, fontSize: 13),
         items: List.generate(items.length, (i) => DropdownMenuItem(value: items[i], child: Text(labels[i]))),
         onChanged: onChanged)));
 
@@ -612,7 +612,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       ),
       child: Text(
         role.toUpperCase(),
-        style: GoogleFonts.inter(color: c, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+        style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
       ),
     );
   }

@@ -105,13 +105,13 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
                         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         leftTitles: AxisTitles(sideTitles: SideTitles(
                           showTitles: true, reservedSize: 40,
-                          getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
+                          getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: TextStyle(color: Colors.white38, fontSize: 10)),
                         )),
                         bottomTitles: AxisTitles(sideTitles: SideTitles(
                           showTitles: true, interval: 5,
                           getTitlesWidget: (value, meta) {
                             if (value.toInt() >= _loginHistory.length) return const SizedBox();
-                            return Text('Day ${value.toInt() + 1}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 9));
+                            return Text('Day ${value.toInt() + 1}', style: TextStyle(color: Colors.white38, fontSize: 9));
                           },
                         )),
                       ),
@@ -167,7 +167,7 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
                               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                               leftTitles: AxisTitles(sideTitles: SideTitles(
                                 showTitles: true, reservedSize: 40,
-                                getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
+                                getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: TextStyle(color: Colors.white38, fontSize: 10)),
                               )),
                               bottomTitles: AxisTitles(sideTitles: SideTitles(
                                 showTitles: true,
@@ -175,7 +175,7 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
                                   if (value.toInt() >= _rentalFrequency.length) return const SizedBox();
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 8),
-                                    child: Text(_rentalFrequency[value.toInt()]['month'] as String, style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
+                                    child: Text(_rentalFrequency[value.toInt()]['month'] as String, style: TextStyle(color: Colors.white38, fontSize: 10)),
                                   );
                                 },
                               )),
@@ -212,7 +212,7 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
                                 value: e.value.value.toDouble(),
                                 color: colors[e.key % colors.length],
                                 title: '${e.value.value}%',
-                                titleStyle: GoogleFonts.inter(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                titleStyle: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                                 radius: 38,
                               );
                             }).toList(),
@@ -228,9 +228,9 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
                             children: [
                               Container(width: 8, height: 8, decoration: BoxDecoration(color: colors[e.key % colors.length], shape: BoxShape.circle)),
                               const SizedBox(width: 8),
-                              Text(e.value.key, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                              Text(e.value.key, style: TextStyle(color: Colors.white54, fontSize: 11)),
                               const Spacer(),
-                              Text('${e.value.value}%', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
+                              Text('${e.value.value}%', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600)),
                             ],
                           ),
                         );
@@ -275,10 +275,10 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
 
   List<Widget> _buildLoginRow(String name, String ip, String device, String time) {
     return [
-      Text(name, style: GoogleFonts.inter(color: Colors.white, fontSize: 13)),
+      Text(name, style: TextStyle(color: Colors.white, fontSize: 13)),
       Text(ip, style: GoogleFonts.firaCode(color: Colors.white54, fontSize: 12)),
-      Text(device, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
-      Text(time, style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+      Text(device, style: TextStyle(color: Colors.white54, fontSize: 12)),
+      Text(time, style: TextStyle(color: Colors.white38, fontSize: 12)),
     ];
   }
 
@@ -296,7 +296,7 @@ class _UserAnalyticsViewState extends State<UserAnalyticsView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-              Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+              Text(title, style: TextStyle(color: Colors.white54, fontSize: 12)),
             ],
           )),
         ]),

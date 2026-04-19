@@ -76,7 +76,7 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
                         child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.analytics_outlined, size: 48, color: Colors.white.withValues(alpha: 0.2)),
                           const SizedBox(height: 12),
-                          Text('No performance data available', style: GoogleFonts.inter(color: Colors.white54)),
+                          Text('No performance data available', style: TextStyle(color: Colors.white54)),
                         ])),
                       )
                     : Column(
@@ -88,7 +88,7 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
                               const SizedBox(width: 10),
                               Text('Performance Comparison', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                               const Spacer(),
-                              Text('${_stations.length} stations', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                              Text('${_stations.length} stations', style: TextStyle(color: Colors.white54, fontSize: 12)),
                             ]),
                           ),
                           AdvancedTable(
@@ -161,7 +161,7 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
         const SizedBox(width: 12),
         Flexible(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
           Text(value, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
+          Text(title, style: TextStyle(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
         ])),
       ]),
     ),
@@ -211,7 +211,7 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
           if (items.isEmpty)
             Center(child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Text('No data', style: GoogleFonts.inter(color: Colors.white54)),
+              child: Text('No data', style: TextStyle(color: Colors.white54)),
             ))
           else
             ...items.asMap().entries.map((entry) {
@@ -233,16 +233,16 @@ class _StationPerformanceViewState extends State<StationPerformanceView> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(s.stationName, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13)),
-                    Text(s.city ?? '', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                    Text(s.stationName, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 13)),
+                    Text(s.city ?? '', style: TextStyle(color: Colors.white54, fontSize: 11)),
                   ])),
                   Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                     Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(Icons.star, size: 12, color: Color(0xFFF59E0B)),
                       const SizedBox(width: 3),
-                      Text(s.rating.toStringAsFixed(1), style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text(s.rating.toStringAsFixed(1), style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                     ]),
-                    Text('${s.utilizationPercentage.toStringAsFixed(0)}% util', style: GoogleFonts.inter(color: Colors.white54, fontSize: 10)),
+                    Text('${s.utilizationPercentage.toStringAsFixed(0)}% util', style: TextStyle(color: Colors.white54, fontSize: 10)),
                   ]),
                 ]),
               );

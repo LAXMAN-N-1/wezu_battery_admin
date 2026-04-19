@@ -24,7 +24,7 @@ class _AuditDashboardViewState extends State<AuditDashboardView> {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Audit & Security Dashboard', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
       const SizedBox(height: 4),
-      Text('High-level overview of system security and audit compliance', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+      Text('High-level overview of system security and audit compliance', style: TextStyle(color: Colors.white54, fontSize: 14)),
       const SizedBox(height: 24),
       _isLoading ? const Center(child: CircularProgressIndicator())
           : _buildDashboardContent(),
@@ -51,7 +51,7 @@ class _AuditDashboardViewState extends State<AuditDashboardView> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Icon(icon, color: color, size: 24), const SizedBox(height: 12),
         Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+        Text(title, style: TextStyle(color: Colors.white54, fontSize: 13)),
       ]));
   }
 

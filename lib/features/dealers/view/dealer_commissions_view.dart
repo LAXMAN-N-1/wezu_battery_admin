@@ -396,7 +396,7 @@ class _DealerCommissionsViewState extends State<DealerCommissionsView>
                   ),
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white54,
                       fontSize: 12,
                     ),

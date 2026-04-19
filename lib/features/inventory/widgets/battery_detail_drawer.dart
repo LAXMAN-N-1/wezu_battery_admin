@@ -372,7 +372,7 @@ class _BatteryDetailDrawerState extends State<BatteryDetailDrawer> with SingleTi
           ),
         ),
         Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('${health.toInt()}', style: GoogleFonts.inter(fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text('${health.toInt()}', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: Colors.white)),
           Text('Health Score', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
         ]),
       ]),

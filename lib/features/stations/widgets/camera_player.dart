@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../data/models/station.dart';
 
@@ -33,7 +32,7 @@ class CameraPlayer extends StatelessWidget {
                 ? 'No camera feeds configured for this station.'
                 : '$cameraCount camera feeds are configured but hidden until the merged monitoring stack is stabilized.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+            style: TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
       ),

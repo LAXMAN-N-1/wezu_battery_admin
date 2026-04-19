@@ -149,7 +149,7 @@ class _TemplatesTab extends ConsumerWidget {
               children: [
                 const Icon(Icons.inventory_2_outlined, color: Colors.white10, size: 64),
                 const SizedBox(height: 16),
-                Text('No templates found', style: GoogleFonts.inter(color: Colors.white38, fontSize: 16)),
+                Text('No templates found', style: TextStyle(color: Colors.white38, fontSize: 16)),
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: () => ref.invalidate(checklistTemplateNotifierProvider),
@@ -212,7 +212,7 @@ class _HistoryTab extends ConsumerWidget {
               children: [
                 const Icon(Icons.history, color: Colors.white10, size: 64),
                 const SizedBox(height: 16),
-                Text('No history recorded yet', style: GoogleFonts.inter(color: Colors.white38, fontSize: 16)),
+                Text('No history recorded yet', style: TextStyle(color: Colors.white38, fontSize: 16)),
                 const SizedBox(height: 8),
                 TextButton.icon(
                   onPressed: () => ref.invalidate(checklistSubmissionNotifierProvider),
@@ -294,7 +294,7 @@ class _TemplateCardState extends State<_TemplateCard> {
             ),
             title: Text(
               widget.template.name,
-              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
             subtitle: Text(
               '${widget.template.stationType} • ${widget.template.maintenanceType} • ${widget.template.tasks.length} tasks',
@@ -340,7 +340,7 @@ class _TemplateCardState extends State<_TemplateCard> {
                   if (widget.template.description.isNotEmpty) ...[
                     Text(
                       'Description',
-                      style: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -351,7 +351,7 @@ class _TemplateCardState extends State<_TemplateCard> {
                   ],
                   Text(
                     'Tasks',
-                    style: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 8),
                   ...widget.template.tasks.map((task) => Padding(

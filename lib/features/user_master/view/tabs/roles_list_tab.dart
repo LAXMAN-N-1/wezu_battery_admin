@@ -132,7 +132,7 @@ class RolesListTab extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
               Text(title, style: const TextStyle(color: Colors.white54, fontSize: 12)),
             ],

@@ -171,7 +171,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
                       ),
                       Text(
                         'Admin Portal',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: colors.textTertiary,
                           fontSize: 11,
                           fontWeight: FontWeight.w400,
@@ -245,7 +245,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
         ),
         title: Text(
           'Sign Out',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.red.shade300,
             fontWeight: FontWeight.w500,
             fontSize: 13,
@@ -292,7 +292,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
           ],
           Text(
             title,
-            style: GoogleFonts.inter(
+            style: TextStyle(
                color: colors.textPrimary,
               fontSize: isDesktop ? 17 : 15,
               fontWeight: FontWeight.w600,
@@ -346,7 +346,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
             children: [
               Text(
                 userName,
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -354,7 +354,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
               ),
               Text(
                  userRole.toString().replaceAll('_', ' ').toUpperCase(),
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: colors.textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
@@ -508,7 +508,7 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                     Expanded(
                       child: Text(
                         widget.section.label,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: isActive ? colors.textPrimary : colors.textSecondary,
                           fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                           fontSize: 13,
@@ -594,7 +594,7 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                 Expanded(
                   child: Text(
                     item.label,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: isActive ? colors.accent : colors.textSecondary,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                       fontSize: 12,

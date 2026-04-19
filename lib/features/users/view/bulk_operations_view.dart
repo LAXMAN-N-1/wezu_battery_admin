@@ -72,7 +72,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                     const SizedBox(height: 4),
                     Text(
                       '${_selectedIds.length} of ${_users.length} users selected',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 13,
                       ),
@@ -168,14 +168,14 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                         ),
                         title: Text(
                           user.fullName,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                           ),
                         ),
                         subtitle: Text(
                           '${user.email} • ${user.role}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white38,
                             fontSize: 11,
                           ),
@@ -234,7 +234,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                 // Template
                 Text(
                   'Template',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -255,7 +255,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                       value: _selectedTemplate,
                       isExpanded: true,
                       dropdownColor: const Color(0xFF1E293B),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
                       ),
@@ -290,7 +290,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                 if (_messageType == 'email') ...[
                   Text(
                     'Subject',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white70,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
@@ -299,10 +299,10 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _subjectController,
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                    style: TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
                       hintText: 'Enter email subject...',
-                      hintStyle: GoogleFonts.inter(color: Colors.white24),
+                      hintStyle: TextStyle(color: Colors.white24),
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
@@ -328,7 +328,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
 
                 Text(
                   'Message Body',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -338,11 +338,11 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                 TextField(
                   controller: _bodyController,
                   maxLines: 6,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: Colors.white, fontSize: 14),
                   decoration: InputDecoration(
                     hintText:
                         'Type your message here...\n\nUse {{name}} for personalization.',
-                    hintStyle: GoogleFonts.inter(color: Colors.white24),
+                    hintStyle: TextStyle(color: Colors.white24),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.05),
                     border: OutlineInputBorder(
@@ -398,7 +398,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                         icon: const Icon(Icons.download, size: 18),
                         label: Text(
                           _isProcessing ? 'Wait...' : 'Export CSV',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
@@ -432,7 +432,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
                           _isProcessing
                               ? 'Processing...'
                               : 'Send ${_messageType == 'email' ? 'Email' : 'SMS'}',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
@@ -544,7 +544,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.white54,
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -585,7 +585,7 @@ class _BulkOperationsViewState extends State<BulkOperationsView> {
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: isActive ? Colors.blue : Colors.white54,
                 fontSize: 13,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,

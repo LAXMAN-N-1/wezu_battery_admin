@@ -350,7 +350,7 @@ class _RentalHistoryViewState extends State<RentalHistoryView> {
               children: [
                 Text(
                   'BATTERY LEVEL',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 10,
                     color: Colors.white38,
                     letterSpacing: 1.5,
@@ -431,7 +431,7 @@ class _RentalHistoryViewState extends State<RentalHistoryView> {
                   ),
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white54,
                       fontSize: 11,
                     ),

@@ -49,7 +49,7 @@ class _TelematicsViewState extends State<TelematicsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Fleet Telematics', style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text('Detailed movement history, telemetry logs, and state-of-charge analysis.', style: GoogleFonts.inter(fontSize: 16, color: Colors.white54)),
+                  Text('Detailed movement history, telemetry logs, and state-of-charge analysis.', style: TextStyle(fontSize: 16, color: Colors.white54)),
                 ],
               ),
               SizedBox(

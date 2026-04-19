@@ -98,7 +98,7 @@ class _InvoicesViewState extends State<InvoicesView> {
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(value, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
-        Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+        Text(label, style: TextStyle(color: Colors.white54, fontSize: 11)),
       ])),
     ])),
   );

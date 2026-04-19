@@ -251,14 +251,14 @@ class _LoginViewState extends ConsumerState<LoginView> {
           ),
           content: Text(
             'Contact your super admin to reset your password for admin access.',
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: Colors.white70, fontSize: 14),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Close',
-                style: GoogleFonts.inter(color: const Color(0xFF3B82F6)),
+                style: TextStyle(color: const Color(0xFF3B82F6)),
               ),
             ),
           ],
@@ -329,7 +329,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                               const SizedBox(height: 24),
                               Text(
                                     "Energy solutions refined for the next generation of infrastructure.",
-                                    style: GoogleFonts.inter(
+                                    style: TextStyle(
                                       color: Colors.white54,
                                       fontSize: 18,
                                       fontWeight: FontWeight.w300,
@@ -415,7 +415,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
                           Text(
                                 "WEZU Admin Portal",
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   color: Colors.white38,
                                   fontSize: 16,
                                 ),
@@ -514,7 +514,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                           Expanded(
                                             child: Text(
                                               'Caps Lock appears to be on.',
-                                              style: GoogleFonts.inter(
+                                              style: TextStyle(
                                                 color: Colors.amberAccent,
                                                 fontSize: 12,
                                               ),
@@ -545,7 +545,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                       ),
                                       Text(
                                         "Remember me",
-                                        style: GoogleFonts.inter(
+                                        style: TextStyle(
                                           color: Colors.white54,
                                           fontSize: 13,
                                         ),
@@ -555,7 +555,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                         onPressed: _showForgotPasswordHelp,
                                         child: Text(
                                           "Forgot password?",
-                                          style: GoogleFonts.inter(
+                                          style: TextStyle(
                                             color: const Color(0xFF3B82F6),
                                             fontSize: 13,
                                           ),
@@ -573,7 +573,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                     alignment: Alignment.centerLeft,
                                     child: Text(
                                       'Use your admin credential to continue.',
-                                      style: GoogleFonts.inter(
+                                      style: TextStyle(
                                         color: Colors.white38,
                                         fontSize: 12,
                                       ),
@@ -637,7 +637,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           Center(
                             child: Text(
                               "© 2024 WEZU Energy Solutions",
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 color: Colors.white12,
                                 fontSize: 11,
                               ),

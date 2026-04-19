@@ -121,7 +121,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(risk.userName, style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+                                  Text(risk.userName, style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 4),
                                   _buildRiskBadge(risk.level),
                                 ],
@@ -186,7 +186,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
                       children: [
                         _buildRiskBadge(risk.level),
                         const SizedBox(width: 8),
-                        Text('User #${risk.userId}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+                        Text('User #${risk.userId}', style: TextStyle(color: Colors.white38, fontSize: 12)),
                       ],
                     ),
                   ],
@@ -232,8 +232,8 @@ class _FraudRiskViewState extends State<FraudRiskView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(factor.name, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-                      Text(factor.description, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                      Text(factor.name, style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+                      Text(factor.description, style: TextStyle(color: Colors.white54, fontSize: 11)),
                     ],
                   ),
                 ),
@@ -243,7 +243,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
                     color: _severityColor(factor.severity).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text('+${factor.contribution}', style: GoogleFonts.inter(color: _severityColor(factor.severity), fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text('+${factor.contribution}', style: TextStyle(color: _severityColor(factor.severity), fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -264,7 +264,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
                     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     leftTitles: AxisTitles(sideTitles: SideTitles(
                       showTitles: true, reservedSize: 30,
-                      getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 9)),
+                      getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: TextStyle(color: Colors.white38, fontSize: 9)),
                     )),
                     bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
@@ -307,7 +307,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
           children: [
             Icon(Icons.shield_outlined, color: Colors.white.withValues(alpha: 0.2), size: 48),
             const SizedBox(height: 12),
-            Text('Select a user to view risk details', style: GoogleFonts.inter(color: Colors.white38)),
+            Text('Select a user to view risk details', style: TextStyle(color: Colors.white38)),
           ],
         ),
       ),
@@ -326,7 +326,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
         children: [
           Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
           const SizedBox(width: 6),
-          Text('$count $label', style: GoogleFonts.inter(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text('$count $label', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -337,7 +337,7 @@ class _FraudRiskViewState extends State<FraudRiskView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
-      child: Text(level.toUpperCase(), style: GoogleFonts.inter(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+      child: Text(level.toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
 

@@ -403,7 +403,7 @@ class _UserMasterFormViewState extends ConsumerState<UserMasterFormView> {
                 backgroundColor: Colors.blueAccent.withValues(alpha: 0.15),
                 child: Text(
                   _nameController.text.isNotEmpty ? _nameController.text[0].toUpperCase() : 'U',
-                  style: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.blueAccent),
                 ),
               ),
               const SizedBox(height: 16),

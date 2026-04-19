@@ -131,7 +131,7 @@ class _BannerListViewState extends State<BannerListView> {
                         Expanded(
                           child: Text(
                             banner.title,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,

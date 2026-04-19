@@ -134,7 +134,7 @@ class _StationMapViewState extends State<StationMapView> {
                     children: [
                       Text('Station Map', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)).animate().fadeIn().slideX(begin: -0.1),
                       const SizedBox(height: 4),
-                      Text('${_stations.length} stations on map', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                      Text('${_stations.length} stations on map', style: TextStyle(color: Colors.white54, fontSize: 12)),
                       const SizedBox(height: 16),
                       TextField(
                         style: const TextStyle(color: Colors.white),
@@ -193,13 +193,13 @@ class _StationMapViewState extends State<StationMapView> {
                                     decoration: BoxDecoration(color: _statusColor(station.status), shape: BoxShape.circle),
                                   ),
                                   const SizedBox(width: 10),
-                                  Expanded(child: Text(station.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 14))),
+                                  Expanded(child: Text(station.name, style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 14))),
                                 ]),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(height: 4),
-                                    Text(station.address, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    Text(station.address, style: TextStyle(color: Colors.white54, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                                     const SizedBox(height: 8),
                                     Row(children: [
                                       _badge('${station.availableBatteries} Bats', const Color(0xFF22C55E), Icons.battery_charging_full),
@@ -283,7 +283,7 @@ class _StationMapViewState extends State<StationMapView> {
     children: [
       Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       const SizedBox(width: 4),
-      Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 10)),
+      Text(label, style: TextStyle(color: Colors.white54, fontSize: 10)),
     ],
   );
 
@@ -314,7 +314,7 @@ class _StationMapViewState extends State<StationMapView> {
       const SizedBox(width: 16),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(s.name, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(s.address, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+        Text(s.address, style: TextStyle(color: Colors.white54, fontSize: 12)),
         const SizedBox(height: 8),
         Row(children: [
           _badge('${s.availableBatteries} Batteries', const Color(0xFF22C55E), Icons.battery_charging_full),

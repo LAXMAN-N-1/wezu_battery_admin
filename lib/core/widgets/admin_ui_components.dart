@@ -158,7 +158,7 @@ class StatCard extends StatelessWidget {
                         ),
                         Text(
                           label,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white38,
                             fontSize: 11,
                           ),
@@ -236,7 +236,7 @@ class _AdminTextFieldState extends State<AdminTextField> {
       children: [
         Text(
           widget.label,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.white54,
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -274,7 +274,7 @@ class _AdminTextFieldState extends State<AdminTextField> {
               autocorrect: widget.autocorrect,
               enableSuggestions: widget.enableSuggestions,
               textCapitalization: widget.textCapitalization,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+              style: TextStyle(color: Colors.white, fontSize: 15),
               decoration: InputDecoration(
                 hintText: widget.hint,
                 hintStyle: TextStyle(
@@ -333,7 +333,7 @@ class _AdminTextFieldState extends State<AdminTextField> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.redAccent),
                 ),
-                errorStyle: GoogleFonts.inter(
+                errorStyle: TextStyle(
                   color: Colors.redAccent,
                   fontSize: 11,
                 ),
@@ -398,7 +398,7 @@ class AdminButton extends StatelessWidget {
               )
             : Text(
                 label,
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
                   color: Colors.white,
@@ -515,7 +515,7 @@ class StatusBadge extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             status.toUpperCase(),
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontSize: 10,
               color: color,
               fontWeight: FontWeight.bold,
@@ -566,7 +566,7 @@ class PageHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                       subtitle,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 14,
                         color: Colors.white54,
                       ),
@@ -624,7 +624,7 @@ class AdvancedTable extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 'No data available',
-                style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                style: TextStyle(color: Colors.white54, fontSize: 14),
               ),
             ],
           ),
@@ -656,7 +656,7 @@ class AdvancedTable extends StatelessWidget {
                     colWidth - (32 / columns.length), // Adjusting for padding
                 child: Text(
                   col.toUpperCase(),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 11,
                     color: Colors.white38,
                     fontWeight: FontWeight.bold,

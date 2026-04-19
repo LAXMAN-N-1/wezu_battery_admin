@@ -267,7 +267,7 @@ class _AuditTrailViewState extends State<AuditTrailView> {
           _buildDetailRow('Timestamp', DateFormat('MMM dd, yyyy HH:mm:ss').format(entry.timestamp)),
           const Divider(color: Colors.white12, height: 32),
           if (entry.fromLocationType != null) ...[
-            Text('FROM', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+            Text('FROM', style: TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
@@ -289,7 +289,7 @@ class _AuditTrailViewState extends State<AuditTrailView> {
             const SizedBox(height: 16),
           ],
           if (entry.toLocationType != null) ...[
-            Text('TO', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+            Text('TO', style: TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
@@ -311,7 +311,7 @@ class _AuditTrailViewState extends State<AuditTrailView> {
           ],
           if (entry.notes != null) ...[
             const SizedBox(height: 24),
-            Text('NOTES', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+            Text('NOTES', style: TextStyle(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -353,7 +353,7 @@ class _AuditTrailViewState extends State<AuditTrailView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+                Text(title, style: TextStyle(color: Colors.white54, fontSize: 13)),
               ],
             ),
           ],

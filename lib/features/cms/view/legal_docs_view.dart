@@ -26,7 +26,7 @@ class _LegalDocsViewState extends State<LegalDocsView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Legal Documents', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('Terms, privacy policies, and legal agreements', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Terms, privacy policies, and legal agreements', style: TextStyle(color: Colors.white54, fontSize: 14)),
         ])),
         ElevatedButton.icon(onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('New Document'),
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white,
@@ -59,7 +59,7 @@ class _LegalDocsViewState extends State<LegalDocsView> {
               const SizedBox(width: 8),
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(6)),
-                child: Text(doc['slug']?.toString() ?? '', style: GoogleFonts.inter(color: Colors.white38, fontSize: 10))),
+                child: Text(doc['slug']?.toString() ?? '', style: TextStyle(color: Colors.white38, fontSize: 10))),
             ]),
           ])),
           Column(children: [
@@ -72,7 +72,7 @@ class _LegalDocsViewState extends State<LegalDocsView> {
                 decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   const Icon(Icons.warning_amber, size: 12, color: Colors.orange), const SizedBox(width: 4),
-                  Text('FORCE UPDATE', style: GoogleFonts.inter(color: Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
+                  Text('FORCE UPDATE', style: TextStyle(color: Colors.orange, fontSize: 9, fontWeight: FontWeight.bold)),
                 ])),
             ],
           ]),
@@ -82,12 +82,12 @@ class _LegalDocsViewState extends State<LegalDocsView> {
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(8)),
           child: Text(
             (doc['content']?.toString() ?? '').replaceAll(RegExp(r'<[^>]*>'), ''),
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, height: 1.5), maxLines: 3, overflow: TextOverflow.ellipsis)),
+            style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.5), maxLines: 3, overflow: TextOverflow.ellipsis)),
         const SizedBox(height: 12),
         Row(children: [
           if (doc['published_at'] != null) ...[
             Icon(Icons.calendar_today, size: 12, color: Colors.white38), const SizedBox(width: 4),
-            Text('Published: ${_formatDate(doc['published_at'])}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+            Text('Published: ${_formatDate(doc['published_at'])}', style: TextStyle(color: Colors.white38, fontSize: 11)),
           ],
           const Spacer(),
           IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 18), onPressed: () => _showEditDialog(doc)),
@@ -122,13 +122,13 @@ class _LegalDocsViewState extends State<LegalDocsView> {
             Expanded(child: _field(versionCtrl, 'Version (e.g. 1.2)')),
             const SizedBox(width: 10),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
-              title: Text('Published', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
+              title: Text('Published', style: TextStyle(color: Colors.white70, fontSize: 13)),
               value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => isActive = v),
             ))),
             const SizedBox(width: 10),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
-              title: Text('Force App Update', style: GoogleFonts.inter(color: Colors.white70, fontSize: 11)),
+              title: Text('Force App Update', style: TextStyle(color: Colors.white70, fontSize: 11)),
               value: forceUpdate, activeThumbColor: Colors.red, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => forceUpdate = v),
             ))),

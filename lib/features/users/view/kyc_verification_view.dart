@@ -125,7 +125,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: isActive ? Colors.blue : Colors.white54,
             fontSize: 12,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
@@ -149,7 +149,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
             const SizedBox(height: 12),
             Text(
               'No documents in this queue',
-              style: GoogleFonts.inter(color: Colors.white38),
+              style: TextStyle(color: Colors.white38),
             ),
           ],
         ),
@@ -197,7 +197,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                     children: [
                       Text(
                         doc.userName,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -206,14 +206,14 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                       const SizedBox(height: 2),
                       Text(
                         doc.typeLabel,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
                         ),
                       ),
                       Text(
                         DateFormat('MMM d, y • HH:mm').format(doc.uploadedAt),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 11,
                         ),
@@ -250,7 +250,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
               const SizedBox(height: 16),
               Text(
                 'Select a document to review',
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+                style: TextStyle(color: Colors.white38, fontSize: 14),
               ),
             ],
           ),
@@ -304,7 +304,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                       ),
                       Text(
                         '${doc.typeLabel} • ${doc.userEmail}',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
                         ),
@@ -341,14 +341,14 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                       const SizedBox(height: 12),
                       Text(
                         'Document Preview',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 14,
                         ),
                       ),
                       Text(
                         '(${doc.typeLabel})',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white24,
                           fontSize: 12,
                         ),
@@ -370,7 +370,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                           ),
                           child: Text(
                             'Quality Score: ${doc.qualityScore!.toInt()}%',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: doc.qualityScore! >= 70
                                   ? Colors.green
                                   : Colors.orange,
@@ -400,10 +400,10 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                 children: [
                   TextField(
                     controller: _notesController,
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                    style: TextStyle(color: Colors.white, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Review notes...',
-                      hintStyle: GoogleFonts.inter(color: Colors.white24),
+                      hintStyle: TextStyle(color: Colors.white24),
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
@@ -484,7 +484,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                       icon: const Icon(Icons.verified_user_outlined, size: 18),
                       label: Text(
                         'Finalize User Verification',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
@@ -524,7 +524,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                       children: [
                         Text(
                           '${doc.status == 'approved' ? 'Approved' : 'Rejected'} by ${doc.reviewedBy}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -533,7 +533,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                         if (doc.reviewNotes != null)
                           Text(
                             doc.reviewNotes!,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white38,
                               fontSize: 11,
                             ),
@@ -544,7 +544,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
                   if (doc.reviewedAt != null)
                     Text(
                       DateFormat('MMM d, y').format(doc.reviewedAt!),
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white38,
                         fontSize: 11,
                       ),
@@ -691,7 +691,7 @@ class _KycVerificationViewState extends State<KycVerificationView> {
       ),
       child: Text(
         status.replaceAll('_', ' ').toUpperCase(),
-        style: GoogleFonts.inter(
+        style: TextStyle(
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.bold,

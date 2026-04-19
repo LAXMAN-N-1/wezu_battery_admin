@@ -66,7 +66,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
         ),
         content: Text(
           'Are you sure you want to delete ${station.name}?\nThis action cannot be undone.',
-          style: GoogleFonts.inter(color: Colors.white70),
+          style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
@@ -185,7 +185,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
                                       children: [
                                         Text(
                                           '${filtered.length} Stations Found',
-                                          style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                                          style: TextStyle(color: Colors.white54, fontSize: 13),
                                         ),
                                         const Spacer(),
                                         _buildFilterDropdown(),
@@ -299,7 +299,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                Text(label, style: TextStyle(color: Colors.white54, fontSize: 11)),
               ],
             ),
           ],
@@ -370,7 +370,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(station.name, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text(station.address, style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+                      Text(station.address, style: TextStyle(fontSize: 12, color: Colors.white38)),
                     ],
                   ),
                 ),
@@ -450,7 +450,7 @@ class _StationsViewState extends ConsumerState<StationsView> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: Text(label, style: GoogleFonts.inter(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -595,7 +595,7 @@ Widget infoChip(String label, Color color) {
     ),
     child: Text(
       label,
-      style: GoogleFonts.inter(
+      style: TextStyle(
         color: color,
         fontSize: 10,
         fontWeight: FontWeight.bold,

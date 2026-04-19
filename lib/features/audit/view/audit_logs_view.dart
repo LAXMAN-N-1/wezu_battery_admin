@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/audit_models.dart';
 import '../data/repositories/audit_repository.dart';
@@ -54,8 +53,8 @@ class _AuditLogsViewState extends State<AuditLogsView> {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
-        value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-        dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        value: value, hint: Text('All $label', style: TextStyle(color: Colors.white38, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 13),
         items: [DropdownMenuItem(value: null, child: Text('All $label')), ...items.map((i) => DropdownMenuItem(value: i, child: Text(i.toUpperCase())))],
         onChanged: onChanged)));
   }
@@ -73,7 +72,7 @@ class _AuditLogsViewState extends State<AuditLogsView> {
                   Text(_formatTs(l.timestamp), style: const TextStyle(color: Colors.white54, fontSize: 12)),
                   Text(l.userId?.toString() ?? 'System', style: const TextStyle(color: Colors.white, fontSize: 13)),
                   StatusBadge(status: l.action),
-                  Text(l.resourceType.toUpperCase(), style: GoogleFonts.inter(color: Colors.white54, fontSize: 12, letterSpacing: 0.5)),
+                  Text(l.resourceType.toUpperCase(), style: TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 0.5)),
                   Text(l.resourceId ?? '—', style: const TextStyle(color: Colors.white, fontSize: 13)),
                   Text(l.details, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis, maxLines: 2),
                   Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [

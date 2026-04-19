@@ -41,7 +41,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
         icon: const Icon(Icons.cloud_upload_outlined, color: Colors.white),
         label: Text(
           'Upload Media',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
@@ -66,7 +66,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                 const SizedBox(height: 4),
                 Text(
                   'Manage and organize your platform images and digital assets',
-                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+                  style: TextStyle(color: Colors.white54, fontSize: 14),
                 ),
               ],
             ),
@@ -105,7 +105,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                       ),
                       child: Text(
                         cat == 'All' ? 'All' : cat.toUpperCase(),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: selected
                               ? const Color(0xFF3B82F6)
                               : Colors.white54,
@@ -161,7 +161,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
           const SizedBox(height: 8),
           Text(
             'Upload your first image to get started.',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white38),
+            style: TextStyle(fontSize: 14, color: Colors.white38),
           ),
         ],
       ),
@@ -216,7 +216,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                   padding: const EdgeInsets.all(8),
                   child: Text(
                     asset['file_name'] ?? 'Unknown',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -331,7 +331,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                       const SizedBox(height: 16),
                       Text(
                         'Alt Text',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
                         ),
@@ -339,7 +339,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                       const SizedBox(height: 4),
                       Text(
                         asset['alt_text'] ?? 'No alt text provided',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -347,7 +347,7 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
                       const Spacer(),
                       Text(
                         'Public URL',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
                         ),
@@ -433,12 +433,12 @@ class _MediaLibraryViewState extends State<MediaLibraryView> {
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
           const SizedBox(height: 4),
           Text(
             val,
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.w500,

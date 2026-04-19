@@ -191,7 +191,7 @@ class _FaqListViewState extends State<FaqListView> {
           Expanded(
             child: Text(
               faq.question,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),

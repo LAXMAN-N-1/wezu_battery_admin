@@ -170,7 +170,7 @@ class _OperatingHoursSettingsViewState
             width: 100,
             child: Text(
               displayName,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: schedule.isOpen ? Colors.white : Colors.white38,
                 fontWeight: schedule.isOpen
                     ? FontWeight.w600
@@ -194,7 +194,7 @@ class _OperatingHoursSettingsViewState
           ] else
             Text(
               'Closed',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: Colors.redAccent.withValues(alpha: 0.5),
                 fontSize: 13,
               ),
@@ -217,7 +217,7 @@ class _OperatingHoursSettingsViewState
         ),
         child: Text(
           time,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+          style: TextStyle(color: Colors.white, fontSize: 13),
         ),
       ),
     );

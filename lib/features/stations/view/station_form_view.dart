@@ -271,7 +271,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
                         children: [
                           Text(
                             'Status',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
                             ),
@@ -281,7 +281,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
                             initialValue: _status,
                             isExpanded: true, // prevents overflow
                             dropdownColor: const Color(0xFF1E293B),
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 14,
                             ),
@@ -371,7 +371,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
       children: [
         Text(
           'Contact Phone',
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+          style: TextStyle(color: Colors.white70, fontSize: 13),
         ),
         const SizedBox(height: 8),
         Row(
@@ -397,7 +397,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
                         value: c,
                         child: Text(
                           '${c.flag}  ${c.dialCode}  ${c.name}',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                           ),
@@ -415,7 +415,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
                     children: [
                       Text(
                         '${_selectedCountry.flag} ${_selectedCountry.dialCode}',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -436,7 +436,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
             Expanded(
               child: TextFormField(
                 controller: _phoneController,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontSize: 14),
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
@@ -447,7 +447,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
                 decoration: InputDecoration(
                   hintText:
                       '${'#' * _selectedCountry.phoneLength}  (${_selectedCountry.phoneLength} digits)',
-                  hintStyle: GoogleFonts.inter(
+                  hintStyle: TextStyle(
                     color: Colors.white24,
                     fontSize: 13,
                   ),
@@ -493,12 +493,12 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
       children: [
         Text(
           label + (required ? ' *' : ''),
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+          style: TextStyle(color: Colors.white70, fontSize: 13),
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: Colors.white, fontSize: 14),
           keyboardType: isNumber
               ? (isInteger
                     ? TextInputType.number

@@ -26,7 +26,7 @@ class _BannerManagementViewState extends State<BannerManagementView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Banner Management', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('Manage promotional banners for the customer app', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Manage promotional banners for the customer app', style: TextStyle(color: Colors.white54, fontSize: 14)),
         ])),
         ElevatedButton.icon(onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('New Banner'),
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white,
@@ -108,7 +108,7 @@ class _BannerManagementViewState extends State<BannerManagementView> {
             Expanded(child: TextField(controller: priorityCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: _inputDeco('Priority (higher = first)'))),
             const SizedBox(width: 16),
             Expanded(child: Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
-              title: Text(isActive ? 'Active' : 'Hidden', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
+              title: Text(isActive ? 'Active' : 'Hidden', style: TextStyle(color: Colors.white70, fontSize: 13)),
               value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
               onChanged: (v) => setModalState(() => isActive = v),
             ))),
@@ -129,7 +129,7 @@ class _BannerManagementViewState extends State<BannerManagementView> {
   Widget _infoPill(IconData icon, String text) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 13, color: Colors.white38), const SizedBox(width: 4),
-      Text(text, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
+      Text(text, style: TextStyle(color: Colors.white54, fontSize: 11), overflow: TextOverflow.ellipsis),
     ]);
   }
 

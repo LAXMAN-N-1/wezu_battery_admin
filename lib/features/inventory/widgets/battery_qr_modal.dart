@@ -86,7 +86,7 @@ class BatteryQRModal extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               serialNumber,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,

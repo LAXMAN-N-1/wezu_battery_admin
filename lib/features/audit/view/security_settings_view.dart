@@ -24,7 +24,7 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Platform Security Settings', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
       const SizedBox(height: 4),
-      Text('Manage authentication policies and platform restrictions', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+      Text('Manage authentication policies and platform restrictions', style: TextStyle(color: Colors.white54, fontSize: 14)),
       const SizedBox(height: 32),
       _isLoading ? const Center(child: CircularProgressIndicator())
           : _buildSettingsContent(),
@@ -77,7 +77,7 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
     return Padding(padding: const EdgeInsets.only(bottom: 20), child: Row(children: [
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        const SizedBox(height: 4), Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
+        const SizedBox(height: 4), Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.white54)),
       ])),
       Switch(value: value, activeThumbColor: Colors.blue, onChanged: onChanged),
     ]));
@@ -87,7 +87,7 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
     return Padding(padding: const EdgeInsets.only(bottom: 20), child: Row(children: [
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        const SizedBox(height: 4), Text(subtitle, style: GoogleFonts.inter(fontSize: 13, color: Colors.white38)),
+        const SizedBox(height: 4), Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.white38)),
       ])),
       const Icon(Icons.info_outline, color: Colors.white24, size: 20),
     ]));
@@ -101,7 +101,7 @@ class _SecuritySettingsViewState extends State<SecuritySettingsView> {
       Container(width: 100, padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)),
         child: DropdownButtonHideUnderline(child: DropdownButton<int>(
-          value: value, isExpanded: true, dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+          value: value, isExpanded: true, dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 14),
           items: [5, 15, 30, 60, 120, 240, 480].map((v) => DropdownMenuItem(value: v, child: Text('$v'))).toList(),
           onChanged: (val) { if (val != null) onChanged(val); }))),
     ]));

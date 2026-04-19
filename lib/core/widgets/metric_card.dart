@@ -97,7 +97,7 @@ class MetricCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -132,7 +132,7 @@ class MetricCard extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 13),
+                  style: TextStyle(color: colors.textTertiary, fontSize: 13),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -205,7 +205,7 @@ class MetricCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         trend,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: isNeutral
                               ? colors.textSecondary
                               : (isPositive ? colors.success : colors.danger),
@@ -217,7 +217,7 @@ class MetricCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           trendLabel,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: (isPositive ? colors.success : colors.danger)
                                 .withValues(alpha: 0.6),
                             fontSize: 12,

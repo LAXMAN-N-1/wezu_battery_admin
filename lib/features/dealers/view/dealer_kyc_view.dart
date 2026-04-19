@@ -123,7 +123,7 @@ class _DealerKycViewState extends State<DealerKycView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(doc.documentType.replaceAll('_', ' ').toUpperCase(), style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(doc.documentType.replaceAll('_', ' ').toUpperCase(), style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                     const SizedBox(height: 2),
                     Text(doc.businessName, style: const TextStyle(color: Colors.white54, fontSize: 13)),
                   ],
@@ -209,7 +209,7 @@ class _DealerKycViewState extends State<DealerKycView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                Text(title, style: TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             ),
           ],

@@ -27,7 +27,7 @@ class _GeneralSettingsViewState extends State<GeneralSettingsView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('General Settings', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('Manage application-wide system configurations', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Manage application-wide system configurations', style: TextStyle(color: Colors.white54, fontSize: 14)),
         ])),
         ElevatedButton.icon(
           onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('New Config'),
@@ -72,7 +72,7 @@ class _GeneralSettingsViewState extends State<GeneralSettingsView> {
       Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(config.key.toUpperCase(), style: GoogleFonts.robotoMono(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
         if (config.description != null) ...[
-          const SizedBox(height: 4), Text(config.description!, style: GoogleFonts.inter(fontSize: 12, color: Colors.white54)),
+          const SizedBox(height: 4), Text(config.description!, style: TextStyle(fontSize: 12, color: Colors.white54)),
         ],
       ])),
       const SizedBox(width: 24),

@@ -52,7 +52,7 @@ class _ActiveRentalsViewState extends State<ActiveRentalsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Active Rentals', style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text('Real-time tracking of all active battery rentals in the field.', style: GoogleFonts.inter(fontSize: 16, color: Colors.white54)),
+                  Text('Real-time tracking of all active battery rentals in the field.', style: TextStyle(fontSize: 16, color: Colors.white54)),
                 ],
               ),
               IconButton(
@@ -224,7 +224,7 @@ class _ActiveRentalsViewState extends State<ActiveRentalsView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+                Text(title, style: TextStyle(color: Colors.white54, fontSize: 14)),
               ],
             ),
           ],

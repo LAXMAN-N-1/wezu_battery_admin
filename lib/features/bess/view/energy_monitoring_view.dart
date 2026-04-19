@@ -73,9 +73,9 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
       decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<int?>(
         value: _selectedUnitId,
-        hint: Text('All Units', style: GoogleFonts.inter(color: Colors.white38)),
+        hint: Text('All Units', style: TextStyle(color: Colors.white38)),
         dropdownColor: const Color(0xFF1E293B),
-        style: GoogleFonts.inter(color: Colors.white),
+        style: TextStyle(color: Colors.white),
         items: [
           const DropdownMenuItem(value: null, child: Text('All Units')),
           ..._units.map((u) => DropdownMenuItem(value: u.id, child: Text(u.name))),
@@ -92,7 +92,7 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
       child: DropdownButtonHideUnderline(child: DropdownButton<int>(
         value: _hours,
         dropdownColor: const Color(0xFF1E293B),
-        style: GoogleFonts.inter(color: Colors.white),
+        style: TextStyle(color: Colors.white),
         items: const [
           DropdownMenuItem(value: 6, child: Text('Last 6h')),
           DropdownMenuItem(value: 24, child: Text('Last 24h')),
@@ -120,16 +120,16 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
               Container(width: 14, height: maxVal > 0 ? (discharged / maxVal * 120) : 0, decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(3))),
             ]),
             const SizedBox(height: 8),
-            Text(day['date']?.toString().substring(5) ?? '', style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
+            Text(day['date']?.toString().substring(5) ?? '', style: TextStyle(color: Colors.white38, fontSize: 10)),
           ])));
         }).toList())),
         const SizedBox(height: 12),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
           Container(width: 12, height: 12, decoration: BoxDecoration(color: const Color(0xFF22C55E).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(2))),
-          const SizedBox(width: 4), Text('Charged', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+          const SizedBox(width: 4), Text('Charged', style: TextStyle(color: Colors.white54, fontSize: 11)),
           const SizedBox(width: 16),
           Container(width: 12, height: 12, decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(2))),
-          const SizedBox(width: 4), Text('Discharged', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+          const SizedBox(width: 4), Text('Discharged', style: TextStyle(color: Colors.white54, fontSize: 11)),
         ]),
       ]),
     ).animate().fadeIn(duration: 400.ms, delay: 100.ms);
@@ -142,7 +142,7 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
         Padding(padding: const EdgeInsets.all(20), child: Row(children: [
           Text('Energy Logs (${_logs.length} records)', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
           const Spacer(),
-          Text('Showing last $_hours hours', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+          Text('Showing last $_hours hours', style: TextStyle(color: Colors.white38, fontSize: 12)),
         ])),
         Divider(color: Colors.white.withValues(alpha: 0.04), height: 1),
         _logs.isEmpty
@@ -176,7 +176,7 @@ class _EnergyMonitoringViewState extends State<EnergyMonitoringView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))),
-      child: Text(source.toUpperCase(), style: GoogleFonts.inter(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+      child: Text(source.toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
     );
   }
 

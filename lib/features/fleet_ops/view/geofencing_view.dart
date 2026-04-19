@@ -46,7 +46,7 @@ class _GeofencingViewState extends State<GeofencingView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Geofencing & Safe Zones', style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text('Configure virtual boundaries for fleet operation limits and station security perimeters.', style: GoogleFonts.inter(fontSize: 16, color: Colors.white54)),
+                  Text('Configure virtual boundaries for fleet operation limits and station security perimeters.', style: TextStyle(fontSize: 16, color: Colors.white54)),
                 ],
               ),
               ElevatedButton.icon(

@@ -57,7 +57,7 @@ class PlaceholderScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       description,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 14,
                         height: 1.5,
@@ -79,7 +79,7 @@ class PlaceholderScreen extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             'Coming Soon',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.amber.shade400,
                               fontWeight: FontWeight.w600,
                               fontSize: 12,

@@ -79,7 +79,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                   );
                 },
                 icon: const Icon(Icons.download, size: 16),
-                label: Text('Export', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                label: Text('Export', style: TextStyle(fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
                   foregroundColor: Colors.white70,
@@ -107,7 +107,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
           // Filters
           Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('Filters:', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+              Text('Filters:', style: TextStyle(color: Colors.white54, fontSize: 13)),
               const SizedBox(width: 12),
               _buildDropdownFilter('Action', _actionFilter, _actionTypes, (v) {
                 setState(() => _actionFilter = v);
@@ -119,7 +119,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                 _loadData();
               }),
               
-              Text('${_logs.length} events', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+              Text('${_logs.length} events', style: TextStyle(color: Colors.white38, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 16),
@@ -168,7 +168,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                             children: [
                               Row(
                                 children: [
-                                  Text(log.userName, style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                                  Text(log.userName, style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                                   const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -190,7 +190,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Text(log.details, style: GoogleFonts.inter(color: Colors.white70, fontSize: 12)),
+                              Text(log.details, style: TextStyle(color: Colors.white70, fontSize: 12)),
                               if (log.beforeValue != null && log.afterValue != null) ...[
                                 const SizedBox(height: 6),
                                 Container(
@@ -201,10 +201,10 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                                   ),
                                   child: Row(
                                     children: [
-                                      Text('Before: ', style: GoogleFonts.inter(color: Colors.red.shade300, fontSize: 10)),
+                                      Text('Before: ', style: TextStyle(color: Colors.red.shade300, fontSize: 10)),
                                       Text(log.beforeValue!, style: GoogleFonts.firaCode(color: Colors.red.shade300, fontSize: 10)),
                                       const SizedBox(width: 12),
-                                      Text('After: ', style: GoogleFonts.inter(color: Colors.green.shade300, fontSize: 10)),
+                                      Text('After: ', style: TextStyle(color: Colors.green.shade300, fontSize: 10)),
                                       Text(log.afterValue!, style: GoogleFonts.firaCode(color: Colors.green.shade300, fontSize: 10)),
                                     ],
                                   ),
@@ -220,7 +220,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                                     const SizedBox(width: 12),
                                   ],
                                   if (log.userAgent != null)
-                                    Text(log.userAgent!, style: GoogleFonts.inter(color: Colors.white24, fontSize: 10)),
+                                    Text(log.userAgent!, style: TextStyle(color: Colors.white24, fontSize: 10)),
                                 ],
                               ),
                             ],
@@ -230,7 +230,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                         // Timestamp
                         Text(
                           DateFormat('MMM d, HH:mm').format(log.timestamp),
-                          style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+                          style: TextStyle(color: Colors.white38, fontSize: 11),
                         ),
                       ],
                     ),
@@ -260,7 +260,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+                Text(title, style: TextStyle(color: Colors.white54, fontSize: 11)),
               ],
             ),
           ],
@@ -280,7 +280,7 @@ class _SessionActivityViewState extends State<SessionActivityView> {
         child: DropdownButton<String>(
           value: value,
           dropdownColor: const Color(0xFF1E293B),
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+          style: TextStyle(color: Colors.white, fontSize: 12),
           icon: const Icon(Icons.expand_more, color: Colors.white38, size: 18),
           items: items.map((item) => DropdownMenuItem(
             value: item,

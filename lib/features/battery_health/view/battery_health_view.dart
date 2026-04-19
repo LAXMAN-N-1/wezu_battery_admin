@@ -225,7 +225,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                     children: [
                       Text(
                         'CRITICAL: ${critical.length} ${critical.length == 1 ? 'battery' : 'batteries'} require immediate attention',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: const Color(0xFFEF4444),
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
@@ -237,7 +237,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                             .map((a) => a.batterySerial ?? 'Unknown')
                             .take(3)
                             .join(', '),
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white60,
                           fontSize: 12,
                         ),
@@ -251,7 +251,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                   }),
                   child: Text(
                     'View Batteries →',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: const Color(0xFFEF4444),
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
@@ -296,7 +296,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 Expanded(
                   child: Text(
                     '⚠ WARNING: ${warnings.length} ${warnings.length == 1 ? 'battery' : 'batteries'} showing rapid degradation',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: const Color(0xFFF59E0B),
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
@@ -309,7 +309,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                   }),
                   child: Text(
                     'Review Now →',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: const Color(0xFFF59E0B),
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
@@ -367,7 +367,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                         const SizedBox(width: 6),
                         Text(
                           'Live',
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: const Color(0xFF10B981),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -381,7 +381,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               const SizedBox(height: 4),
               Text(
                 'Track degradation, schedule maintenance, and predict end-of-life',
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+                style: TextStyle(color: Colors.white38, fontSize: 13),
               ),
             ],
           ),
@@ -402,7 +402,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                     SnackBar(
                       content: Text(
                         'Health Report generated and saved to PDF.',
-                        style: GoogleFonts.inter(color: Colors.white),
+                        style: TextStyle(color: Colors.white),
                       ),
                       backgroundColor: const Color(0xFF10B981),
                       behavior: SnackBarBehavior.floating,
@@ -432,7 +432,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: Text(
                   'Record Reading',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -467,7 +467,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       icon: Icon(icon, size: 16, color: color),
       label: Text(
         label,
-        style: GoogleFonts.inter(
+        style: TextStyle(
           color: color,
           fontWeight: FontWeight.w600,
           fontSize: 12,
@@ -632,7 +632,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               const SizedBox(height: 4),
               Text(
                 title,
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -641,7 +641,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: GoogleFonts.inter(color: Colors.white30, fontSize: 11),
+                style: TextStyle(color: Colors.white30, fontSize: 11),
               ),
             ],
           ),
@@ -806,7 +806,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         title: '$val',
         color: i['color'] as Color,
         radius: 35,
-        titleStyle: GoogleFonts.inter(
+        titleStyle: TextStyle(
           color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.bold,
@@ -830,7 +830,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         const SizedBox(width: 8),
         Text(
           '$label: $count',
-          style: GoogleFonts.inter(color: Colors.white60, fontSize: 12),
+          style: TextStyle(color: Colors.white60, fontSize: 12),
         ),
       ],
     );
@@ -884,7 +884,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               interval: 10,
               getTitlesWidget: (v, _) => Text(
                 '${v.toInt()}%',
-                style: GoogleFonts.inter(color: Colors.white24, fontSize: 10),
+                style: TextStyle(color: Colors.white24, fontSize: 10),
               ),
             ),
           ),
@@ -902,7 +902,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     d.substring(5),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white24,
                       fontSize: 9,
                     ),
@@ -940,7 +940,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             getTooltipItems: (spots) => spots.map((s) {
               return LineTooltipItem(
                 '${s.y.toStringAsFixed(1)}%',
-                GoogleFonts.inter(
+                TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -998,7 +998,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: selected ? const Color(0xFF3B82F6) : Colors.white38,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -1035,7 +1035,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               selected: isSelected,
               label: Text(
                 f['label'] as String,
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1067,10 +1067,10 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           height: 38,
           child: TextField(
             onChanged: (v) => setState(() => _searchQuery = v),
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+            style: TextStyle(color: Colors.white, fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Search serial...',
-              hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
+              hintStyle: TextStyle(color: Colors.white24, fontSize: 12),
               prefixIcon: const Icon(
                 Icons.search,
                 color: Colors.white24,
@@ -1111,7 +1111,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             child: DropdownButton<String>(
               value: _sortBy,
               dropdownColor: const Color(0xFF1E293B),
-              style: GoogleFonts.inter(color: Colors.white60, fontSize: 12),
+              style: TextStyle(color: Colors.white60, fontSize: 12),
               icon: const Icon(
                 Icons.unfold_more,
                 color: Colors.white38,
@@ -1146,7 +1146,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           children: [
             Text(
               'Needs Attention',
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+              style: TextStyle(color: Colors.white38, fontSize: 12),
             ),
             const SizedBox(width: 6),
             Switch(
@@ -1184,7 +1184,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
               const SizedBox(height: 12),
               Text(
                 'No batteries match this health filter',
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+                style: TextStyle(color: Colors.white38, fontSize: 14),
               ),
               const SizedBox(height: 8),
               TextButton(
@@ -1195,7 +1195,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
                 }),
                 child: Text(
                   'Clear Filters',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: const Color(0xFF3B82F6),
                     fontWeight: FontWeight.w600,
                   ),
@@ -1217,7 +1217,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
     ).animate().fadeIn(duration: 400.ms);
   }
 
-  TextStyle _headerStyle() => GoogleFonts.inter(
+  TextStyle _headerStyle() => TextStyle(
     color: Colors.white38,
     fontSize: 11,
     fontWeight: FontWeight.w600,
@@ -1249,7 +1249,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             if (b.manufacturer != null)
               Padding(
                 padding: const EdgeInsets.only(left: 20),
-                child: Text(b.manufacturer!, style: GoogleFonts.inter(color: Colors.white24, fontSize: 11)),
+                child: Text(b.manufacturer!, style: TextStyle(color: Colors.white24, fontSize: 11)),
               ),
           ],
         ),
@@ -1262,7 +1262,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
             width: 36, height: 36,
             child: Stack(alignment: Alignment.center, children: [
               CircularProgressIndicator(value: b.healthPercentage / 100, strokeWidth: 3, backgroundColor: healthColor.withValues(alpha: 0.1), valueColor: AlwaysStoppedAnimation(healthColor)),
-              Text('${b.healthPercentage.toInt()}', style: GoogleFonts.inter(color: healthColor, fontSize: 9, fontWeight: FontWeight.bold)),
+              Text('${b.healthPercentage.toInt()}', style: TextStyle(color: healthColor, fontSize: 9, fontWeight: FontWeight.bold)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -1290,7 +1290,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           const SizedBox(width: 4),
           Text(
             b.degradationRate > 0 ? '${b.degradationRate}%/mo' : 'Stable',
-            style: GoogleFonts.inter(color: b.degradationRate > 3 ? const Color(0xFFEF4444) : b.degradationRate > 1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600),
+            style: TextStyle(color: b.degradationRate > 3 ? const Color(0xFFEF4444) : b.degradationRate > 1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -1298,7 +1298,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
       // Last Reading
       Text(
         b.lastReadingAt != null ? _formatRelativeDate(b.lastReadingAt!) : 'No readings',
-        style: GoogleFonts.inter(color: b.lastReadingAt == null ? const Color(0xFFEF4444).withValues(alpha: 0.7) : Colors.white54, fontSize: 12),
+        style: TextStyle(color: b.lastReadingAt == null ? const Color(0xFFEF4444).withValues(alpha: 0.7) : Colors.white54, fontSize: 12),
       ),
 
       // Voltage / Temp
@@ -1309,13 +1309,13 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           Row(children: [
             Icon(Icons.bolt_rounded, color: Colors.amber.withValues(alpha: 0.6), size: 13),
             const SizedBox(width: 3),
-            Text(b.voltage != null ? '${b.voltage!.toStringAsFixed(1)}V' : '--', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+            Text(b.voltage != null ? '${b.voltage!.toStringAsFixed(1)}V' : '--', style: TextStyle(color: Colors.white54, fontSize: 11)),
           ]),
           const SizedBox(height: 2),
           Row(children: [
             Icon(Icons.thermostat_rounded, color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.cyan.withValues(alpha: 0.6), size: 13),
             const SizedBox(width: 3),
-            Text(b.temperature != null ? '${b.temperature!.toStringAsFixed(1)}°C' : '--', style: GoogleFonts.inter(color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.white54, fontSize: 11)),
+            Text(b.temperature != null ? '${b.temperature!.toStringAsFixed(1)}°C' : '--', style: TextStyle(color: (b.temperature ?? 0) > 45 ? const Color(0xFFEF4444) : Colors.white54, fontSize: 11)),
           ]),
         ],
       ),
@@ -1351,7 +1351,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           const SizedBox(width: 4),
           Text(
             'No record',
-            style: GoogleFonts.inter(color: Colors.white24, fontSize: 11),
+            style: TextStyle(color: Colors.white24, fontSize: 11),
           ),
         ],
       );
@@ -1365,7 +1365,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           const SizedBox(width: 4),
           Text(
             'Overdue',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: const Color(0xFFEF4444),
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -1384,7 +1384,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           const SizedBox(width: 4),
           Text(
             'Due soon',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: const Color(0xFFF59E0B),
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -1403,7 +1403,7 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           const SizedBox(width: 4),
           Text(
             'Up to date',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: const Color(0xFF10B981),
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -1480,14 +1480,14 @@ class _BatteryHealthViewState extends ConsumerState<BatteryHealthView> {
           Expanded(
             child: Text(
               message,
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+              style: TextStyle(color: Colors.white54, fontSize: 13),
             ),
           ),
           TextButton(
             onPressed: _refresh,
             child: Text(
               'Retry',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: const Color(0xFF3B82F6),
                 fontWeight: FontWeight.w600,
               ),

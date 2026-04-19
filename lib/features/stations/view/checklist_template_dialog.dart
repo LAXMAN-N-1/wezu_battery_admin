@@ -145,7 +145,7 @@ class _ChecklistTemplateDialogState extends ConsumerState<ChecklistTemplateDialo
                       const SizedBox(height: 32),
                       Row(
                         children: [
-                          Text('Tasks', style: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 18)),
+                          Text('Tasks', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 18)),
                           const Spacer(),
                           TextButton.icon(
                             icon: const Icon(Icons.add, size: 18),

@@ -61,8 +61,8 @@ class _BessReportsViewState extends State<BessReportsView> {
         Container(padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
           child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
-            value: _filterType, hint: Text('All Types', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-            dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+            value: _filterType, hint: Text('All Types', style: TextStyle(color: Colors.white38, fontSize: 13)),
+            dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 13),
             items: const [
               DropdownMenuItem(value: null, child: Text('All Types')),
               DropdownMenuItem(value: 'daily', child: Text('Daily')),
@@ -108,7 +108,7 @@ class _BessReportsViewState extends State<BessReportsView> {
         const SizedBox(height: 12),
         Text(value, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 4),
-        Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+        Text(title, style: TextStyle(color: Colors.white54, fontSize: 12)),
       ]),
     );
   }

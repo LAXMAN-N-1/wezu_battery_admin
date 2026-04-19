@@ -55,7 +55,7 @@ class _IoTDashboardViewState extends State<IoTDashboardView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('IoT Dashboard', style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text('Real-time telemetry, device health monitoring, and remote diagnostics.', style: GoogleFonts.inter(fontSize: 16, color: Colors.white54)),
+                  Text('Real-time telemetry, device health monitoring, and remote diagnostics.', style: TextStyle(fontSize: 16, color: Colors.white54)),
                 ],
               ),
               ElevatedButton.icon(
@@ -140,7 +140,7 @@ class _IoTDashboardViewState extends State<IoTDashboardView> {
         Icon(icon, color: color, size: 24),
         const SizedBox(height: 12),
         Text(value, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(label, style: GoogleFonts.inter(fontSize: 14, color: Colors.white54)),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.white54)),
       ],
     );
   }

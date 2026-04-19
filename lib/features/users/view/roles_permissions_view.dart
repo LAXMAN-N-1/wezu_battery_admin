@@ -58,7 +58,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
               icon: const Icon(Icons.add, size: 18),
               label: Text(
                 'Create Role',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                style: TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),
@@ -87,7 +87,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
             ),
             labelColor: const Color(0xFF3B82F6),
             unselectedLabelColor: Colors.white54,
-            labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+            labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             tabs: const [
               Tab(text: 'Roles'),
               Tab(text: 'Permission Matrix'),
@@ -165,7 +165,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                                 ),
                                 child: Text(
                                   'SYSTEM',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(
                                     color: const Color(0xFF3B82F6),
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
@@ -178,14 +178,14 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                         ),
                         Text(
                           role.description,
-                          style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
                   Text(
                     '${role.permissions.length} permissions',
-                    style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+                    style: TextStyle(color: Colors.white38, fontSize: 12),
                   ),
                   const SizedBox(width: 12),
                   Switch(
@@ -233,7 +233,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                                 ),
                                 child: Text(
                                   '+${role.permissions.length - 8} more',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(
                                     color: const Color(0xFF3B82F6),
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
@@ -291,13 +291,13 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                           children: [
                             SizedBox(
                               width: 180,
-                              child: Text('PERMISSION', style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                              child: Text('PERMISSION', style: TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                             ),
                             ..._roles.map((r) => SizedBox(
                               width: 90,
                               child: Text(
                                 r.name,
-                                style: GoogleFonts.inter(color: _roleColor(r.name), fontSize: 11, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: _roleColor(r.name), fontSize: 11, fontWeight: FontWeight.w600),
                                 textAlign: TextAlign.center,
                               ),
                             )),
@@ -321,8 +321,8 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(perm.name, style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
-                                    Text(perm.description, style: GoogleFonts.inter(color: Colors.white38, fontSize: 10), overflow: TextOverflow.ellipsis),
+                                    Text(perm.name, style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500)),
+                                    Text(perm.description, style: TextStyle(color: Colors.white38, fontSize: 10), overflow: TextOverflow.ellipsis),
                                   ],
                                 ),
                               ),
@@ -424,18 +424,18 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                   children: [
                     Text(
                       entry['action'] as String,
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                      style: TextStyle(color: Colors.white, fontSize: 13),
                     ),
                     Text(
                       'by ${entry['admin']}',
-                      style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+                      style: TextStyle(color: Colors.white38, fontSize: 11),
                     ),
                   ],
                 ),
               ),
               Text(
                 entry['time'] as String,
-                style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+                style: TextStyle(color: Colors.white38, fontSize: 11),
               ),
             ],
           ),
@@ -467,10 +467,10 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
               const SizedBox(height: 20),
               TextField(
                 controller: nameController,
-                style: GoogleFonts.inter(color: Colors.white),
+                style: TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Role Name',
-                  labelStyle: GoogleFonts.inter(color: Colors.white54),
+                  labelStyle: TextStyle(color: Colors.white54),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.03),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -479,10 +479,10 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
               const SizedBox(height: 14),
               TextField(
                 controller: descController,
-                style: GoogleFonts.inter(color: Colors.white),
+                style: TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   labelText: 'Description',
-                  labelStyle: GoogleFonts.inter(color: Colors.white54),
+                  labelStyle: TextStyle(color: Colors.white54),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.03),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -499,7 +499,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
+                      child: Text('Cancel', style: TextStyle(color: Colors.white70)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -520,7 +520,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('Create', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                      child: Text('Create', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -557,10 +557,10 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                 const SizedBox(height: 20),
                 TextField(
                   controller: nameController,
-                  style: GoogleFonts.inter(color: Colors.white),
+                  style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Role Name',
-                    labelStyle: GoogleFonts.inter(color: Colors.white54),
+                    labelStyle: TextStyle(color: Colors.white54),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.03),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -569,10 +569,10 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                 const SizedBox(height: 14),
                 TextField(
                   controller: descController,
-                  style: GoogleFonts.inter(color: Colors.white),
+                  style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Description',
-                    labelStyle: GoogleFonts.inter(color: Colors.white54),
+                    labelStyle: TextStyle(color: Colors.white54),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.03),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -580,7 +580,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                 ),
                 const SizedBox(height: 14),
                 SwitchListTile(
-                  title: Text('Active', style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
+                  title: Text('Active', style: TextStyle(color: Colors.white, fontSize: 14)),
                   value: isActive,
                   onChanged: (v) => setState(() => isActive = v),
                   contentPadding: EdgeInsets.zero,
@@ -596,7 +596,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
+                        child: Text('Cancel', style: TextStyle(color: Colors.white70)),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -620,7 +620,7 @@ class _RolesPermissionsViewState extends State<RolesPermissionsView>
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('Update', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                        child: Text('Update', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],

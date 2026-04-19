@@ -92,10 +92,10 @@ class _KycDashboardViewState extends State<KycDashboardView> {
                             sectionsSpace: 3,
                             centerSpaceRadius: 40,
                             sections: [
-                              PieChartSectionData(value: (_metrics['approved'] as num?)?.toDouble() ?? 0, color: Colors.green, title: '${_metrics['approved']}', titleStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
-                              PieChartSectionData(value: (_metrics['pending'] as num?)?.toDouble() ?? 0, color: Colors.orange, title: '${_metrics['pending']}', titleStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
-                              PieChartSectionData(value: (_metrics['rejected'] as num?)?.toDouble() ?? 0, color: Colors.red, title: '${_metrics['rejected']}', titleStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
-                              PieChartSectionData(value: (_metrics['manual_review'] as num?)?.toDouble() ?? 0, color: Colors.amber, title: '${_metrics['manual_review']}', titleStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
+                              PieChartSectionData(value: (_metrics['approved'] as num?)?.toDouble() ?? 0, color: Colors.green, title: '${_metrics['approved']}', titleStyle: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
+                              PieChartSectionData(value: (_metrics['pending'] as num?)?.toDouble() ?? 0, color: Colors.orange, title: '${_metrics['pending']}', titleStyle: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
+                              PieChartSectionData(value: (_metrics['rejected'] as num?)?.toDouble() ?? 0, color: Colors.red, title: '${_metrics['rejected']}', titleStyle: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
+                              PieChartSectionData(value: (_metrics['manual_review'] as num?)?.toDouble() ?? 0, color: Colors.amber, title: '${_metrics['manual_review']}', titleStyle: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), radius: 50),
                             ],
                           ),
                         ),
@@ -182,14 +182,14 @@ class _KycDashboardViewState extends State<KycDashboardView> {
                                   
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 8),
-                                    child: Text(label, style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
+                                    child: Text(label, style: TextStyle(color: Colors.white38, fontSize: 10)),
                                   );
                                 },
                               )),
                               leftTitles: AxisTitles(sideTitles: SideTitles(
                                 showTitles: true,
                                 reservedSize: 30,
-                                getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: GoogleFonts.inter(color: Colors.white38, fontSize: 10)),
+                                getTitlesWidget: (value, meta) => Text('${value.toInt()}', style: TextStyle(color: Colors.white38, fontSize: 10)),
                               )),
                               topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -234,7 +234,7 @@ class _KycDashboardViewState extends State<KycDashboardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                Text(title, style: TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             ),
           ],
@@ -260,7 +260,7 @@ class _KycDashboardViewState extends State<KycDashboardView> {
       children: [
         Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+        Text(label, style: TextStyle(color: Colors.white54, fontSize: 11)),
       ],
     );
   }

@@ -146,7 +146,7 @@ class _FinanceViewState extends State<FinanceView> {
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(value, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
-        Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 10)),
+        Text(title, style: TextStyle(color: Colors.white54, fontSize: 10)),
       ])),
     ])),
   );

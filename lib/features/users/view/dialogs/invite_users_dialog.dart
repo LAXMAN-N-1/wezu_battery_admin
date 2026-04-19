@@ -158,7 +158,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                   dividerColor: Colors.transparent,
                   labelColor: Colors.blue,
                   unselectedLabelColor: Colors.white54,
-                  labelStyle: GoogleFonts.inter(
+                  labelStyle: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -210,7 +210,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                         ),
                         child: Text(
                           'Cancel',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                          style: TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -241,7 +241,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                               )
                             : Text(
                                 'Send Invite',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
                                 ),
@@ -272,7 +272,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
         const SizedBox(height: 20),
         Text(
           'Role',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontSize: 14,
             color: Colors.white70,
             fontWeight: FontWeight.w500,
@@ -311,7 +311,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                   const SizedBox(height: 8),
                   Text(
                     'CSV Format',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white70,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -333,7 +333,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
         const SizedBox(height: 20),
         Text(
           'Paste CSV data:',
-          style: GoogleFonts.inter(
+          style: TextStyle(
             fontSize: 14,
             color: Colors.white70,
             fontWeight: FontWeight.w500,
@@ -392,11 +392,11 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
       children: [
         TextField(
           controller: controller,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+          style: TextStyle(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.white38, size: 20),
             hintText: label,
-            hintStyle: GoogleFonts.inter(color: Colors.white38, fontSize: 15),
+            hintStyle: TextStyle(color: Colors.white38, fontSize: 15),
             filled: true,
             fillColor: Colors.white.withValues(
               alpha: 0.05,
@@ -438,7 +438,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
           dropdownColor: const Color(0xFF1E293B),
           icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white38),
           isExpanded: true,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+          style: TextStyle(color: Colors.white, fontSize: 15),
           items: const [
             DropdownMenuItem(value: 'customer', child: Text('Customer')),
             DropdownMenuItem(value: 'driver', child: Text('Driver')),
@@ -467,7 +467,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
           const SizedBox(width: 12),
           Text(
             text,
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: Colors.blue,
               fontSize: 13,
               fontWeight: FontWeight.w500,

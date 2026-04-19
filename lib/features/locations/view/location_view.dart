@@ -114,7 +114,7 @@ class LocationView extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.white70,
             fontSize: 13,
             fontWeight: FontWeight.w500,
@@ -162,7 +162,7 @@ class LocationView extends ConsumerWidget {
               child: Text(
                 node.name,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                 ),

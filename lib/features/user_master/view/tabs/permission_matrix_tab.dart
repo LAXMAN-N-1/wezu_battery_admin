@@ -205,14 +205,14 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
               children: [
                 SizedBox(
                   width: 180,
-                  child: Text('MODULES / FEATURES', style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  child: Text('MODULES / FEATURES', style: TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                 ),
                 ...displayRoles.map((r) => SizedBox(
                   width: 100,
                   child: Text(
                     _displayRoleName(r.name).toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    style: TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

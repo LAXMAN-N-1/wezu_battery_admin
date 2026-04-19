@@ -50,7 +50,7 @@ class _BessOverviewViewState extends State<BessOverviewView> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('BESS Overview', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 8),
-          Text('Battery Energy Storage System — real-time monitoring', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Battery Energy Storage System — real-time monitoring', style: TextStyle(color: Colors.white54, fontSize: 14)),
           const SizedBox(height: 24),
           // Stats cards
           if (_stats != null) _buildStatsRow(),
@@ -94,16 +94,16 @@ class _BessOverviewViewState extends State<BessOverviewView> {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Container(width: 6, height: 6, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
               const SizedBox(width: 4),
-              Text('LIVE', style: GoogleFonts.inter(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
+              Text('LIVE', style: TextStyle(color: Colors.green, fontSize: 10, fontWeight: FontWeight.bold)),
             ])),
         ]),
         const SizedBox(height: 16),
         Text(value, style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 4),
-        Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+        Text(title, style: TextStyle(color: Colors.white54, fontSize: 13)),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
-          Text(subtitle, style: GoogleFonts.inter(color: color.withValues(alpha: 0.8), fontSize: 12)),
+          Text(subtitle, style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 12)),
         ],
       ]),
     );
@@ -131,7 +131,7 @@ class _BessOverviewViewState extends State<BessOverviewView> {
             Row(children: [
               Icon(Icons.location_on_outlined, color: Colors.white38, size: 14),
               const SizedBox(width: 4),
-              Text(unit.location, style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
+              Text(unit.location, style: TextStyle(color: Colors.white38, fontSize: 13)),
             ]),
           ])),
           Container(
@@ -140,7 +140,7 @@ class _BessOverviewViewState extends State<BessOverviewView> {
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
               const SizedBox(width: 6),
-              Text(unit.status.toUpperCase(), style: GoogleFonts.inter(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
+              Text(unit.status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
             ]),
           ),
         ]),
@@ -149,7 +149,7 @@ class _BessOverviewViewState extends State<BessOverviewView> {
         Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text('State of Charge', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+              Text('State of Charge', style: TextStyle(color: Colors.white54, fontSize: 12)),
               const Spacer(),
               Text('${unit.soc.toStringAsFixed(1)}%', style: GoogleFonts.outfit(color: socColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ]),
@@ -176,7 +176,7 @@ class _BessOverviewViewState extends State<BessOverviewView> {
     return Column(children: [
       Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
       const SizedBox(height: 2),
-      Text(label, style: GoogleFonts.inter(color: Colors.white38, fontSize: 11)),
+      Text(label, style: TextStyle(color: Colors.white38, fontSize: 11)),
     ]);
   }
 }

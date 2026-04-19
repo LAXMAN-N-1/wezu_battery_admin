@@ -69,7 +69,7 @@ class _ReturnsViewState extends State<ReturnsView> {
       Expanded(child: _isLoading
         ? const Center(child: CircularProgressIndicator())
         : _returns.isEmpty
-          ? Center(child: Text('No return requests', style: GoogleFonts.inter(color: Colors.white38, fontSize: 16)))
+          ? Center(child: Text('No return requests', style: TextStyle(color: Colors.white38, fontSize: 16)))
           : AdvancedCard(padding: EdgeInsets.zero, child: AdvancedTable(
               columns: const ['ID', 'User', 'Reason', 'Status', 'Refund', 'Notes', 'Date', 'Actions'],
               rows: _returns.map((r) {

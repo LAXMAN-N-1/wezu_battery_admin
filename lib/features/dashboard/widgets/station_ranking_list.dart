@@ -85,13 +85,13 @@ class _RankingItem extends StatelessWidget {
           Expanded(
             child: Text(
               ranking.stationName,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+              style: TextStyle(color: Colors.white, fontSize: 13),
               overflow: TextOverflow.ellipsis,
             ),
           ),
           Text(
             '₹${ranking.metricValue.toStringAsFixed(0)}',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: Colors.greenAccent,
               fontSize: 13,
               fontWeight: FontWeight.w600,

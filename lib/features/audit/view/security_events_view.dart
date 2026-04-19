@@ -29,7 +29,7 @@ class _SecurityEventsViewState extends State<SecurityEventsView> {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Security Events', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
       const SizedBox(height: 4),
-      Text('Monitor and resolve potential security threats and anomalies', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+      Text('Monitor and resolve potential security threats and anomalies', style: TextStyle(color: Colors.white54, fontSize: 14)),
       const SizedBox(height: 24),
       Row(children: [
         _buildFilter('Severity', _filterSeverity, ['low', 'medium', 'high', 'critical'], (v) { setState(() => _filterSeverity = v); _loadData(); }),
@@ -46,8 +46,8 @@ class _SecurityEventsViewState extends State<SecurityEventsView> {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
-        value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-        dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        value: value, hint: Text('All $label', style: TextStyle(color: Colors.white38, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 13),
         items: [DropdownMenuItem(value: null, child: Text('All $label')), ...items.map((i) => DropdownMenuItem(value: i, child: Text(i.toUpperCase())))],
         onChanged: onChanged)));
   }
@@ -56,8 +56,8 @@ class _SecurityEventsViewState extends State<SecurityEventsView> {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
       child: DropdownButtonHideUnderline(child: DropdownButton<bool?>(
-        value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-        dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        value: value, hint: Text('All $label', style: TextStyle(color: Colors.white38, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 13),
         items: const [DropdownMenuItem(value: null, child: Text('All Status')), DropdownMenuItem(value: true, child: Text('RESOLVED')), DropdownMenuItem(value: false, child: Text('UNRESOLVED'))],
         onChanged: onChanged)));
   }
@@ -78,20 +78,20 @@ class _SecurityEventsViewState extends State<SecurityEventsView> {
               const SizedBox(width: 8),
               if (!event.isResolved) Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: severityColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                child: Text(event.severity.toUpperCase(), style: GoogleFonts.inter(color: severityColor, fontSize: 10, fontWeight: FontWeight.bold))),
+                child: Text(event.severity.toUpperCase(), style: TextStyle(color: severityColor, fontSize: 10, fontWeight: FontWeight.bold))),
             ]),
             const SizedBox(height: 4),
             Row(children: [
               if (event.userId != null) ...[
                 Icon(Icons.person, size: 12, color: Colors.white38), const SizedBox(width: 4),
-                Text('User #${event.userId}', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                Text('User #${event.userId}', style: TextStyle(color: Colors.white54, fontSize: 12)),
                 const SizedBox(width: 12),
               ],
               Icon(Icons.computer, size: 12, color: Colors.white38), const SizedBox(width: 4),
               Text(event.sourceIp ?? 'Unknown IP', style: GoogleFonts.robotoMono(color: Colors.white54, fontSize: 11)),
               const SizedBox(width: 12),
               Icon(Icons.access_time, size: 12, color: Colors.white38), const SizedBox(width: 4),
-              Text(_formatDate(event.timestamp), style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+              Text(_formatDate(event.timestamp), style: TextStyle(color: Colors.white54, fontSize: 12)),
             ]),
           ])),
           if (!event.isResolved) ElevatedButton.icon(
@@ -101,13 +101,13 @@ class _SecurityEventsViewState extends State<SecurityEventsView> {
           if (event.isResolved) Row(children: [
             const Icon(Icons.check_circle, color: Colors.green, size: 16),
             const SizedBox(width: 4),
-            Text('Resolved', style: GoogleFonts.inter(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
+            Text('Resolved', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
           ]),
         ]),
         const SizedBox(height: 14),
         Container(padding: const EdgeInsets.all(12), width: double.infinity,
           decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(8)),
-          child: Text(event.details, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, height: 1.5))),
+          child: Text(event.details, style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5))),
       ]));
   }
 

@@ -192,7 +192,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                       ),
                       Text(
                         ' ${d.degradationRate}%/mo',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: const Color(0xFFF59E0B),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -225,7 +225,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
             unselectedLabelColor: Colors.white38,
             indicatorColor: const Color(0xFF3B82F6),
             indicatorSize: TabBarIndicatorSize.label,
-            labelStyle: GoogleFonts.inter(
+            labelStyle: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -265,7 +265,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
       ),
       child: Text(
         label.toUpperCase(),
-        style: GoogleFonts.inter(
+        style: TextStyle(
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w700,
@@ -338,7 +338,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
               children: [
                 Text(
                   '${d.chargeCycles ?? d.totalCycles} / 2000 cycles used',
-                  style: GoogleFonts.inter(color: Colors.white60, fontSize: 13),
+                  style: TextStyle(color: Colors.white60, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 ClipRRect(
@@ -360,7 +360,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                 if (d.estimatedRemainingCycles != null)
                   Text(
                     'Estimated remaining: ~${d.estimatedRemainingCycles} cycles (~${d.estimatedRemainingYears?.toStringAsFixed(1) ?? '?'} years)',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white38,
                       fontSize: 12,
                     ),
@@ -390,7 +390,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                   children: [
                     Text(
                       'Overall Composite:',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white60,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -424,7 +424,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                 children: [
                   Text(
                     'At current rate of ${d.degradationRate}%/month:',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white54,
                       fontSize: 12,
                     ),
@@ -470,7 +470,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
           ),
           Text(
             label,
-            style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+            style: TextStyle(color: Colors.white38, fontSize: 11),
           ),
         ],
       ),
@@ -489,7 +489,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
           width: 160,
           child: Text(
             label,
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ),
         Expanded(
@@ -508,7 +508,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
           width: 40,
           child: Text(
             '${value.toInt()}%',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: color,
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -530,11 +530,11 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
           const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
           Text(
             dateStr,
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: color,
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -664,7 +664,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
               interval: 10,
               getTitlesWidget: (v, _) => Text(
                 '${v.toInt()}%',
-                style: GoogleFonts.inter(color: Colors.white24, fontSize: 10),
+                style: TextStyle(color: Colors.white24, fontSize: 10),
               ),
             ),
           ),
@@ -701,7 +701,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                 .map(
                   (s) => LineTooltipItem(
                     '${s.y.toStringAsFixed(1)}%',
-                    GoogleFonts.inter(
+                    TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
@@ -770,7 +770,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
               reservedSize: 35,
               getTitlesWidget: (v, _) => Text(
                 '${v.toStringAsFixed(0)}V',
-                style: GoogleFonts.inter(color: Colors.white24, fontSize: 10),
+                style: TextStyle(color: Colors.white24, fontSize: 10),
               ),
             ),
           ),
@@ -831,7 +831,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
               reservedSize: 35,
               getTitlesWidget: (v, _) => Text(
                 '${v.toInt()}°',
-                style: GoogleFonts.inter(color: Colors.white24, fontSize: 10),
+                style: TextStyle(color: Colors.white24, fontSize: 10),
               ),
             ),
           ),
@@ -873,12 +873,12 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
         children: [
           Text(
             label,
-            style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+            style: TextStyle(color: Colors.white38, fontSize: 12),
           ),
           const Spacer(),
           Text(
             value,
-            style: GoogleFonts.inter(
+            style: TextStyle(
               color: Colors.white70,
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -922,7 +922,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                     const SizedBox(height: 8),
                     Text(
                       'No maintenance scheduled',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white38,
                         fontSize: 13,
                       ),
@@ -953,7 +953,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                             m.maintenanceType
                                 .replaceAll('_', ' ')
                                 .toUpperCase(),
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -961,7 +961,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                           ),
                           Text(
                             'Date: ${m.scheduledDate.substring(0, 10)} • Priority: ${m.priority}',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white38,
                               fontSize: 11,
                             ),
@@ -981,7 +981,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
           if (completed.isEmpty)
             Text(
               'No maintenance history',
-              style: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
+              style: TextStyle(color: Colors.white24, fontSize: 12),
             )
           else
             ...completed.map(
@@ -1003,7 +1003,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                         children: [
                           Text(
                             m.maintenanceType.replaceAll('_', ' '),
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -1012,7 +1012,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                           if (m.healthBefore != null && m.healthAfter != null)
                             Text(
                               'Health: ${m.healthBefore!.toStringAsFixed(0)}% → ${m.healthAfter!.toStringAsFixed(0)}% (+${(m.healthAfter! - m.healthBefore!).toStringAsFixed(0)}%)',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 color: const Color(0xFF10B981),
                                 fontSize: 11,
                               ),
@@ -1022,7 +1022,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                     ),
                     Text(
                       m.completedAt?.substring(0, 10) ?? '--',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white24,
                         fontSize: 11,
                       ),
@@ -1053,7 +1053,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
             const SizedBox(height: 12),
             Text(
               'No active health alerts',
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+              style: TextStyle(color: Colors.white38, fontSize: 14),
             ),
           ],
         ),
@@ -1098,7 +1098,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                   const Spacer(),
                   Text(
                     a.createdAt.substring(0, 10),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white24,
                       fontSize: 11,
                     ),
@@ -1108,7 +1108,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
               const SizedBox(height: 8),
               Text(
                 a.message,
-                style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
               const SizedBox(height: 8),
               Row(
@@ -1118,7 +1118,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                     icon: const Icon(Icons.check_rounded, size: 14),
                     label: Text(
                       'Resolve',
-                      style: GoogleFonts.inter(fontSize: 11),
+                      style: TextStyle(fontSize: 11),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF10B981),
@@ -1170,7 +1170,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
                 icon: const Icon(Icons.download_rounded, size: 14),
                 label: Text(
                   'Export CSV',
-                  style: GoogleFonts.inter(fontSize: 11),
+                  style: TextStyle(fontSize: 11),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: Colors.white54,
@@ -1187,7 +1187,7 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
           if (d.snapshots.isEmpty)
             Text(
               'No snapshots recorded',
-              style: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
+              style: TextStyle(color: Colors.white24, fontSize: 12),
             )
           else
             AdvancedCard(
@@ -1215,13 +1215,13 @@ class _HealthDetailDrawerState extends ConsumerState<HealthDetailDrawer>
     );
   }
 
-  TextStyle _tinyHeader() => GoogleFonts.inter(
+  TextStyle _tinyHeader() => TextStyle(
     color: Colors.white38,
     fontSize: 10,
     fontWeight: FontWeight.w600,
   );
   TextStyle _tinyCell() =>
-      GoogleFonts.inter(color: Colors.white54, fontSize: 11);
+      TextStyle(color: Colors.white54, fontSize: 11);
 
   // ==================================================================
   // HELPERS

@@ -50,7 +50,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Change Password', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text('For ${widget.userName}', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+                      Text('For ${widget.userName}', style: TextStyle(color: Colors.white54, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -59,15 +59,15 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             ),
             const SizedBox(height: 24),
 
-            Text('New Password', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+            Text('New Password', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             TextField(
               controller: _passwordController,
               obscureText: _obscure,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: '••••••••',
-                hintStyle: GoogleFonts.inter(color: Colors.white24),
+                hintStyle: TextStyle(color: Colors.white24),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white38, size: 18),
                 suffixIcon: IconButton(
                   onPressed: () => setState(() => _obscure = !_obscure),
@@ -82,15 +82,15 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
             ),
             const SizedBox(height: 16),
 
-            Text('Confirm Password', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+            Text('Confirm Password', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             TextField(
               controller: _confirmController,
               obscureText: _obscure,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+              style: TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: '••••••••',
-                hintStyle: GoogleFonts.inter(color: Colors.white24),
+                hintStyle: TextStyle(color: Colors.white24),
                 prefixIcon: const Icon(Icons.lock_outline, color: Colors.white38, size: 18),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.05),
@@ -117,7 +117,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     side: const BorderSide(color: Colors.white38),
                   ),
                   Expanded(
-                    child: Text('Force password reset on next login', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
+                    child: Text('Force password reset on next login', style: TextStyle(color: Colors.white70, fontSize: 13)),
                   ),
                 ],
               ),
@@ -134,7 +134,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
+                    child: Text('Cancel', style: TextStyle(color: Colors.white70)),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -148,7 +148,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     ),
                     child: _isSubmitting
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Reset Password', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                        : Text('Reset Password', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -163,7 +163,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     if (_passwordController.text.isEmpty || _passwordController.text != _confirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Passwords do not match', style: GoogleFonts.inter()),
+          content: Text('Passwords do not match', style: TextStyle()),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),

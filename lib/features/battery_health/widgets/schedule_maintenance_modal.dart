@@ -133,7 +133,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
               if (_batId == null) ...[
                 Text(
                   'Select Battery',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: Colors.white60,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -143,7 +143,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                 TextField(
                   controller: _searchCtrl,
                   onChanged: _search,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: Colors.white, fontSize: 13),
                   decoration: _dec('Type serial...'),
                 ),
                 if (_results.isNotEmpty)
@@ -227,7 +227,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
               // Maintenance Type Cards
               Text(
                 'Maintenance Type',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -268,7 +268,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                               const SizedBox(height: 6),
                               Text(
                                 t['label'] as String,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   color: sel ? c : Colors.white38,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -287,7 +287,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
               // Priority Pills
               Text(
                 'Priority',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -305,7 +305,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                       label: Text(p['label'] as String),
                       selectedColor: c.withValues(alpha: 0.15),
                       backgroundColor: const Color(0xFF0F172A),
-                      labelStyle: GoogleFonts.inter(
+                      labelStyle: TextStyle(
                         color: sel ? c : Colors.white38,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -329,7 +329,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
               // Date Picker
               Text(
                 'Scheduled Date',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -368,7 +368,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                       const SizedBox(width: 8),
                       Text(
                         '${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -382,7 +382,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
               // Notes
               Text(
                 'Notes (optional)',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -392,7 +392,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
               TextField(
                 controller: _notesCtrl,
                 maxLines: 3,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: Colors.white, fontSize: 13),
                 decoration: _dec('Add notes...'),
               ),
               const SizedBox(height: 16),
@@ -402,7 +402,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
                     _error!,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: const Color(0xFFEF4444),
                       fontSize: 12,
                     ),
@@ -417,7 +417,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
                       'Cancel',
-                      style: GoogleFonts.inter(color: Colors.white38),
+                      style: TextStyle(color: Colors.white38),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -445,7 +445,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
                           )
                         : Text(
                             'Schedule',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -461,7 +461,7 @@ class _State extends ConsumerState<ScheduleMaintenanceModal> {
 
   InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
+    hintStyle: TextStyle(color: Colors.white24, fontSize: 12),
     filled: true,
     fillColor: const Color(0xFF0F172A),
     border: OutlineInputBorder(

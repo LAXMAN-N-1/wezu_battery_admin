@@ -123,7 +123,7 @@ class _LegalListViewState extends State<LegalListView> {
                     children: [
                       Text(
                         doc.title,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -153,7 +153,7 @@ class _LegalListViewState extends State<LegalListView> {
                       children: [
                         const Icon(Icons.warning_amber, color: Colors.redAccent, size: 12),
                         const SizedBox(width: 4),
-                        Text('FORCE UPDATE', style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text('FORCE UPDATE', style: TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),

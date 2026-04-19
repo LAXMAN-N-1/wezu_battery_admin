@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
@@ -214,7 +213,7 @@ class _SupportViewState extends State<SupportView> {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 const Spacer(),
                 Container(
@@ -272,7 +271,7 @@ class _SupportViewState extends State<SupportView> {
               const SizedBox(height: 12),
               Text(
                 ticket.subject,
-                style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
               Text(
@@ -479,7 +478,7 @@ class _TicketDetailDialogState extends State<_TicketDetailDialog> {
                   children: [
                     Text(
                       '[#${_ticket!.id}] ${_ticket!.subject}',
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 8),
                     Row(

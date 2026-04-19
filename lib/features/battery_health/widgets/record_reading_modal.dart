@@ -51,7 +51,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
 
   InputDecoration _dec(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 12),
+    hintStyle: TextStyle(color: Colors.white24, fontSize: 12),
     filled: true,
     fillColor: const Color(0xFF0F172A),
     border: OutlineInputBorder(
@@ -122,7 +122,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
             if (_batId == null) ...[
               Text(
                 'Select Battery',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -132,7 +132,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
               TextField(
                 controller: _searchCtrl,
                 onChanged: _search,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: Colors.white, fontSize: 13),
                 decoration: _dec('Type serial...'),
               ),
               if (_results.isNotEmpty)
@@ -216,7 +216,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
               children: [
                 Text(
                   'Health %',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: Colors.white60,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -256,7 +256,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                     children: [
                       Text(
                         'Voltage (V)',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 11,
                         ),
@@ -265,7 +265,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                       TextField(
                         controller: _voltCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -281,7 +281,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                     children: [
                       Text(
                         'Temp (°C)',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 11,
                         ),
@@ -290,7 +290,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                       TextField(
                         controller: _tempCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -306,7 +306,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                     children: [
                       Text(
                         'Resistance (mΩ)',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 11,
                         ),
@@ -315,7 +315,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                       TextField(
                         controller: _resCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                         ),
@@ -349,7 +349,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                     Expanded(
                       child: Text(
                         'Low health — an alert will be auto-created.',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: const Color(0xFFEF4444),
                           fontSize: 12,
                         ),
@@ -363,7 +363,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   _error!,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: const Color(0xFFEF4444),
                     fontSize: 12,
                   ),
@@ -376,7 +376,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     'Cancel',
-                    style: GoogleFonts.inter(color: Colors.white38),
+                    style: TextStyle(color: Colors.white38),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -404,7 +404,7 @@ class _RecordReadingModalState extends ConsumerState<RecordReadingModal> {
                         )
                       : Text(
                           'Save Reading',
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                 ),
               ],

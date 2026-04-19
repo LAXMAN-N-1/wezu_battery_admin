@@ -25,7 +25,7 @@ class _FeatureFlagsViewState extends State<FeatureFlagsView> {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Feature Flags', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
       const SizedBox(height: 4),
-      Text('Toggle experimental features and platform modules in real-time', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+      Text('Toggle experimental features and platform modules in real-time', style: TextStyle(color: Colors.white54, fontSize: 14)),
       const SizedBox(height: 32),
       _isLoading ? const Center(child: CircularProgressIndicator())
           : _flags.isEmpty ? const Text('No feature flags found', style: TextStyle(color: Colors.white54))
@@ -57,7 +57,7 @@ class _FeatureFlagsViewState extends State<FeatureFlagsView> {
               child: Text(flag.key, style: GoogleFonts.robotoMono(fontSize: 10, color: Colors.white38))),
           ]),
           if (flag.description != null) ...[
-            const SizedBox(height: 4), Text(flag.description!, style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
+            const SizedBox(height: 4), Text(flag.description!, style: TextStyle(fontSize: 13, color: Colors.white54)),
           ],
         ])),
         Switch(value: flag.isEnabled, activeThumbColor: Colors.green, onChanged: (val) async {

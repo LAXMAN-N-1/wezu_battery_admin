@@ -160,11 +160,11 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
               indicatorWeight: 3,
               labelColor: const Color(0xFF3B82F6),
               unselectedLabelColor: Colors.white54,
-              labelStyle: GoogleFonts.inter(
+              labelStyle: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
-              unselectedLabelStyle: GoogleFonts.inter(
+              unselectedLabelStyle: TextStyle(
                 fontWeight: FontWeight.w400,
                 fontSize: 13,
               ),
@@ -193,7 +193,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
                               ),
                               child: Text(
                                 _stats.totalPending.toString(),
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   fontSize: 10,
                                   color: const Color(0xFFF59E0B),
                                   fontWeight: FontWeight.bold,
@@ -235,7 +235,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
                                 _statusFilter == 'all'
                                     ? 'No KYC documents found'
                                     : 'No $_statusFilter documents',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(
                                   color: Colors.white54,
                                   fontSize: 14,
                                 ),
@@ -425,7 +425,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
                 ),
                 Text(
                   title,
-                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 11),
+                  style: TextStyle(color: Colors.white54, fontSize: 11),
                 ),
               ],
             ),
@@ -504,7 +504,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
             children: [
               Text(
                 'Rejecting ${doc.documentTypeDisplay} for ${doc.userName}',
-                style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -646,7 +646,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
                     const SizedBox(height: 8),
                     Text(
                       'Document Preview',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white38,
                         fontSize: 12,
                       ),
@@ -656,7 +656,7 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           doc.fileUrl,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: const Color(0xFF3B82F6),
                             fontSize: 11,
                           ),
@@ -721,13 +721,13 @@ class _KYCDocumentsViewState extends State<KYCDocumentsView>
             width: 140,
             child: Text(
               label,
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+              style: TextStyle(color: Colors.white54, fontSize: 13),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

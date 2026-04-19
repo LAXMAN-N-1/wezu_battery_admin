@@ -16,11 +16,11 @@ class AppThemes {
     brightness: Brightness.dark,
     scaffoldBackgroundColor: const Color(0xFF0D1117),
     textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-      displayLarge: GoogleFonts.inter(fontSize: 48, fontWeight: FontWeight.bold, fontFeatures: const [FontFeature.tabularFigures()]),
-      displayMedium: GoogleFonts.inter(fontSize: 36, fontWeight: FontWeight.bold, fontFeatures: const [FontFeature.tabularFigures()]),
-      titleLarge: GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white),
-      titleMedium: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white),
-      labelMedium: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w400, color: const Color(0xFF94A3B8)),
+      displayLarge: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, fontFeatures: const [FontFeature.tabularFigures()]),
+      displayMedium: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, fontFeatures: const [FontFeature.tabularFigures()]),
+      titleLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w600, color: Colors.white),
+      titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.white),
+      labelMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: const Color(0xFF94A3B8)),
     ),
     colorScheme: const ColorScheme.dark(
       primary: Color(0xFF3B82F6),

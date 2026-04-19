@@ -104,7 +104,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+          Text(title, style: TextStyle(color: Colors.white54, fontSize: 12)),
         ])),
       ]),
     );
@@ -117,7 +117,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
         color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06))),
-      child: Text(label, style: GoogleFonts.inter(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
+      child: Text(label, style: TextStyle(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
     ));
   }
 
@@ -125,8 +125,8 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
-        value: _filterStatus, hint: Text('All Status', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-        dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        value: _filterStatus, hint: Text('All Status', style: TextStyle(color: Colors.white38, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 13),
         items: const [
           DropdownMenuItem(value: null, child: Text('All Status')),
           DropdownMenuItem(value: 'completed', child: Text('Completed')),
@@ -167,7 +167,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
     final label = type.replaceAll('_', ' ');
     return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))),
-      child: Text(label.toUpperCase(), style: GoogleFonts.inter(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)));
+      child: Text(label.toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)));
   }
 
   String _formatTs(String ts) {
@@ -179,7 +179,7 @@ class _GridIntegrationViewState extends State<GridIntegrationView> {
       backgroundColor: const Color(0xFF0F172A),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text('New Grid Event', style: GoogleFonts.outfit(color: Colors.white)),
-      content: Text('Grid event creation coming soon.', style: GoogleFonts.inter(color: Colors.white54)),
+      content: Text('Grid event creation coming soon.', style: TextStyle(color: Colors.white54)),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
     ));
   }

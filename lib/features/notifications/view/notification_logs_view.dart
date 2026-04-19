@@ -75,7 +75,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
         ),
         const SizedBox(height: 8),
         Text(value, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-        Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+        Text(title, style: TextStyle(color: Colors.white54, fontSize: 11)),
       ]),
     );
   }
@@ -84,8 +84,8 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
     return Container(padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
       child: DropdownButtonHideUnderline(child: DropdownButton<String?>(
-        value: value, hint: Text('All $label', style: GoogleFonts.inter(color: Colors.white38, fontSize: 13)),
-        dropdownColor: const Color(0xFF1E293B), style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+        value: value, hint: Text('All $label', style: TextStyle(color: Colors.white38, fontSize: 13)),
+        dropdownColor: const Color(0xFF1E293B), style: TextStyle(color: Colors.white, fontSize: 13),
         items: [DropdownMenuItem(value: null, child: Text('All $label')), ...items.map((i) => DropdownMenuItem(value: i, child: Text(i.toUpperCase())))],
         onChanged: onChanged)));
   }
@@ -139,7 +139,7 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
             _detailRow('Message Title', l.title),
             _detailRow('Message Body / Template', l.message),
             const SizedBox(height: 16),
-            Text('Timestamps', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
+            Text('Timestamps', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(12)),
               child: Column(children: [
@@ -149,13 +149,13 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
               ])),
             if (l.errorMessage != null) ...[
               const SizedBox(height: 24),
-              Text('Failure Reason', style: GoogleFonts.inter(color: const Color(0xFFEF4444).withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.bold)),
+              Text('Failure Reason', style: TextStyle(color: const Color(0xFFEF4444).withValues(alpha: 0.8), fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.2))),
                 child: Text(l.errorMessage!, style: GoogleFonts.robotoMono(color: const Color(0xFFEF4444), fontSize: 12))),
             ],
             const SizedBox(height: 24),
-            Text('Raw Metadata JSON', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
+            Text('Raw Metadata JSON', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Container(width: double.infinity, padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
               child: Text('{\n  "payload": {\n    "routing": "${l.channel}",\n    "target_id": ${l.userId},\n    "priority": "high"\n  }\n}', style: GoogleFonts.robotoMono(color: const Color(0xFF22C55E), fontSize: 12))),
@@ -167,17 +167,17 @@ class _NotificationLogsViewState extends State<NotificationLogsView> {
 
   Widget _tsRow(String label, String? ts) {
     return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [
-      Expanded(child: Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12))),
+      Expanded(child: Text(label, style: TextStyle(color: Colors.white54, fontSize: 12))),
       Text(ts ?? 'Pending', style: GoogleFonts.robotoMono(color: ts == null ? const Color(0xFFF59E0B) : Colors.white, fontSize: 12)),
     ]));
   }
 
   Widget _detailRow(String label, String val, {bool isPill = false, Color pillColor = const Color(0xFF3B82F6)}) {
     return Padding(padding: const EdgeInsets.only(bottom: 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
+      Text(label, style: TextStyle(color: Colors.white54, fontSize: 12)),
       const SizedBox(height: 4),
-      isPill ? Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: pillColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)), child: Text(val, style: GoogleFonts.inter(color: pillColor, fontSize: 11, fontWeight: FontWeight.bold)))
-             : Text(val, style: GoogleFonts.inter(color: Colors.white, fontSize: 14)),
+      isPill ? Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: pillColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)), child: Text(val, style: TextStyle(color: pillColor, fontSize: 11, fontWeight: FontWeight.bold)))
+             : Text(val, style: TextStyle(color: Colors.white, fontSize: 14)),
     ]));
   }
 }

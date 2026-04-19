@@ -54,7 +54,7 @@ class _SendPushViewState extends State<SendPushView> {
                     const SizedBox(height: 4),
                     Text(
                       'Create, schedule & track push notification campaigns',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 14,
                       ),
@@ -159,7 +159,7 @@ class _SendPushViewState extends State<SendPushView> {
           ),
           Text(
             title,
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+            style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
       ),
@@ -209,7 +209,7 @@ class _SendPushViewState extends State<SendPushView> {
                 ),
                 child: Text(
                   c.status.toUpperCase(),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: statusColor,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -241,7 +241,7 @@ class _SendPushViewState extends State<SendPushView> {
           const SizedBox(height: 8),
           Text(
             c.message,
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+            style: TextStyle(color: Colors.white54, fontSize: 13),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -281,11 +281,11 @@ class _SendPushViewState extends State<SendPushView> {
         const SizedBox(width: 4),
         Text(
           '$label: ',
-          style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+          style: TextStyle(color: Colors.white38, fontSize: 11),
         ),
         Text(
           value,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.white70,
             fontSize: 11,
             fontWeight: FontWeight.w600,

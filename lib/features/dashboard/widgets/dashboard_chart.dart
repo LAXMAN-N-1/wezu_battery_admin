@@ -42,7 +42,7 @@ class DashboardChart extends StatelessWidget {
                   children: [
                     Text(
                       'Last 30 Days',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.blue,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

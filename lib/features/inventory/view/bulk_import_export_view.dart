@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../provider/bulk_provider.dart';
 import '../data/repositories/inventory_repository.dart';
@@ -143,7 +142,7 @@ class _BulkImportExportViewState extends ConsumerState<BulkImportExportView>
             const SizedBox(height: 24),
             Text(
               'Successfully Imported!',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

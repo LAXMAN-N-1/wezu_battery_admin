@@ -55,14 +55,14 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
             const SizedBox(height: 24),
 
             if (!_linkGenerated) ...[
-              Text('Email Address', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text('Email Address', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               TextField(
                 controller: _emailController,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'user@example.com',
-                  hintStyle: GoogleFonts.inter(color: Colors.white24),
+                  hintStyle: TextStyle(color: Colors.white24),
                   prefixIcon: const Icon(Icons.email_outlined, color: Colors.white38, size: 18),
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.05),
@@ -79,7 +79,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Role', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                        Text('Role', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -93,7 +93,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                               value: _selectedRole,
                               isExpanded: true,
                               dropdownColor: const Color(0xFF1E293B),
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                              style: TextStyle(color: Colors.white, fontSize: 14),
                               items: const [
                                 DropdownMenuItem(value: 'dealer', child: Text('Dealer')),
                                 DropdownMenuItem(value: 'driver', child: Text('Driver')),
@@ -111,7 +111,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Expires In', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                        Text('Expires In', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -125,7 +125,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                               value: _expiryDays,
                               isExpanded: true,
                               dropdownColor: const Color(0xFF1E293B),
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                              style: TextStyle(color: Colors.white, fontSize: 14),
                               items: const [
                                 DropdownMenuItem(value: 1, child: Text('1 day')),
                                 DropdownMenuItem(value: 3, child: Text('3 days')),
@@ -149,7 +149,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                 child: ElevatedButton.icon(
                   onPressed: _generateLink,
                   icon: const Icon(Icons.link, size: 18),
-                  label: Text('Generate Link', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+                  label: Text('Generate Link', style: TextStyle(fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -174,7 +174,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                       children: [
                         const Icon(Icons.check_circle, color: Colors.green, size: 18),
                         const SizedBox(width: 8),
-                        Text('Invite Link Generated!', style: GoogleFonts.inter(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 14)),
+                        Text('Invite Link Generated!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 14)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -199,7 +199,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                               Clipboard.setData(ClipboardData(text: _generatedLink ?? ''));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Link copied to clipboard!', style: GoogleFonts.inter()),
+                                  content: Text('Link copied to clipboard!', style: TextStyle()),
                                   backgroundColor: Colors.green,
                                   behavior: SnackBarBehavior.floating,
                                 ),
@@ -214,7 +214,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                     const SizedBox(height: 12),
                     Text(
                       'For: ${_emailController.text} • Role: ${_selectedRole.toUpperCase()} • Expires in $_expiryDays days',
-                      style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ],
                 ),
@@ -230,7 +230,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('Generate Another', style: GoogleFonts.inter(color: Colors.white70)),
+                      child: Text('Generate Another', style: TextStyle(color: Colors.white70)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -242,7 +242,7 @@ class _InviteLinkDialogState extends State<InviteLinkDialog> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('Done', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                      child: Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],

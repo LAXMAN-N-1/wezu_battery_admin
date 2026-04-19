@@ -77,11 +77,11 @@ class MaintenanceComplianceView extends ConsumerWidget {
         children: [
           _buildStatsGrid(completed, overdue, complianceRate),
           const SizedBox(height: 32),
-          Text('Compliance Trends', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text('Compliance Trends', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
           _buildTrendChart(events),
           const SizedBox(height: 32),
-          Text('Critical Alerts', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text('Critical Alerts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 16),
           _buildAlertsList(events.where((e) => e.status == MaintenanceStatus.scheduled && e.startTime.isBefore(now)).toList()),
         ],

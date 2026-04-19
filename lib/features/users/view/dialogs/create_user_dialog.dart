@@ -84,7 +84,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                     return null;
                   }),
                 const SizedBox(height: 18),
-                Text('Role', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('Role', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -98,7 +98,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                       value: _selectedRole,
                       isExpanded: true,
                       dropdownColor: const Color(0xFF1E293B),
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                       items: const [
                         DropdownMenuItem(value: 'admin', child: Text('Admin')),
                         DropdownMenuItem(value: 'supervisor', child: Text('Supervisor')),
@@ -122,7 +122,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
+                        child: Text('Cancel', style: TextStyle(color: Colors.white70)),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -136,7 +136,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                         ),
                         child: _isSubmitting
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : Text('Create User', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
+                            : Text('Create User', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -153,16 +153,16 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(label, style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           validator: validator,
           obscureText: obscure,
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 14),
+            hintStyle: TextStyle(color: Colors.white24, fontSize: 14),
             prefixIcon: Icon(icon, color: Colors.white38, size: 18),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),

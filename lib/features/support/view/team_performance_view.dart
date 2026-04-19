@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/widgets/admin_ui_components.dart';
@@ -179,7 +178,7 @@ class _TeamPerformanceViewState extends State<TeamPerformanceView> {
                     const SizedBox(height: 4),
                     Text(
                       value,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -212,7 +211,7 @@ class _TeamPerformanceViewState extends State<TeamPerformanceView> {
             children: [
               Text(
                 'Ticket Volume Trend (14 Days)',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -376,7 +375,7 @@ class _TeamPerformanceViewState extends State<TeamPerformanceView> {
               const SizedBox(width: 8),
               Text(
                 'Agent Leaderboard',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

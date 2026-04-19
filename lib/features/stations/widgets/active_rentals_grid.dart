@@ -41,7 +41,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
                 ),
                 child: Text(
                   'Live',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: Colors.greenAccent,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -113,7 +113,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
             alignment: Alignment.center,
             child: Text(
               'No active rentals at this station.',
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 13),
+              style: TextStyle(color: Colors.white38, fontSize: 13),
             ),
           )
         else
@@ -151,7 +151,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Text(
         text,
-        style: GoogleFonts.inter(
+        style: TextStyle(
           color: Colors.white38,
           fontSize: 11,
           fontWeight: FontWeight.w600,
@@ -165,7 +165,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Text(
         text,
-        style: GoogleFonts.inter(
+        style: TextStyle(
           color: Colors.white70,
           fontSize: 12,
         ),

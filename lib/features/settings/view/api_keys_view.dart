@@ -27,7 +27,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('API Keys', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('Manage API keys for external services and integrations', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Manage API keys for external services and integrations', style: TextStyle(color: Colors.white54, fontSize: 14)),
         ])),
         ElevatedButton.icon(
           onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('Generate Key'),
@@ -56,9 +56,9 @@ class _ApiKeysViewState extends State<ApiKeysView> {
               const SizedBox(width: 12),
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: (key.environment == 'production' ? Colors.red : Colors.green).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                child: Text(key.environment.toUpperCase(), style: GoogleFonts.inter(color: key.environment == 'production' ? Colors.red : Colors.green, fontSize: 10, fontWeight: FontWeight.bold))),
+                child: Text(key.environment.toUpperCase(), style: TextStyle(color: key.environment == 'production' ? Colors.red : Colors.green, fontSize: 10, fontWeight: FontWeight.bold))),
             ]),
-            const SizedBox(height: 4), Text(key.serviceName.toUpperCase(), style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+            const SizedBox(height: 4), Text(key.serviceName.toUpperCase(), style: TextStyle(fontSize: 12, color: Colors.white38)),
           ])),
           Switch(value: key.isActive, activeThumbColor: Colors.green, onChanged: (val) async {
             await _repo.updateApiKey(key.id, isActive: val); _loadData();
@@ -74,7 +74,7 @@ class _ApiKeysViewState extends State<ApiKeysView> {
         const SizedBox(height: 16),
         Row(children: [
           Icon(Icons.history, size: 14, color: Colors.white38), const SizedBox(width: 6),
-          Text(key.lastUsedAt != null ? 'Last used: ${_formatDate(key.lastUsedAt!)}' : 'Never used', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+          Text(key.lastUsedAt != null ? 'Last used: ${_formatDate(key.lastUsedAt!)}' : 'Never used', style: TextStyle(color: Colors.white38, fontSize: 12)),
           const Spacer(),
           TextButton.icon(
             onPressed: () async { await _repo.deleteApiKey(key.id); _loadData(); },

@@ -26,7 +26,7 @@ class _SystemHealthViewState extends State<SystemHealthView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('System Health', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('Real-time infrastructure monitoring and service status', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Real-time infrastructure monitoring and service status', style: TextStyle(color: Colors.white54, fontSize: 14)),
         ])),
         ElevatedButton.icon(
           onPressed: _isLoading ? null : _loadData, icon: const Icon(Icons.refresh, size: 18), label: const Text('Refresh'),
@@ -91,14 +91,14 @@ class _SystemHealthViewState extends State<SystemHealthView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(name, style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
           if (details != null) ...[
-            const SizedBox(height: 4), Text(details, style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
+            const SizedBox(height: 4), Text(details, style: TextStyle(fontSize: 13, color: Colors.white54)),
           ],
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Row(children: [
             Container(width: 8, height: 8, decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle)),
             const SizedBox(width: 6),
-            Text(status.toUpperCase(), style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: statusColor)),
+            Text(status.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusColor)),
           ]),
           if (latency != null) ...[
             const SizedBox(height: 4), Text('${latency}ms ping', style: GoogleFonts.robotoMono(fontSize: 11, color: Colors.white38)),
@@ -109,7 +109,7 @@ class _SystemHealthViewState extends State<SystemHealthView> {
 
   Widget _infoRow(String label, String value) {
     return Padding(padding: const EdgeInsets.only(bottom: 16), child: Row(children: [
-      Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 14, color: Colors.white54))),
+      Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: Colors.white54))),
       Text(value, style: GoogleFonts.robotoMono(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w600)),
     ]));
   }

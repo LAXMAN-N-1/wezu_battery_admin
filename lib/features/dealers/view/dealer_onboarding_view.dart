@@ -301,7 +301,7 @@ class _DealerOnboardingViewState extends State<DealerOnboardingView> {
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(value, style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+            Text(title, style: TextStyle(color: Colors.white54, fontSize: 11)),
           ])),
         ]),
       ),

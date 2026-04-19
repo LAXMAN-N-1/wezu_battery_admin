@@ -48,7 +48,7 @@ class _RoutePlannerViewState extends State<RoutePlannerView> {
       Expanded(child: _isLoading
         ? const Center(child: CircularProgressIndicator())
         : _routes.isEmpty
-          ? Center(child: Text('No routes found', style: GoogleFonts.inter(color: Colors.white38, fontSize: 16)))
+          ? Center(child: Text('No routes found', style: TextStyle(color: Colors.white38, fontSize: 16)))
           : ListView.builder(
               itemCount: _routes.length,
               itemBuilder: (ctx, i) => _routeCard(_routes[i], i),
@@ -107,7 +107,7 @@ class _RoutePlannerViewState extends State<RoutePlannerView> {
             const SizedBox(height: 16),
             Divider(color: Colors.white.withValues(alpha: 0.06)),
             const SizedBox(height: 10),
-            Text('Route Stops', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
+            Text('Route Stops', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(spacing: 8, runSpacing: 6, children: stops.map((s) {
               final isCompleted = s['status'] == 'COMPLETED';

@@ -140,8 +140,9 @@ class _BatteriesViewState extends State<BatteriesView>
     try {
       double? minHealth;
       double? maxHealth;
-      if (_healthFilter == 'Good >80%') minHealth = 80;
-      else if (_healthFilter == 'Fair 50-80%') { minHealth = 50; maxHealth = 80; }
+      if (_healthFilter == 'Good >80%') {
+        minHealth = 80;
+      } else if (_healthFilter == 'Fair 50-80%') { minHealth = 50; maxHealth = 80; }
       else if (_healthFilter == 'Poor <50%') maxHealth = 50;
 
       String? effectiveStatus = _statusFilter;
@@ -869,7 +870,7 @@ class _BatteriesViewState extends State<BatteriesView>
                     : '$val';
                 return Text(
                   display,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,

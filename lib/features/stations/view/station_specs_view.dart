@@ -125,14 +125,14 @@ class _SpecsRow extends StatelessWidget {
             width: 140,
             child: Text(
               label,
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+              style: TextStyle(color: Colors.white54, fontSize: 13),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+              style: TextStyle(color: Colors.white, fontSize: 13),
             ),
           ),
         ],

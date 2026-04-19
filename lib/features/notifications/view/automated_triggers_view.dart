@@ -48,7 +48,7 @@ class _AutomatedTriggersViewState extends State<AutomatedTriggersView> {
           const SizedBox(height: 4),
           Text(
             'Configure behavioral triggers for automated notifications',
-            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+            style: TextStyle(color: Colors.white54, fontSize: 14),
           ),
           const SizedBox(height: 24),
           _isLoading
@@ -107,7 +107,7 @@ class _AutomatedTriggersViewState extends State<AutomatedTriggersView> {
                     if (t.description != null)
                       Text(
                         t.description!,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 12,
                         ),
@@ -143,7 +143,7 @@ class _AutomatedTriggersViewState extends State<AutomatedTriggersView> {
             ),
             child: Text(
               t.templateMessage,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: Colors.white70,
                 fontSize: 13,
                 fontStyle: FontStyle.italic,
@@ -200,11 +200,11 @@ class _AutomatedTriggersViewState extends State<AutomatedTriggersView> {
         const SizedBox(width: 4),
         Text(
           '$label: ',
-          style: GoogleFonts.inter(color: Colors.white38, fontSize: 11),
+          style: TextStyle(color: Colors.white38, fontSize: 11),
         ),
         Text(
           value,
-          style: GoogleFonts.inter(
+          style: TextStyle(
             color: Colors.white70,
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -302,7 +302,7 @@ class _AutomatedTriggersViewState extends State<AutomatedTriggersView> {
                         child: SwitchListTile(
                           title: Text(
                             'Active',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               color: Colors.white70,
                               fontSize: 13,
                             ),

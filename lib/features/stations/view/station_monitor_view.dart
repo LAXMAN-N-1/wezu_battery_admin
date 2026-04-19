@@ -208,7 +208,7 @@ class _StationMonitorViewState extends ConsumerState<StationMonitorView>
                   children: [
                     Text(
                       f.label,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: isActive ? f.color : Colors.white54,
                         fontSize: 12,
                         fontWeight: isActive
@@ -260,7 +260,7 @@ class _StationMonitorViewState extends ConsumerState<StationMonitorView>
             const SizedBox(height: 12),
             Text(
               'No stations match the current filter',
-              style: GoogleFonts.inter(color: Colors.white38),
+              style: TextStyle(color: Colors.white38),
             ),
           ],
         ),
@@ -397,7 +397,7 @@ class _AlertBanner extends ConsumerWidget {
               critical.length == 1
                   ? '⚠️ ${critical.first.stationName} changed to ${critical.first.newStatus.label}'
                   : '⚠️ ${critical.length} stations have critical alerts',
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 color: const Color(0xFFEF4444),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -408,7 +408,7 @@ class _AlertBanner extends ConsumerWidget {
             onPressed: () => ref.read(alertsProvider.notifier).dismissAll(),
             child: Text(
               'Dismiss All',
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+              style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ),
         ],
@@ -622,7 +622,7 @@ class _StatusCardState extends State<_StatusCard>
                       ),
                       child: Text(
                         '🔧 Maint',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: const Color(0xFFF59E0B),
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -648,7 +648,7 @@ class _StatusCardState extends State<_StatusCard>
             const SizedBox(height: 2),
             Text(
               widget.event.stationAddress,
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 10),
+              style: TextStyle(color: Colors.white38, fontSize: 10),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -680,7 +680,7 @@ class _StatusCardState extends State<_StatusCard>
                 const SizedBox(width: 8),
                 Text(
                   _relativeTime(widget.event.timestamp),
-                  style: GoogleFonts.inter(color: Colors.white24, fontSize: 9),
+                  style: TextStyle(color: Colors.white24, fontSize: 9),
                 ),
               ],
             ),
@@ -785,7 +785,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
             ),
             Text(
               widget.event.stationAddress,
-              style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+              style: TextStyle(color: Colors.white38, fontSize: 12),
             ),
             const SizedBox(height: 16),
 
@@ -815,7 +815,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     const SizedBox(width: 8),
                     Text(
                       '• ${DateFormat('HH:mm:ss').format(widget.event.timestamp)}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: color.withValues(alpha: 0.7),
                         fontSize: 11,
                       ),
@@ -873,7 +873,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                 ),
                 child: Text(
                   widget.event.errorMessage!,
-                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ),
               const SizedBox(height: 14),
@@ -911,7 +911,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       Expanded(
                         child: Text(
                           e.value,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(
                             color: Colors.white60,
                             fontSize: 12,
                           ),
@@ -950,7 +950,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       widget.maintenance!.isActive
                           ? '🔧 In Progress'
                           : '📅 Scheduled',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: const Color(0xFFF59E0B),
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -960,7 +960,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     Text(
                       '${DateFormat('MMM d, HH:mm').format(widget.maintenance!.startTime)} → '
                       '${DateFormat('HH:mm').format(widget.maintenance!.endTime)}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         color: Colors.white54,
                         fontSize: 11,
                       ),
@@ -969,7 +969,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                       const SizedBox(height: 4),
                       Text(
                         widget.maintenance!.notes,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white38,
                           fontSize: 11,
                         ),
@@ -1022,7 +1022,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                     Expanded(
                       child: Text(
                         'Station is currently under maintenance.\nUpdate its status to schedule future maintenance.',
-                        style: GoogleFonts.inter(
+                        style: TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
                         ),
@@ -1095,7 +1095,7 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                           const SizedBox(height: 6),
                           Text(
                             a.message,
-                            style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+                            style: TextStyle(color: Colors.white70, fontSize: 12),
                           ),
                         ],
                       ),
@@ -1130,12 +1130,12 @@ class _DetailPanelState extends ConsumerState<_DetailPanel> {
                             children: [
                               Text(
                                 '${queueResponse.currentQueue.length} Batteries',
-                                style: GoogleFonts.inter(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold),
                               ),
                               const Spacer(),
                               Text(
                                 'Capacity: ${queueResponse.capacity}',
-                                style: GoogleFonts.inter(color: Colors.white24, fontSize: 11),
+                                style: TextStyle(color: Colors.white24, fontSize: 11),
                               ),
                             ],
                           ),
@@ -1311,7 +1311,7 @@ class _TimelineRow extends StatelessWidget {
                   const Spacer(),
                   Text(
                     DateFormat('HH:mm').format(event.timestamp),
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white24,
                       fontSize: 10,
                     ),
@@ -1391,7 +1391,7 @@ class _MaintenanceDialogState extends State<_MaintenanceDialog> {
             const SizedBox(height: 12),
             Text(
               'Maintenance Type',
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+              style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
             const SizedBox(height: 6),
             Container(
@@ -1405,7 +1405,7 @@ class _MaintenanceDialogState extends State<_MaintenanceDialog> {
                   value: _type,
                   dropdownColor: const Color(0xFF1E293B),
                   isExpanded: true,
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: Colors.white, fontSize: 13),
                   items: ['Routine', 'Repair', 'Upgrade', 'Inspection']
                       .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                       .toList(),
@@ -1416,16 +1416,16 @@ class _MaintenanceDialogState extends State<_MaintenanceDialog> {
             const SizedBox(height: 12),
             Text(
               'Notes (optional)',
-              style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+              style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
             const SizedBox(height: 6),
             TextField(
               controller: _notesCtrl,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+              style: TextStyle(color: Colors.white, fontSize: 13),
               maxLines: 2,
               decoration: InputDecoration(
                 hintText: 'Battery module replacement, cable inspection…',
-                hintStyle: GoogleFonts.inter(
+                hintStyle: TextStyle(
                   color: Colors.white24,
                   fontSize: 12,
                 ),
@@ -1446,7 +1446,7 @@ class _MaintenanceDialogState extends State<_MaintenanceDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text(
             'Cancel',
-            style: GoogleFonts.inter(color: Colors.white38),
+            style: TextStyle(color: Colors.white38),
           ),
         ),
         ElevatedButton(
@@ -1471,7 +1471,7 @@ class _MaintenanceDialogState extends State<_MaintenanceDialog> {
           ),
           child: Text(
             'Schedule',
-            style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
       ],
@@ -1496,7 +1496,7 @@ class _DateTimeRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+          style: TextStyle(color: Colors.white54, fontSize: 12),
         ),
         const SizedBox(height: 6),
         GestureDetector(
@@ -1533,7 +1533,7 @@ class _DateTimeRow extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   DateFormat('MMM d, yyyy  HH:mm').format(value),
-                  style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: Colors.white, fontSize: 13),
                 ),
               ],
             ),

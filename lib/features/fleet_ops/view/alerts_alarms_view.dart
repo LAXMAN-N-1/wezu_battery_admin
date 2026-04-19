@@ -53,7 +53,7 @@ class _AlertsAlarmsViewState extends State<AlertsAlarmsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Alerts & Alarms', style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text('Urgent field alerts, hardware failures, and safety violations requiring immediate attention.', style: GoogleFonts.inter(fontSize: 16, color: Colors.white54)),
+                  Text('Urgent field alerts, hardware failures, and safety violations requiring immediate attention.', style: TextStyle(fontSize: 16, color: Colors.white54)),
                 ],
               ),
               IconButton(onPressed: _loadData, icon: const Icon(Icons.refresh, color: Colors.white70)),

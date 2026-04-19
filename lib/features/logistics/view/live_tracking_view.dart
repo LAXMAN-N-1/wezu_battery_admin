@@ -30,7 +30,7 @@ class _LiveTrackingViewState extends State<LiveTrackingView> {
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Live Tracking', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-          Text('Real-time delivery tracking and driver positions.', style: GoogleFonts.inter(color: Colors.white54)),
+          Text('Real-time delivery tracking and driver positions.', style: TextStyle(color: Colors.white54)),
         ]),
         Row(children: [
           Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -52,7 +52,7 @@ class _LiveTrackingViewState extends State<LiveTrackingView> {
           ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.location_off, color: Colors.white24, size: 64),
               const SizedBox(height: 12),
-              Text('No active deliveries', style: GoogleFonts.inter(color: Colors.white38, fontSize: 16)),
+              Text('No active deliveries', style: TextStyle(color: Colors.white38, fontSize: 16)),
             ]))
           : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               // Left: Track List

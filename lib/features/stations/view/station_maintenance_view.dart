@@ -403,7 +403,7 @@ class _StationMaintenanceViewState extends State<StationMaintenanceView> {
                 ),
                 Text(
                   title,
-                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),

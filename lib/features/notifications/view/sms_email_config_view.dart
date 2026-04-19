@@ -25,7 +25,7 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
     return SingleChildScrollView(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('SMS & Email Configuration', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
       const SizedBox(height: 4),
-      Text('Configure notification provider credentials', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+      Text('Configure notification provider credentials', style: TextStyle(color: Colors.white54, fontSize: 14)),
       const SizedBox(height: 24),
       _isLoading ? const Center(child: CircularProgressIndicator())
           : Column(children: _configs.map(_buildConfigCard).toList()),
@@ -48,18 +48,18 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
             Row(children: [
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(6)),
-                child: Text(c.channel.toUpperCase(), style: GoogleFonts.inter(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold))),
+                child: Text(c.channel.toUpperCase(), style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold))),
               const SizedBox(width: 8),
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(6)),
-                child: Text(c.provider.toUpperCase(), style: GoogleFonts.inter(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold))),
+                child: Text(c.provider.toUpperCase(), style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold))),
             ]),
           ])),
           Column(children: [
             IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 18), onPressed: () => _showEditDialog(c)),
             Switch(value: c.isActive, activeThumbColor: Colors.green,
               onChanged: (val) async { await _repo.updateConfig(c.id, {'is_active': val}); _loadData(); }),
-            Text(c.isActive ? 'Active' : 'Inactive', style: GoogleFonts.inter(color: c.isActive ? Colors.green : Colors.white38, fontSize: 11)),
+            Text(c.isActive ? 'Active' : 'Inactive', style: TextStyle(color: c.isActive ? Colors.green : Colors.white38, fontSize: 11)),
           ]),
         ]),
         const SizedBox(height: 16),
@@ -83,7 +83,7 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
 
   Widget _configRow(String label, String value, {Color? valueColor}) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-      SizedBox(width: 100, child: Text(label, style: GoogleFonts.inter(color: Colors.white38, fontSize: 12))),
+      SizedBox(width: 100, child: Text(label, style: TextStyle(color: Colors.white38, fontSize: 12))),
       Expanded(child: Text(value, style: GoogleFonts.robotoMono(color: valueColor ?? Colors.white70, fontSize: 12))),
     ]));
   }
@@ -106,7 +106,7 @@ class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
           TextField(controller: senderCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDeco('Sender ID (e.g. +1234567, no-reply@)')),
           const SizedBox(height: 16),
           Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)), child: SwitchListTile(
-            title: Text('Account Integration Active', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13)),
+            title: Text('Account Integration Active', style: TextStyle(color: Colors.white70, fontSize: 13)),
             value: isActive, activeThumbColor: Colors.green, inactiveTrackColor: Colors.white12,
             onChanged: (v) => setModalState(() => isActive = v),
           )),

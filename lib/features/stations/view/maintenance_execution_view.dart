@@ -83,7 +83,7 @@ class _MaintenanceExecutionViewState extends ConsumerState<MaintenanceExecutionV
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Perform Maintenance', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-            Text(widget.event.title, style: GoogleFonts.inter(fontSize: 12, color: Colors.white70)),
+            Text(widget.event.title, style: TextStyle(fontSize: 12, color: Colors.white70)),
           ],
         ),
       ),
@@ -123,11 +123,11 @@ class _MaintenanceExecutionViewState extends ConsumerState<MaintenanceExecutionV
               children: [
                 Text(
                   widget.template.name,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 Text(
                   'Station: ${widget.event.stationName}',
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white70),
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
                 ),
               ],
             ),
@@ -174,7 +174,7 @@ class _MaintenanceExecutionViewState extends ConsumerState<MaintenanceExecutionV
                   children: [
                     Text(
                       task.title,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                         decoration: task.isCompleted ? TextDecoration.lineThrough : null,
@@ -182,7 +182,7 @@ class _MaintenanceExecutionViewState extends ConsumerState<MaintenanceExecutionV
                     ),
                     Text(
                       task.description,
-                      style: GoogleFonts.inter(fontSize: 13, color: Colors.white38),
+                      style: TextStyle(fontSize: 13, color: Colors.white38),
                     ),
                   ],
                 ),

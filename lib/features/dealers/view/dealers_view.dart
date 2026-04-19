@@ -474,7 +474,7 @@ class _DealersViewState extends State<DealersView> {
         children: [
           Text(
             title.toUpperCase(),
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontSize: 10,
               color: Colors.white38,
               letterSpacing: 1.5,
@@ -737,7 +737,7 @@ class _DealersViewState extends State<DealersView> {
                   ),
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       color: Colors.white54,
                       fontSize: 14,
                     ),

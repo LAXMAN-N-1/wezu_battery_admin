@@ -58,7 +58,7 @@ class _ProfitAnalysisViewState extends State<ProfitAnalysisView> {
           _bigStat('Net Profit', netProfit, netProfit >= 0 ? const Color(0xFF14B8A6) : const Color(0xFFEF4444), Icons.account_balance_wallet),
           const SizedBox(width: 12),
           Expanded(child: AdvancedCard(child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
-            Text('Profit Margin', style: GoogleFonts.inter(color: Colors.white54, fontSize: 11)),
+            Text('Profit Margin', style: TextStyle(color: Colors.white54, fontSize: 11)),
             const SizedBox(height: 6),
             Text('${margin.toStringAsFixed(1)}%', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: margin >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444))),
             const SizedBox(height: 4),
@@ -141,7 +141,7 @@ class _ProfitAnalysisViewState extends State<ProfitAnalysisView> {
 
   Widget _bigStat(String title, double value, Color color, IconData icon) => Expanded(
     child: AdvancedCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Icon(icon, color: color, size: 16), const SizedBox(width: 6), Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 11))]),
+      Row(children: [Icon(icon, color: color, size: 16), const SizedBox(width: 6), Text(title, style: TextStyle(color: Colors.white54, fontSize: 11))]),
       const SizedBox(height: 8),
       Text('₹${NumberFormat('#,##0').format(value)}', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), overflow: TextOverflow.ellipsis),
     ])),

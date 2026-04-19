@@ -27,7 +27,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Blog Management', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text('Create, edit and publish blog articles', style: GoogleFonts.inter(color: Colors.white54, fontSize: 14)),
+          Text('Create, edit and publish blog articles', style: TextStyle(color: Colors.white54, fontSize: 14)),
         ])),
         ElevatedButton.icon(onPressed: _showCreateDialog, icon: const Icon(Icons.add, size: 18), label: const Text('New Post'),
           style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), foregroundColor: Colors.white,
@@ -55,7 +55,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? const Color(0xFF3B82F6).withValues(alpha: 0.4) : Colors.transparent)),
-      child: Text(label, style: GoogleFonts.inter(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 13))));
+      child: Text(label, style: TextStyle(color: selected ? const Color(0xFF3B82F6) : Colors.white54, fontSize: 13))));
   }
 
   Widget _buildBlogCard(Map<String, dynamic> blog) {
@@ -85,14 +85,14 @@ class _BlogManagementViewState extends State<BlogManagementView> {
               child: Text(status.toUpperCase(), style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold))),
           ]),
           const SizedBox(height: 4),
-          Text(blog['summary']?.toString() ?? '', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(blog['summary']?.toString() ?? '', style: TextStyle(color: Colors.white54, fontSize: 13), maxLines: 2, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           Row(children: [
             Icon(Icons.category, size: 13, color: Colors.white38), const SizedBox(width: 4),
-            Text(blog['category']?.toString() ?? 'general', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+            Text(blog['category']?.toString() ?? 'general', style: TextStyle(color: Colors.white38, fontSize: 12)),
             const SizedBox(width: 16),
             Icon(Icons.visibility, size: 13, color: Colors.white38), const SizedBox(width: 4),
-            Text('$views views', style: GoogleFonts.inter(color: Colors.white38, fontSize: 12)),
+            Text('$views views', style: TextStyle(color: Colors.white38, fontSize: 12)),
             const Spacer(),
             IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18), iconSize: 18,
               onPressed: () async { await _repo.deleteBlog(blog['id']); _loadData(); }),
@@ -120,7 +120,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
               const SizedBox(width: 16),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Edit Blog Post', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text('Update details, rich text content, and publish status', style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
+                Text('Update details, rich text content, and publish status', style: TextStyle(fontSize: 13, color: Colors.white54)),
               ])),
               IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(ctx)),
             ])),
@@ -135,7 +135,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
               const SizedBox(height: 20),
               Row(children: [
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Publish Status', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
+                  Text('Publish Status', style: TextStyle(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: status, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
@@ -145,7 +145,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
                 ])),
                 const SizedBox(width: 16),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Content Category', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
+                  Text('Content Category', style: TextStyle(color: Colors.white54, fontSize: 13)), const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     initialValue: category, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none)),
@@ -155,7 +155,7 @@ class _BlogManagementViewState extends State<BlogManagementView> {
                 ])),
               ]),
               const SizedBox(height: 24),
-              Text('HTML Body Content', style: GoogleFonts.inter(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
+              Text('HTML Body Content', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)), const SizedBox(height: 8),
               _field(contentCtrl, 'Write your comprehensive article here...', maxLines: 12),
             ]))),
             Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
