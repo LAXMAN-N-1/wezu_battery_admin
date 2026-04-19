@@ -5,6 +5,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/user_analytics_repository.dart';
 import '../provider/user_provider.dart';
+import '../provider/analytics_provider.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 class UserAnalyticsView extends ConsumerStatefulWidget {
   const UserAnalyticsView({super.key});

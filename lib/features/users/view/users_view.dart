@@ -516,7 +516,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       Text(l, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13))]));
 
   void _showCreateDialog() => showDialog(context: context, builder: (_) => CreateUserDialog(
-    onSubmit: (name, email, phone, password, role) {
+    onSubmit: (name, email, phone, password, role) async {
       ref.read(userListProvider.notifier).createUser(fullName: name, email: email, phoneNumber: phone, password: password, role: role);
       _showSnackbar('User "$name" created');
     }));
@@ -532,7 +532,7 @@ class _UsersViewState extends ConsumerState<UsersView> with SingleTickerProvider
       case 'toggle': ref.read(userListProvider.notifier).toggleUserActive(user.id);
         _showSnackbar(user.isActive ? 'Deactivated' : 'Activated'); break;
       case 'suspend': showDialog(context: context, builder: (_) => SuspendUserDialog(userName: user.fullName,
-        onSubmit: (r, n, d) { ref.read(userListProvider.notifier).suspendUser(user.id, reason: r, durationDays: d); _showSnackbar('Suspended'); })); break;
+        onSubmit: (r, n, d) async { ref.read(userListProvider.notifier).suspendUser(user.id, reason: r, durationDays: d); _showSnackbar('Suspended'); })); break;
       case 'reactivate': showDialog(context: context, builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1E293B), title: const Text('Reactivate User', style: TextStyle(color: Colors.white)),
         content: Column(mainAxisSize: MainAxisSize.min, children: [

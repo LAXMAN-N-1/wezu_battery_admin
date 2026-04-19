@@ -39,7 +39,7 @@ class RoleRepository {
     }
   }
 
-  Future<Role?> getRoleDetail(int roleId) async {
+  Future<List<Permission>> getPermissions() async {
     try {
       final response = await _api.get('/api/v1/admin/rbac/roles/permissions');
       final data = response.data as List;
@@ -48,6 +48,16 @@ class RoleRepository {
     } catch (e) {
       print("Error fetching permissions: $e");
       return [];
+    }
+  }
+
+  Future<Role?> getRoleDetail(int roleId) async {
+    try {
+      final response = await _api.get('/api/v1/admin/rbac/roles/$roleId');
+      return Role.fromJson(response.data);
+    } catch (e) {
+      print("Error fetching role detail: $e");
+      return null;
     }
   }
 
@@ -83,7 +93,7 @@ class RoleRepository {
       'category': category,
       'level': level,
       'is_active': isActive,
-      'permissions': permissionSlugs,
+      'permissions': await _permissionSlugsFromIds(permissionIds),
       if (parentId != null) 'parent_id': parentId,
     });
     return Role.fromJson(response.data);

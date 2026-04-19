@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/fraud_risk.dart';
 import '../data/repositories/user_analytics_repository.dart';
 import '../provider/user_provider.dart';
+import '../provider/fraud_provider.dart';
+import 'package:intl/intl.dart';
+import '../../../core/widgets/admin_ui_components.dart';
 
 class FraudRiskView extends ConsumerStatefulWidget {
   const FraudRiskView({super.key});
@@ -14,17 +17,20 @@ class FraudRiskView extends ConsumerStatefulWidget {
   ConsumerState<FraudRiskView> createState() => _FraudRiskViewState();
 }
 
-class _FraudRiskViewState extends ConsumerState<FraudRiskView> {
-  late UserAnalyticsRepository _repository;
-  List<FraudRisk> _risks = [];
-  FraudRisk? _selectedRisk;
-  bool _isLoading = true;
+class _FraudRiskViewState extends ConsumerState<FraudRiskView> with SingleTickerProviderStateMixin {
+  late final TabController _tabController = TabController(length: 5, vsync: this);
+  final _panController = TextEditingController();
+  final _panNameController = TextEditingController();
+  final _gstController = TextEditingController();
+  final _gstBusinessController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(userAnalyticsRepositoryProvider);
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(fraudProvider.notifier).loadAll();
+    });
   }
 
   @override

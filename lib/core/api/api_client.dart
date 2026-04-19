@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import '../utils/token_utils.dart';
 import '../widgets/api_error_handler.dart';
@@ -34,6 +35,18 @@ class ApiClient {
 
   ApiClient() {
     dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    _refreshDio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 60),
@@ -86,7 +99,14 @@ class ApiClient {
         },
       ),
     );
+  }
 
+  Future<Response<dynamic>> retryRequest(RequestOptions requestOptions, String token) {
+    requestOptions.headers['Authorization'] = 'Bearer $token';
+    final options = Options(
+      method: requestOptions.method,
+      headers: requestOptions.headers,
+    );
     return dio.request<dynamic>(
       requestOptions.path,
       data: requestOptions.data,
@@ -96,6 +116,46 @@ class ApiClient {
       onSendProgress: requestOptions.onSendProgress,
       onReceiveProgress: requestOptions.onReceiveProgress,
     );
+  }
+
+  Future<void> clearSession({bool notifyListeners = false}) async {
+    await deleteAuthValue(accessTokenStorageKey);
+    await deleteAuthValue(refreshTokenStorageKey);
+    if (notifyListeners) {
+      await _notifySessionExpired();
+    }
+  }
+
+  Future<String?> getValidAccessToken() async {
+    final token = await readAuthValue(accessTokenStorageKey);
+    if (token == null || token.isEmpty) return null;
+    
+    if (TokenUtils.isExpired(token)) {
+      return await refreshAccessToken();
+    }
+    return token;
+  }
+
+  void registerSessionExpiredCallback(Future<void> Function() callback) {
+    _sessionExpiredCallback = callback;
+  }
+
+  Future<String?> refreshAccessToken() async {
+    if (_refreshCompleter != null) {
+      return _refreshCompleter!.future;
+    }
+
+    _refreshCompleter = Completer<String?>();
+    try {
+      final newToken = await _refreshAccessTokenInternal();
+      _refreshCompleter!.complete(newToken);
+      return newToken;
+    } catch (e) {
+      _refreshCompleter!.completeError(e);
+      return null;
+    } finally {
+      _refreshCompleter = null;
+    }
   }
 
   bool shouldSkipAuthInterceptor(RequestOptions options) {

@@ -36,7 +36,7 @@ class _SuspendedAccountsViewState extends ConsumerState<SuspendedAccountsView> {
     setState(() => _isLoading = true);
     
     final userRepo = ref.read(userRepositoryProvider);
-    final analyticsRepo = ref.read(analyticsRepositoryProvider);
+    final analyticsRepo = ref.read(userAnalyticsRepositoryProvider);
     
     try {
       final response = await userRepo.getUsers(status: 'suspended');
