@@ -43,7 +43,7 @@ const List<MenuSection> _allMenuSections = [
     id: 'user-master',
     icon: Icons.people_outline,
     label: 'User Master',
-    allowedRoles: ['super_admin', 'superadmin'], // restrict to super admins
+    allowedRoles: ['super_admin', 'superadmin', 'admin'],
     children: [
       MenuItem(label: 'All Users', route: '/user-master'),
       MenuItem(label: 'Add / Edit User', route: '/user-master/edit'),
@@ -104,7 +104,7 @@ const List<MenuSection> _allMenuSections = [
     id: 'finance',
     icon: Icons.account_balance_outlined,
     label: 'Finance',
-    allowedRoles: ['super_admin', 'superadmin', 'finance'],
+    allowedRoles: ['super_admin', 'superadmin', 'finance', 'finance_admin'],
     children: [
       MenuItem(label: 'Revenue Dashboard', route: '/finance'),
       MenuItem(label: 'Transactions', route: '/finance/transactions'),
@@ -185,10 +185,12 @@ const List<MenuSection> _allMenuSections = [
     id: 'audit',
     icon: Icons.shield_outlined,
     label: 'Audit & Security',
-    allowedRoles: ['super_admin', 'superadmin'],
+    allowedRoles: ['super_admin', 'superadmin', 'admin'],
     children: [
+      MenuItem(label: 'Dashboard', route: '/audit/dashboard'),
       MenuItem(label: 'Audit Logs', route: '/audit/logs'),
       MenuItem(label: 'Fraud Detection', route: '/audit/fraud'),
+      MenuItem(label: 'Security Events', route: '/audit/security-events'),
       MenuItem(label: 'Security Settings', route: '/audit/security'),
     ],
   ),
@@ -199,6 +201,7 @@ const List<MenuSection> _allMenuSections = [
     allowedRoles: ['super_admin', 'superadmin', 'admin'],
     children: [
       MenuItem(label: 'General', route: '/settings'),
+      MenuItem(label: 'Feature Flags', route: '/settings/features'),
       MenuItem(label: 'API Keys', route: '/settings/api-keys'),
       MenuItem(label: 'System Health', route: '/settings/health'),
     ],
@@ -210,18 +213,25 @@ final sidebarMenuProvider = Provider<List<MenuSection>>((ref) {
   final user = authState.user;
 
   // Extract roles string or list.
-  final dynamic roleRaw = user?['role'] ?? user?['roles'] ?? user?['current_role'];
-  
+  final dynamic roleRaw =
+      user?['current_role'] ?? user?['roles'] ?? user?['role'];
+
   List<String> userRoles = [];
   if (roleRaw is String) {
     userRoles.add(roleRaw.toLowerCase().trim());
   } else if (roleRaw is List) {
     userRoles.addAll(roleRaw.map((e) => e.toString().toLowerCase().trim()));
+  } else if (roleRaw is Map) {
+    final roleName = roleRaw['name'] ?? roleRaw['role'];
+    if (roleName is String && roleName.trim().isNotEmpty) {
+      userRoles.add(roleName.toLowerCase().trim());
+    }
   }
 
   // Fallback: If roles is somehow completely empty but user is logged in,
   // we assume a base-level access (or superadmin if is_superuser is true).
-  final isSuperuser = user?['is_superuser'] == true || user?['isSuperuser'] == true;
+  final isSuperuser =
+      user?['is_superuser'] == true || user?['isSuperuser'] == true;
   if (isSuperuser && !userRoles.contains('superadmin')) {
     userRoles.add('superadmin');
   }
@@ -230,8 +240,10 @@ final sidebarMenuProvider = Provider<List<MenuSection>>((ref) {
     if (section.allowedRoles == null || section.allowedRoles!.isEmpty) {
       return true; // No restrictions
     }
-    
+
     // Check if the user has any of the allowed roles
-    return userRoles.any((r) => section.allowedRoles!.map((a) => a.toLowerCase()).contains(r));
+    return userRoles.any(
+      (r) => section.allowedRoles!.map((a) => a.toLowerCase()).contains(r),
+    );
   }).toList();
 });

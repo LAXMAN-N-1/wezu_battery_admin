@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/audit_trail_model.dart';
 import '../data/repositories/audit_trail_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class AuditTrailView extends StatefulWidget {
   const AuditTrailView({super.key});
@@ -13,7 +14,7 @@ class AuditTrailView extends StatefulWidget {
   State<AuditTrailView> createState() => _AuditTrailViewState();
 }
 
-class _AuditTrailViewState extends State<AuditTrailView> {
+class _AuditTrailViewState extends SafeState<AuditTrailView> {
   final AuditTrailRepository _repository = AuditTrailRepository();
   List<AuditTrailEntry> _entries = [];
   AuditTrailStats? _stats;

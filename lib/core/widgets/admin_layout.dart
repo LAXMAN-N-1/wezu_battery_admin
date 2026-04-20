@@ -33,7 +33,9 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
 
     return Scaffold(
       backgroundColor: colors.scaffoldBg,
-      drawer: isDesktop ? null : Drawer(child: _buildSidebar(context, forceExpanded: true)),
+      drawer: isDesktop
+          ? null
+          : Drawer(child: _buildSidebar(context, forceExpanded: true)),
       body: Row(
         children: [
           if (isDesktop) _buildSidebar(context),
@@ -43,9 +45,8 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
                 _buildHeader(context, widget.title, isDesktop),
                 Expanded(
                   child: Container(
-                    color: colors.scaffoldBg,
                     clipBehavior: Clip.hardEdge,
-                    decoration: const BoxDecoration(),
+                    decoration: BoxDecoration(color: colors.scaffoldBg),
                     child: widget.child,
                   ),
                 ),
@@ -82,19 +83,24 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
 
           // Scrollable menu
           Expanded(
-            child: ListView(
-              padding: EdgeInsets.symmetric(
-                horizontal: collapsed ? 8 : 12,
-                vertical: 4,
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: ListView(
+                primary: false,
+                physics: const ClampingScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: collapsed ? 8 : 12,
+                  vertical: 4,
+                ),
+                children: [
+                  for (final section in menuSections)
+                    _SectionWidget(
+                      section: section,
+                      currentRoute: currentRoute,
+                      collapsed: collapsed,
+                    ),
+                ],
               ),
-              children: [
-                for (final section in menuSections)
-                  _SectionWidget(
-                    section: section,
-                    currentRoute: currentRoute,
-                    collapsed: collapsed,
-                  ),
-              ],
             ),
           ),
 
@@ -251,19 +257,13 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
             fontSize: 13,
           ),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         hoverColor: Colors.red.withValues(alpha: 0.05),
       ),
     );
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    String title,
-    bool isDesktop,
-  ) {
+  Widget _buildHeader(BuildContext context, String title, bool isDesktop) {
     final colors = context.appColors;
     final user = ref.watch(authProvider).user;
     final userName = user?['first_name'] ?? user?['name'] ?? 'Admin';
@@ -293,7 +293,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
           Text(
             title,
             style: TextStyle(
-               color: colors.textPrimary,
+              color: colors.textPrimary,
               fontSize: isDesktop ? 17 : 15,
               fontWeight: FontWeight.w600,
             ),
@@ -353,7 +353,7 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
                 ),
               ),
               Text(
-                 userRole.toString().replaceAll('_', ' ').toUpperCase(),
+                userRole.toString().replaceAll('_', ' ').toUpperCase(),
                 style: TextStyle(
                   color: colors.textTertiary,
                   fontSize: 10,
@@ -383,7 +383,8 @@ class _SectionWidget extends ConsumerStatefulWidget {
   ConsumerState<_SectionWidget> createState() => _SectionWidgetState();
 }
 
-class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTickerProviderStateMixin {
+class _SectionWidgetState extends ConsumerState<_SectionWidget>
+    with SingleTickerProviderStateMixin {
   late bool _expanded;
 
   @override
@@ -403,11 +404,13 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
 
   bool _isSectionActive() {
     if (widget.section.id == 'dashboard') {
-      return widget.currentRoute == '/dashboard' || widget.currentRoute.startsWith('/dashboard/');
+      return widget.currentRoute == '/dashboard' ||
+          widget.currentRoute.startsWith('/dashboard/');
     }
     return widget.currentRoute.startsWith('/${widget.section.id}') ||
-           widget.section.children.any((c) => widget.currentRoute == c.route) ||
-           (widget.section.route != null && widget.currentRoute == widget.section.route);
+        widget.section.children.any((c) => widget.currentRoute == c.route) ||
+        (widget.section.route != null &&
+            widget.currentRoute == widget.section.route);
   }
 
   @override
@@ -496,7 +499,10 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                       ? colors.accent.withValues(alpha: 0.1)
                       : Colors.transparent,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -509,8 +515,12 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                       child: Text(
                         widget.section.label,
                         style: TextStyle(
-                          color: isActive ? colors.textPrimary : colors.textSecondary,
-                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                          color: isActive
+                              ? colors.textPrimary
+                              : colors.textSecondary,
+                          fontWeight: isActive
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           fontSize: 13,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -539,7 +549,9 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
           curve: Curves.easeInOut,
           alignment: Alignment.topCenter,
           child: SizedBox(
-            height: (_expanded && widget.section.children.length > 1) ? null : 0,
+            height: (_expanded && widget.section.children.length > 1)
+                ? null
+                : 0,
             child: Padding(
               padding: const EdgeInsets.only(left: 20, bottom: 4, top: 2),
               child: Column(
@@ -555,11 +567,7 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
     );
   }
 
-  Widget _buildChildItem(
-    MenuItem item,
-    bool isActive,
-    BuildContext context,
-  ) {
+  Widget _buildChildItem(MenuItem item, bool isActive, BuildContext context) {
     final colors = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.0),
@@ -587,7 +595,9 @@ class _SectionWidgetState extends ConsumerState<_SectionWidget> with SingleTicke
                   height: 5,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isActive ? colors.accent : colors.border.withValues(alpha: 0.5),
+                    color: isActive
+                        ? colors.accent
+                        : colors.border.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(width: 12),

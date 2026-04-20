@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../data/models/blog.dart';
 import '../data/repositories/blog_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BlogListView extends StatefulWidget {
   const BlogListView({super.key});
@@ -11,7 +12,7 @@ class BlogListView extends StatefulWidget {
   State<BlogListView> createState() => _BlogListViewState();
 }
 
-class _BlogListViewState extends State<BlogListView> {
+class _BlogListViewState extends SafeState<BlogListView> {
   final BlogRepository _repository = BlogRepository();
   List<Blog> _blogs = [];
   bool _isLoading = true;

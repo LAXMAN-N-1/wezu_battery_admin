@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/battery.dart';
 import '../data/repositories/inventory_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BatteryDetailDrawer extends StatefulWidget {
   final Battery battery;
@@ -14,7 +15,7 @@ class BatteryDetailDrawer extends StatefulWidget {
   State<BatteryDetailDrawer> createState() => _BatteryDetailDrawerState();
 }
 
-class _BatteryDetailDrawerState extends State<BatteryDetailDrawer> with SingleTickerProviderStateMixin {
+class _BatteryDetailDrawerState extends SafeState<BatteryDetailDrawer> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final InventoryRepository _repository = InventoryRepository();
   List<BatteryAuditLog> _auditLogs = [];

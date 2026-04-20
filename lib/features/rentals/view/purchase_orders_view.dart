@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/purchase_model.dart';
 import '../data/repositories/rental_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class PurchaseOrdersView extends StatefulWidget {
   const PurchaseOrdersView({super.key});
@@ -13,7 +14,7 @@ class PurchaseOrdersView extends StatefulWidget {
   State<PurchaseOrdersView> createState() => _PurchaseOrdersViewState();
 }
 
-class _PurchaseOrdersViewState extends State<PurchaseOrdersView> {
+class _PurchaseOrdersViewState extends SafeState<PurchaseOrdersView> {
   final RentalRepository _repository = RentalRepository();
   List<PurchaseOrder> _purchases = [];
   bool _isLoading = true;

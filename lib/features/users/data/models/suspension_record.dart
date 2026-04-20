@@ -25,6 +25,28 @@ class SuspensionRecord {
     this.isActive = true,
   });
 
+  factory SuspensionRecord.fromJson(Map<String, dynamic> json) {
+    return SuspensionRecord(
+      id: json['id'] ?? 0,
+      userId: json['user_id'] ?? 0,
+      userName: json['user_name'] ?? '',
+      reason: json['reason'] ?? 'other',
+      notes: json['notes'],
+      suspendedBy: json['suspended_by'] ?? 'Admin',
+      suspendedAt: json['suspended_at'] != null
+          ? DateTime.parse(json['suspended_at'])
+          : DateTime.now(),
+      reactivateAt: json['reactivate_at'] != null
+          ? DateTime.parse(json['reactivate_at'])
+          : null,
+      reactivatedAt: json['reactivated_at'] != null
+          ? DateTime.parse(json['reactivated_at'])
+          : null,
+      reactivatedBy: json['reactivated_by'],
+      isActive: json['is_active'] ?? true,
+    );
+  }
+
   String get reasonLabel {
     switch (reason) {
       case 'fraud': return 'Fraud';

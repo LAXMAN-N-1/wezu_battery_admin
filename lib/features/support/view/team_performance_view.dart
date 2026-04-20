@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class TeamPerformanceView extends StatefulWidget {
   const TeamPerformanceView({super.key});
@@ -11,7 +12,7 @@ class TeamPerformanceView extends StatefulWidget {
   State<TeamPerformanceView> createState() => _TeamPerformanceViewState();
 }
 
-class _TeamPerformanceViewState extends State<TeamPerformanceView> {
+class _TeamPerformanceViewState extends SafeState<TeamPerformanceView> {
   final SupportRepository _repository = SupportRepository();
   bool _isLoading = true;
 

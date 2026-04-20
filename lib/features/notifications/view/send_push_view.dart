@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/models/notification_models.dart';
 import '../data/repositories/notification_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class SendPushView extends StatefulWidget {
   const SendPushView({super.key});
@@ -9,7 +10,7 @@ class SendPushView extends StatefulWidget {
   State<SendPushView> createState() => _SendPushViewState();
 }
 
-class _SendPushViewState extends State<SendPushView> {
+class _SendPushViewState extends SafeState<SendPushView> {
   final NotificationRepository _repo = NotificationRepository();
   List<PushCampaign> _campaigns = [];
   bool _isLoading = true;

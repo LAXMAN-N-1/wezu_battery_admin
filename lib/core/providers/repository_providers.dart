@@ -94,20 +94,17 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 
 // ── Users ────────────────────────────────────────────────────────────────────
 final userRepositoryProvider = Provider<UserRepository>((ref) {
-  return UserRepository(ref.read(apiClientProvider));
+  return UserRepository();
 });
 
 final roleRepositoryProvider = Provider<RoleRepository>((ref) {
-  return RoleRepository(ref.read(apiClientProvider));
+  return RoleRepository();
 });
 
 final kycRepositoryProvider = Provider<KycRepository>((ref) {
   return KycRepository(ref.read(apiClientProvider));
 });
 
-final kycLegacyRepositoryProvider = Provider<KYCRepository>((ref) {
-  return KYCRepository(ref.read(apiClientProvider));
-});
 
 final auditLogRepositoryProvider = Provider<AuditLogRepository>((ref) {
   return AuditLogRepository(ref.read(apiClientProvider));

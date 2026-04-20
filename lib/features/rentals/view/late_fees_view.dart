@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/late_fee_model.dart';
 import '../data/repositories/rental_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class LateFeesView extends StatefulWidget {
   const LateFeesView({super.key});
@@ -13,7 +14,7 @@ class LateFeesView extends StatefulWidget {
   State<LateFeesView> createState() => _LateFeesViewState();
 }
 
-class _LateFeesViewState extends State<LateFeesView> {
+class _LateFeesViewState extends SafeState<LateFeesView> {
   final RentalRepository _repository = RentalRepository();
   List<LateFee> _lateFees = [];
   bool _isLoading = true;

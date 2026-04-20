@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../data/models/audit_log.dart';
+import '../../../core/api/api_client.dart';
 import '../data/repositories/audit_log_repository.dart';
+import '../provider/audit_provider.dart';
+import '../../auth/provider/session_provider.dart';
+import '../../auth/data/models/user_session.dart';
 
-class SessionActivityView extends StatefulWidget {
+class SessionActivityView extends ConsumerStatefulWidget {
   const SessionActivityView({super.key});
 
   @override
-  State<SessionActivityView> createState() => _SessionActivityViewState();
+  ConsumerState<SessionActivityView> createState() =>
+      _SessionActivityViewState();
 }
 
-class _SessionActivityViewState extends State<SessionActivityView> {
-  final AuditLogRepository _repository = AuditLogRepository();
-  List<AuditLog> _logs = [];
-  bool _isLoading = true;
-  String? _error;
+class _SessionActivityViewState extends ConsumerState<SessionActivityView>
+    with SingleTickerProviderStateMixin {
+  late AuditLogRepository _repository;
+  late final TabController _tabController = TabController(
+    length: 2,
+    vsync: this,
+  );
   String _actionFilter = 'all';
   String _moduleFilter = 'all';
   List<String> _actionTypes = [];
@@ -24,66 +31,392 @@ class _SessionActivityViewState extends State<SessionActivityView> {
   @override
   void initState() {
     super.initState();
+    _repository = AuditLogRepository(ref.read(apiClientProvider));
     _loadData();
+    _refreshSessions();
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
     try {
-      final logs = await _repository.getLogs(
-        action: _actionFilter == 'all' ? null : _actionFilter,
-        module: _moduleFilter == 'all' ? null : _moduleFilter,
-      );
       final actions = await _repository.getActionTypes();
       final modules = await _repository.getModules();
+      if (!mounted) {
+        return;
+      }
       setState(() {
-        _logs = logs;
         _actionTypes = actions;
         _modules = modules;
-        _isLoading = false;
       });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error = 'Session activity is unavailable: $e';
-      });
+      _refreshAudit();
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      _refreshAudit();
     }
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadTypes() async {
+    final repo = ref.read(auditRepositoryProvider);
+    final actions = await repo.getActionTypes();
+    final modules = await repo.getModules();
+    if (mounted) {
+      setState(() {
+        _actionTypes = actions;
+        _modules = modules;
+      });
+    }
+    _refreshAudit();
+  }
+
+  void _refreshAudit() {
+    ref
+        .read(auditProvider.notifier)
+        .loadLogs(
+          action: _actionFilter == 'all' ? null : _actionFilter,
+          module: _moduleFilter == 'all' ? null : _moduleFilter,
+        );
+  }
+
+  void _refreshSessions() {
+    ref.read(sessionProvider.notifier).loadSessions();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (_error != null) {
+    return Column(
+      children: [
+        // Tabs
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          child: Row(
+            children: [
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                dividerColor: Colors.transparent,
+                indicatorColor: Colors.blue,
+                labelColor: Colors.blue,
+                unselectedLabelColor: Colors.white38,
+                labelStyle: GoogleFonts.outfit(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+                tabs: const [
+                  Tab(text: 'Active Sessions'),
+                  Tab(text: 'Audit Logs'),
+                ],
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: () => _tabController.index == 0
+                    ? _refreshSessions()
+                    : _refreshAudit(),
+                icon: const Icon(Icons.refresh, color: Colors.blue, size: 20),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [_buildActiveSessionsTab(), _buildAuditLogsTab()],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActiveSessionsTab() {
+    final sessionState = ref.watch(sessionProvider);
+    final sessions = sessionState.sessions;
+
+    if (sessionState.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (sessionState.error != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(_error!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              'Unable to load active sessions.',
+              style: const TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _refreshSessions,
+              child: const Text('Retry'),
+            ),
+          ],
         ),
       );
     }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+          Text(
+            'Manage Active Sessions',
+            style: GoogleFonts.outfit(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            'Review and manage your current login sessions across different devices.',
+            style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+
+          if (sessionState.error != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.orange.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    size: 18,
+                    color: Colors.orange,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Session list may be stale. Refresh to retry.',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _refreshSessions,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+
+          ...sessions.map((session) => _buildSessionItem(session)).toList(),
+
+          if (sessions.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(40),
+                child: Text(
+                  'No active sessions found.',
+                  style: GoogleFonts.inter(color: Colors.white24),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionItem(UserSession session) {
+    final isDesktop =
+        session.deviceType.toLowerCase().contains('desktop') ||
+        session.deviceType.toLowerCase().contains('windows') ||
+        session.deviceType.toLowerCase().contains('mac');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: session.isCurrent
+              ? Colors.blue.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (session.isCurrent ? Colors.blue : Colors.white)
+                  .withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isDesktop ? Icons.desktop_windows : Icons.smartphone,
+              color: session.isCurrent ? Colors.blue : Colors.white70,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      session.deviceName,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (session.isCurrent) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Current Device',
+                          style: GoogleFonts.inter(
+                            color: Colors.green,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${session.ipAddress} • Last active: ${DateFormat('MMM d, HH:mm').format(session.lastActiveAt)}',
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          if (!session.isCurrent)
+            TextButton(
+              onPressed: () => _confirmRevoke(session),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.redAccent.withValues(alpha: 0.8),
+              ),
+              child: const Text('Revoke'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmRevoke(UserSession session) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Text(
+          'Revoke Session?',
+          style: GoogleFonts.outfit(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to terminate the session on ${session.deviceName}? You will be logged out from that device.',
+          style: GoogleFonts.inter(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(sessionProvider.notifier).revokeSession(session.id);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Session revoked: ${session.deviceName}'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            child: const Text(
+              'Revoke',
+              style: TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuditLogsTab() {
+    final auditState = ref.watch(auditProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('Session Activity Logs', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-              
+              Text(
+                'Session Activity Logs',
+                style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+
               OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Exporting audit logs...'), behavior: SnackBarBehavior.floating),
-                  );
+                onPressed: () async {
+                  final success = await ref
+                      .read(auditRepositoryProvider)
+                      .exportLogs(action: _actionFilter, module: _moduleFilter);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? 'Audit log export triggered. You will receive an email shortly.'
+                              : 'Export failed. Please try again later.',
+                        ),
+                        backgroundColor: success ? Colors.green : Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.download, size: 16),
-                label: Text('Export', style: TextStyle(fontWeight: FontWeight.w600)),
+                label: Text(
+                  'Export',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
                   foregroundColor: Colors.white70,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -93,40 +426,107 @@ class _SessionActivityViewState extends State<SessionActivityView> {
           // Summary cards
           Row(
             children: [
-              _buildMiniCard('Total Events', _logs.length.toString(), Icons.list_alt, Colors.blue),
+              _buildMiniCard(
+                'Total Events',
+                auditState.logs.length.toString(),
+                Icons.list_alt,
+                Colors.blue,
+              ),
               const SizedBox(width: 12),
-              _buildMiniCard('Logins', _logs.where((l) => l.action == 'login').length.toString(), Icons.login, Colors.green),
+              _buildMiniCard(
+                'Logins',
+                auditState.logs
+                    .where((l) => l.action == 'login')
+                    .length
+                    .toString(),
+                Icons.login,
+                Colors.green,
+              ),
               const SizedBox(width: 12),
-              _buildMiniCard('Modifications', _logs.where((l) => l.action == 'update' || l.action == 'create' || l.action == 'delete').length.toString(), Icons.edit_note, Colors.amber),
+              _buildMiniCard(
+                'Modifications',
+                auditState.logs
+                    .where(
+                      (l) => ['update', 'create', 'delete'].contains(l.action),
+                    )
+                    .length
+                    .toString(),
+                Icons.edit_note,
+                Colors.amber,
+              ),
               const SizedBox(width: 12),
-              _buildMiniCard('Security', _logs.where((l) => l.action == 'suspend' || l.action == 'permission_change').length.toString(), Icons.shield_outlined, Colors.red),
+              _buildMiniCard(
+                'Security',
+                auditState.logs
+                    .where(
+                      (l) =>
+                          ['suspend', 'permission_change'].contains(l.action),
+                    )
+                    .length
+                    .toString(),
+                Icons.shield_outlined,
+                Colors.red,
+              ),
             ],
           ),
           const SizedBox(height: 20),
 
           // Filters
-          Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text('Filters:', style: TextStyle(color: Colors.white54, fontSize: 13)),
+              Text(
+                'Filters:',
+                style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+              ),
               const SizedBox(width: 12),
               _buildDropdownFilter('Action', _actionFilter, _actionTypes, (v) {
                 setState(() => _actionFilter = v);
-                _loadData();
+                _refreshAudit();
               }),
               const SizedBox(width: 12),
               _buildDropdownFilter('Module', _moduleFilter, _modules, (v) {
                 setState(() => _moduleFilter = v);
-                _loadData();
+                _refreshAudit();
               }),
-              
-              Text('${_logs.length} events', style: TextStyle(color: Colors.white38, fontSize: 12)),
+
+              Text(
+                '${auditState.logs.length} events',
+                style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+              ),
             ],
           ),
           const SizedBox(height: 16),
 
           // Activity log
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
+          if (auditState.isLoading && auditState.logs.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (auditState.error != null)
+            Center(
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error: ${auditState.error}',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _refreshAudit,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            )
           else
             Container(
               decoration: BoxDecoration(
@@ -135,13 +535,19 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                 border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
               ),
               child: Column(
-                children: _logs.asMap().entries.map((entry) {
+                children: auditState.logs.asMap().entries.map((entry) {
                   final log = entry.value;
-                  final isLast = entry.key == _logs.length - 1;
+                  final isLast = entry.key == auditState.logs.length - 1;
                   return Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: isLast ? null : Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+                      border: isLast
+                          ? null
+                          : Border(
+                              bottom: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.06),
+                              ),
+                            ),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,10 +558,16 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: _actionColor(log.action).withValues(alpha: 0.15),
+                                color: _getAuditActionColor(
+                                  log.action,
+                                ).withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(_actionIcon(log.action), color: _actionColor(log.action), size: 14),
+                              child: Icon(
+                                _getAuditActionIcon(log.action),
+                                color: _getAuditActionColor(log.action),
+                                size: 14,
+                              ),
                             ),
                           ],
                         ),
@@ -168,60 +580,64 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                             children: [
                               Row(
                                 children: [
-                                  Text(log.userName, style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: _actionColor(log.action).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(6),
+                                  Text(
+                                    log.userName,
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    child: Text(log.actionLabel, style: TextStyle(color: _actionColor(log.action), fontSize: 10, fontWeight: FontWeight.bold)),
                                   ),
                                   const SizedBox(width: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.06),
+                                      color: _getAuditActionColor(
+                                        log.action,
+                                      ).withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: Text(log.module, style: GoogleFonts.firaCode(color: Colors.white38, fontSize: 10)),
+                                    child: Text(
+                                      log.actionLabel,
+                                      style: TextStyle(
+                                        color: _getAuditActionColor(log.action),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.06,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      log.module,
+                                      style: GoogleFonts.firaCode(
+                                        color: Colors.white38,
+                                        fontSize: 10,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Text(log.details, style: TextStyle(color: Colors.white70, fontSize: 12)),
-                              if (log.beforeValue != null && log.afterValue != null) ...[
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black26,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text('Before: ', style: TextStyle(color: Colors.red.shade300, fontSize: 10)),
-                                      Text(log.beforeValue!, style: GoogleFonts.firaCode(color: Colors.red.shade300, fontSize: 10)),
-                                      const SizedBox(width: 12),
-                                      Text('After: ', style: TextStyle(color: Colors.green.shade300, fontSize: 10)),
-                                      Text(log.afterValue!, style: GoogleFonts.firaCode(color: Colors.green.shade300, fontSize: 10)),
-                                    ],
-                                  ),
+                              Text(
+                                log.details,
+                                style: GoogleFonts.inter(
+                                  color: Colors.white70,
+                                  fontSize: 12,
                                 ),
-                              ],
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  if (log.ipAddress != null) ...[
-                                    Icon(Icons.wifi, size: 12, color: Colors.white.withValues(alpha: 0.25)),
-                                    const SizedBox(width: 4),
-                                    Text(log.ipAddress!, style: GoogleFonts.firaCode(color: Colors.white30, fontSize: 10)),
-                                    const SizedBox(width: 12),
-                                  ],
-                                  if (log.userAgent != null)
-                                    Text(log.userAgent!, style: TextStyle(color: Colors.white24, fontSize: 10)),
-                                ],
                               ),
                             ],
                           ),
@@ -230,7 +646,10 @@ class _SessionActivityViewState extends State<SessionActivityView> {
                         // Timestamp
                         Text(
                           DateFormat('MMM d, HH:mm').format(log.timestamp),
-                          style: TextStyle(color: Colors.white38, fontSize: 11),
+                          style: GoogleFonts.inter(
+                            color: Colors.white38,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -243,7 +662,12 @@ class _SessionActivityViewState extends State<SessionActivityView> {
     );
   }
 
-  Widget _buildMiniCard(String title, String value, IconData icon, Color color) {
+  Widget _buildMiniCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -259,8 +683,18 @@ class _SessionActivityViewState extends State<SessionActivityView> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(title, style: TextStyle(color: Colors.white54, fontSize: 11)),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 11),
+                ),
               ],
             ),
           ],
@@ -269,7 +703,12 @@ class _SessionActivityViewState extends State<SessionActivityView> {
     );
   }
 
-  Widget _buildDropdownFilter(String label, String value, List<String> items, Function(String) onChanged) {
+  Widget _buildDropdownFilter(
+    String label,
+    String value,
+    List<String> items,
+    Function(String) onChanged,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -280,46 +719,74 @@ class _SessionActivityViewState extends State<SessionActivityView> {
         child: DropdownButton<String>(
           value: value,
           dropdownColor: const Color(0xFF1E293B),
-          style: TextStyle(color: Colors.white, fontSize: 12),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
           icon: const Icon(Icons.expand_more, color: Colors.white38, size: 18),
-          items: items.map((item) => DropdownMenuItem(
-            value: item,
-            child: Text(item == 'all' ? 'All ${label}s' : item.replaceAll('_', ' ')),
-          )).toList(),
+          items: items
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    item == 'all' ? 'All ${label}s' : item.replaceAll('_', ' '),
+                  ),
+                ),
+              )
+              .toList(),
           onChanged: (v) => onChanged(v!),
         ),
       ),
     );
   }
 
-  Color _actionColor(String action) {
-    switch (action) {
-      case 'login': case 'logout': return Colors.blue;
-      case 'create': return Colors.green;
-      case 'update': return Colors.amber;
-      case 'delete': return Colors.red;
-      case 'suspend': return Colors.red;
-      case 'reactivate': return Colors.green;
-      case 'kyc_approve': return Colors.green;
-      case 'kyc_reject': return Colors.red;
-      case 'permission_change': return Colors.purple;
-      default: return Colors.grey;
+  Color _getAuditActionColor(String action) {
+    switch (action.toLowerCase()) {
+      case 'login':
+      case 'logout':
+        return Colors.blue;
+      case 'create':
+        return Colors.green;
+      case 'update':
+        return Colors.amber;
+      case 'delete':
+        return Colors.red;
+      case 'suspend':
+        return Colors.red;
+      case 'reactivate':
+        return Colors.green;
+      case 'kyc_approve':
+        return Colors.green;
+      case 'kyc_reject':
+        return Colors.red;
+      case 'permission_change':
+        return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
-  IconData _actionIcon(String action) {
-    switch (action) {
-      case 'login': return Icons.login;
-      case 'logout': return Icons.logout;
-      case 'create': return Icons.add_circle_outline;
-      case 'update': return Icons.edit;
-      case 'delete': return Icons.delete_outline;
-      case 'suspend': return Icons.block;
-      case 'reactivate': return Icons.check_circle_outline;
-      case 'kyc_approve': return Icons.verified;
-      case 'kyc_reject': return Icons.cancel;
-      case 'permission_change': return Icons.admin_panel_settings;
-      default: return Icons.info_outline;
+  IconData _getAuditActionIcon(String action) {
+    switch (action.toLowerCase()) {
+      case 'login':
+        return Icons.login;
+      case 'logout':
+        return Icons.logout;
+      case 'create':
+        return Icons.add_circle_outline;
+      case 'update':
+        return Icons.edit;
+      case 'delete':
+        return Icons.delete_outline;
+      case 'suspend':
+        return Icons.block;
+      case 'reactivate':
+        return Icons.check_circle_outline;
+      case 'kyc_approve':
+        return Icons.verified;
+      case 'kyc_reject':
+        return Icons.cancel;
+      case 'permission_change':
+        return Icons.admin_panel_settings;
+      default:
+        return Icons.info_outline;
     }
   }
 }

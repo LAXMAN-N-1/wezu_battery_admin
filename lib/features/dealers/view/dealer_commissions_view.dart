@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/dealer_repository.dart';
 import '../data/models/commission.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class DealerCommissionsView extends StatefulWidget {
   const DealerCommissionsView({super.key});
@@ -13,7 +14,7 @@ class DealerCommissionsView extends StatefulWidget {
   State<DealerCommissionsView> createState() => _DealerCommissionsViewState();
 }
 
-class _DealerCommissionsViewState extends State<DealerCommissionsView>
+class _DealerCommissionsViewState extends SafeState<DealerCommissionsView>
     with SingleTickerProviderStateMixin {
   final DealerRepository _repository = DealerRepository();
   List<CommissionConfig> _configs = [];

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/models/notification_models.dart';
 import '../data/repositories/notification_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class SmsEmailConfigView extends StatefulWidget {
   const SmsEmailConfigView({super.key});
   @override State<SmsEmailConfigView> createState() => _SmsEmailConfigViewState();
 }
 
-class _SmsEmailConfigViewState extends State<SmsEmailConfigView> {
+class _SmsEmailConfigViewState extends SafeState<SmsEmailConfigView> {
   final NotificationRepository _repo = NotificationRepository();
   List<NotificationConfig> _configs = [];
   bool _isLoading = true;

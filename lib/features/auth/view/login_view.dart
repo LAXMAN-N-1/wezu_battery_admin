@@ -1,17 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../provider/auth_provider.dart';
 import '../../../core/widgets/admin_ui_components.dart';
-import '../../../core/utils/autofill_helper_stub.dart'
-    if (dart.library.html) '../../../core/utils/autofill_helper_web.dart'
-    as autofill;
 
 class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
@@ -21,250 +15,18 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
-  static const _rememberCredentialKey = 'remembered_admin_credential';
-  static const _rememberToggleKey = 'remember_admin_credential_enabled';
-  static const _credentialFieldKey = ValueKey('admin-login-credential-field');
-  static const _passwordFieldKey = ValueKey('admin-login-password-field');
-
-  final _formKey = GlobalKey<FormState>();
   final _credentialController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _credentialFocusNode = FocusNode();
-  final _passwordFocusNode = FocusNode();
+  String _credentialValue = '';
+  String _passwordValue = '';
   bool _obscurePassword = true;
   bool _rememberMe = false;
-  bool _hasSubmitted = false;
-  bool _capsLockEnabled = false;
-  Timer? _autofillPollTimer;
-  int _autofillPollCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _hydrateRememberedCredential();
-    _refreshCapsLockIndicator();
-    // Listen to controller changes to detect browser autofill.
-    // Browser autofill updates the controller text but does NOT trigger
-    // onChanged, so the Sign In button would stay disabled without this.
-    _credentialController.addListener(_onControllerChanged);
-    _passwordController.addListener(_onControllerChanged);
-
-    // Google Password Manager on Flutter web can fill DOM inputs with a delay
-    // that doesn't always sync to TextEditingController via addListener.
-    // Poll every 300ms for up to 10 seconds — try reading DOM values directly.
-    _autofillPollTimer = Timer.periodic(
-      const Duration(milliseconds: 300),
-      (_) {
-        _autofillPollCount++;
-        // Stop polling after ~10 seconds (33 ticks × 300ms)
-        if (_autofillPollCount > 33) {
-          _autofillPollTimer?.cancel();
-          _autofillPollTimer = null;
-          return;
-        }
-        if (!mounted) return;
-        // Try to sync DOM-autofilled values into the controllers.
-        _syncDomAutofillValues();
-        setState(() {});
-      },
-    );
-  }
 
   @override
   void dispose() {
-    _autofillPollTimer?.cancel();
-    _credentialController.removeListener(_onControllerChanged);
-    _passwordController.removeListener(_onControllerChanged);
-    _credentialFocusNode.dispose();
-    _passwordFocusNode.dispose();
     _credentialController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _onControllerChanged() {
-    if (mounted) setState(() {});
-  }
-
-  /// Reads autofill values directly from the browser DOM and syncs them
-  /// into the TextEditingControllers if they're currently empty.
-  /// This handles the case where the password manager fills <input> elements
-  /// but Flutter never picks up the change.
-  void _syncDomAutofillValues() {
-    if (_credentialController.text.trim().isNotEmpty &&
-        _passwordController.text.trim().isNotEmpty) {
-      // Both fields already have values — stop polling early.
-      _autofillPollTimer?.cancel();
-      _autofillPollTimer = null;
-      return;
-    }
-
-    final domValues = autofill.readAutofillValues();
-    final domCredential = domValues['credential'];
-    final domPassword = domValues['password'];
-
-    if (_credentialController.text.trim().isEmpty &&
-        domCredential != null &&
-        domCredential.trim().isNotEmpty) {
-      _credentialController.text = domCredential;
-    }
-    if (_passwordController.text.trim().isEmpty &&
-        domPassword != null &&
-        domPassword.isNotEmpty) {
-      _passwordController.text = domPassword;
-    }
-  }
-
-  String? _credentialValidator(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      return 'Enter your login credential.';
-    }
-    return null;
-  }
-
-  String? _passwordValidator(String? value) {
-    final text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      return 'Enter your password.';
-    }
-    return null;
-  }
-
-  Future<void> _hydrateRememberedCredential() async {
-    final prefs = await SharedPreferences.getInstance();
-    final rememberMe = prefs.getBool(_rememberToggleKey) ?? false;
-    final savedCredential = (prefs.getString(_rememberCredentialKey) ?? '')
-        .trim();
-
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _rememberMe = rememberMe;
-      if (rememberMe && savedCredential.isNotEmpty) {
-        _credentialController.text = savedCredential;
-      }
-    });
-  }
-
-  Future<void> _syncRememberedCredential(String credential) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (_rememberMe) {
-      await prefs.setBool(_rememberToggleKey, true);
-      await prefs.setString(_rememberCredentialKey, credential);
-      return;
-    }
-
-    await prefs.setBool(_rememberToggleKey, false);
-    await prefs.remove(_rememberCredentialKey);
-  }
-
-  void _refreshCapsLockIndicator() {
-    final nextState = HardwareKeyboard.instance.lockModesEnabled.contains(
-      KeyboardLockMode.capsLock,
-    );
-    if (nextState == _capsLockEnabled || !mounted) {
-      return;
-    }
-    setState(() => _capsLockEnabled = nextState);
-  }
-
-  Future<void> _submit(AuthState authState) async {
-    if (authState.isLoading) {
-      return;
-    }
-
-    setState(() => _hasSubmitted = true);
-
-    // Re-read controller text at submission time.
-    var credential = _credentialController.text.trim();
-    var password = _passwordController.text;
-
-    // Fallback: On Flutter web, browser password managers fill the DOM
-    // <input> elements directly but TextEditingController may never sync.
-    // Read values straight from the DOM as a last resort.
-    if (credential.isEmpty || password.isEmpty) {
-      final domValues = autofill.readAutofillValues();
-      if (credential.isEmpty && domValues['credential'] != null) {
-        credential = domValues['credential']!.trim();
-        _credentialController.text = credential;
-      }
-      if (password.isEmpty && domValues['password'] != null) {
-        password = domValues['password']!;
-        _passwordController.text = password;
-      }
-    }
-
-    // If fields are still empty after autofill attempt, validate form.
-    if (credential.isEmpty || password.isEmpty) {
-      _formKey.currentState?.validate();
-      return;
-    }
-
-    final isValid = _formKey.currentState?.validate() ?? false;
-    if (!isValid) {
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-
-    await ref.read(authProvider.notifier).login(credential, password);
-    if (!mounted) {
-      return;
-    }
-
-    final latestAuthState = ref.read(authProvider);
-    if (latestAuthState.isAuthenticated) {
-      await _syncRememberedCredential(credential);
-      TextInput.finishAutofillContext(shouldSave: true);
-      if (mounted) {
-        context.go('/dashboard');
-      }
-    }
-  }
-
-  void _onFieldChanged(String _) {
-    if (ref.read(authProvider).error != null) {
-      ref.read(authProvider.notifier).clearError();
-    }
-    _refreshCapsLockIndicator();
-    if (_hasSubmitted) {
-      _formKey.currentState?.validate();
-    }
-    setState(() {});
-  }
-
-  void _showForgotPasswordHelp() {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF111827),
-          title: Text(
-            'Reset Password',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          content: Text(
-            'Contact your super admin to reset your password for admin access.',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Close',
-                style: TextStyle(color: const Color(0xFF3B82F6)),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -275,383 +37,320 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E1A),
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Row(
-          children: [
-            // Left Side (60% width) - Branding & Stats
-            if (!isMobile)
-              Expanded(
-                flex: 6,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF0A0E1A), Color(0xFF1A1F35)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+
+        children: [
+          // Left Side (60% width) - Branding & Stats
+          if (!isMobile)
+            Expanded(
+              flex: 6,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF0A0E1A), Color(0xFF1A1F35)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Stack(
-                    children: [
-                      // Grid Pattern
-                      Positioned.fill(
-                        child: Opacity(
-                          opacity: 0.05,
-                          child: CustomPaint(painter: GridPainter()),
+                  border: Border(
+                    right: BorderSide(color: Color(0x1FFFFFFF), width: 1),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    // Grid Pattern
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.05,
+                        child: CustomPaint(painter: GridPainter()),
+                      ),
+                    ),
+
+                    // Content
+                    Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 64,
+                          vertical: 32,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const WezuLogo(size: 100),
+                            const SizedBox(height: 32),
+                            Text(
+                                  "Powering the Future\nof Mobility",
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.w900,
+                                    height: 1.1,
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(duration: 800.ms)
+                                .slideX(begin: -0.1),
+                            const SizedBox(height: 24),
+                            Text(
+                                  "Energy solutions refined for the next generation of infrastructure.",
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white54,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                )
+                                .animate()
+                                .fadeIn(duration: 800.ms, delay: 200.ms)
+                                .slideX(begin: -0.1),
+
+                            const SizedBox(height: 64),
+
+                            // Floating Stat Cards
+                            const Wrap(
+                              spacing: 24,
+                              runSpacing: 24,
+                              children: [
+                                StatCard(
+                                  label: "batteries deployed",
+                                  value: "2,400+",
+                                  icon: Icons.battery_charging_full_rounded,
+                                  delay: Duration(milliseconds: 400),
+                                ),
+                                StatCard(
+                                  label: "uptime guaranteed",
+                                  value: "98.2%",
+                                  icon: Icons.verified_rounded,
+                                  delay: Duration(milliseconds: 600),
+                                ),
+                                StatCard(
+                                  label: "charging stations",
+                                  value: "150+",
+                                  icon: Icons.ev_station_rounded,
+                                  delay: Duration(milliseconds: 800),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-                      // Content
-                      Center(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 64,
-                            vertical: 32,
+          // Right Side (40% width) - Login Form
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: const Color(0xFF111827),
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 48,
+                    vertical: 64,
+                  ),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (isMobile) ...[
+                          const Center(
+                            child: WezuLogo(size: 80, showText: false),
                           ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const WezuLogo(size: 100),
-                              const SizedBox(height: 32),
-                              Text(
-                                    "Powering the Future\nof Mobility",
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white,
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.w900,
-                                      height: 1.1,
-                                    ),
-                                  )
-                                  .animate()
-                                  .fadeIn(duration: 800.ms)
-                                  .slideX(begin: -0.1),
-                              const SizedBox(height: 24),
-                              Text(
-                                    "Energy solutions refined for the next generation of infrastructure.",
-                                    style: TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w300,
-                                    ),
-                                  )
-                                  .animate()
-                                  .fadeIn(duration: 800.ms, delay: 200.ms)
-                                  .slideX(begin: -0.1),
+                          const SizedBox(height: 32),
+                        ],
 
-                              const SizedBox(height: 64),
+                        Text(
+                          "Welcome Back",
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1),
 
-                              // Floating Stat Cards
-                              const Wrap(
-                                spacing: 24,
-                                runSpacing: 24,
-                                children: [
-                                  StatCard(
-                                    label: "batteries deployed",
-                                    value: "2,400+",
-                                    icon: Icons.battery_charging_full_rounded,
-                                    delay: Duration(milliseconds: 400),
-                                  ),
-                                  StatCard(
-                                    label: "uptime guaranteed",
-                                    value: "98.2%",
-                                    icon: Icons.verified_rounded,
-                                    delay: Duration(milliseconds: 600),
-                                  ),
-                                  StatCard(
-                                    label: "charging stations",
-                                    value: "150+",
-                                    icon: Icons.ev_station_rounded,
-                                    delay: Duration(milliseconds: 800),
-                                  ),
-                                ],
+                        const SizedBox(height: 8),
+
+                        Text(
+                              "WEZU Admin Portal",
+                              style: GoogleFonts.inter(
+                                color: Colors.white38,
+                                fontSize: 16,
                               ),
+                            )
+                            .animate()
+                            .fadeIn(duration: 600.ms, delay: 100.ms)
+                            .slideY(begin: 0.1),
+
+                        const SizedBox(height: 48),
+
+                        AutofillGroup(
+                          child: Column(
+                            children: [
+                              AdminTextField(
+                                    controller: _credentialController,
+                                    label: "Login Credentials",
+                                    hint: "Email / phone / username",
+                                    icon: Icons.person_outline,
+                                    keyboardType: TextInputType.emailAddress,
+                                    textInputAction: TextInputAction.next,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                      AutofillHints.email,
+                                    ],
+                                    onChanged: (value) =>
+                                        _credentialValue = value,
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 600.ms, delay: 200.ms)
+                                  .slideY(begin: 0.1),
+
+                              const SizedBox(height: 24),
+
+                              AdminTextField(
+                                    controller: _passwordController,
+                                    label: "Password",
+                                    hint: "Enter your password",
+                                    icon: Icons.lock_outline,
+                                    obscureText: _obscurePassword,
+                                    keyboardType: TextInputType.visiblePassword,
+                                    textInputAction: TextInputAction.done,
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
+                                    onChanged: (value) =>
+                                        _passwordValue = value,
+                                    onToggleObscure: () => setState(
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
+                                    ),
+                                  )
+                                  .animate()
+                                  .fadeIn(duration: 600.ms, delay: 300.ms)
+                                  .slideY(begin: 0.1),
                             ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
 
-            // Right Side (40% width) - Login Form
-            Expanded(
-              flex: 4,
-              child: Container(
-                color: const Color(0xFF111827),
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 48,
-                      vertical: 64,
-                    ),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (isMobile) ...[
-                            const Center(
-                              child: WezuLogo(size: 80, showText: false),
+                        const SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: _rememberMe,
+                              onChanged: (v) =>
+                                  setState(() => _rememberMe = v ?? false),
+                              activeColor: const Color(0xFF3B82F6),
+                              side: const BorderSide(color: Colors.white24),
                             ),
-                            const SizedBox(height: 32),
+                            Text(
+                              "Remember me",
+                              style: GoogleFonts.inter(
+                                color: Colors.white54,
+                                fontSize: 13,
+                              ),
+                            ),
+
+                            TextButton(
+                              onPressed: () {},
+                              child: Text(
+                                "Forgot password?",
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF3B82F6),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                           ],
+                        ).animate().fadeIn(duration: 600.ms, delay: 400.ms),
 
-                          Text(
-                                "Welcome Back",
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                              .animate()
-                              .fadeIn(duration: 600.ms)
-                              .slideY(begin: 0.1),
+                        const SizedBox(height: 32),
 
-                          const SizedBox(height: 8),
-
-                          Text(
-                                "WEZU Admin Portal",
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 16,
-                                ),
-                              )
-                              .animate()
-                              .fadeIn(duration: 600.ms, delay: 100.ms)
-                              .slideY(begin: 0.1),
-
-                          const SizedBox(height: 48),
-
-                          AutofillGroup(
-                            child: Form(
-                              key: _formKey,
-                              autovalidateMode: _hasSubmitted
-                                  ? AutovalidateMode.onUserInteraction
-                                  : AutovalidateMode.disabled,
-                              child: Column(
-                                children: [
-                                  AdminTextField(
-                                        textFieldKey: _credentialFieldKey,
-                                        controller: _credentialController,
-                                        focusNode: _credentialFocusNode,
-                                        label: "Login Credential",
-                                        hint: "Email / phone / username",
-                                        icon: Icons.person_outline,
-                                        keyboardType: TextInputType.text,
-                                        textInputAction: TextInputAction.next,
-                                        autofillHints: const [
-                                          AutofillHints.username,
-                                          AutofillHints.email,
-                                        ],
-                                        validator: _credentialValidator,
-                                        autocorrect: false,
-                                        enableSuggestions: true,
-                                        textCapitalization:
-                                            TextCapitalization.none,
-                                        onChanged: _onFieldChanged,
-                                        onFieldSubmitted: (_) {
-                                          _passwordFocusNode.requestFocus();
-                                        },
-                                      )
-                                      .animate()
-                                      .fadeIn(duration: 600.ms, delay: 200.ms)
-                                      .slideY(begin: 0.1),
-
-                                  const SizedBox(height: 24),
-
-                                  Focus(
-                                        onKeyEvent: (_, __) {
-                                          _refreshCapsLockIndicator();
-                                          return KeyEventResult.ignored;
-                                        },
-                                        child: AdminTextField(
-                                          textFieldKey: _passwordFieldKey,
-                                          controller: _passwordController,
-                                          focusNode: _passwordFocusNode,
-                                          label: "Password",
-                                          hint: "Enter your password",
-                                          icon: Icons.lock_outline,
-                                          obscureText: _obscurePassword,
-                                          keyboardType:
-                                              TextInputType.visiblePassword,
-                                          textInputAction: TextInputAction.done,
-                                          autofillHints: const [
-                                            AutofillHints.password,
-                                          ],
-                                          validator: _passwordValidator,
-                                          autocorrect: false,
-                                          enableSuggestions: true,
-                                          textCapitalization:
-                                              TextCapitalization.none,
-                                          onChanged: _onFieldChanged,
-                                          onFieldSubmitted: (_) =>
-                                              _submit(authState),
-                                          onToggleObscure: () => setState(
-                                            () => _obscurePassword =
-                                                !_obscurePassword,
-                                          ),
-                                        ),
-                                      )
-                                      .animate()
-                                      .fadeIn(duration: 600.ms, delay: 300.ms)
-                                      .slideY(begin: 0.1),
-
-                                  if (_capsLockEnabled)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.warning_amber_rounded,
-                                            size: 16,
-                                            color: Colors.amberAccent,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              'Caps Lock appears to be on.',
-                                              style: TextStyle(
-                                                color: Colors.amberAccent,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                  const SizedBox(height: 16),
-
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: _rememberMe,
-                                        onChanged: (v) {
-                                          setState(
-                                            () => _rememberMe = v ?? false,
-                                          );
-                                          _syncRememberedCredential(
-                                            _credentialController.text.trim(),
-                                          );
-                                        },
-                                        activeColor: const Color(0xFF3B82F6),
-                                        side: const BorderSide(
-                                          color: Colors.white24,
-                                        ),
-                                      ),
-                                      Text(
-                                        "Remember me",
-                                        style: TextStyle(
-                                          color: Colors.white54,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      TextButton(
-                                        onPressed: _showForgotPasswordHelp,
-                                        child: Text(
-                                          "Forgot password?",
-                                          style: TextStyle(
-                                            color: const Color(0xFF3B82F6),
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ).animate().fadeIn(
-                                    duration: 600.ms,
-                                    delay: 400.ms,
+                        if (authState.error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.redAccent.withValues(
+                                    alpha: 0.2,
                                   ),
-
-                                  const SizedBox(height: 12),
-
-                                  Align(
-                                    alignment: Alignment.centerLeft,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    size: 18,
+                                    color: Colors.redAccent,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
                                     child: Text(
-                                      'Use your admin credential to continue.',
-                                      style: TextStyle(
-                                        color: Colors.white38,
-                                        fontSize: 12,
+                                      authState.error!,
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
+                            ).animate().shake(),
                           ),
 
-                          const SizedBox(height: 24),
+                        AdminButton(
+                          label: "Sign In",
+                          isLoading: authState.isLoading,
+                          onPressed: () async {
+                            FocusScope.of(context).unfocus();
+                            TextInput.finishAutofillContext(
+                              shouldSave: !kIsWeb,
+                            );
 
-                          if (authState.error != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 24),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.redAccent.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.error_outline,
-                                      size: 18,
-                                      color: Colors.redAccent,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        authState.error!,
-                                        style: const TextStyle(
-                                          color: Colors.redAccent,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ).animate().shake(),
-                            ),
+                            final credential =
+                                (_credentialController.text.isNotEmpty
+                                        ? _credentialController.text
+                                        : _credentialValue)
+                                    .trim();
+                            final password =
+                                (_passwordController.text.isNotEmpty
+                                        ? _passwordController.text
+                                        : _passwordValue)
+                                    .trim();
 
-                          AdminButton(
-                            label: "Sign In",
-                            isLoading: authState.isLoading,
-                            onPressed: authState.isLoading
-                                ? null
-                                : () => _submit(authState),
-                          ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
+                            ref
+                                .read(authProvider.notifier)
+                                .login(credential, password);
+                          },
+                        ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
 
-                          const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                          Center(
-                            child: Text(
-                              "© 2024 WEZU Energy Solutions",
-                              style: TextStyle(
-                                color: Colors.white12,
-                                fontSize: 11,
-                              ),
+                        Center(
+                          child: Text(
+                            "© ${DateTime.now().year} WEZU Energy Solutions",
+                            style: GoogleFonts.inter(
+                              color: Colors.white12,
+                              fontSize: 11,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

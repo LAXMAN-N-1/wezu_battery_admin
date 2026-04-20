@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../data/models/faq.dart';
 import '../data/repositories/faq_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class FaqListView extends StatefulWidget {
   const FaqListView({super.key});
@@ -11,8 +12,8 @@ class FaqListView extends StatefulWidget {
   State<FaqListView> createState() => _FaqListViewState();
 }
 
-class _FaqListViewState extends State<FaqListView> {
-  final FaqRepository _repository = FaqRepository();
+class _FaqListViewState extends SafeState<FaqListView> {
+  final FAQRepository _repository = FAQRepository();
   List<FAQ> _faqs = [];
   bool _isLoading = true;
   String _searchQuery = '';
@@ -29,7 +30,7 @@ class _FaqListViewState extends State<FaqListView> {
     try {
       final faqs = await _repository.getFaqs(
         category: _filterCategory,
-        q: _searchQuery.isEmpty ? null : _searchQuery,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
       );
       setState(() {
         _faqs = faqs;
@@ -177,6 +178,10 @@ class _FaqListViewState extends State<FaqListView> {
   }
 
   Widget _buildFaqTile(FAQ faq) {
+    final updatedAtLabel = faq.updatedAt != null
+        ? DateFormat('MMM d, y').format(faq.updatedAt!)
+        : '—';
+
     return ExpansionTile(
       backgroundColor: Colors.white.withValues(alpha: 0.03),
       collapsedBackgroundColor: Colors.white.withValues(alpha: 0.03),
@@ -260,7 +265,7 @@ class _FaqListViewState extends State<FaqListView> {
                   ),
 
                   Text(
-                    'Last updated: ${DateFormat('MMM d, y').format(faq.updatedAt)}',
+                    'Last updated: $updatedAtLabel',
                     style: const TextStyle(color: Colors.white24, fontSize: 11),
                   ),
                 ],

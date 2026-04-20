@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class CreateUserDialog extends StatefulWidget {
-  final Function(String fullName, String email, String phone, String password, String role) onSubmit;
+  final Future<void> Function(String fullName, String email, String phone, String password, String role) onSubmit;
 
   const CreateUserDialog({super.key, required this.onSubmit});
 
@@ -10,7 +11,7 @@ class CreateUserDialog extends StatefulWidget {
   State<CreateUserDialog> createState() => _CreateUserDialogState();
 }
 
-class _CreateUserDialogState extends State<CreateUserDialog> {
+class _CreateUserDialogState extends SafeState<CreateUserDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -84,7 +85,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                     return null;
                   }),
                 const SizedBox(height: 18),
-                Text('Role', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('Role', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -98,7 +99,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                       value: _selectedRole,
                       isExpanded: true,
                       dropdownColor: const Color(0xFF1E293B),
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
                       items: const [
                         DropdownMenuItem(value: 'admin', child: Text('Admin')),
                         DropdownMenuItem(value: 'supervisor', child: Text('Supervisor')),
@@ -122,7 +123,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+                        child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -136,7 +137,7 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
                         ),
                         child: _isSubmitting
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : Text('Create User', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                            : Text('Create User', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
                       ),
                     ),
                   ],
@@ -153,16 +154,16 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           validator: validator,
           obscureText: obscure,
-          style: TextStyle(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white24, fontSize: 14),
+            hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 14),
             prefixIcon: Icon(icon, color: Colors.white38, size: 18),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
@@ -180,14 +181,20 @@ class _CreateUserDialogState extends State<CreateUserDialog> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    widget.onSubmit(
-      _nameController.text,
-      _emailController.text,
-      _phoneController.text,
-      _passwordController.text,
-      _selectedRole,
-    );
-    if (mounted) Navigator.pop(context);
+    
+    try {
+      await widget.onSubmit(
+        _nameController.text,
+        _emailController.text,
+        _phoneController.text,
+        _passwordController.text,
+        _selectedRole,
+      );
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }

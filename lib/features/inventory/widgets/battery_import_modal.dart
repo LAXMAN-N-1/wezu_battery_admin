@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import '../data/repositories/inventory_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BatteryImportModal extends StatefulWidget {
   const BatteryImportModal({super.key});
@@ -10,7 +11,7 @@ class BatteryImportModal extends StatefulWidget {
   State<BatteryImportModal> createState() => _BatteryImportModalState();
 }
 
-class _BatteryImportModalState extends State<BatteryImportModal> {
+class _BatteryImportModalState extends SafeState<BatteryImportModal> {
   final InventoryRepository _repository = InventoryRepository();
   int _currentStep = 0;
   bool _isLoading = false;

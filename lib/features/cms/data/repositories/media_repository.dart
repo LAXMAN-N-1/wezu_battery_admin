@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/media_asset.dart';
@@ -26,7 +26,7 @@ class MediaRepository {
           .map((e) => MediaAsset.fromJson(e))
           .toList();
     } on DioException {
-      // Legacy fallback for older backend builds.
+      // Backward compatibility for older backend builds.
       final response = await _apiClient.get(
         '/api/v1/admin/media',
         queryParameters: {if (category != null) 'category': category},
@@ -38,44 +38,40 @@ class MediaRepository {
   }
 
   Future<MediaAsset> uploadMedia(
-    File file, {
+    List<int> bytes,
+    String fileName, {
     String category = 'general',
     String? altText,
   }) async {
-    final String fileName = file.path.split('/').last;
-    final fileSize = await file.length();
-    final ext = fileName.contains('.')
-        ? fileName.split('.').last.toLowerCase()
-        : 'bin';
-    final mime = _extensionToMimeType(ext);
-
-    // Use the CMS media endpoint directly.
-    // The old /api/v1/admin/media/upload route returns 405 (Method Not Allowed)
-    // and should not be called.
     try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: fileName),
+        'category': category,
+        if (altText != null) 'alt_text': altText,
+      });
+
+      final response = await _apiClient.post(
+        '/api/v1/admin/media/upload',
+        data: formData,
+      );
+      return MediaAsset.fromJson(response.data);
+    } on DioException {
+      final fileSize = bytes.length;
+      final ext = fileName.contains('.')
+          ? fileName.split('.').last.toLowerCase()
+          : 'bin';
+      final mime = _extensionToMimeType(ext);
+
       final response = await _apiClient.post(
         _cmsMediaPath,
         queryParameters: {
           'file_name': fileName,
           'file_type': mime,
           'file_size_bytes': fileSize,
-          'url': file.path,
+          'url': fileName, // Use fileName as a placeholder for local path on web
           'category': category,
           if (altText != null) 'alt_text': altText,
         },
-      );
-      return MediaAsset.fromJson(response.data);
-    } on DioException {
-      // Fallback: try multipart upload if the query-param approach fails.
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path, filename: fileName),
-        'category': category,
-        if (altText != null) 'alt_text': altText,
-      });
-
-      final response = await _apiClient.post(
-        _cmsMediaPath,
-        data: formData,
       );
       return MediaAsset.fromJson(response.data);
     }

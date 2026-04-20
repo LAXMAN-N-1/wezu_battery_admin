@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/bess_models.dart';
 import '../data/repositories/bess_repository.dart';
 import '../../../core/widgets/admin_ui_components.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BessReportsView extends StatefulWidget {
   const BessReportsView({super.key});
@@ -11,7 +12,7 @@ class BessReportsView extends StatefulWidget {
   State<BessReportsView> createState() => _BessReportsViewState();
 }
 
-class _BessReportsViewState extends State<BessReportsView> {
+class _BessReportsViewState extends SafeState<BessReportsView> {
   final BessRepository _repo = BessRepository();
   List<BessReport> _reports = [];
   Map<String, dynamic> _kpi = {};

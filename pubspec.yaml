@@ -68,6 +68,8 @@ dependencies:
   url_launcher: ^6.3.2
   path_provider: ^2.1.5
   rrule: ^0.2.18
+  flutter_quill: ^11.5.0
+  html_editor_enhanced: ^2.7.1
 
 dev_dependencies:
   flutter_test:

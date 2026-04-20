@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/iot_device_model.dart';
 import '../data/repositories/fleet_ops_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class IoTDashboardView extends StatefulWidget {
   const IoTDashboardView({super.key});
@@ -12,7 +13,7 @@ class IoTDashboardView extends StatefulWidget {
   State<IoTDashboardView> createState() => _IoTDashboardViewState();
 }
 
-class _IoTDashboardViewState extends State<IoTDashboardView> {
+class _IoTDashboardViewState extends SafeState<IoTDashboardView> {
   final FleetOpsRepository _repository = FleetOpsRepository();
   IoTStats? _stats;
   List<IoTDevice> _devices = [];

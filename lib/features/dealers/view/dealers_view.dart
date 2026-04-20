@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/dealer.dart';
 import '../data/repositories/dealer_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class DealersView extends StatefulWidget {
   const DealersView({super.key});
@@ -13,7 +14,7 @@ class DealersView extends StatefulWidget {
   State<DealersView> createState() => _DealersViewState();
 }
 
-class _DealersViewState extends State<DealersView> {
+class _DealersViewState extends SafeState<DealersView> {
   final DealerRepository _repository = DealerRepository();
   List<DealerProfile> _dealers = [];
   DealerStats? _stats;

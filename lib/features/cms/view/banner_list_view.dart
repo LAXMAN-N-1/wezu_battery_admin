@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../data/models/banner.dart';
 import '../data/repositories/banner_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BannerListView extends StatefulWidget {
   const BannerListView({super.key});
@@ -11,7 +12,7 @@ class BannerListView extends StatefulWidget {
   State<BannerListView> createState() => _BannerListViewState();
 }
 
-class _BannerListViewState extends State<BannerListView> {
+class _BannerListViewState extends SafeState<BannerListView> {
   final BannerRepository _repository = BannerRepository();
   List<Banner> _banners = [];
   bool _isLoading = true;

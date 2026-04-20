@@ -3,6 +3,7 @@ import '../../../../core/widgets/admin_ui_components.dart';
 import 'tabs/roles_list_tab.dart';
 import 'tabs/role_form_tab.dart';
 import 'tabs/permission_matrix_tab.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class RolesPermissionsMasterView extends StatefulWidget {
   const RolesPermissionsMasterView({super.key});
@@ -11,7 +12,7 @@ class RolesPermissionsMasterView extends StatefulWidget {
   State<RolesPermissionsMasterView> createState() => _RolesPermissionsMasterViewState();
 }
 
-class _RolesPermissionsMasterViewState extends State<RolesPermissionsMasterView> with SingleTickerProviderStateMixin {
+class _RolesPermissionsMasterViewState extends SafeState<RolesPermissionsMasterView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override

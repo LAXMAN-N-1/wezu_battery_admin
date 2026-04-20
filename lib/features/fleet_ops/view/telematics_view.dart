@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/telemetry_model.dart';
 import '../data/repositories/fleet_ops_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class TelematicsView extends StatefulWidget {
   const TelematicsView({super.key});
@@ -13,7 +14,7 @@ class TelematicsView extends StatefulWidget {
   State<TelematicsView> createState() => _TelematicsViewState();
 }
 
-class _TelematicsViewState extends State<TelematicsView> {
+class _TelematicsViewState extends SafeState<TelematicsView> {
   final FleetOpsRepository _repository = FleetOpsRepository();
   List<TelemetryData> _history = [];
   bool _isLoading = false;

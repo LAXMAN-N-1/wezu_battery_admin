@@ -90,10 +90,7 @@ class UserMasterRepository {
       );
       return User.fromJson(response.data);
     } on Exception {
-      final response = await _apiClient.post(
-        '/api/v1/admin/users',
-        data: data,
-      );
+      final response = await _apiClient.post('/api/v1/admin/users', data: data);
       return User.fromJson(response.data);
     }
   }
@@ -108,7 +105,28 @@ class UserMasterRepository {
 
   Future<List<Role>> getRoles() async {
     final response = await _apiClient.get('/api/v1/admin/rbac/roles');
-    return (response.data as List).map((json) => Role.fromJson(json)).toList();
+    final payload = response.data;
+
+    if (payload is List) {
+      return payload
+          .whereType<Map>()
+          .map((json) => Role.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+    }
+
+    if (payload is Map) {
+      final normalized = Map<String, dynamic>.from(payload);
+      final rawList =
+          normalized['items'] ?? normalized['roles'] ?? const <dynamic>[];
+      if (rawList is List) {
+        return rawList
+            .whereType<Map>()
+            .map((json) => Role.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+      }
+    }
+
+    return const <Role>[];
   }
 
   Future<Map<String, dynamic>> createRole(Map<String, dynamic> data) async {
@@ -137,14 +155,47 @@ class UserMasterRepository {
 
   Future<List<Map<String, dynamic>>> getPermissionModules() async {
     final response = await _apiClient.get('/api/v1/admin/rbac/permissions');
-    final data = response.data is Map<String, dynamic>
-        ? response.data as Map<String, dynamic>
-        : Map<String, dynamic>.from(response.data as Map);
-    final modules = data['modules'] as List? ?? const <dynamic>[];
-    return modules
-        .whereType<Map>()
-        .map((m) => Map<String, dynamic>.from(m))
-        .toList();
+    final payload = response.data;
+
+    List<Map<String, dynamic>> modules = const <Map<String, dynamic>>[];
+
+    if (payload is List) {
+      modules = payload
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
+    } else if (payload is Map) {
+      final data = Map<String, dynamic>.from(payload);
+      final rawModules =
+          data['modules'] ?? data['items'] ?? data['permissions'];
+      if (rawModules is List) {
+        modules = rawModules
+            .whereType<Map>()
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList();
+      }
+    }
+
+    if (modules.isEmpty) {
+      // Keep Permission Matrix renderable even when backend shape changes
+      // or permission modules endpoint is temporarily unavailable.
+      final roles = await getRoles();
+      final roleDerivedModules = <String>{
+        for (final role in roles) ...role.permissions.modules.keys,
+      };
+      modules = roleDerivedModules
+          .where((name) => name.trim().isNotEmpty)
+          .map(
+            (name) => <String, dynamic>{
+              'module': name,
+              'label': name.replaceAll('_', ' '),
+              'permissions': const <Map<String, dynamic>>[],
+            },
+          )
+          .toList();
+    }
+
+    return modules;
   }
 
   Future<List<AccessLog>> getAccessLogs({int skip = 0, int limit = 50}) async {

@@ -32,12 +32,17 @@ class ApiErrorHandler {
         return 'Too many requests. Please wait a moment and try again.';
       case 500:
         return 'Server error. Please try again later.';
+      case 503:
+        return 'Service temporarily unavailable. Please retry in a moment.';
       case null:
         if (error.type == DioExceptionType.cancel) {
-          return 'Your session has expired. Please log in again.';
+          if (_isSessionExpiredCancellation(error)) {
+            return 'Your session has expired. Please log in again.';
+          }
+          return 'Request was cancelled. Please try again.';
         }
         if (error.type == DioExceptionType.connectionError) {
-          return 'Connection error. Please check your internet and try again.';
+          return 'Connection error. The service may be temporarily unavailable.';
         }
         if (error.type == DioExceptionType.connectionTimeout ||
             error.type == DioExceptionType.receiveTimeout ||
@@ -56,7 +61,7 @@ class ApiErrorHandler {
     final isAuthError =
         statusCode == 401 ||
         statusCode == 403 ||
-        error.type == DioExceptionType.cancel;
+        _isSessionExpiredCancellation(error);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -88,7 +93,7 @@ class ApiErrorHandler {
     final isAuthError =
         statusCode == 401 ||
         statusCode == 403 ||
-        error.type == DioExceptionType.cancel;
+        _isSessionExpiredCancellation(error);
 
     messenger.showSnackBar(
       SnackBar(
@@ -120,5 +125,18 @@ class ApiErrorHandler {
     }
 
     return null;
+  }
+
+  static bool _isSessionExpiredCancellation(DioException error) {
+    if (error.type != DioExceptionType.cancel) {
+      return false;
+    }
+
+    final signal = '${error.error ?? ''} ${error.message ?? ''}'
+        .toLowerCase()
+        .trim();
+
+    return signal.contains('session expired') ||
+        signal.contains('awaiting re-login');
   }
 }

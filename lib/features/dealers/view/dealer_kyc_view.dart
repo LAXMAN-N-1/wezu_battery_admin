@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/dealer_repository.dart';
 import '../data/models/dealer.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class DealerKycView extends StatefulWidget {
   const DealerKycView({super.key});
@@ -13,7 +14,7 @@ class DealerKycView extends StatefulWidget {
   State<DealerKycView> createState() => _DealerKycViewState();
 }
 
-class _DealerKycViewState extends State<DealerKycView> {
+class _DealerKycViewState extends SafeState<DealerKycView> {
   final DealerRepository _repository = DealerRepository();
   List<DealerKycDocument> _documents = [];
   bool _isLoading = true;

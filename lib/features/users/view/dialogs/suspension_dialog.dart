@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class SuspensionDialog extends StatefulWidget {
   final String userName;
@@ -18,7 +19,7 @@ class SuspensionDialog extends StatefulWidget {
   State<SuspensionDialog> createState() => _SuspensionDialogState();
 }
 
-class _SuspensionDialogState extends State<SuspensionDialog> {
+class _SuspensionDialogState extends SafeState<SuspensionDialog> {
   final _reasonController = TextEditingController();
   int? _days;
 

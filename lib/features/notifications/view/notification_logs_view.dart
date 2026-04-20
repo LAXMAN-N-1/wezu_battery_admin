@@ -4,13 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../data/models/notification_models.dart';
 import '../data/repositories/notification_repository.dart';
 import '../../../core/widgets/admin_ui_components.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class NotificationLogsView extends StatefulWidget {
   const NotificationLogsView({super.key});
   @override State<NotificationLogsView> createState() => _NotificationLogsViewState();
 }
 
-class _NotificationLogsViewState extends State<NotificationLogsView> {
+class _NotificationLogsViewState extends SafeState<NotificationLogsView> {
   final NotificationRepository _repo = NotificationRepository();
   List<NotificationLog> _logs = [];
   Map<String, dynamic> _stats = {};

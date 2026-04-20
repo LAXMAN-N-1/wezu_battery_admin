@@ -29,32 +29,15 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>frontend_admin</title>
+  <title>PowerFrill Admin</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <script src="https://maps.googleapis.com/maps/api/js?key=your-google-maps-api-key"></script>
-  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
-  <script>
-    // Robust bridge for Flutter google_maps_flutter_web clustering
-    (function() {
-      function initializeBridge() {
-        if (typeof markerClusterer !== 'undefined' && typeof markerClusterer.MarkerClusterer !== 'undefined') {
-          window.MarkerClusterer = markerClusterer.MarkerClusterer;
-          console.log('MarkerClusterer bridge initialized');
-        } else {
-          console.warn('MarkerClusterer not found, retrying...');
-          setTimeout(initializeBridge, 500);
-        }
-      }
-      
-      try {
-        initializeBridge();
-      } catch (e) {
-        console.error('Error initializing MarkerClusterer bridge:', e);
-      }
-    })();
-  </script>
+  <!--
+    Google Maps JS key is intentionally omitted from source control.
+    Add your production key before enabling map features:
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY"></script>
+  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

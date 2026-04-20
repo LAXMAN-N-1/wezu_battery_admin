@@ -91,6 +91,14 @@ class ApiClient {
     _refreshDio = Dio(baseOptions);
     _configureHttpAdapters();
 
+    if (kDebugMode) {
+      final resolvedBaseUrl = baseOptions.baseUrl.trim();
+      debugPrint(
+        '[ApiClient] baseUrl='
+        '${resolvedBaseUrl.isEmpty ? '(same-origin)' : resolvedBaseUrl}',
+      );
+    }
+
     dio.interceptors.add(AuthInterceptor(this));
     dio.interceptors.add(RetryInterceptor(dio: dio));
     dio.interceptors.add(ErrorFormattingInterceptor());
@@ -113,10 +121,13 @@ class ApiClient {
       defaultValue: '',
     ).trim();
     if (value.isEmpty) {
-      // On web with no explicit API_BASE_URL, use same-origin (empty string)
-      // so requests hit the nginx reverse proxy at /api/...
-      // On native platforms, fall back to the direct API URL.
-      return kIsWeb ? '' : _fallbackApiBaseUrl;
+      if (kIsWeb) {
+        // On local `flutter run -d chrome`, defaulting to localhost causes
+        // immediate timeouts unless the backend is also running locally.
+        // Keep release behavior (same-origin fallback) unchanged.
+        return kDebugMode ? _fallbackApiBaseUrl : '';
+      }
+      return _fallbackApiBaseUrl;
     }
     return value.replaceAll(RegExp(r'/+$'), '');
   }
@@ -375,7 +386,9 @@ class ApiClient {
 
     return pathLower == '/api/v1/auth/login' ||
         pathLower == '/api/v1/auth/admin/login' ||
-        pathLower == '/api/v1/auth/refresh';
+        pathLower == '/api/v1/auth/refresh' ||
+        pathLower == '/auth/token' ||
+        pathLower == '/api/v1/auth/token';
   }
 
   DioException sessionExpiredException(
@@ -425,7 +438,14 @@ class ApiClient {
     final refreshToken = sanitizeToken(
       await readAuthValue(refreshTokenStorageKey),
     );
-    if (refreshToken == null || TokenUtils.isExpired(refreshToken)) {
+    // No refresh token means there is no existing session to recover.
+    // Do not lock/cancel requests or show a forced "session expired" message.
+    if (refreshToken == null) {
+      await clearSession(notifyListeners: false);
+      return null;
+    }
+
+    if (TokenUtils.isExpired(refreshToken)) {
       cancelAllRequests(reason: 'Refresh token expired');
       await clearSession(notifyListeners: true);
       return null;
@@ -792,10 +812,7 @@ class AuthInterceptor extends Interceptor {
         _apiClient.cancelAllRequests(reason: 'Session expired');
         await _apiClient.clearSession(notifyListeners: true);
         handler.reject(
-          _apiClient.sessionExpiredException(
-            options,
-            error: 'Session expired',
-          ),
+          _apiClient.sessionExpiredException(options, error: 'Session expired'),
         );
         return;
       }

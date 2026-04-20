@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/rental_model.dart';
 import '../data/repositories/rental_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class ActiveRentalsView extends StatefulWidget {
   const ActiveRentalsView({super.key});
@@ -12,7 +13,7 @@ class ActiveRentalsView extends StatefulWidget {
   State<ActiveRentalsView> createState() => _ActiveRentalsViewState();
 }
 
-class _ActiveRentalsViewState extends State<ActiveRentalsView> {
+class _ActiveRentalsViewState extends SafeState<ActiveRentalsView> {
   final RentalRepository _repository = RentalRepository();
   List<Rental> _rentals = [];
   RentalStats? _stats;

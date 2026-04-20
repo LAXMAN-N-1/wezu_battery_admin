@@ -3,6 +3,7 @@ class KycDocument {
   final int userId;
   final String userName;
   final String userEmail;
+  final String userPhone;
   final String documentType; 
   final String? documentNumber;
   final String fileUrl;
@@ -18,6 +19,7 @@ class KycDocument {
     required this.userId,
     required this.userName,
     required this.userEmail,
+    required this.userPhone,
     required this.documentType,
     this.documentNumber,
     required this.fileUrl,
@@ -35,6 +37,7 @@ class KycDocument {
       userId: json['user_id'] as int,
       userName: defaultUserName ?? 'Unknown User',
       userEmail: defaultUserEmail ?? '',
+      userPhone: json['user_phone'] ?? '',
       documentType: json['document_type'] ?? 'unknown',
       documentNumber: json['document_number'],
       fileUrl: json['file_url'] ?? '',
@@ -48,6 +51,7 @@ class KycDocument {
     int? userId,
     String? userName,
     String? userEmail,
+    String? userPhone,
     String? documentType,
     String? documentNumber,
     String? fileUrl,
@@ -63,6 +67,7 @@ class KycDocument {
       userId: userId ?? this.userId,
       userName: userName ?? this.userName,
       userEmail: userEmail ?? this.userEmail,
+      userPhone: userPhone ?? this.userPhone,
       documentType: documentType ?? this.documentType,
       documentNumber: documentNumber ?? this.documentNumber,
       fileUrl: fileUrl ?? this.fileUrl,
@@ -83,5 +88,37 @@ class KycDocument {
       case 'address_proof': return 'Address Proof';
       default: return documentType.toUpperCase();
     }
+  }
+
+  // To maintain compatibility with older views
+  String get userNameDisplay => userName;
+  String get documentTypeDisplay => typeLabel;
+  DateTime? get verifiedAt => reviewedAt;
+  String? get rejectionReason => reviewNotes;
+}
+
+class KYCStats {
+  final int totalDocuments;
+  final int totalPending;
+  final int totalVerified;
+  final int totalRejected;
+  final int pendingUsers;
+
+  const KYCStats({
+    required this.totalDocuments,
+    required this.totalPending,
+    required this.totalVerified,
+    required this.totalRejected,
+    required this.pendingUsers,
+  });
+
+  factory KYCStats.fromJson(Map<String, dynamic> json) {
+    return KYCStats(
+      totalDocuments: json['total_documents'] ?? 0,
+      totalPending: json['total_pending'] ?? 0,
+      totalVerified: json['total_verified'] ?? 0,
+      totalRejected: json['total_rejected'] ?? 0,
+      pendingUsers: json['pending_users'] ?? 0,
+    );
   }
 }

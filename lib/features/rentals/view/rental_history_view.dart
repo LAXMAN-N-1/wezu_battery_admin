@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/rental_model.dart';
 import '../data/repositories/rental_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class RentalHistoryView extends StatefulWidget {
   const RentalHistoryView({super.key});
@@ -13,7 +14,7 @@ class RentalHistoryView extends StatefulWidget {
   State<RentalHistoryView> createState() => _RentalHistoryViewState();
 }
 
-class _RentalHistoryViewState extends State<RentalHistoryView> {
+class _RentalHistoryViewState extends SafeState<RentalHistoryView> {
   final RentalRepository _repository = RentalRepository();
   List<Rental> _history = [];
   List<Rental> _filtered = [];

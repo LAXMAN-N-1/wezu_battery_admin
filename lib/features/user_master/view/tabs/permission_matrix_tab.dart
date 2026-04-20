@@ -11,7 +11,8 @@ class PermissionMatrixTab extends ConsumerStatefulWidget {
   const PermissionMatrixTab({super.key});
 
   @override
-  ConsumerState<PermissionMatrixTab> createState() => _PermissionMatrixTabState();
+  ConsumerState<PermissionMatrixTab> createState() =>
+      _PermissionMatrixTabState();
 }
 
 class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
@@ -23,21 +24,32 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
   String _displayRoleName(String dbName) {
     return dbName
         .split('_')
-        .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+        .map(
+          (word) => word.isNotEmpty
+              ? '${word[0].toUpperCase()}${word.substring(1)}'
+              : '',
+        )
         .join(' ');
   }
 
   void _initializeMatrix(List<Role> roles, List<Map<String, dynamic>> modules) {
     if (_initialized) return;
-    
+
     for (var mRecord in modules) {
-      final m = mRecord['label'] as String? ?? mRecord['module'] as String? ?? 'Other';
+      final m =
+          mRecord['label'] as String? ??
+          mRecord['module'] as String? ??
+          'Other';
       matrix[m] = {};
-      
+      final moduleKey = (mRecord['module'] as String?) ?? m;
+
       for (var role in roles) {
         // Find if this role has any permissions in this module
-        final level = role.permissions.modules[mRecord['module']] ?? PermissionLevel.noAccess;
-        
+        final level =
+            role.permissions.modules[moduleKey] ??
+            role.permissions.modules[m] ??
+            PermissionLevel.noAccess;
+
         if (level == PermissionLevel.full) {
           matrix[m]![role.name] = 2; // Full
         } else if (level == PermissionLevel.view) {
@@ -57,17 +69,39 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
 
     return rolesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('Error loading roles: $err', style: const TextStyle(color: Color(0xFFEF4444)))),
+      error: (err, _) => Center(
+        child: Text(
+          'Error loading roles: $err',
+          style: const TextStyle(color: Color(0xFFEF4444)),
+        ),
+      ),
       data: (roles) {
         return modulesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Error loading modules: $err', style: const TextStyle(color: Color(0xFFEF4444)))),
+          error: (err, _) => Center(
+            child: Text(
+              'Error loading modules: $err',
+              style: const TextStyle(color: Color(0xFFEF4444)),
+            ),
+          ),
           data: (modules) {
             // Use up to 6 roles for display (to fit the screen)
             final displayRoles = roles.length > 6 ? roles.sublist(0, 6) : roles;
-            
-            _initializeMatrix(displayRoles, modules);
-            
+            final normalizedModules = modules.isEmpty
+                ? _buildFallbackModules(displayRoles)
+                : modules;
+
+            _initializeMatrix(displayRoles, normalizedModules);
+
+            if (normalizedModules.isEmpty) {
+              return const Center(
+                child: Text(
+                  'Permission data is currently unavailable.',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              );
+            }
+
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: AdvancedCard(
@@ -83,11 +117,21 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('System Permission Matrix', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                                Text(
+                                  'System Permission Matrix',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                                 const SizedBox(height: 4),
                                 Text(
                                   'Click on cells to toggle: None (Gray) → Read-Only (Blue) → Full Control (Green). Showing ${displayRoles.length} of ${roles.length} roles.',
-                                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ],
                             ),
@@ -97,21 +141,34 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                             onPressed: () async {
                               // Show loading
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Row(children: [CircularProgressIndicator(strokeWidth: 2), SizedBox(width: 12), Text('Saving Matrix...')])),
+                                const SnackBar(
+                                  content: Row(
+                                    children: [
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                      SizedBox(width: 12),
+                                      Text('Saving Matrix...'),
+                                    ],
+                                  ),
+                                ),
                               );
-                              
+
                               try {
                                 for (var role in displayRoles) {
                                   final List<String> roleSlugs = [];
-                                  
-                                  for (var mRecord in modules) {
-                                    final moduleLabel = mRecord['label'] as String? ?? mRecord['module'] as String? ?? 'Other';
-                                    final state = matrix[moduleLabel]?[role.name] ?? 0;
-                                    
+
+                                  for (var mRecord in normalizedModules) {
+                                    final moduleLabel =
+                                        mRecord['label'] as String? ??
+                                        mRecord['module'] as String? ??
+                                        'Other';
+                                    final state =
+                                        matrix[moduleLabel]?[role.name] ?? 0;
+
                                     if (state == 0) continue; // No access
-                                    
-                                    final perms = (mRecord['permissions'] as List? ?? []);
-                                    
+
+                                    final perms =
+                                        (mRecord['permissions'] as List? ?? []);
+
                                     if (state == 2) {
                                       // FULL Access: Add all slugs in this module
                                       for (var p in perms) {
@@ -124,48 +181,91 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                       for (var p in perms) {
                                         if (p is Map && p.containsKey('id')) {
                                           final slug = p['id'] as String;
-                                          final action = (p['action'] as String? ?? '').toLowerCase();
-                                          if (action.contains('view') || action.contains('read') || action.contains('list')) {
+                                          final action =
+                                              (p['action'] as String? ?? '')
+                                                  .toLowerCase();
+                                          if (action.contains('view') ||
+                                              action.contains('read') ||
+                                              action.contains('list')) {
                                             roleSlugs.add(slug);
                                           }
                                         }
                                       }
                                     }
                                   }
-                                  
+
                                   // Update role via repository
-                                  await ref.read(userMasterRepositoryProvider).updateRolePermissions(int.parse(role.id), roleSlugs);
+                                  if (roleSlugs.isNotEmpty) {
+                                    await ref
+                                        .read(userMasterRepositoryProvider)
+                                        .updateRolePermissions(
+                                          int.parse(role.id),
+                                          roleSlugs,
+                                        );
+                                  }
                                 }
-                                
+
                                 // Done!
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Permissions Matrix saved successfully!'), backgroundColor: Color(0xFF22C55E)),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Permissions Matrix saved successfully!',
+                                      ),
+                                      backgroundColor: Color(0xFF22C55E),
+                                    ),
                                   );
                                   // Refetch roles to update UI
                                   ref.invalidate(rolesProvider);
                                 }
                               } catch (e) {
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).clearSnackBars();
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to save matrix: $e'), backgroundColor: const Color(0xFFEF4444)),
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to save matrix: $e',
+                                      ),
+                                      backgroundColor: const Color(0xFFEF4444),
+                                    ),
                                   );
                                 }
                               }
                             },
-                            icon: const Icon(Icons.save, size: 18, color: Colors.white),
-                            label: const Text('Save Matrix', style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            icon: const Icon(
+                              Icons.save,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Save Matrix',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3B82F6),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    Divider(color: Colors.white.withValues(alpha: 0.04), height: 1),
+                    Divider(
+                      color: Colors.white.withValues(alpha: 0.04),
+                      height: 1,
+                    ),
                     // Legend
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           _legendItem(Colors.grey, 'NONE'),
@@ -177,7 +277,7 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                       ),
                     ),
                     // Build custom matrix grid instead of DataTable for consistency
-                    _buildMatrixGrid(displayRoles, modules),
+                    _buildMatrixGrid(displayRoles, normalizedModules),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -189,7 +289,26 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
     );
   }
 
-  Widget _buildMatrixGrid(List<Role> displayRoles, List<Map<String, dynamic>> modules) {
+  List<Map<String, dynamic>> _buildFallbackModules(List<Role> roles) {
+    final moduleNames = <String>{
+      for (final role in roles) ...role.permissions.modules.keys,
+    };
+    return moduleNames
+        .where((name) => name.trim().isNotEmpty)
+        .map(
+          (name) => <String, dynamic>{
+            'module': name,
+            'label': _displayRoleName(name),
+            'permissions': const <Map<String, dynamic>>[],
+          },
+        )
+        .toList();
+  }
+
+  Widget _buildMatrixGrid(
+    List<Role> displayRoles,
+    List<Map<String, dynamic>> modules,
+  ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Column(
@@ -205,18 +324,33 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
               children: [
                 SizedBox(
                   width: 180,
-                  child: Text('MODULES / FEATURES', style: TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                ),
-                ...displayRoles.map((r) => SizedBox(
-                  width: 100,
                   child: Text(
-                    _displayRoleName(r.name).toUpperCase(),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.white38, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    'MODULES / FEATURES',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white38,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                )),
+                ),
+                ...displayRoles.map(
+                  (r) => SizedBox(
+                    width: 100,
+                    child: Text(
+                      _displayRoleName(r.name).toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white38,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -225,59 +359,96 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
           ...modules.asMap().entries.map((entry) {
             final idx = entry.key;
             final mRecord = entry.value;
-            final moduleLabel = mRecord['label'] as String? ?? mRecord['module'] as String? ?? 'Other';
+            final moduleLabel =
+                mRecord['label'] as String? ??
+                mRecord['module'] as String? ??
+                'Other';
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                border: idx < modules.length - 1
-                    ? Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.04)))
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 180,
-                    child: Row(
-                      children: [
-                        const Icon(Icons.extension_outlined, size: 16, color: Colors.white38),
-                        const SizedBox(width: 8),
-                        Flexible(child: Text(moduleLabel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-                      ],
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
                   ),
-                  ...displayRoles.map((role) {
-                    final state = matrix[moduleLabel]?[role.name] ?? 0;
-                    return SizedBox(
-                      width: 100,
-                      child: Center(
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              matrix[moduleLabel]![role.name] = (state + 1) % 3;
-                            });
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            width: 80,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: _getColor(state).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _getColor(state).withValues(alpha: 0.5)),
+                  decoration: BoxDecoration(
+                    border: idx < modules.length - 1
+                        ? Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.04),
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _getLabel(state),
-                              style: TextStyle(color: _getColor(state), fontSize: 11, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 180,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.extension_outlined,
+                              size: 16,
+                              color: Colors.white38,
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                moduleLabel,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  }),
-                ],
-              ),
-            ).animate(delay: (idx * 30).ms).fadeIn(duration: 300.ms).slideX(begin: 0.03);
+                      ...displayRoles.map((role) {
+                        final state = matrix[moduleLabel]?[role.name] ?? 0;
+                        return SizedBox(
+                          width: 100,
+                          child: Center(
+                            child: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  matrix[moduleLabel]![role.name] =
+                                      (state + 1) % 3;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                width: 80,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: _getColor(
+                                    state,
+                                  ).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: _getColor(
+                                      state,
+                                    ).withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  _getLabel(state),
+                                  style: TextStyle(
+                                    color: _getColor(state),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                )
+                .animate(delay: (idx * 30).ms)
+                .fadeIn(duration: 300.ms)
+                .slideX(begin: 0.03);
           }),
         ],
       ),
@@ -297,7 +468,14 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }

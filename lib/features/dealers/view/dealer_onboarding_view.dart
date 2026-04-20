@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/dealer_application.dart';
 import '../data/repositories/dealer_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class DealerOnboardingView extends StatefulWidget {
   const DealerOnboardingView({super.key});
@@ -13,7 +14,7 @@ class DealerOnboardingView extends StatefulWidget {
   State<DealerOnboardingView> createState() => _DealerOnboardingViewState();
 }
 
-class _DealerOnboardingViewState extends State<DealerOnboardingView> {
+class _DealerOnboardingViewState extends SafeState<DealerOnboardingView> {
   final DealerRepository _repository = DealerRepository();
   List<DealerApplication> _applications = [];
   Map<String, int> _stageCounts = {};

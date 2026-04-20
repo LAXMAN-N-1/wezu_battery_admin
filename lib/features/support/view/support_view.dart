@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class SupportView extends StatefulWidget {
   const SupportView({super.key});
@@ -11,7 +12,7 @@ class SupportView extends StatefulWidget {
   State<SupportView> createState() => _SupportViewState();
 }
 
-class _SupportViewState extends State<SupportView> {
+class _SupportViewState extends SafeState<SupportView> {
   final SupportRepository _repository = SupportRepository();
   bool _isLoading = true;
   
@@ -395,7 +396,7 @@ class _TicketDetailDialog extends StatefulWidget {
   State<_TicketDetailDialog> createState() => _TicketDetailDialogState();
 }
 
-class _TicketDetailDialogState extends State<_TicketDetailDialog> {
+class _TicketDetailDialogState extends SafeState<_TicketDetailDialog> {
   TicketDetail? _ticket;
   bool _isLoading = true;
   final TextEditingController _msgController = TextEditingController();

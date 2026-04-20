@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/models/bess_models.dart';
 import '../data/repositories/bess_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BessOverviewView extends StatefulWidget {
   const BessOverviewView({super.key});
@@ -9,7 +10,7 @@ class BessOverviewView extends StatefulWidget {
   State<BessOverviewView> createState() => _BessOverviewViewState();
 }
 
-class _BessOverviewViewState extends State<BessOverviewView> {
+class _BessOverviewViewState extends SafeState<BessOverviewView> {
   final BessRepository _repo = BessRepository();
   BessOverviewStats? _stats;
   List<BessUnit> _units = [];

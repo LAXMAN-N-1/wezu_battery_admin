@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class KnowledgeBaseView extends StatefulWidget {
   const KnowledgeBaseView({super.key});
@@ -10,7 +11,7 @@ class KnowledgeBaseView extends StatefulWidget {
   State<KnowledgeBaseView> createState() => _KnowledgeBaseViewState();
 }
 
-class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
+class _KnowledgeBaseViewState extends SafeState<KnowledgeBaseView> {
   final SupportRepository _repository = SupportRepository();
   bool _isLoading = true;
   
@@ -277,7 +278,7 @@ class _ArticleFormDialog extends StatefulWidget {
   State<_ArticleFormDialog> createState() => _ArticleFormDialogState();
 }
 
-class _ArticleFormDialogState extends State<_ArticleFormDialog> {
+class _ArticleFormDialogState extends SafeState<_ArticleFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late String _question;
   late String _answer;

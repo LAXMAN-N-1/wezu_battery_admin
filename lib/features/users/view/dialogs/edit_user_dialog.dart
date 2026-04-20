@@ -103,7 +103,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
               _buildField('Address', _addressController, Icons.location_on_outlined),
               const SizedBox(height: 16),
     
-              Text('Role', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+              Text('Role', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -119,7 +119,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                       value: _availableRoles.any((r) => r.name.toLowerCase() == _selectedRole.toLowerCase()) ? _selectedRole : null,
                       isExpanded: true,
                       dropdownColor: const Color(0xFF1E293B),
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                      style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
                       hint: Text(_selectedRole, style: const TextStyle(color: Colors.white70)),
                       items: _availableRoles.map((r) => DropdownMenuItem(value: r.name, child: Text(r.name[0].toUpperCase() + r.name.substring(1)))).toList(),
                       onChanged: (v) => setState(() => _selectedRole = v!),
@@ -144,7 +144,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+                      child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -158,7 +158,7 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
                       ),
                       child: _isSubmitting
                           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : Text('Save Changes', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                          : Text('Save Changes', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
                     ),
                   ),
                 ],
@@ -174,11 +174,11 @@ class _EditUserDialogState extends ConsumerState<EditUserDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(label, style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: TextStyle(color: Colors.white, fontSize: 14),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.white38, size: 18),
             filled: true,

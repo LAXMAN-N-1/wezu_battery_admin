@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class InviteUsersDialog extends StatefulWidget {
   final Function(String email, String role) onSingleInvite;
@@ -15,8 +16,7 @@ class InviteUsersDialog extends StatefulWidget {
   State<InviteUsersDialog> createState() => _InviteUsersDialogState();
 }
 
-class _InviteUsersDialogState extends State<InviteUsersDialog>
-    with SingleTickerProviderStateMixin {
+class _InviteUsersDialogState extends SafeState<InviteUsersDialog> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _emailController = TextEditingController();
   final _bulkCsvController = TextEditingController();
@@ -60,7 +60,10 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
     for (var line in lines) {
       final parts = line.split(',');
       if (parts.length >= 2) {
-        invites.add({'email': parts[0].trim(), 'role_name': parts[1].trim()});
+        invites.add({
+          'email': parts[0].trim(),
+          'role_name': parts[1].trim(),
+        });
       }
     }
     return invites;
@@ -73,22 +76,17 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 16 : 40,
-        vertical: 24,
-      ),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 40, vertical: 24),
       child: Container(
         width: 500,
         constraints: BoxConstraints(maxHeight: size.height * 0.9),
         decoration: BoxDecoration(
-          color: const Color(
-            0xFF1E293B,
-          ), // Matches menus and snackbars in users_view.dart
+          color: const Color(0xFF1E293B), // Matches menus and snackbars in users_view.dart
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withOpacity(0.5),
               blurRadius: 40,
               offset: const Offset(0, 20),
             ),
@@ -105,14 +103,10 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
+                      color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.mail_outline,
-                      color: Colors.green,
-                      size: 24,
-                    ),
+                    child: const Icon(Icons.mail_outline, color: Colors.green, size: 24),
                   ),
                   const SizedBox(width: 16),
                   Text(
@@ -126,11 +120,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white54,
-                      size: 20,
-                    ),
+                    icon: const Icon(Icons.close, color: Colors.white54, size: 20),
                     splashRadius: 24,
                   ),
                 ],
@@ -143,25 +133,20 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
               child: Container(
                 height: 52,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
-                    color: Colors.blue.withValues(
-                      alpha: 0.2,
-                    ), // Matches tab indicator in users_view.dart
+                    color: Colors.blue.withOpacity(0.2), // Matches tab indicator in users_view.dart
                     borderRadius: BorderRadius.circular(12),
                   ),
                   indicatorPadding: const EdgeInsets.all(6),
                   dividerColor: Colors.transparent,
                   labelColor: Colors.blue,
                   unselectedLabelColor: Colors.white54,
-                  labelStyle: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                  labelStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14),
                   tabs: const [
                     Tab(text: 'Single Invite'),
                     Tab(text: 'Bulk CSV Import'),
@@ -200,18 +185,11 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          side: BorderSide(color: Colors.white.withOpacity(0.1)),
                           foregroundColor: Colors.white70,
                         ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
+                        child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w500)),
                       ),
                     ),
                   ),
@@ -222,30 +200,14 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSendInvite,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.green, // Standard green for action
+                          backgroundColor: Colors.green, // Standard green for action
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
                         child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                'Send Invite',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 16,
-                                ),
-                              ),
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : Text('Send Invite', style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16)),
                       ),
                     ),
                   ),
@@ -272,11 +234,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
         const SizedBox(height: 20),
         Text(
           'Role',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white70,
-            fontWeight: FontWeight.w500,
-          ),
+          style: GoogleFonts.inter(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
         _buildRoleDropdown(),
@@ -296,35 +254,17 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.file_upload_outlined,
-                    color: Colors.white54,
-                    size: 32,
-                  ),
+                  const Icon(Icons.file_upload_outlined, color: Colors.white54, size: 32),
                   const SizedBox(height: 8),
-                  Text(
-                    'CSV Format',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  Text(
-                    'email, role',
-                    style: GoogleFonts.jetBrainsMono(
-                      color: Colors.green,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('CSV Format', style: GoogleFonts.inter(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text('email, role', style: GoogleFonts.jetBrainsMono(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -333,11 +273,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
         const SizedBox(height: 20),
         Text(
           'Paste CSV data:',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white70,
-            fontWeight: FontWeight.w500,
-          ),
+          style: GoogleFonts.inter(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
         Expanded(
@@ -349,25 +285,16 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
             style: GoogleFonts.jetBrainsMono(color: Colors.white, fontSize: 13),
             decoration: InputDecoration(
               hintText: 'user1@email.com, customer\nuser2@email.com, driver',
-              hintStyle: GoogleFonts.jetBrainsMono(
-                color: Colors.white24,
-                fontSize: 13,
-              ),
+              hintStyle: GoogleFonts.jetBrainsMono(color: Colors.white24, fontSize: 13),
               filled: true,
-              fillColor: Colors.white.withValues(
-                alpha: 0.05,
-              ), // Consistent with cards/inputs in users_view.dart
+              fillColor: Colors.white.withOpacity(0.05), // Consistent with cards/inputs in users_view.dart
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.1),
-                ),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -392,26 +319,20 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
       children: [
         TextField(
           controller: controller,
-          style: TextStyle(color: Colors.white, fontSize: 15),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.white38, size: 20),
             hintText: label,
-            hintStyle: TextStyle(color: Colors.white38, fontSize: 15),
+            hintStyle: GoogleFonts.inter(color: Colors.white38, fontSize: 15),
             filled: true,
-            fillColor: Colors.white.withValues(
-              alpha: 0.05,
-            ), // Consistent with search in users_view.dart
+            fillColor: Colors.white.withOpacity(0.05), // Consistent with search in users_view.dart
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -428,9 +349,9 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -438,7 +359,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
           dropdownColor: const Color(0xFF1E293B),
           icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white38),
           isExpanded: true,
-          style: TextStyle(color: Colors.white, fontSize: 15),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
           items: const [
             DropdownMenuItem(value: 'customer', child: Text('Customer')),
             DropdownMenuItem(value: 'driver', child: Text('Driver')),
@@ -457,9 +378,9 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.05),
+        color: Colors.blue.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.blue.withOpacity(0.1)),
       ),
       child: Row(
         children: [
@@ -467,11 +388,7 @@ class _InviteUsersDialogState extends State<InviteUsersDialog>
           const SizedBox(width: 12),
           Text(
             text,
-            style: TextStyle(
-              color: Colors.blue,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+            style: GoogleFonts.inter(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.w500),
           ),
         ],
       ),

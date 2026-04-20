@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class SuspendUserDialog extends StatefulWidget {
   final String userName;
-  final Function(String reason, String? notes, int? durationDays) onSubmit;
+  final Future<void> Function(String reason, String? notes, int? durationDays) onSubmit;
 
   const SuspendUserDialog({super.key, required this.userName, required this.onSubmit});
 
@@ -11,7 +12,7 @@ class SuspendUserDialog extends StatefulWidget {
   State<SuspendUserDialog> createState() => _SuspendUserDialogState();
 }
 
-class _SuspendUserDialogState extends State<SuspendUserDialog> {
+class _SuspendUserDialogState extends SafeState<SuspendUserDialog> {
   String _reason = 'policy_violation';
   final _notesController = TextEditingController();
   int? _durationDays = 7;
@@ -49,7 +50,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Suspend Account', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text(widget.userName, style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      Text(widget.userName, style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -73,7 +74,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                   Expanded(
                     child: Text(
                       'This will immediately prevent the user from logging in and using any services.',
-                      style: TextStyle(color: Colors.red.shade300, fontSize: 12),
+                      style: GoogleFonts.inter(color: Colors.red.shade300, fontSize: 12),
                     ),
                   ),
                 ],
@@ -81,7 +82,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
             ),
             const SizedBox(height: 20),
 
-            Text('Reason', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+            Text('Reason', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -95,7 +96,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                   value: _reason,
                   isExpanded: true,
                   dropdownColor: const Color(0xFF1E293B),
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
                   items: const [
                     DropdownMenuItem(value: 'fraud', child: Text('Fraud')),
                     DropdownMenuItem(value: 'non_compliance', child: Text('Non-Compliance')),
@@ -111,7 +112,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
 
             Row(
               children: [
-                Text('Duration', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                Text('Duration', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
                 const Spacer(),
                 Row(
                   children: [
@@ -128,7 +129,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                       activeColor: Colors.red,
                       side: const BorderSide(color: Colors.white38),
                     ),
-                    Text('Indefinite', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    Text('Indefinite', style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
                   ],
                 ),
               ],
@@ -147,7 +148,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                     value: _durationDays,
                     isExpanded: true,
                     dropdownColor: const Color(0xFF1E293B),
-                    style: TextStyle(color: Colors.white, fontSize: 14),
+                    style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
                     items: const [
                       DropdownMenuItem(value: 1, child: Text('1 day')),
                       DropdownMenuItem(value: 3, child: Text('3 days')),
@@ -162,15 +163,15 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
               ),
             const SizedBox(height: 16),
 
-            Text('Notes (optional)', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+            Text('Notes (optional)', style: GoogleFonts.inter(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
             TextField(
               controller: _notesController,
               maxLines: 3,
-              style: TextStyle(color: Colors.white, fontSize: 14),
+              style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Add any additional notes...',
-                hintStyle: TextStyle(color: Colors.white24),
+                hintStyle: GoogleFonts.inter(color: Colors.white24),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
@@ -190,7 +191,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text('Cancel', style: TextStyle(color: Colors.white70)),
+                    child: Text('Cancel', style: GoogleFonts.inter(color: Colors.white70)),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -204,7 +205,7 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
                     ),
                     child: _isSubmitting
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Suspend Account', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                        : Text('Suspend Account', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -217,8 +218,14 @@ class _SuspendUserDialogState extends State<SuspendUserDialog> {
 
   void _submit() async {
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    widget.onSubmit(_reason, _notesController.text.isEmpty ? null : _notesController.text, _durationDays);
-    if (mounted) Navigator.pop(context);
+    
+    try {
+      await widget.onSubmit(_reason, _notesController.text.isEmpty ? null : _notesController.text, _durationDays);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }

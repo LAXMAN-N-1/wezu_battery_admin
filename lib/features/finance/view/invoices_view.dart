@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/finance_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class InvoicesView extends StatefulWidget {
   const InvoicesView({super.key});
@@ -11,7 +12,7 @@ class InvoicesView extends StatefulWidget {
   State<InvoicesView> createState() => _InvoicesViewState();
 }
 
-class _InvoicesViewState extends State<InvoicesView> {
+class _InvoicesViewState extends SafeState<InvoicesView> {
   final FinanceRepository _repo = FinanceRepository();
   bool _isLoading = true;
   Map<String, dynamic> _stats = {};

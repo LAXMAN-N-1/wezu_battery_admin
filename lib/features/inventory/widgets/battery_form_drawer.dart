@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../data/models/battery.dart';
 import '../data/repositories/inventory_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BatteryFormDrawer extends StatefulWidget {
   final Battery? battery;
@@ -15,7 +16,7 @@ class BatteryFormDrawer extends StatefulWidget {
   State<BatteryFormDrawer> createState() => _BatteryFormDrawerState();
 }
 
-class _BatteryFormDrawerState extends State<BatteryFormDrawer> {
+class _BatteryFormDrawerState extends SafeState<BatteryFormDrawer> {
   final InventoryRepository _repository = InventoryRepository();
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;

@@ -7,6 +7,7 @@ import '../data/providers/station_status_provider.dart';
 import '../data/providers/stations_provider.dart';
 import '../data/providers/station_details_provider.dart';
 import 'station_performance_view.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 // -------------------------------------------------------
 // Filter type
@@ -425,7 +426,7 @@ class _LivePulse extends StatefulWidget {
   State<_LivePulse> createState() => _LivePulseState();
 }
 
-class _LivePulseState extends State<_LivePulse>
+class _LivePulseState extends SafeState<_LivePulse>
     with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
@@ -497,7 +498,7 @@ class _StatusCard extends StatefulWidget {
   State<_StatusCard> createState() => _StatusCardState();
 }
 
-class _StatusCardState extends State<_StatusCard>
+class _StatusCardState extends SafeState<_StatusCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late Animation<double> _pulse;
@@ -1339,7 +1340,7 @@ class _MaintenanceDialog extends StatefulWidget {
   State<_MaintenanceDialog> createState() => _MaintenanceDialogState();
 }
 
-class _MaintenanceDialogState extends State<_MaintenanceDialog> {
+class _MaintenanceDialogState extends SafeState<_MaintenanceDialog> {
   DateTime _start = DateTime.now().add(const Duration(hours: 1));
   DateTime _end = DateTime.now().add(const Duration(hours: 3));
   String _type = 'Routine';

@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/api/api_client.dart';
+import '../../../core/api/api_client.dart';
 import '../../../core/widgets/api_error_handler.dart';
 
-final authProvider = StateNotifierProvider.autoDispose<AuthNotifier, AuthState>((ref) {
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
 });
 
@@ -51,72 +51,42 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   static const _adminRoles = <String>{'admin', 'super_admin', 'superadmin'};
 
-  bool _isSessionInvalidError(DioException error) {
-    return _apiClient.isLikelyAuthFailure(error);
-  }
-
   Future<void> _checkStatus() async {
-    final token = await _apiClient.getValidAccessToken();
+    final token = await _apiClient.getValidAccessToken(allowRefresh: false);
 
-    if (token == null || token.isEmpty) {
+    if (token != null && token.isNotEmpty) {
+      final user = await _resolveSignedInUserContext(null);
       state = state.copyWith(
         isLoading: false,
-        isAuthenticated: false,
+        isAuthenticated: true,
+        user: user,
         error: null,
-        user: null,
       );
       return;
     }
 
-    // Optimistic auth when token exists. We only drop session on explicit
-    // token/auth failures; transient backend/network failures should not log
-    // out an otherwise valid user.
-    state = state.copyWith(
-      isLoading: false,
-      isAuthenticated: true,
-      error: null,
-    );
-
-    try {
-      final currentUser = await _fetchCurrentAdminUser();
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        error: null,
-        user: currentUser,
-      );
-    } on _AuthFailure {
-      await _apiClient.clearSession(notifyListeners: false);
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: false,
-        error: null,
-        user: null,
-      );
-    } on DioException catch (e) {
-      if (_isSessionInvalidError(e)) {
-        await _apiClient.clearSession(notifyListeners: false);
+    // Only attempt refresh when an active refresh token exists. This avoids
+    // startup race conditions that can cancel login requests for fresh users.
+    if (await _apiClient.hasActiveRefreshToken()) {
+      final refreshedToken = await _apiClient.refreshAccessToken();
+      if (refreshedToken != null && refreshedToken.isNotEmpty) {
+        final user = await _resolveSignedInUserContext(null);
         state = state.copyWith(
           isLoading: false,
-          isAuthenticated: false,
+          isAuthenticated: true,
+          user: user,
           error: null,
-          user: null,
         );
         return;
       }
-
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        error: null,
-      );
-    } catch (_) {
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        error: null,
-      );
     }
+
+    state = state.copyWith(
+      isLoading: false,
+      isAuthenticated: false,
+      user: null,
+      error: null,
+    );
   }
 
   Future<void> _onSessionExpired() async {
@@ -146,19 +116,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  void clearError() {
-    if (state.error != null) {
-      state = state.copyWith(error: null);
-    }
-  }
-
   Future<void> login(String credential, String password) async {
     state = state.copyWith(isLoading: true, error: null);
 
-    final normalizedCredential = credential.trim();
-    final rawPassword = password;
+    _apiClient.unlockSession();
 
-    if (normalizedCredential.isEmpty || rawPassword.isEmpty) {
+    final normalizedCredential = credential.trim();
+    final normalizedPassword = password.trim();
+
+    if (normalizedCredential.isEmpty || normalizedPassword.isEmpty) {
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: false,
@@ -169,35 +135,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     try {
-      // Unlock the API client so login requests can flow (the previous session
-      // may have been locked after a 401).
-      _apiClient.unlockSession();
-
-      final result = await _authenticate(normalizedCredential, rawPassword);
+      final result = await _authenticate(
+        normalizedCredential,
+        normalizedPassword,
+      );
       await _persistSession(result);
-
-      Map<String, dynamic>? currentUser = result.user;
-      try {
-        currentUser = await _fetchCurrentAdminUser();
-      } on _AuthFailure {
-        await _apiClient.clearSession(notifyListeners: false);
-        rethrow;
-      } on DioException catch (e) {
-        if (_isSessionInvalidError(e)) {
-          await _apiClient.clearSession(notifyListeners: false);
-          rethrow;
-        }
-
-        // Continue login flow with parsed user payload if current-user probe
-        // fails due transient connectivity/server issues.
-        debugPrint('[Auth] /users/me check skipped after login: $e');
-      }
+      final hydratedUser = await _resolveSignedInUserContext(result.user);
 
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
         error: null,
-        user: currentUser,
+        user: hydratedUser,
       );
     } on _AuthFailure catch (e) {
       state = state.copyWith(
@@ -240,44 +189,62 @@ class AuthNotifier extends StateNotifier<AuthState> {
             String path,
             Map<String, dynamic> payload,
             bool allowAdminRoleRetry,
+            bool isFormEncoded,
           })
         >[
           (
-            path: '/api/v1/auth/admin/login',
-            payload: {'username': credential, 'password': password},
+            path: '/api/v1/auth/token',
+            payload: {
+              'username': credential,
+              'password': password,
+              'grant_type': 'password',
+            },
             allowAdminRoleRetry: false,
-          ),
-          (
-            path: '/api/v1/auth/admin/login',
-            payload: {'email': credential, 'password': password},
-            allowAdminRoleRetry: false,
-          ),
-          (
-            path: '/api/v1/auth/admin/login',
-            payload: {'credential': credential, 'password': password},
-            allowAdminRoleRetry: false,
-          ),
-          (
-            path: '/api/v1/auth/login',
-            payload: {'credential': credential, 'password': password},
-            allowAdminRoleRetry: true,
+            isFormEncoded: true,
           ),
           (
             path: '/api/v1/auth/login',
             payload: {'username': credential, 'password': password},
             allowAdminRoleRetry: true,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/admin/login',
+            payload: {'username': credential, 'password': password},
+            allowAdminRoleRetry: false,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/admin/login',
+            payload: {'email': credential, 'password': password},
+            allowAdminRoleRetry: false,
+            isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/login',
+            payload: {'credential': credential, 'password': password},
+            allowAdminRoleRetry: true,
+            isFormEncoded: false,
           ),
           (
             path: '/api/v1/auth/login',
             payload: {'email': credential, 'password': password},
             allowAdminRoleRetry: true,
+            isFormEncoded: false,
           ),
         ];
 
     DioException? lastError;
+    var transportFailureAttempts = 0;
 
     for (final attempt in attempts) {
       try {
+        if (attempt.isFormEncoded) {
+          return await _loginWithForm(
+            path: attempt.path,
+            payload: attempt.payload,
+          );
+        }
         return await _loginWithJson(
           path: attempt.path,
           payload: attempt.payload,
@@ -285,6 +252,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
         );
       } on DioException catch (e) {
         _logLoginFailure(e, endpoint: attempt.path);
+        if (e.response == null &&
+            (e.type == DioExceptionType.connectionError ||
+                e.type == DioExceptionType.connectionTimeout ||
+                e.type == DioExceptionType.receiveTimeout ||
+                e.type == DioExceptionType.sendTimeout)) {
+          transportFailureAttempts += 1;
+          if (transportFailureAttempts >= 2) {
+            lastError = e;
+            break;
+          }
+        }
         if (_shouldTryNextEndpoint(e)) {
           lastError = e;
           continue;
@@ -298,6 +276,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     throw const _AuthFailure('Unable to sign in right now. Please try again.');
+  }
+
+  Future<_AuthResult> _loginWithForm({
+    required String path,
+    required Map<String, dynamic> payload,
+  }) async {
+    final response = await _apiClient.post(
+      path,
+      data: payload,
+      options: Options(contentType: Headers.formUrlEncodedContentType),
+    );
+
+    return _parseAuthResponse(
+      response: response,
+      path: path,
+      payload: payload,
+      allowAdminRoleRetry: false,
+    );
   }
 
   Future<_AuthResult> _loginWithJson({
@@ -395,9 +391,73 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  Future<Map<String, dynamic>?> _resolveSignedInUserContext(
+    Map<String, dynamic>? loginUser,
+  ) async {
+    final profile = await _fetchCurrentUserProfile();
+    final merged = <String, dynamic>{
+      if (loginUser != null) ...loginUser,
+      if (profile != null) ...profile,
+    };
+
+    if (merged.isEmpty) {
+      // Keep admin navigation stable even if profile hydration fails
+      // transiently (for example short network interruptions).
+      return _fallbackUserContext(loginUser ?? const {'current_role': 'admin'});
+    }
+
+    return _fallbackUserContext(merged);
+  }
+
+  Future<Map<String, dynamic>?> _fetchCurrentUserProfile() async {
+    try {
+      final response = await _apiClient.get('/api/v1/users/me');
+      final data = _normalizeResponseData(response.data);
+      if (data.isEmpty) {
+        return null;
+      }
+      return data;
+    } on DioException catch (e) {
+      debugPrint('[Auth] current-user fetch skipped: $e');
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic>? _fallbackUserContext(Map<String, dynamic>? user) {
+    if (user == null) {
+      return null;
+    }
+
+    final normalized = <String, dynamic>{...user};
+    final role = normalized['current_role'] ?? normalized['role'];
+    if (role == null) {
+      // /api/v1/auth/admin/login may return minimal user fields; this keeps
+      // role-gated navigation visible until /users/me is fetched next.
+      normalized['current_role'] = 'admin';
+    } else if (normalized['current_role'] == null) {
+      if (role is String) {
+        normalized['current_role'] = role;
+      } else if (role is Map) {
+        final roleName = role['name'];
+        if (roleName is String && roleName.trim().isNotEmpty) {
+          normalized['current_role'] = roleName.trim();
+        }
+      }
+    }
+
+    return normalized;
+  }
+
   bool _shouldTryNextEndpoint(DioException error) {
+    if (error.response == null) {
+      return true;
+    }
+
     final statusCode = error.response?.statusCode;
-    return statusCode == 404 ||
+    return statusCode == 401 ||
+        statusCode == 404 ||
         statusCode == 405 ||
         statusCode == 415 ||
         statusCode == 422 ||
@@ -415,8 +475,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void _logLoginFailure(DioException error, {required String endpoint}) {
     final statusCode = error.response?.statusCode;
     final responseData = error.response?.data;
+    final errorType = error.type;
     debugPrint(
-      '[Auth] login failed endpoint=$endpoint statusCode=$statusCode responseData=$responseData',
+      '[Auth] login failed endpoint=$endpoint errorType=$errorType statusCode=$statusCode responseData=$responseData',
     );
   }
 
@@ -446,52 +507,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return null;
   }
 
-  Future<Map<String, dynamic>> _fetchCurrentAdminUser() async {
-    final response = await _apiClient.get('/api/v1/users/me');
-    final data = _normalizeResponseData(response.data);
-    _ensureCurrentSessionHasAdminAccess(data);
-    return data;
-  }
-
-  void _ensureCurrentSessionHasAdminAccess(Map<String, dynamic> data) {
-    final currentRole = _extractCurrentRole(data);
-    final roles = _extractRoles(data);
-    final userType = _extractUserType(data);
-
-    if (_isSuperuser(data) ||
-        (currentRole != null && _isAdminRole(currentRole)) ||
-        (userType != null && _isAdminRole(userType)) ||
-        roles.any(_isAdminRole)) {
-      return;
-    }
-
-    throw const _AuthFailure('This account does not have admin access.');
-  }
-
-  String? _extractUserType(Map<String, dynamic> data) {
-    final userType = data['user_type'];
-    if (userType is String && userType.trim().isNotEmpty) {
-      return userType.trim();
-    }
-
-    final user = _extractUser(data);
-    final nestedUserType = user?['user_type'];
-    if (nestedUserType is String && nestedUserType.trim().isNotEmpty) {
-      return nestedUserType.trim();
-    }
-
-    return null;
-  }
-
-  bool _isSuperuser(Map<String, dynamic> data) {
-    if (data['is_superuser'] == true || data['isSuperuser'] == true) {
-      return true;
-    }
-
-    final user = _extractUser(data);
-    return user?['is_superuser'] == true || user?['isSuperuser'] == true;
-  }
-
   List<String> _extractRoles(Map<String, dynamic> data) {
     final roles = <String>{};
 
@@ -504,7 +519,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (value is Map) {
         addRole(value['name']);
         addRole(value['role']);
-        addRole(value['current_role']);
         addRole(value['user_type']);
         return;
       }
@@ -517,14 +531,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     addRole(data['role']);
-    addRole(data['current_role']);
     addRole(data['available_roles']);
 
-    final user = _extractUser(data);
-    if (user != null) {
+    final user = data['user'];
+    if (user is Map) {
       addRole(user['role']);
       addRole(user['roles']);
-      addRole(user['current_role']);
       addRole(user['user_type']);
     }
 
@@ -542,23 +554,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   String? _extractCurrentRole(Map<String, dynamic> data) {
-    final currentRole = data['current_role'];
-    if (currentRole is String && currentRole.trim().isNotEmpty) {
-      return currentRole.trim();
-    }
-
     final role = data['role'];
     if (role is String && role.trim().isNotEmpty) {
       return role.trim();
     }
 
-    final user = _extractUser(data);
-    if (user != null) {
-      final userCurrentRole = user['current_role'];
-      if (userCurrentRole is String && userCurrentRole.trim().isNotEmpty) {
-        return userCurrentRole.trim();
-      }
-
+    final user = data['user'];
+    if (user is Map) {
       final userRole = user['role'];
       if (userRole is String && userRole.trim().isNotEmpty) {
         return userRole.trim();

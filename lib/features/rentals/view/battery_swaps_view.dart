@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/swap_model.dart';
 import '../data/repositories/rental_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BatterySwapsView extends StatefulWidget {
   const BatterySwapsView({super.key});
@@ -13,7 +14,7 @@ class BatterySwapsView extends StatefulWidget {
   State<BatterySwapsView> createState() => _BatterySwapsViewState();
 }
 
-class _BatterySwapsViewState extends State<BatterySwapsView> {
+class _BatterySwapsViewState extends SafeState<BatterySwapsView> {
   final RentalRepository _repository = RentalRepository();
   List<SwapSession> _swaps = [];
   bool _isLoading = true;

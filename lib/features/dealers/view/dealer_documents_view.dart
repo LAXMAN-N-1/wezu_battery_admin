@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/dealer_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class DealerDocumentsView extends StatefulWidget {
   const DealerDocumentsView({super.key});
@@ -12,7 +13,7 @@ class DealerDocumentsView extends StatefulWidget {
   State<DealerDocumentsView> createState() => _DealerDocumentsViewState();
 }
 
-class _DealerDocumentsViewState extends State<DealerDocumentsView> {
+class _DealerDocumentsViewState extends SafeState<DealerDocumentsView> {
   final DealerRepository _repository = DealerRepository();
   List<Map<String, dynamic>> _documents = [];
   List<Map<String, dynamic>> _filtered = [];

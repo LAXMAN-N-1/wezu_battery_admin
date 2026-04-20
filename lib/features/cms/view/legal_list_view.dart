@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/models/legal_document.dart';
 import '../data/repositories/legal_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class LegalListView extends StatefulWidget {
   const LegalListView({super.key});
@@ -10,7 +11,7 @@ class LegalListView extends StatefulWidget {
   State<LegalListView> createState() => _LegalListViewState();
 }
 
-class _LegalListViewState extends State<LegalListView> {
+class _LegalListViewState extends SafeState<LegalListView> {
   final LegalRepository _repository = LegalRepository();
   List<LegalDocument> _documents = [];
   bool _isLoading = true;

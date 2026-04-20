@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/station.dart';
 import '../data/repositories/station_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class StationPerformanceView extends StatefulWidget {
   const StationPerformanceView({super.key});
@@ -12,7 +13,7 @@ class StationPerformanceView extends StatefulWidget {
   State<StationPerformanceView> createState() => _StationPerformanceViewState();
 }
 
-class _StationPerformanceViewState extends State<StationPerformanceView> {
+class _StationPerformanceViewState extends SafeState<StationPerformanceView> {
   final StationRepository _repository = StationRepository();
   List<StationPerformanceSummary> _stations = [];
   Map<String, dynamic> _summary = {};

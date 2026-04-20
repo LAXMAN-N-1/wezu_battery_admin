@@ -12,6 +12,7 @@ import '../widgets/battery_detail_drawer.dart';
 import '../widgets/battery_import_modal.dart';
 import '../widgets/battery_qr_modal.dart';
 import '../../../core/widgets/wezu_skeleton.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class BatteriesView extends StatefulWidget {
   const BatteriesView({super.key});
@@ -20,7 +21,7 @@ class BatteriesView extends StatefulWidget {
   State<BatteriesView> createState() => _BatteriesViewState();
 }
 
-class _BatteriesViewState extends State<BatteriesView>
+class _BatteriesViewState extends SafeState<BatteriesView>
     with TickerProviderStateMixin {
   final InventoryRepository _repository = InventoryRepository();
   List<Battery> _batteries = [];

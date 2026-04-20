@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/maintenance_model.dart';
 import '../data/repositories/maintenance_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class StationMaintenanceView extends StatefulWidget {
   const StationMaintenanceView({super.key});
@@ -13,7 +14,7 @@ class StationMaintenanceView extends StatefulWidget {
   State<StationMaintenanceView> createState() => _StationMaintenanceViewState();
 }
 
-class _StationMaintenanceViewState extends State<StationMaintenanceView> {
+class _StationMaintenanceViewState extends SafeState<StationMaintenanceView> {
   final MaintenanceRepository _repository = MaintenanceRepository();
   List<MaintenanceRecord> _records = [];
   List<MaintenanceRecord> _filteredRecords = [];

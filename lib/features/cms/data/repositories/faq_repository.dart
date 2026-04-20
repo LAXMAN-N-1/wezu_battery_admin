@@ -2,21 +2,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/api/api_client.dart';
 import '../models/faq.dart';
 
-final faqRepositoryProvider = Provider<FaqRepository>((ref) {
-  return FaqRepository(ref.read(apiClientProvider));
+final faqRepositoryProvider = Provider<FAQRepository>((ref) {
+  return FAQRepository(ref.read(apiClientProvider));
 });
 
-class FaqRepository {
+class FAQRepository {
   final ApiClient _apiClient;
 
-  FaqRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
+  FAQRepository([ApiClient? apiClient]) : _apiClient = apiClient ?? ApiClient();
 
-  Future<List<FAQ>> getFaqs({String? category, String? q}) async {
+  static const String _basePath = '/api/v1/admin/cms/faqs';
+
+  Future<List<FAQ>> getFaqs({String? category, bool? isActive, String? search, int skip = 0, int limit = 100}) async {
     final response = await _apiClient.get(
-      '/api/v1/faqs',
+      '$_basePath/',
       queryParameters: {
         if (category != null) 'category': category,
-        if (q != null) 'q': q,
+        if (isActive != null) 'is_active': isActive,
+        if (search != null && search.isNotEmpty) 'q': search,
+        'skip': skip,
+        'limit': limit,
       },
     );
     return (response.data as List).map((e) => FAQ.fromJson(e)).toList();
@@ -24,21 +29,21 @@ class FaqRepository {
 
   Future<FAQ> createFaq(FAQ faq) async {
     final response = await _apiClient.post(
-      '/api/v1/admin/cms/faqs/',
+      '$_basePath/',
       data: faq.toJson(),
     );
     return FAQ.fromJson(response.data);
   }
 
-  Future<FAQ> updateFaq(int id, Map<String, dynamic> data) async {
+  Future<FAQ> updateFaq(int id, FAQ faq) async {
     final response = await _apiClient.put(
-      '/api/v1/admin/cms/faqs/$id',
-      data: data,
+      '$_basePath/$id',
+      data: faq.toJson(),
     );
     return FAQ.fromJson(response.data);
   }
 
   Future<void> deleteFaq(int id) async {
-    await _apiClient.delete('/api/v1/admin/cms/faqs/$id');
+    await _apiClient.delete('$_basePath/$id');
   }
 }

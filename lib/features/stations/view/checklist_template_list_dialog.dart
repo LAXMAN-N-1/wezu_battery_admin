@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/models/maintenance_checklist.dart';
 import '../data/providers/checklist_provider.dart';
 import 'checklist_template_dialog.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class ChecklistTemplateListDialog extends ConsumerStatefulWidget {
   const ChecklistTemplateListDialog({super.key});
@@ -269,7 +270,7 @@ class _TemplateCard extends StatefulWidget {
   State<_TemplateCard> createState() => _TemplateCardState();
 }
 
-class _TemplateCardState extends State<_TemplateCard> {
+class _TemplateCardState extends SafeState<_TemplateCard> {
   bool _isExpanded = false;
 
   @override
@@ -398,7 +399,7 @@ class _SubmissionCard extends StatefulWidget {
   State<_SubmissionCard> createState() => _SubmissionCardState();
 }
 
-class _SubmissionCardState extends State<_SubmissionCard> {
+class _SubmissionCardState extends SafeState<_SubmissionCard> {
   bool _isExpanded = false;
 
   @override

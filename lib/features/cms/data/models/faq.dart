@@ -6,8 +6,10 @@ class FAQ {
   final bool isActive;
   final int helpfulCount;
   final int notHelpfulCount;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final List<String> targetAudience;
+  final int displayOrder;
 
   FAQ({
     required this.id,
@@ -17,22 +19,40 @@ class FAQ {
     required this.isActive,
     required this.helpfulCount,
     required this.notHelpfulCount,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
+    this.targetAudience = const ['All Users'],
+    this.displayOrder = 0,
   });
 
   factory FAQ.fromJson(Map<String, dynamic> json) {
     return FAQ(
-      id: json['id'],
-      question: json['question'],
-      answer: json['answer'],
-      category: json['category'] ?? 'general',
-      isActive: json['is_active'] ?? true,
-      helpfulCount: json['helpful_count'] ?? 0,
-      notHelpfulCount: json['not_helpful_count'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      id: json['id'] as int,
+      question: json['question'] as String,
+      answer: json['answer'] as String,
+      category: json['category'] as String? ?? 'general',
+      isActive: json['is_active'] as bool? ?? true,
+      helpfulCount: json['helpful_count'] as int? ?? 0,
+      notHelpfulCount: json['not_helpful_count'] as int? ?? 0,
+      createdAt: _parseDateTime(json['created_at'] ?? json['createdAt']),
+      updatedAt: _parseDateTime(json['updated_at'] ?? json['updatedAt']),
+      targetAudience:
+          (json['target_audience'] as List?)
+              ?.map((e) => e as String)
+              .toList() ??
+          ['All Users'],
+      displayOrder: json['display_order'] as int? ?? 0,
     );
+  }
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      return DateTime.tryParse(value.trim());
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -41,6 +61,36 @@ class FAQ {
       'answer': answer,
       'category': category,
       'is_active': isActive,
+      'target_audience': targetAudience,
+      'display_order': displayOrder,
     };
+  }
+
+  FAQ copyWith({
+    int? id,
+    String? question,
+    String? answer,
+    String? category,
+    bool? isActive,
+    int? helpfulCount,
+    int? notHelpfulCount,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<String>? targetAudience,
+    int? displayOrder,
+  }) {
+    return FAQ(
+      id: id ?? this.id,
+      question: question ?? this.question,
+      answer: answer ?? this.answer,
+      category: category ?? this.category,
+      isActive: isActive ?? this.isActive,
+      helpfulCount: helpfulCount ?? this.helpfulCount,
+      notHelpfulCount: notHelpfulCount ?? this.notHelpfulCount,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      targetAudience: targetAudience ?? this.targetAudience,
+      displayOrder: displayOrder ?? this.displayOrder,
+    );
   }
 }

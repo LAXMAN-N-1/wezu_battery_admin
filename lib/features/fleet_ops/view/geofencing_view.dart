@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/geofence_model.dart';
 import '../data/repositories/fleet_ops_repository.dart';
+import 'package:frontend_admin/core/utils/safe_state.dart';
 
 class GeofencingView extends StatefulWidget {
   const GeofencingView({super.key});
@@ -12,7 +13,7 @@ class GeofencingView extends StatefulWidget {
   State<GeofencingView> createState() => _GeofencingViewState();
 }
 
-class _GeofencingViewState extends State<GeofencingView> {
+class _GeofencingViewState extends SafeState<GeofencingView> {
   final FleetOpsRepository _repository = FleetOpsRepository();
   List<Geofence> _geofences = [];
   bool _isLoading = true;

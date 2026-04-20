@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/widgets/session_expired_overlay.dart';
@@ -17,6 +18,11 @@ import '../features/cms/view/blog_management_view.dart';
 import '../features/cms/view/faq_management_view.dart';
 import '../features/cms/view/banner_management_view.dart';
 import '../features/cms/view/legal_docs_view.dart';
+import '../features/cms/view/banner_editor_view.dart';
+import '../features/cms/view/blog_editor_view.dart';
+import '../features/cms/view/legal_editor_view.dart';
+import '../features/cms/data/models/banner.dart' as banner_model;
+import '../features/cms/data/models/legal_document.dart' as legal_model;
 import '../features/cms/view/media_library_view.dart';
 import '../features/audit/view/audit_dashboard_view.dart';
 import '../features/audit/view/audit_logs_view.dart';
@@ -32,6 +38,14 @@ import '../features/inventory/view/audit_trail_view.dart';
 import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/users/view/fraud_risk_view.dart';
+import '../features/users/view/users_view.dart';
+import '../features/users/view/kyc_verification_view.dart';
+import '../features/users/view/kyc_dashboard_view.dart';
+import '../features/users/view/roles_permissions_view.dart';
+import '../features/users/view/suspended_accounts_view.dart';
+import '../features/users/view/user_analytics_view.dart';
+import '../features/users/view/bulk_operations_view.dart';
+import '../features/users/view/session_activity_view.dart';
 import '../features/finance/view/finance_view.dart';
 import '../features/finance/view/transactions_view.dart';
 import '../features/finance/view/settlements_view.dart';
@@ -90,6 +104,83 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/login',
     debugLogDiagnostics: kDebugMode,
     refreshListenable: refreshListenable,
+    errorBuilder: (context, state) {
+      final authState = ref.read(authProvider);
+      final canNavigateBack = state.uri.path != '/login';
+      return Scaffold(
+        backgroundColor: const Color(0xFF0B1220),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF111827),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.route_outlined,
+                        size: 44,
+                        color: Color(0xFFF59E0B),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'Page Not Available',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'The requested route "${state.uri.path}" could not be opened.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          if (canNavigateBack)
+                            OutlinedButton.icon(
+                              onPressed: () => context.go('/dashboard'),
+                              icon: const Icon(Icons.home_outlined),
+                              label: const Text('Go To Dashboard'),
+                            ),
+                          FilledButton.icon(
+                            onPressed: () => context.go(
+                              authState.isAuthenticated
+                                  ? '/dashboard'
+                                  : '/login',
+                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reload App'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    },
     redirect: (context, state) {
       final authState = ref.read(authProvider);
       final isLoggingIn = state.matchedLocation == '/login';
@@ -135,7 +226,58 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
 
           // ==========================================
-          // 2. USER MASTER
+          // 2. USERS (LEGACY PATHS)
+          // ==========================================
+          GoRoute(
+            path: '/users',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: UsersView()),
+            routes: [
+              GoRoute(
+                path: 'kyc',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: KycVerificationView()),
+              ),
+              GoRoute(
+                path: 'kyc-dashboard',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: KycDashboardView()),
+              ),
+              GoRoute(
+                path: 'roles',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: RolesPermissionsView()),
+              ),
+              GoRoute(
+                path: 'suspended',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SuspendedAccountsView()),
+              ),
+              GoRoute(
+                path: 'analytics',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: UserAnalyticsView()),
+              ),
+              GoRoute(
+                path: 'fraud',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: FraudRiskView()),
+              ),
+              GoRoute(
+                path: 'bulk',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: BulkOperationsView()),
+              ),
+              GoRoute(
+                path: 'activity',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: SessionActivityView()),
+              ),
+            ],
+          ),
+
+          // ==========================================
+          // 3. USER MASTER
           // ==========================================
           GoRoute(
             path: '/user-master',
@@ -463,6 +605,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'blogs',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BlogManagementView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: BlogEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    pageBuilder: (context, state) {
+                      final blogId = int.tryParse(
+                        state.pathParameters['id'] ?? '',
+                      );
+                      return NoTransitionPage(
+                        child: BlogEditorView(blogId: blogId),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'faqs',
@@ -473,11 +633,41 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'banners',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: BannerManagementView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: BannerEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (context, state) {
+                      final banner = state.extra as banner_model.Banner?;
+                      return NoTransitionPage(
+                        child: BannerEditorView(banner: banner),
+                      );
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'legal',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: LegalDocsView()),
+                routes: [
+                  GoRoute(
+                    path: 'new',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage(child: LegalEditorView()),
+                  ),
+                  GoRoute(
+                    path: 'edit',
+                    pageBuilder: (context, state) {
+                      final doc = state.extra as legal_model.LegalDocument?;
+                      return NoTransitionPage(child: LegalEditorView(doc: doc));
+                    },
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'media',
