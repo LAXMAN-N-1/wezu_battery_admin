@@ -11,21 +11,21 @@ class LogisticsRepository {
       final params = <String, dynamic>{'skip': skip, 'limit': limit};
       if (status != null) params['status'] = status;
       if (orderType != null) params['order_type'] = orderType;
-      final r = await _api.get('/api/v1/admin/logistics/orders', queryParameters: params);
+      final r = await _api.get('/api/v1/logistics/orders', queryParameters: params);
       return r.data as Map<String, dynamic>;
     } catch (e) { rethrow; }
   }
 
   Future<Map<String, dynamic>> getOrderStats() async {
     try {
-      final r = await _api.get('/api/v1/admin/logistics/orders/stats');
+      final r = await _api.get('/api/v1/logistics/dashboard');
       return r.data as Map<String, dynamic>;
     } catch (e) { rethrow; }
   }
 
   Future<bool> updateOrderStatus(int orderId, String newStatus) async {
     try {
-      await _api.put('/api/v1/admin/logistics/orders/$orderId/status', queryParameters: {'new_status': newStatus});
+      await _api.put('/api/v1/logistics/orders/$orderId/status', queryParameters: {'new_status': newStatus});
       return true;
     } catch (e) { rethrow; }
   }
@@ -34,14 +34,14 @@ class LogisticsRepository {
 
   Future<List<dynamic>> getDrivers() async {
     try {
-      final r = await _api.get('/api/v1/admin/logistics/drivers');
+      final r = await _api.get('/api/v1/logistics/drivers');
       return r.data as List<dynamic>;
     } catch (e) { rethrow; }
   }
 
   Future<Map<String, dynamic>> getDriverStats() async {
     try {
-      final r = await _api.get('/api/v1/admin/logistics/drivers/stats');
+      final r = await _api.get('/api/v1/logistics/performance');
       return r.data as Map<String, dynamic>;
     } catch (e) { rethrow; }
   }
@@ -52,7 +52,7 @@ class LogisticsRepository {
     try {
       final params = <String, dynamic>{};
       if (status != null) params['status'] = status;
-      final r = await _api.get('/api/v1/admin/logistics/routes', queryParameters: params);
+      final r = await _api.get('/api/v1/logistics/routes/history', queryParameters: params);
       return r.data as List<dynamic>;
     } catch (e) { rethrow; }
   }
@@ -63,14 +63,15 @@ class LogisticsRepository {
     try {
       final params = <String, dynamic>{};
       if (status != null) params['status'] = status;
-      final r = await _api.get('/api/v1/admin/logistics/returns', queryParameters: params);
+      params['order_type'] = 'return';
+      final r = await _api.get('/api/v1/logistics/orders', queryParameters: params);
       return r.data as List<dynamic>;
     } catch (e) { rethrow; }
   }
 
   Future<Map<String, dynamic>> getReturnStats() async {
     try {
-      final r = await _api.get('/api/v1/admin/logistics/returns/stats');
+      final r = await _api.get('/api/v1/logistics/dashboard');
       return r.data as Map<String, dynamic>;
     } catch (e) { rethrow; }
   }
@@ -79,7 +80,7 @@ class LogisticsRepository {
     try {
       final params = <String, dynamic>{'new_status': newStatus};
       if (notes != null) params['notes'] = notes;
-      await _api.put('/api/v1/admin/logistics/returns/$returnId/status', queryParameters: params);
+      await _api.put('/api/v1/logistics/orders/$returnId/status', queryParameters: params);
       return true;
     } catch (e) { rethrow; }
   }
@@ -88,7 +89,7 @@ class LogisticsRepository {
 
   Future<List<dynamic>> getLiveTracking() async {
     try {
-      final r = await _api.get('/api/v1/admin/logistics/tracking');
+      final r = await _api.get('/api/v1/logistics/deliveries/active');
       return r.data as List<dynamic>;
     } catch (e) { rethrow; }
   }
