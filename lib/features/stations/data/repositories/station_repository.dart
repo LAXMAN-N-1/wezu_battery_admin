@@ -289,7 +289,19 @@ class StationRepository {
       );
       final data = response.data;
       if (data is List) {
-        return data.map((json) => BackendStationAlert.fromJson(json)).toList();
+        return data
+            .whereType<Map>()
+            .map((json) => BackendStationAlert.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+      }
+      if (data is Map) {
+        final alerts = data['alerts'];
+        if (alerts is List) {
+          return alerts
+              .whereType<Map>()
+              .map((json) => BackendStationAlert.fromJson(Map<String, dynamic>.from(json)))
+              .toList();
+        }
       }
       throw const FormatException('Unexpected station alerts payload');
     } catch (e) {
@@ -334,7 +346,7 @@ class StationRepository {
   Future<ChargingQueueResponse> getChargingQueue(int stationId) async {
     try {
       final response = await _api.get(
-        '/api/v1/admin/stations/$stationId/queue',
+        '/api/v1/admin/stations/$stationId/charging-queue',
       );
       return ChargingQueueResponse.fromJson(response.data);
     } catch (e) {
