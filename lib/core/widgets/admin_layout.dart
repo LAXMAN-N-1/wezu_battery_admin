@@ -20,11 +20,24 @@ class AdminLayout extends ConsumerStatefulWidget {
 
 class _AdminLayoutState extends ConsumerState<AdminLayout> {
   bool _sidebarCollapsed = false;
+  late final ScrollController _sidebarScrollController;
 
   static const double _expandedWidth = 270.0;
   static const double _collapsedWidth = 72.0;
   static const Duration _animDuration = Duration(milliseconds: 250);
   static const Curve _animCurve = Curves.easeInOutCubic;
+
+  @override
+  void initState() {
+    super.initState();
+    _sidebarScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _sidebarScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +98,9 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
           Expanded(
             child: Scrollbar(
               thumbVisibility: true,
+              controller: _sidebarScrollController,
               child: ListView(
+                controller: _sidebarScrollController,
                 primary: false,
                 physics: const ClampingScrollPhysics(),
                 padding: EdgeInsets.symmetric(
@@ -241,24 +256,28 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
 
     return Padding(
       padding: const EdgeInsets.all(12),
-      child: ListTile(
+      child: InkWell(
         onTap: () => ref.read(authProvider.notifier).logout(),
-        dense: true,
-        leading: Icon(
-          Icons.logout_outlined,
-          color: Colors.red.shade300,
-          size: 18,
-        ),
-        title: Text(
-          'Sign Out',
-          style: TextStyle(
-            color: Colors.red.shade300,
-            fontWeight: FontWeight.w500,
-            fontSize: 13,
+        borderRadius: BorderRadius.circular(10),
+        hoverColor: Colors.red.withValues(alpha: 0.05),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+          child: Row(
+            children: [
+              Icon(Icons.logout_outlined, color: Colors.red.shade300, size: 18),
+              const SizedBox(width: 10),
+              Text(
+                'Sign Out',
+                style: TextStyle(
+                  color: Colors.red.shade300,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+            ],
           ),
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        hoverColor: Colors.red.withValues(alpha: 0.05),
       ),
     );
   }
@@ -290,15 +309,19 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
             ),
             const SizedBox(width: 8),
           ],
-          Text(
-            title,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: isDesktop ? 17 : 15,
-              fontWeight: FontWeight.w600,
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: isDesktop ? 17 : 15,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
+          const SizedBox(width: 12),
           IconButton(
             onPressed: () => ref.read(themeProvider.notifier).toggle(),
             icon: Icon(
@@ -320,48 +343,57 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
             ),
             tooltip: 'Notifications',
           ),
-          const SizedBox(width: 16),
-          Container(
-            height: 28,
-            width: 1,
-            color: colors.border.withValues(alpha: 0.1),
-          ),
-          const SizedBox(width: 16),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.blue.shade600,
-            child: Text(
-              userInitial,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
+          if (isDesktop) ...[
+            const SizedBox(width: 16),
+            Container(
+              height: 28,
+              width: 1,
+              color: colors.border.withValues(alpha: 0.1),
             ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                userName,
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w600,
+            const SizedBox(width: 16),
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.blue.shade600,
+              child: Text(
+                userInitial,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
               ),
-              Text(
-                userRole.toString().replaceAll('_', ' ').toUpperCase(),
-                style: TextStyle(
-                  color: colors.textTertiary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
+            ),
+            const SizedBox(width: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  Text(
+                    userRole.toString().replaceAll('_', ' ').toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textTertiary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );

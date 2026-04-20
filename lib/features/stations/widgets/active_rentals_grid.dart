@@ -3,13 +3,32 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/admin_providers.dart';
 
-class ActiveRentalsGrid extends ConsumerWidget {
+class ActiveRentalsGrid extends ConsumerStatefulWidget {
   final int stationId;
 
   const ActiveRentalsGrid({super.key, required this.stationId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActiveRentalsGrid> createState() => _ActiveRentalsGridState();
+}
+
+class _ActiveRentalsGridState extends ConsumerState<ActiveRentalsGrid> {
+  late final ScrollController _rentalsScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _rentalsScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _rentalsScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final rentalsAsync = ref.watch(adminRentalsProvider);
 
     return Container(
@@ -55,10 +74,13 @@ class ActiveRentalsGrid extends ConsumerWidget {
             data: (rentals) {
               // Filter rentals for this station
               final stationRentals = rentals.where((r) {
-                return r.pickupStationId == stationId;
+                return r.pickupStationId == widget.stationId;
               }).toList();
-              
-              return _buildRentalTable(stationRentals);
+
+              return _buildRentalTable(
+                stationRentals,
+                _rentalsScrollController,
+              );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, stack) => Center(
@@ -73,7 +95,10 @@ class ActiveRentalsGrid extends ConsumerWidget {
     );
   }
 
-  Widget _buildRentalTable(List<dynamic> rentals) {
+  Widget _buildRentalTable(
+    List<dynamic> rentals,
+    ScrollController scrollController,
+  ) {
     const columnWidths = {
       0: FlexColumnWidth(2),
       1: FlexColumnWidth(1.5),
@@ -88,7 +113,9 @@ class ActiveRentalsGrid extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+            border: Border(
+              bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            ),
           ),
           child: Table(
             columnWidths: columnWidths,
@@ -104,7 +131,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
             ],
           ),
         ),
-        
+
         // Scrollable Body
         const SizedBox(height: 8),
         if (rentals.isEmpty)
@@ -123,11 +150,14 @@ class ActiveRentalsGrid extends ConsumerWidget {
               thumbColor: Colors.white24,
               radius: const Radius.circular(4),
               thickness: 4,
+              controller: scrollController,
               child: SingleChildScrollView(
+                controller: scrollController,
                 child: Table(
                   columnWidths: columnWidths,
                   children: rentals.map((r) {
-                    final timeStr = '${r.startTime.hour.toString().padLeft(2, '0')}:${r.startTime.minute.toString().padLeft(2, '0')}';
+                    final timeStr =
+                        '${r.startTime.hour.toString().padLeft(2, '0')}:${r.startTime.minute.toString().padLeft(2, '0')}';
 
                     return TableRow(
                       children: [
@@ -163,13 +193,7 @@ class ActiveRentalsGrid extends ConsumerWidget {
   Widget _dataCell(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white70,
-          fontSize: 12,
-        ),
-      ),
+      child: Text(text, style: TextStyle(color: Colors.white70, fontSize: 12)),
     );
   }
 }

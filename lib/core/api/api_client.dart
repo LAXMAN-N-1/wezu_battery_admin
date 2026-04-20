@@ -21,6 +21,8 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
 class ApiClient {
   static const _fallbackApiBaseUrl = 'https://api1.wezutech.com';
+  static const _localDebugApiBaseUrl = 'http://127.0.0.1:8000';
+  static const _localDebugHosts = {'localhost', '127.0.0.1', '::1', '[::1]'};
   static const accessTokenStorageKey = 'admin_token';
   static const refreshTokenStorageKey = 'admin_refresh_token';
   static const _skipAuthInterceptorKey = 'skipAuthInterceptor';
@@ -120,16 +122,29 @@ class ApiClient {
       'API_BASE_URL',
       defaultValue: '',
     ).trim();
-    if (value.isEmpty) {
-      if (kIsWeb) {
-        // On local `flutter run -d chrome`, defaulting to localhost causes
-        // immediate timeouts unless the backend is also running locally.
-        // Keep release behavior (same-origin fallback) unchanged.
-        return kDebugMode ? _fallbackApiBaseUrl : '';
+    if (value.isNotEmpty) {
+      return value.replaceAll(RegExp(r'/+$'), '');
+    }
+
+    if (kIsWeb) {
+      if (!kDebugMode) {
+        return '';
+      }
+      if (_isRunningOnLocalWebHost()) {
+        return _localDebugApiBaseUrl;
       }
       return _fallbackApiBaseUrl;
     }
-    return value.replaceAll(RegExp(r'/+$'), '');
+
+    return _fallbackApiBaseUrl;
+  }
+
+  static bool _isRunningOnLocalWebHost() {
+    if (!kIsWeb) {
+      return false;
+    }
+    final host = Uri.base.host.trim().toLowerCase();
+    return _localDebugHosts.contains(host);
   }
 
   void _configureHttpAdapters() {

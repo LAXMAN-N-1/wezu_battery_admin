@@ -49,7 +49,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   final ApiClient _apiClient;
 
-  static const _adminRoles = <String>{'admin', 'super_admin', 'superadmin'};
+  static const _adminRoles = <String>{
+    'admin',
+    'super_admin',
+    'superadmin',
+    'operations_admin',
+    'ops_admin',
+    'platform_admin',
+    'system_admin',
+  };
 
   Future<void> _checkStatus() async {
     final token = await _apiClient.getValidAccessToken(allowRefresh: false);
@@ -193,18 +201,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
           })
         >[
           (
-            path: '/api/v1/auth/token',
-            payload: {
-              'username': credential,
-              'password': password,
-              'grant_type': 'password',
-            },
-            allowAdminRoleRetry: false,
-            isFormEncoded: true,
-          ),
-          (
             path: '/api/v1/auth/login',
-            payload: {'username': credential, 'password': password},
+            payload: {'credential': credential, 'password': password},
             allowAdminRoleRetry: true,
             isFormEncoded: false,
           ),
@@ -231,6 +229,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
             payload: {'email': credential, 'password': password},
             allowAdminRoleRetry: true,
             isFormEncoded: false,
+          ),
+          (
+            path: '/api/v1/auth/token',
+            payload: {
+              'username': credential,
+              'password': password,
+              'grant_type': 'password',
+            },
+            allowAdminRoleRetry: false,
+            isFormEncoded: true,
           ),
         ];
 
@@ -456,7 +464,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     final statusCode = error.response?.statusCode;
-    return statusCode == 401 ||
+    return statusCode == 400 ||
+        statusCode == 401 ||
+        statusCode == 307 ||
+        statusCode == 308 ||
         statusCode == 404 ||
         statusCode == 405 ||
         statusCode == 415 ||
@@ -469,6 +480,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   String _extractErrorMessage(DioException error) {
+    if (error.response == null &&
+        (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.sendTimeout)) {
+      final signal = '${error.message ?? ''} ${error.error ?? ''}'
+          .toLowerCase()
+          .trim();
+      if (kIsWeb && signal.contains('xmlhttprequest')) {
+        return 'Browser could not reach the API. '
+            'Check API_BASE_URL, backend availability, and CORS.';
+      }
+    }
     return ApiErrorHandler.getReadableMessage(error);
   }
 
@@ -476,8 +500,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final statusCode = error.response?.statusCode;
     final responseData = error.response?.data;
     final errorType = error.type;
+    final baseUrl = _apiClient.dio.options.baseUrl;
+    final message = error.message;
+    final rawError = error.error;
     debugPrint(
-      '[Auth] login failed endpoint=$endpoint errorType=$errorType statusCode=$statusCode responseData=$responseData',
+      '[Auth] login failed baseUrl=$baseUrl endpoint=$endpoint '
+      'errorType=$errorType statusCode=$statusCode message=$message '
+      'rawError=$rawError responseData=$responseData',
     );
   }
 
@@ -494,17 +523,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Map<String, dynamic>? _extractUser(Map<String, dynamic> data) {
+    final extracted = <String, dynamic>{};
     final user = data['user'];
 
     if (user is Map<String, dynamic>) {
-      return user;
+      extracted.addAll(user);
+    } else if (user is Map) {
+      extracted.addAll(Map<String, dynamic>.from(user));
     }
 
-    if (user is Map) {
-      return Map<String, dynamic>.from(user);
+    // Some auth endpoints return role data at top-level with an empty `user`.
+    // Preserve this so role-based routing/menu logic remains accurate.
+    final topLevelRole = data['current_role'] ?? data['role'];
+    if (topLevelRole is String && topLevelRole.trim().isNotEmpty) {
+      extracted['current_role'] = topLevelRole.trim();
+      extracted.putIfAbsent('role', () => topLevelRole.trim());
     }
 
-    return null;
+    final availableRoles = data['available_roles'];
+    if (availableRoles is List && availableRoles.isNotEmpty) {
+      extracted.putIfAbsent('roles', () => availableRoles);
+    }
+
+    return extracted.isEmpty ? null : extracted;
   }
 
   List<String> _extractRoles(Map<String, dynamic> data) {
@@ -591,7 +632,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   bool _isAdminRole(String role) {
-    return _adminRoles.contains(role.trim().toLowerCase());
+    final normalized = role.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    return _adminRoles.contains(normalized) ||
+        normalized == 'administrator' ||
+        normalized.endsWith('_admin');
   }
 }
 

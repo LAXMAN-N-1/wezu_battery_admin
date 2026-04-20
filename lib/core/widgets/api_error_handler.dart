@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'app_scaffold_keys.dart';
@@ -42,6 +43,13 @@ class ApiErrorHandler {
           return 'Request was cancelled. Please try again.';
         }
         if (error.type == DioExceptionType.connectionError) {
+          final signal = '${error.message ?? ''} ${error.error ?? ''}'
+              .toLowerCase()
+              .trim();
+          if (kIsWeb && signal.contains('xmlhttprequest')) {
+            return 'Cannot reach API from browser. '
+                'Verify API_BASE_URL, backend status, and CORS settings.';
+          }
           return 'Connection error. The service may be temporarily unavailable.';
         }
         if (error.type == DioExceptionType.connectionTimeout ||

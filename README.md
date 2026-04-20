@@ -13,6 +13,10 @@ Flutter web admin panel deployed with Docker Compose and reverse-proxied by Cool
 
 ```bash
 flutter pub get
+# If you run from localhost in debug, API defaults to http://127.0.0.1:8000.
+flutter run -d chrome
+
+# To target production API explicitly:
 flutter run -d chrome --dart-define=API_BASE_URL=https://api1.wezutech.com
 ```
 

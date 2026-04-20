@@ -107,18 +107,20 @@ class _DashboardViewState extends ConsumerState<DashboardView>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 740;
+            final greetingWidget = Text(
               '$greeting 👋',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.outfit(
-                fontSize: 32,
+                fontSize: compact ? 26 : 32,
                 fontWeight: FontWeight.w800,
                 color: colors.textPrimary,
               ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
+            );
+            final refreshButton = ElevatedButton.icon(
               onPressed: _manualRefreshAll,
               icon: Icon(Icons.refresh, size: 18, color: colors.textPrimary),
               label: Text(
@@ -140,11 +142,33 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                 ),
                 elevation: 0,
               ),
-            ),
-          ],
+            );
+
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  greetingWidget,
+                  const SizedBox(height: 12),
+                  refreshButton,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: greetingWidget),
+                const SizedBox(width: 16),
+                refreshButton,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 8),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Container(
               width: 8,
@@ -154,7 +178,6 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 8),
             Text(
               'All systems operational',
               style: TextStyle(
@@ -164,7 +187,6 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               ),
             ),
             if (lastRefresh != null) ...[
-              const SizedBox(width: 8),
               Container(
                 width: 3,
                 height: 3,
@@ -173,7 +195,6 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 8),
               Text(
                 'Updated ${DateFormat('h:mm a').format(lastRefresh)}',
                 style: TextStyle(
@@ -586,10 +607,10 @@ class _DashboardViewState extends ConsumerState<DashboardView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Column(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 700;
+              final titleBlock = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -610,12 +631,32 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     ),
                   ),
                 ],
-              ),
-              const Spacer(),
-              _buildExportButton(trendsAsync.valueOrNull, colors),
-              const SizedBox(width: 12),
-              _buildPeriodToggle(colors),
-            ],
+              );
+              final controls = Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  _buildExportButton(trendsAsync.valueOrNull, colors),
+                  _buildPeriodToggle(colors),
+                ],
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [titleBlock, const SizedBox(height: 12), controls],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: titleBlock),
+                  const SizedBox(width: 12),
+                  controls,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 24),
           _buildChartLegend(colors),
@@ -1421,16 +1462,20 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          stage.name,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: colors.textPrimary,
+                        Expanded(
+                          child: Text(
+                            stage.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           _compactNumber(stage.count.toDouble()),
                           style: GoogleFonts.outfit(
@@ -1478,16 +1523,20 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     ),
                     const SizedBox(height: 4),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${stage.conversionRate.toStringAsFixed(1)}% Conv.',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: colors.textTertiary,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Text(
+                            '${stage.conversionRate.toStringAsFixed(1)}% Conv.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colors.textTertiary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${(percentage * 100).toStringAsFixed(0)}% of total',
                           style: TextStyle(
@@ -1528,7 +1577,9 @@ class _DashboardViewState extends ConsumerState<DashboardView>
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              Wrap(
+                spacing: 16,
+                runSpacing: 12,
                 children: [
                   _inventoryStat(
                     'Total',
@@ -1536,14 +1587,12 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     colors.textPrimary,
                     colors,
                   ),
-                  const SizedBox(width: 16),
                   _inventoryStat(
                     'Available',
                     data.totalAvailable.toString(),
                     colors.success,
                     colors,
                   ),
-                  const SizedBox(width: 16),
                   _inventoryStat(
                     'Utilization',
                     '${utilization.toStringAsFixed(1)}%',
@@ -1568,15 +1617,19 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              item.category,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: colors.textPrimary,
+                            Expanded(
+                              child: Text(
+                                item.category,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '${item.total} units',
                               style: TextStyle(
@@ -1637,10 +1690,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             color: color,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: colors.textTertiary),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
       ],
     );
   }
@@ -1704,10 +1754,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               reservedSize: 42,
               getTitlesWidget: (value, meta) => Text(
                 value.toStringAsFixed(0),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colors.textTertiary,
-                ),
+                style: TextStyle(fontSize: 11, color: colors.textTertiary),
               ),
             ),
           ),
@@ -1805,12 +1852,27 @@ class _DashboardViewState extends ConsumerState<DashboardView>
 
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildRevenueSortDropdown(colors),
-            _buildRevenueToggle(colors),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 640;
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildRevenueSortDropdown(colors),
+                  const SizedBox(height: 12),
+                  _buildRevenueToggle(colors),
+                ],
+              );
+            }
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildRevenueSortDropdown(colors),
+                _buildRevenueToggle(colors),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -2256,10 +2318,13 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
                               item.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -2267,36 +2332,46 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                               ),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  (item.severity == 'critical'
-                                          ? colors.danger
-                                          : colors.textSecondary)
-                                      .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              item.type.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: item.severity == 'critical'
-                                    ? colors.danger
-                                    : colors.textSecondary,
-                              ),
-                            ),
-                          ),
                           const SizedBox(width: 8),
-                          Text(
-                            item.time,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textTertiary,
+                          Flexible(
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              alignment: WrapAlignment.end,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (item.severity == 'critical'
+                                                ? colors.danger
+                                                : colors.textSecondary)
+                                            .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    item.type.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: item.severity == 'critical'
+                                          ? colors.danger
+                                          : colors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  item.time,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: colors.textTertiary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -2379,14 +2454,19 @@ class _DashboardViewState extends ConsumerState<DashboardView>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Top Performing Stations',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
+              Expanded(
+                child: Text(
+                  'Top Performing Stations',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: colors.textPrimary,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               TextButton(
                 onPressed: () =>
                     GoRouter.of(context).go('/stations/performance'),
@@ -2398,10 +2478,12 @@ class _DashboardViewState extends ConsumerState<DashboardView>
             ],
           ),
           const SizedBox(height: 24),
-          stationsAsync.when(
-            data: (data) => _buildStationsTable(data, colors),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Text('Error: $e'),
+          Expanded(
+            child: stationsAsync.when(
+              data: (data) => _buildStationsTable(data, colors),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, s) => Text('Error: $e'),
+            ),
           ),
         ],
       ),
@@ -2444,282 +2526,292 @@ class _DashboardViewState extends ConsumerState<DashboardView>
     }
 
     return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 32,
-        horizontalMargin: 0,
-        dataRowMinHeight: 40,
-        dataRowMaxHeight: 52,
-        sortColumnIndex: sortColumnIndex,
-        sortAscending: ascending,
-        headingTextStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: colors.textTertiary,
-        ),
-        columns: [
-          const DataColumn(label: Text('Rank')),
-          const DataColumn(label: Text('Location')),
-          DataColumn(
-            label: const Text('Rentals'),
-            onSort: (_, __) {
-              setState(() {
-                _topStationSort =
-                    _topStationSort.startsWith('rentals') &&
-                        _topStationSort.endsWith('desc')
-                    ? 'rentals_asc'
-                    : 'rentals_desc';
-              });
-            },
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columnSpacing: 32,
+          horizontalMargin: 0,
+          dataRowMinHeight: 40,
+          dataRowMaxHeight: 52,
+          sortColumnIndex: sortColumnIndex,
+          sortAscending: ascending,
+          headingTextStyle: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: colors.textTertiary,
           ),
-          DataColumn(
-            label: const Text('Revenue'),
-            onSort: (_, __) {
-              setState(() {
-                _topStationSort =
-                    _topStationSort.startsWith('revenue') &&
-                        _topStationSort.endsWith('desc')
-                    ? 'revenue_asc'
-                    : 'revenue_desc';
-              });
-            },
-          ),
-          DataColumn(
-            label: const Text('Utilization'),
-            onSort: (_, __) {
-              setState(() {
-                _topStationSort =
-                    _topStationSort.startsWith('utilization') &&
-                        _topStationSort.endsWith('desc')
-                    ? 'utilization_asc'
-                    : 'utilization_desc';
-              });
-            },
-          ),
-          const DataColumn(label: Text('Rating')),
-        ],
-        rows: stations.asMap().entries.map((entry) {
-          final index = entry.key;
-          final s = entry.value;
-          return DataRow(
-            cells: [
-              DataCell(
-                Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: colors.accent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        (index + 1).toString(),
-                        style: TextStyle(
-                          color: colors.accent,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
+          columns: [
+            const DataColumn(label: Text('Rank')),
+            const DataColumn(label: Text('Location')),
+            DataColumn(
+              label: const Text('Rentals'),
+              onSort: (_, __) {
+                setState(() {
+                  _topStationSort =
+                      _topStationSort.startsWith('rentals') &&
+                          _topStationSort.endsWith('desc')
+                      ? 'rentals_asc'
+                      : 'rentals_desc';
+                });
+              },
+            ),
+            DataColumn(
+              label: const Text('Revenue'),
+              onSort: (_, __) {
+                setState(() {
+                  _topStationSort =
+                      _topStationSort.startsWith('revenue') &&
+                          _topStationSort.endsWith('desc')
+                      ? 'revenue_asc'
+                      : 'revenue_desc';
+                });
+              },
+            ),
+            DataColumn(
+              label: const Text('Utilization'),
+              onSort: (_, __) {
+                setState(() {
+                  _topStationSort =
+                      _topStationSort.startsWith('utilization') &&
+                          _topStationSort.endsWith('desc')
+                      ? 'utilization_asc'
+                      : 'utilization_desc';
+                });
+              },
+            ),
+            const DataColumn(label: Text('Rating')),
+          ],
+          rows: stations.asMap().entries.map((entry) {
+            final index = entry.key;
+            final s = entry.value;
+            return DataRow(
+              cells: [
+                DataCell(
+                  Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: colors.accent.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          (index + 1).toString(),
+                          style: TextStyle(
+                            color: colors.accent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Tooltip(
-                      padding: const EdgeInsets.all(8),
-                      // Flutter Tooltip asserts that exactly one of message or
-                      // richMessage is non-null. Show the mini sparkline when
-                      // data exists, otherwise fall back to a plain text label.
-                      message: s.sparkline.length < 2
-                          ? (s.name.isNotEmpty ? s.name : s.id)
-                          : null,
-                      richMessage: s.sparkline.length < 2
-                          ? null
-                          : TextSpan(
-                              children: [
-                                WidgetSpan(
-                                  child: SizedBox(
-                                    width: 160,
-                                    height: 60,
-                                    child: LineChart(
-                                      LineChartData(
-                                        titlesData: const FlTitlesData(
-                                          show: false,
-                                        ),
-                                        gridData: const FlGridData(show: false),
-                                        borderData: FlBorderData(show: false),
-                                        lineBarsData: [
-                                          LineChartBarData(
-                                            spots: s.sparkline
-                                                .asMap()
-                                                .entries
-                                                .map(
-                                                  (e) => FlSpot(
-                                                    e.key.toDouble(),
-                                                    e.value,
-                                                  ),
-                                                )
-                                                .toList(),
-                                            isCurved: true,
-                                            color: colors.accent,
-                                            barWidth: 3,
-                                            dotData: const FlDotData(
-                                              show: false,
-                                            ),
-                                            belowBarData: BarAreaData(
-                                              show: true,
-                                              color: colors.accent.withValues(
-                                                alpha: 0.1,
+                      const SizedBox(width: 12),
+                      Tooltip(
+                        padding: const EdgeInsets.all(8),
+                        // Flutter Tooltip asserts that exactly one of message or
+                        // richMessage is non-null. Show the mini sparkline when
+                        // data exists, otherwise fall back to a plain text label.
+                        message: s.sparkline.length < 2
+                            ? (s.name.isNotEmpty ? s.name : s.id)
+                            : null,
+                        richMessage: s.sparkline.length < 2
+                            ? null
+                            : TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    child: SizedBox(
+                                      width: 160,
+                                      height: 60,
+                                      child: LineChart(
+                                        LineChartData(
+                                          titlesData: const FlTitlesData(
+                                            show: false,
+                                          ),
+                                          gridData: const FlGridData(
+                                            show: false,
+                                          ),
+                                          borderData: FlBorderData(show: false),
+                                          lineBarsData: [
+                                            LineChartBarData(
+                                              spots: s.sparkline
+                                                  .asMap()
+                                                  .entries
+                                                  .map(
+                                                    (e) => FlSpot(
+                                                      e.key.toDouble(),
+                                                      e.value,
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                              isCurved: true,
+                                              color: colors.accent,
+                                              barWidth: 3,
+                                              dotData: const FlDotData(
+                                                show: false,
+                                              ),
+                                              belowBarData: BarAreaData(
+                                                show: true,
+                                                color: colors.accent.withValues(
+                                                  alpha: 0.1,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        child: Text(
+                          s.name.isNotEmpty ? s.name : s.id,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    s.location.isNotEmpty ? s.location : s.name,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    NumberFormat('#,###').format(s.rentals),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    _formatCurrency(s.revenue),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: colors.success,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 140,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          children: [
+                            Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: colors.border.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: s.utilization <= 0
+                                      ? 1
+                                      : s.utilization.clamp(1, 100).toInt(),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: colors.success,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(4),
+                                        bottomLeft: Radius.circular(4),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: (() {
+                                    final val = s.chargingPercent > 0
+                                        ? s.chargingPercent
+                                        : 100 -
+                                              s.utilization -
+                                              s.offlinePercent;
+                                    return val <= 0
+                                        ? 1
+                                        : val.clamp(1, 100).toInt();
+                                  })(),
+                                  child: Container(
+                                    height: 8,
+                                    color: colors.accent.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: s.offlinePercent <= 0
+                                      ? 1
+                                      : s.offlinePercent.clamp(1, 100).toInt(),
+                                  child: Container(
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: colors.textTertiary.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(4),
+                                        bottomRight: Radius.circular(4),
                                       ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                      child: Text(
-                        s.name.isNotEmpty ? s.name : s.id,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${s.utilization.toInt()}% active',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${s.availablePercent.toInt()}% avail',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: colors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              DataCell(
-                Text(
-                  s.location.isNotEmpty ? s.location : s.name,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-              DataCell(
-                Text(
-                  NumberFormat('#,###').format(s.rentals),
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-              DataCell(
-                Text(
-                  _formatCurrency(s.revenue),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: colors.success,
                   ),
                 ),
-              ),
-              DataCell(
-                SizedBox(
-                  width: 120,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                DataCell(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Stack(
-                        children: [
-                          Container(
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: colors.border.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: s.utilization <= 0
-                                    ? 1
-                                    : s.utilization.clamp(1, 100).toInt(),
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: colors.success,
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(4),
-                                      bottomLeft: Radius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                flex: (() {
-                                  final val = s.chargingPercent > 0
-                                      ? s.chargingPercent
-                                      : 100 - s.utilization - s.offlinePercent;
-                                  return val <= 0
-                                      ? 1
-                                      : val.clamp(1, 100).toInt();
-                                })(),
-                                child: Container(
-                                  height: 8,
-                                  color: colors.accent.withValues(alpha: 0.6),
-                                ),
-                              ),
-                              Expanded(
-                                flex: s.offlinePercent <= 0
-                                    ? 1
-                                    : s.offlinePercent.clamp(1, 100).toInt(),
-                                child: Container(
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: colors.textTertiary.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    borderRadius: const BorderRadius.only(
-                                      topRight: Radius.circular(4),
-                                      bottomRight: Radius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Text(
-                            '${s.utilization.toInt()}% active',
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '${s.availablePercent.toInt()}% avail',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: colors.textTertiary,
-                            ),
-                          ),
-                        ],
+                      const Icon(Icons.star, size: 14, color: Colors.orange),
+                      const SizedBox(width: 4),
+                      Text(
+                        s.rating.toString(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              DataCell(
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.star, size: 14, color: Colors.orange),
-                    const SizedBox(width: 4),
-                    Text(
-                      s.rating.toString(),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+              ],
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -2789,7 +2881,10 @@ class _DashboardViewState extends ConsumerState<DashboardView>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         title,
@@ -2799,7 +2894,6 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                           color: colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(width: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -2813,6 +2907,7 @@ class _DashboardViewState extends ConsumerState<DashboardView>
                           ),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
                               width: 6,
