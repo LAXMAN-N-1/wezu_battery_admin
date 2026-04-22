@@ -27,7 +27,9 @@ class AnalyticsRepository {
   Future<DashboardOverview> getOverview() async {
     try {
       final response = await _apiClient.get('$_base/overview');
-      return DashboardOverview.fromJson(response.data is Map ? response.data : {});
+      return DashboardOverview.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
@@ -52,17 +54,23 @@ class AnalyticsRepository {
   Future<ConversionFunnel> getConversionFunnel() async {
     try {
       final response = await _apiClient.get('$_base/conversion-funnel');
-      return ConversionFunnel.fromJson(response.data is Map ? response.data : {});
+      return ConversionFunnel.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
   }
 
-  /// GET /api/v1/admin/analytics/battery-health
+  /// GET /api/v1/admin/analytics/battery-health-distribution
   Future<BatteryHealthDistribution> getBatteryHealthDistribution() async {
     try {
-      final response = await _apiClient.get('$_base/battery-health');
-      return BatteryHealthDistribution.fromJson(response.data is Map ? response.data : {});
+      final response = await _apiClient.get(
+        '$_base/battery-health-distribution',
+      );
+      return BatteryHealthDistribution.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
@@ -90,11 +98,13 @@ class AnalyticsRepository {
     }
   }
 
-  /// GET /api/v1/admin/analytics/revenue-by-region
+  /// GET /api/v1/admin/analytics/revenue/by-region
   Future<RevenueByRegion> getRevenueByRegion() async {
     try {
-      final response = await _apiClient.get('$_base/revenue-by-region');
-      return RevenueByRegion.fromJson(response.data is Map ? response.data : {});
+      final response = await _apiClient.get('$_base/revenue/by-region');
+      return RevenueByRegion.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
@@ -119,43 +129,44 @@ class AnalyticsRepository {
   Future<InventoryStatus> getInventoryStatus() async {
     try {
       final response = await _apiClient.get('$_base/inventory-status');
-      return InventoryStatus.fromJson(response.data is Map ? response.data : {});
+      return InventoryStatus.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
   }
 
-  /// GET /api/v1/admin/analytics/revenue/station
+  /// GET /api/v1/admin/analytics/revenue/by-station
   Future<StationRevenueData> getRevenueByStation({
     String? period,
     int limit = 10,
   }) async {
     try {
       final response = await _apiClient.get(
-        '$_base/revenue/station',
-        queryParameters: {
-          if (period != null) 'period': period,
-          'limit': limit,
-        },
+        '$_base/revenue/by-station',
+        queryParameters: {if (period != null) 'period': period, 'limit': limit},
       );
-      return StationRevenueData.fromJson(response.data is Map ? response.data : {});
+      return StationRevenueData.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
   }
 
-  /// GET /api/v1/admin/analytics/revenue/battery-type
+  /// GET /api/v1/admin/analytics/revenue/by-battery-type
   Future<BatteryTypeRevenueData> getRevenueByBatteryType({
     String? period,
   }) async {
     try {
       final response = await _apiClient.get(
-        '$_base/revenue/battery-type',
-        queryParameters: {
-          if (period != null) 'period': period,
-        },
+        '$_base/revenue/by-battery-type',
+        queryParameters: {if (period != null) 'period': period},
       );
-      return BatteryTypeRevenueData.fromJson(response.data is Map ? response.data : {});
+      return BatteryTypeRevenueData.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
@@ -168,7 +179,9 @@ class AnalyticsRepository {
         '$_base/recent-activity',
         queryParameters: {if (type != null) 'type': type},
       );
-      return RecentActivityData.fromJson(response.data is Map ? response.data : {});
+      return RecentActivityData.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
@@ -178,18 +191,24 @@ class AnalyticsRepository {
   Future<TopStationsData> getTopPerformingStations() async {
     try {
       final response = await _apiClient.get('$_base/top-stations');
-      return TopStationsData.fromJson(response.data is Map ? response.data : {});
+      return TopStationsData.fromJson(
+        response.data is Map ? response.data : {},
+      );
     } catch (e) {
       rethrow;
     }
   }
 
-  /// GET /api/v1/admin/analytics/export/:type
+  /// GET /api/v1/admin/analytics/export?report_type=:type
   Future<String> exportReport({required String reportType}) async {
     try {
-      final response = await _apiClient.get('$_base/export/$reportType');
+      final response = await _apiClient.get(
+        '$_base/export',
+        queryParameters: {'report_type': reportType},
+      );
       // For now, return a placeholder or handle correctly if response structure is different.
-      return response.data['url'] ?? 'https://storage.wezu.com/reports/$reportType-export.pdf';
+      return response.data['url'] ??
+          'https://storage.wezu.com/reports/$reportType-export.pdf';
     } catch (e) {
       // Mocked fallback for UI sake
       return 'https://storage.wezu.com/reports/$reportType-export.pdf';
