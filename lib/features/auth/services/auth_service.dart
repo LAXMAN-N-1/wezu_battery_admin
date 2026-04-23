@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/api/api_client.dart';
 
@@ -12,11 +13,7 @@ class AuthService {
   final ApiClient _apiClient;
 
   Future<String?> getValidAccessToken() async {
-    return _apiClient.getValidAccessToken();
-  }
-
-  Future<String?> refreshAccessToken() async {
-    return _apiClient.refreshAccessToken();
+    return Supabase.instance.client.auth.currentSession?.accessToken;
   }
 
   Future<void> clearSessionAndRedirect() async {

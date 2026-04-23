@@ -9,32 +9,36 @@ final userMasterRepositoryProvider = Provider<UserMasterRepository>((ref) {
 });
 
 // --- User Providers ---
-final usersProvider = FutureProvider.autoDispose.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
-  final repo = ref.watch(userMasterRepositoryProvider);
-  return repo.getUsers(
-    search: params['search'] as String?,
-    role: params['role'] as String?,
-    status: params['status'] as String?,
-    skip: params['skip'] as int? ?? 0,
-    limit: params['limit'] as int? ?? 20,
-  );
-});
+final usersProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      return repo.getUsers(
+        search: params['search'] as String?,
+        role: params['role'] as String?,
+        status: params['status'] as String?,
+        skip: params['skip'] as int? ?? 0,
+        limit: params['limit'] as int? ?? 20,
+      );
+    });
 
 // Stable-key version: prevents infinite re-fetch caused by Map identity changing on every widget rebuild
-final usersProviderByKey = FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, queryKey) async {
-  final repo = ref.watch(userMasterRepositoryProvider);
-  final uri = Uri(query: queryKey);
-  final params = uri.queryParameters;
-  return repo.getUsers(
-    search: (params['search'] ?? '').isEmpty ? null : params['search'],
-    role: (params['role'] ?? '').isEmpty ? null : params['role'],
-    status: (params['status'] ?? '').isEmpty ? null : params['status'],
-    skip: int.tryParse(params['skip'] ?? '0') ?? 0,
-    limit: int.tryParse(params['limit'] ?? '20') ?? 20,
-  );
-});
+final usersProviderByKey = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, String>((ref, queryKey) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      final uri = Uri(query: queryKey);
+      final params = uri.queryParameters;
+      return repo.getUsers(
+        search: (params['search'] ?? '').isEmpty ? null : params['search'],
+        role: (params['role'] ?? '').isEmpty ? null : params['role'],
+        status: (params['status'] ?? '').isEmpty ? null : params['status'],
+        skip: int.tryParse(params['skip'] ?? '0') ?? 0,
+        limit: int.tryParse(params['limit'] ?? '20') ?? 20,
+      );
+    });
 
-final userSummaryProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final userSummaryProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final repo = ref.watch(userMasterRepositoryProvider);
   return repo.getUserSummary();
 });
@@ -45,17 +49,26 @@ final rolesProvider = FutureProvider.autoDispose<List<Role>>((ref) async {
   return repo.getRoles();
 });
 
-// --- Permission Providers ---
-final permissionModulesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+final userCreationRolesProvider = FutureProvider.autoDispose<List<Role>>((
+  ref,
+) async {
   final repo = ref.watch(userMasterRepositoryProvider);
-  return repo.getPermissionModules();
+  return repo.getUserCreationRoles();
 });
 
+// --- Permission Providers ---
+final permissionModulesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      return repo.getPermissionModules();
+    });
+
 // --- Access Logs Provider ---
-final accessLogsProvider = FutureProvider.autoDispose.family<List<AccessLog>, Map<String, dynamic>>((ref, params) async {
-  final repo = ref.watch(userMasterRepositoryProvider);
-  return repo.getAccessLogs(
-    skip: params['skip'] as int? ?? 0,
-    limit: params['limit'] as int? ?? 50,
-  );
-});
+final accessLogsProvider = FutureProvider.autoDispose
+    .family<List<AccessLog>, Map<String, dynamic>>((ref, params) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      return repo.getAccessLogs(
+        skip: params['skip'] as int? ?? 0,
+        limit: params['limit'] as int? ?? 50,
+      );
+    });

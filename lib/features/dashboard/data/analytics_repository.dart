@@ -10,6 +10,116 @@ class AnalyticsRepository {
   AnalyticsRepository(this._apiClient);
 
   static const _base = '/api/v1/admin/analytics';
+  static const _adminStatsPath = '/api/v1/admin/stats';
+
+  bool _isPermissionDenied(Object error) {
+    return error is DioException && error.response?.statusCode == 403;
+  }
+
+  DashboardOverview _emptyOverview() {
+    return DashboardOverview.fromJson(const {});
+  }
+
+  TrendData _emptyTrends(String period) {
+    return TrendData.fromJson({'period': period, 'data': const []});
+  }
+
+  ConversionFunnel _emptyConversionFunnel() {
+    return ConversionFunnel.fromJson(const {'stages': []});
+  }
+
+  BatteryHealthDistribution _emptyBatteryHealthDistribution() {
+    return BatteryHealthDistribution.fromJson(const {'distribution': []});
+  }
+
+  UserBehavior _emptyUserBehavior() {
+    return UserBehavior.fromJson(const {});
+  }
+
+  DemandForecast _emptyDemandForecast() {
+    return DemandForecast.fromJson(const {'forecast': []});
+  }
+
+  RevenueByRegion _emptyRevenueByRegion() {
+    return RevenueByRegion.fromJson(const {'regions': []});
+  }
+
+  UserGrowth _emptyUserGrowth(String period) {
+    return UserGrowth.fromJson({'period': period, 'data': const []});
+  }
+
+  InventoryStatus _emptyInventoryStatus() {
+    return InventoryStatus.fromJson(const {'inventory': []});
+  }
+
+  StationRevenueData _emptyRevenueByStation() {
+    return StationRevenueData.fromJson(const {'stations': []});
+  }
+
+  BatteryTypeRevenueData _emptyRevenueByBatteryType() {
+    return BatteryTypeRevenueData.fromJson(const {'types': []});
+  }
+
+  RecentActivityData _emptyRecentActivity() {
+    return RecentActivityData.fromJson(const {'activities': []});
+  }
+
+  TopStationsData _emptyTopStations() {
+    return TopStationsData.fromJson(const {'stations': []});
+  }
+
+  DashboardBootstrapData _emptyBootstrap(
+    String period, {
+    Map<String, dynamic>? overview,
+  }) {
+    return DashboardBootstrapData.fromJson({
+      'period': period,
+      'overview': overview ?? const {},
+      'trends': {'period': period, 'data': const []},
+      'conversion_funnel': const {'stages': []},
+      'battery_health_distribution': const {'distribution': []},
+      'inventory_status': const {'inventory': []},
+      'demand_forecast': const {'forecast': []},
+      'revenue_by_station': const {'stations': []},
+      'recent_activity': const {'activities': []},
+      'top_stations': const {'stations': []},
+    });
+  }
+
+  Map<String, dynamic> _adminStatsOverviewJson(Map<String, dynamic> stats) {
+    return {
+      'total_revenue': 0,
+      'active_rentals': stats['active_rentals'] ?? 0,
+      'total_users': stats['total_users'] ?? 0,
+      'fleet_utilization': 0,
+      'active_stations': stats['total_stations'] ?? 0,
+      'active_dealers': 0,
+      'avg_battery_health': 0,
+      'open_tickets': stats['pending_kyc'] ?? 0,
+      'revenue_per_rental': 0,
+      'avg_session_duration': 0,
+    };
+  }
+
+  Future<DashboardOverview> _getAdminStatsOverview() async {
+    final response = await _apiClient.get(_adminStatsPath);
+    final stats = _asMap(response.data);
+    return DashboardOverview.fromJson(_adminStatsOverviewJson(stats));
+  }
+
+  Future<DashboardBootstrapData> _getPermissionFallbackBootstrap(
+    String period,
+  ) async {
+    try {
+      final response = await _apiClient.get(_adminStatsPath);
+      return _emptyBootstrap(
+        period,
+        overview: _adminStatsOverviewJson(_asMap(response.data)),
+      );
+    } catch (_) {
+      return _emptyBootstrap(period);
+    }
+  }
 
   Map<String, dynamic> _asMap(
     dynamic data, {
@@ -333,39 +443,47 @@ class AnalyticsRepository {
       'bootstrap_$period',
       ttl: const Duration(seconds: 60),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/dashboard',
-          queryParameters: {'period': period},
-        );
-        final map = _asMap(response.data, defaults: {'period': period});
-        final normalizedPeriod = map['period']?.toString() ?? period;
+        try {
+          final response = await _apiClient.get(
+            '$_base/dashboard',
+            queryParameters: {'period': period},
+          );
+          final map = _asMap(response.data, defaults: {'period': period});
+          final normalizedPeriod = map['period']?.toString() ?? period;
 
-        return DashboardBootstrapData.fromJson({
-          'period': normalizedPeriod,
-          'generated_at': map['generated_at'],
-          'overview': _normalizeOverviewResponse(map['overview']),
-          'trends': _normalizeTrendResponse(
-            map['trends'],
-            period: normalizedPeriod,
-          ),
-          'conversion_funnel': _asMap(map['conversion_funnel'], listKey: 'stages'),
-          'battery_health_distribution': _normalizeBatteryHealthResponse(
-            map['battery_health_distribution'],
-          ),
-          'inventory_status': _normalizeInventoryStatusResponse(
-            map['inventory_status'],
-          ),
-          'demand_forecast': _normalizeDemandForecastResponse(
-            map['demand_forecast'],
-          ),
-          'revenue_by_station': _normalizeRevenueByStationResponse(
-            map['revenue_by_station'],
-          ),
-          'recent_activity': _normalizeRecentActivityResponse(
-            map['recent_activity'],
-          ),
-          'top_stations': _normalizeTopStationsResponse(map['top_stations']),
-        });
+          return DashboardBootstrapData.fromJson({
+            'period': normalizedPeriod,
+            'generated_at': map['generated_at'],
+            'overview': _normalizeOverviewResponse(map['overview']),
+            'trends': _normalizeTrendResponse(
+              map['trends'],
+              period: normalizedPeriod,
+            ),
+            'conversion_funnel': _asMap(
+              map['conversion_funnel'],
+              listKey: 'stages',
+            ),
+            'battery_health_distribution': _normalizeBatteryHealthResponse(
+              map['battery_health_distribution'],
+            ),
+            'inventory_status': _normalizeInventoryStatusResponse(
+              map['inventory_status'],
+            ),
+            'demand_forecast': _normalizeDemandForecastResponse(
+              map['demand_forecast'],
+            ),
+            'revenue_by_station': _normalizeRevenueByStationResponse(
+              map['revenue_by_station'],
+            ),
+            'recent_activity': _normalizeRecentActivityResponse(
+              map['recent_activity'],
+            ),
+            'top_stations': _normalizeTopStationsResponse(map['top_stations']),
+          });
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _getPermissionFallbackBootstrap(period);
+        }
       },
     );
   }
@@ -376,10 +494,19 @@ class AnalyticsRepository {
       'overview',
       ttl: const Duration(seconds: 60),
       fetch: () async {
-        final response = await _apiClient.get('$_base/overview');
-        return DashboardOverview.fromJson(
-          _normalizeOverviewResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get('$_base/overview');
+          return DashboardOverview.fromJson(
+            _normalizeOverviewResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          try {
+            return await _getAdminStatsOverview();
+          } catch (_) {
+            return _emptyOverview();
+          }
+        }
       },
     );
   }
@@ -390,13 +517,18 @@ class AnalyticsRepository {
       'trends_$period',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/trends',
-          queryParameters: {'period': period},
-        );
-        return TrendData.fromJson(
-          _normalizeTrendResponse(response.data, period: period),
-        );
+        try {
+          final response = await _apiClient.get(
+            '$_base/trends',
+            queryParameters: {'period': period},
+          );
+          return TrendData.fromJson(
+            _normalizeTrendResponse(response.data, period: period),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyTrends(period);
+        }
       },
     );
   }
@@ -407,10 +539,15 @@ class AnalyticsRepository {
       'conversion_funnel',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get('$_base/conversion-funnel');
-        return ConversionFunnel.fromJson(
-          _asMap(response.data, listKey: 'stages'),
-        );
+        try {
+          final response = await _apiClient.get('$_base/conversion-funnel');
+          return ConversionFunnel.fromJson(
+            _asMap(response.data, listKey: 'stages'),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyConversionFunnel();
+        }
       },
     );
   }
@@ -421,12 +558,17 @@ class AnalyticsRepository {
       'battery_health',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/battery-health-distribution',
-        );
-        return BatteryHealthDistribution.fromJson(
-          _normalizeBatteryHealthResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get(
+            '$_base/battery-health-distribution',
+          );
+          return BatteryHealthDistribution.fromJson(
+            _normalizeBatteryHealthResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyBatteryHealthDistribution();
+        }
       },
     );
   }
@@ -437,8 +579,13 @@ class AnalyticsRepository {
       'user_behavior',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get('$_base/user-behavior');
-        return UserBehavior.fromJson(_asMap(response.data));
+        try {
+          final response = await _apiClient.get('$_base/user-behavior');
+          return UserBehavior.fromJson(_asMap(response.data));
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyUserBehavior();
+        }
       },
     );
   }
@@ -449,10 +596,15 @@ class AnalyticsRepository {
       'demand_forecast',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get('$_base/demand-forecast');
-        return DemandForecast.fromJson(
-          _normalizeDemandForecastResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get('$_base/demand-forecast');
+          return DemandForecast.fromJson(
+            _normalizeDemandForecastResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyDemandForecast();
+        }
       },
     );
   }
@@ -463,10 +615,15 @@ class AnalyticsRepository {
       'revenue_by_region',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get('$_base/revenue/by-region');
-        return RevenueByRegion.fromJson(
-          _normalizeRevenueByRegionResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get('$_base/revenue/by-region');
+          return RevenueByRegion.fromJson(
+            _normalizeRevenueByRegionResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyRevenueByRegion();
+        }
       },
     );
   }
@@ -477,13 +634,22 @@ class AnalyticsRepository {
       'user_growth_$period',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/user-growth',
-          queryParameters: {'period': period},
-        );
-        return UserGrowth.fromJson(
-          _asMap(response.data, listKey: 'data', defaults: {'period': period}),
-        );
+        try {
+          final response = await _apiClient.get(
+            '$_base/user-growth',
+            queryParameters: {'period': period},
+          );
+          return UserGrowth.fromJson(
+            _asMap(
+              response.data,
+              listKey: 'data',
+              defaults: {'period': period},
+            ),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyUserGrowth(period);
+        }
       },
     );
   }
@@ -494,10 +660,15 @@ class AnalyticsRepository {
       'inventory_status',
       ttl: const Duration(minutes: 2),
       fetch: () async {
-        final response = await _apiClient.get('$_base/inventory-status');
-        return InventoryStatus.fromJson(
-          _normalizeInventoryStatusResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get('$_base/inventory-status');
+          return InventoryStatus.fromJson(
+            _normalizeInventoryStatusResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyInventoryStatus();
+        }
       },
     );
   }
@@ -510,13 +681,18 @@ class AnalyticsRepository {
       'revenue_by_station_$period',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/revenue/by-station',
-          queryParameters: {'period': period},
-        );
-        return StationRevenueData.fromJson(
-          _normalizeRevenueByStationResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get(
+            '$_base/revenue/by-station',
+            queryParameters: {'period': period},
+          );
+          return StationRevenueData.fromJson(
+            _normalizeRevenueByStationResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyRevenueByStation();
+        }
       },
     );
   }
@@ -529,13 +705,18 @@ class AnalyticsRepository {
       'revenue_by_battery_type_$period',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/revenue/by-battery-type',
-          queryParameters: {'period': period},
-        );
-        return BatteryTypeRevenueData.fromJson(
-          _asMap(response.data, listKey: 'types'),
-        );
+        try {
+          final response = await _apiClient.get(
+            '$_base/revenue/by-battery-type',
+            queryParameters: {'period': period},
+          );
+          return BatteryTypeRevenueData.fromJson(
+            _asMap(response.data, listKey: 'types'),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyRevenueByBatteryType();
+        }
       },
     );
   }
@@ -556,13 +737,18 @@ class AnalyticsRepository {
       'recent_activity_${type ?? 'all'}',
       ttl: const Duration(seconds: 60),
       fetch: () async {
-        final response = await _apiClient.get(
-          '$_base/recent-activity',
-          queryParameters: {if (type != null) 'type': type},
-        );
-        return RecentActivityData.fromJson(
-          _normalizeRecentActivityResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get(
+            '$_base/recent-activity',
+            queryParameters: {if (type != null) 'type': type},
+          );
+          return RecentActivityData.fromJson(
+            _normalizeRecentActivityResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyRecentActivity();
+        }
       },
     );
   }
@@ -573,10 +759,15 @@ class AnalyticsRepository {
       'top_stations',
       ttl: const Duration(minutes: 5),
       fetch: () async {
-        final response = await _apiClient.get('$_base/top-stations');
-        return TopStationsData.fromJson(
-          _normalizeTopStationsResponse(response.data),
-        );
+        try {
+          final response = await _apiClient.get('$_base/top-stations');
+          return TopStationsData.fromJson(
+            _normalizeTopStationsResponse(response.data),
+          );
+        } on DioException catch (error) {
+          if (!_isPermissionDenied(error)) rethrow;
+          return _emptyTopStations();
+        }
       },
     );
   }

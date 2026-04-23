@@ -9,7 +9,9 @@ class PermissionMatrix {
     final modules = <String, PermissionLevel>{};
     json.forEach((key, value) {
       modules[key] = PermissionLevel.values.firstWhere(
-        (e) => e.name.toLowerCase() == (value as String).toLowerCase().replaceAll('_', ''),
+        (e) =>
+            e.name.toLowerCase() ==
+            (value as String).toLowerCase().replaceAll('_', ''),
         orElse: () => PermissionLevel.noAccess,
       );
     });
@@ -29,6 +31,12 @@ class Role {
   final String id;
   final String name;
   final String description;
+  final String category;
+  final int level;
+  final String? userType;
+  final bool requiresDealerProfile;
+  final bool requiresDealerId;
+  final bool requiresWarehouseIds;
   final bool isSystemRole;
   final int userCount;
   final PermissionMatrix permissions;
@@ -38,6 +46,12 @@ class Role {
     required this.id,
     required this.name,
     required this.description,
+    this.category = 'system',
+    this.level = 0,
+    this.userType,
+    this.requiresDealerProfile = false,
+    this.requiresDealerId = false,
+    this.requiresWarehouseIds = false,
     this.isSystemRole = false,
     this.userCount = 0,
     required this.permissions,
@@ -54,9 +68,14 @@ class Role {
         if (p is Map<String, dynamic>) {
           final module = p['module'] as String? ?? 'Other';
           final action = p['action'] as String? ?? 'view';
-          
+
           // Simple logic: if 'manage' or 'all' or 'create' -> full, else view
-          if (['all', 'manage', 'delete', 'create'].contains(action.toLowerCase())) {
+          if ([
+            'all',
+            'manage',
+            'delete',
+            'create',
+          ].contains(action.toLowerCase())) {
             modulesMap[module] = PermissionLevel.full;
           } else {
             modulesMap[module] = PermissionLevel.view;
@@ -66,7 +85,9 @@ class Role {
     } else if (permissionsData is Map<String, dynamic>) {
       permissionsData.forEach((key, value) {
         modulesMap[key] = PermissionLevel.values.firstWhere(
-          (e) => e.name.toLowerCase() == (value as String).toLowerCase().replaceAll('_', ''),
+          (e) =>
+              e.name.toLowerCase() ==
+              (value as String).toLowerCase().replaceAll('_', ''),
           orElse: () => PermissionLevel.noAccess,
         );
       });
@@ -76,10 +97,18 @@ class Role {
       id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? '',
+      category: json['category']?.toString() ?? 'system',
+      level: json['level'] as int? ?? 0,
+      userType: json['user_type']?.toString(),
+      requiresDealerProfile: json['requires_dealer_profile'] as bool? ?? false,
+      requiresDealerId: json['requires_dealer_id'] as bool? ?? false,
+      requiresWarehouseIds: json['requires_warehouse_ids'] as bool? ?? false,
       isSystemRole: json['is_system_role'] as bool? ?? false,
       userCount: json['user_count'] as int? ?? 0,
       permissions: PermissionMatrix(modules: modulesMap),
-      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now() : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
     );
   }
 
@@ -88,6 +117,12 @@ class Role {
       'id': id,
       'name': name,
       'description': description,
+      'category': category,
+      'level': level,
+      'user_type': userType,
+      'requires_dealer_profile': requiresDealerProfile,
+      'requires_dealer_id': requiresDealerId,
+      'requires_warehouse_ids': requiresWarehouseIds,
       'is_system_role': isSystemRole,
       'user_count': userCount,
       'permissions': permissions.toJson(),

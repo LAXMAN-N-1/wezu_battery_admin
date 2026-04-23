@@ -43,9 +43,8 @@ class _AdminLayoutState extends ConsumerState<AdminLayout> {
                 _buildHeader(context, widget.title, isDesktop),
                 Expanded(
                   child: Container(
-                    color: colors.scaffoldBg,
                     clipBehavior: Clip.hardEdge,
-                    decoration: const BoxDecoration(),
+                    decoration: BoxDecoration(color: colors.scaffoldBg),
                     child: widget.child,
                   ),
                 ),

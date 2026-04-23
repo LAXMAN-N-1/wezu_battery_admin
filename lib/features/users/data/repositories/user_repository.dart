@@ -68,13 +68,13 @@ class UserRepository {
     try {
       final skip = page > 1 ? (page - 1) * limit : 0;
       final queryParams = <String, dynamic>{'limit': limit};
-      
+
       if (cursor != null) {
         queryParams['cursor'] = cursor;
       } else {
-         queryParams['skip'] = skip;
+        queryParams['skip'] = skip;
       }
-      
+
       if (fields != null) queryParams['fields'] = fields;
       if (sortBy != null) queryParams['sort_by'] = sortBy;
       if (sortOrder != null) queryParams['sort_order'] = sortOrder;
@@ -136,13 +136,13 @@ class UserRepository {
     };
 
     try {
+      final response = await _api.post('/api/v1/admin/users', data: payload);
+      return response.data as Map<String, dynamic>;
+    } on Exception {
       final response = await _api.post(
         '/api/v1/admin/users/create',
         data: payload,
       );
-      return response.data as Map<String, dynamic>;
-    } on Exception {
-      final response = await _api.post('/api/v1/admin/users', data: payload);
       return response.data as Map<String, dynamic>;
     }
   }
@@ -177,7 +177,12 @@ class UserRepository {
   }
 
   Future<List<Map<String, dynamic>>> listInvites() async {
-    final response = await _api.get('/api/v1/admin/users/invites');
+    dynamic response;
+    try {
+      response = await _api.get('/api/v1/admin/users/invites');
+    } on Exception {
+      return const <Map<String, dynamic>>[];
+    }
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
@@ -302,7 +307,7 @@ class UserRepository {
   }) async {
     try {
       await _api.post(
-        '/api/v1/admin/rbac/users/$userId/roles',
+        '/api/v1/rbac/assignments/users/$userId/roles',
         data: {'role_id': roleId, 'notes': reason},
       );
     } on Exception {

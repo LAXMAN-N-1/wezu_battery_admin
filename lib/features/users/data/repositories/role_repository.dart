@@ -7,11 +7,12 @@ class RoleRepository {
   final ApiClient _api;
   RoleRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
+  static const String _base = '/api/v1/rbac';
   List<Permission> _cachedPermissions = [];
   final Map<int, String> _permissionIdToSlug = {};
 
   Future<List<Role>> getRoles() async {
-    final response = await _api.get('/api/v1/admin/rbac/roles');
+    final response = await _api.get('$_base/roles');
     final data = response.data as List;
     for (final roleEntry in data.whereType<Map>()) {
       final roleMap = Map<String, dynamic>.from(roleEntry);
@@ -30,17 +31,31 @@ class RoleRepository {
   }
 
   Future<List<Permission>> getPermissions() async {
-    final response = await _api.get('/api/v1/admin/rbac/permissions');
+    final response = await _api.get('$_base/permissions');
     final payload = response.data;
+
+    if (payload is List) {
+      final permissions = payload
+          .whereType<Map>()
+          .map((item) => Permission.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+      for (final permission in permissions) {
+        _permissionIdToSlug[permission.id] = permission.slug;
+      }
+      _cachedPermissions = permissions;
+      return _cachedPermissions;
+    }
 
     final modules = payload is Map<String, dynamic>
         ? payload['modules'] as List<dynamic>?
         : payload is Map
-            ? (payload['modules'] as List<dynamic>?)
-            : null;
+        ? (payload['modules'] as List<dynamic>?)
+        : null;
 
     if (modules == null) {
-      throw const FormatException('Permissions payload did not contain modules');
+      throw const FormatException(
+        'Permissions payload did not contain modules',
+      );
     }
 
     final permissions = <Permission>[];
@@ -94,7 +109,7 @@ class RoleRepository {
     final permissionSlugs = await _permissionSlugsFromIds(permissionIds);
 
     final response = await _api.post(
-      '/api/v1/admin/rbac/roles',
+      '$_base/roles',
       data: {
         'name': name,
         'description': description,
@@ -112,7 +127,7 @@ class RoleRepository {
     final permissionSlugs = await _permissionSlugsFromIds(ids);
 
     final response = await _api.put(
-      '/api/v1/admin/rbac/roles/${role.id}',
+      '$_base/roles/${role.id}',
       data: {
         'name': role.name,
         'description': role.description,

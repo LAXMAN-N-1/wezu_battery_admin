@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'core/api/api_client.dart';
 import 'core/theme/app_themes.dart';
 import 'core/theme/theme_provider.dart';
@@ -8,8 +10,14 @@ import 'core/widgets/session_expired_overlay.dart';
 import 'features/auth/provider/auth_provider.dart';
 import 'router/app_router.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://fxmkfxnqozvgajvjrwim.supabase.co',
+    anonKey: 'sb_publishable_gqj8kSeiC1kr1DCQu_SpdA_MrgWK63T',
+  );
+
   runApp(const ProviderScope(child: MyApp()));
 }
 

@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../../core/api/api_client.dart';
 import '../models/user.dart';
 import '../models/role.dart';
@@ -5,6 +7,7 @@ import '../models/access_log.dart';
 
 class UserMasterRepository {
   final ApiClient _apiClient;
+  static const String _rbacBase = '/api/v1/rbac';
 
   UserMasterRepository({ApiClient? apiClient})
     : _apiClient = apiClient ?? ApiClient();
@@ -84,18 +87,24 @@ class UserMasterRepository {
 
   Future<User> createUser(Map<String, dynamic> data) async {
     try {
+      final response = await _apiClient.post('/api/v1/admin/users', data: data);
+      return User.fromJson(response.data);
+    } on Exception {
       final response = await _apiClient.post(
         '/api/v1/admin/users/create',
         data: data,
       );
       return User.fromJson(response.data);
-    } on Exception {
-      final response = await _apiClient.post(
-        '/api/v1/admin/users',
-        data: data,
-      );
-      return User.fromJson(response.data);
     }
+  }
+
+  Future<Map<String, dynamic>> createSupabaseUser(
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _apiClient.post('/api/v1/admin/users', data: data);
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
   }
 
   Future<User> updateUser(String id, Map<String, dynamic> data) async {
@@ -107,15 +116,28 @@ class UserMasterRepository {
   }
 
   Future<List<Role>> getRoles() async {
-    final response = await _apiClient.get('/api/v1/admin/rbac/roles');
+    final response = await _apiClient.get('$_rbacBase/roles');
     return (response.data as List).map((json) => Role.fromJson(json)).toList();
   }
 
+  Future<List<Role>> getUserCreationRoles() async {
+    try {
+      final response = await _apiClient.get(
+        '/api/v1/admin/users/creation-roles',
+      );
+      return (response.data as List)
+          .map((json) => Role.fromJson(json))
+          .toList();
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) {
+        return await getRoles();
+      }
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> createRole(Map<String, dynamic> data) async {
-    final response = await _apiClient.post(
-      '/api/v1/admin/rbac/roles',
-      data: data,
-    );
+    final response = await _apiClient.post('$_rbacBase/roles', data: data);
     return response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
@@ -127,7 +149,7 @@ class UserMasterRepository {
     String mode = 'overwrite',
   }) async {
     final response = await _apiClient.post(
-      '/api/v1/admin/rbac/roles/$roleId/permissions',
+      '$_rbacBase/roles/$roleId/permissions',
       data: {'permissions': permissionSlugs, 'mode': mode},
     );
     return response.data is Map<String, dynamic>
@@ -136,7 +158,25 @@ class UserMasterRepository {
   }
 
   Future<List<Map<String, dynamic>>> getPermissionModules() async {
-    final response = await _apiClient.get('/api/v1/admin/rbac/permissions');
+    final response = await _apiClient.get('$_rbacBase/permissions');
+    if (response.data is List) {
+      final grouped = <String, List<Map<String, dynamic>>>{};
+      for (final raw in (response.data as List).whereType<Map>()) {
+        final permission = Map<String, dynamic>.from(raw);
+        final module = permission['module']?.toString() ?? 'general';
+        grouped.putIfAbsent(module, () => []).add(permission);
+      }
+      return grouped.entries
+          .map(
+            (entry) => {
+              'module': entry.key,
+              'label': entry.key,
+              'permissions': entry.value,
+            },
+          )
+          .toList();
+    }
+
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);

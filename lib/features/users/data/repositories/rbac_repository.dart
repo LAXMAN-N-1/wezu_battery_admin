@@ -5,10 +5,11 @@ import '../models/role_model.dart';
 
 class RBACRepository {
   final ApiClient _api = ApiClient();
+  static const String _base = '/api/v1/rbac';
   final Map<int, String> _permissionIdToSlug = {};
 
   Future<List<Role>> getRoles() async {
-    final response = await _api.get('/api/v1/admin/rbac/roles');
+    final response = await _api.get('$_base/roles');
     final data = response.data;
     final roles = (data as List).map((r) => Role.fromJson(r)).toList();
     for (final role in roles) {
@@ -21,7 +22,7 @@ class RBACRepository {
   }
 
   Future<Role?> getRoleDetail(int roleId) async {
-    final response = await _api.get('/api/v1/admin/rbac/roles/$roleId');
+    final response = await _api.get('$_base/roles/$roleId');
     return Role.fromJson(response.data);
   }
 
@@ -35,7 +36,7 @@ class RBACRepository {
     final permissionSlugs = await _permissionSlugsFromIds(permissionIds);
 
     await _api.post(
-      '/api/v1/admin/rbac/roles',
+      '$_base/roles',
       data: {
         'name': name,
         'description': description,
@@ -61,25 +62,46 @@ class RBACRepository {
     if (permissionIds != null) {
       data['permissions'] = await _permissionSlugsFromIds(permissionIds);
     }
-    await _api.put('/api/v1/admin/rbac/roles/$roleId', data: data);
+    await _api.put('$_base/roles/$roleId', data: data);
     return true;
   }
 
   Future<bool> deleteRole(int roleId) async {
-    await _api.delete('/api/v1/admin/rbac/roles/$roleId');
+    await _api.delete('$_base/roles/$roleId');
     return true;
   }
 
   Future<Map<String, List<Permission>>> getPermissions() async {
-    final response = await _api.get('/api/v1/admin/rbac/permissions');
+    final response = await _api.get('$_base/permissions');
     final data = response.data;
+
+    if (data is List) {
+      final permissions = data
+          .whereType<Map>()
+          .map((item) => Permission.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+      for (final permission in permissions) {
+        _permissionIdToSlug[permission.id] = permission.slug;
+      }
+
+      final grouped = <String, List<Permission>>{};
+      for (final permission in permissions) {
+        grouped
+            .putIfAbsent(permission.module ?? 'general', () => [])
+            .add(permission);
+      }
+      return grouped;
+    }
+
     final modules = data is Map<String, dynamic>
         ? data['modules'] as List<dynamic>?
         : data is Map
-            ? data['modules'] as List<dynamic>?
-            : null;
+        ? data['modules'] as List<dynamic>?
+        : null;
     if (modules == null) {
-      throw const FormatException('Permissions payload did not contain modules');
+      throw const FormatException(
+        'Permissions payload did not contain modules',
+      );
     }
 
     final permsList = <Permission>[];
@@ -131,7 +153,7 @@ class RBACRepository {
 
   Future<bool> assignRoleToUser(int userId, int roleId) async {
     await _api.post(
-      '/api/v1/admin/rbac/users/$userId/roles',
+      '$_base/assignments/users/$userId/roles',
       data: {'role_id': roleId, 'notes': 'Assigned from RBAC panel'},
     );
     return true;

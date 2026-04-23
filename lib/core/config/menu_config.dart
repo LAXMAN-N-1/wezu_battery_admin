@@ -43,9 +43,16 @@ const List<MenuSection> _allMenuSections = [
     id: 'user-master',
     icon: Icons.people_outline,
     label: 'User Master',
-    allowedRoles: ['super_admin', 'superadmin'], // restrict to super admins
+    allowedRoles: [
+      'super_admin',
+      'superadmin',
+      'admin',
+      'operations_admin',
+      'security_admin',
+    ],
     children: [
       MenuItem(label: 'All Users', route: '/user-master'),
+      MenuItem(label: 'Create User', route: '/user-master/create'),
       MenuItem(label: 'Add / Edit User', route: '/user-master/edit'),
       MenuItem(label: 'Roles & Permissions', route: '/user-master/roles'),
       MenuItem(label: 'Admin Groups', route: '/user-master/groups'),
@@ -210,8 +217,9 @@ final sidebarMenuProvider = Provider<List<MenuSection>>((ref) {
   final user = authState.user;
 
   // Extract roles string or list.
-  final dynamic roleRaw = user?['role'] ?? user?['roles'] ?? user?['current_role'];
-  
+  final dynamic roleRaw =
+      user?['role'] ?? user?['roles'] ?? user?['current_role'];
+
   List<String> userRoles = [];
   if (roleRaw is String) {
     userRoles.add(roleRaw.toLowerCase().trim());
@@ -221,7 +229,8 @@ final sidebarMenuProvider = Provider<List<MenuSection>>((ref) {
 
   // Fallback: If roles is somehow completely empty but user is logged in,
   // we assume a base-level access (or superadmin if is_superuser is true).
-  final isSuperuser = user?['is_superuser'] == true || user?['isSuperuser'] == true;
+  final isSuperuser =
+      user?['is_superuser'] == true || user?['isSuperuser'] == true;
   if (isSuperuser && !userRoles.contains('superadmin')) {
     userRoles.add('superadmin');
   }
@@ -230,8 +239,10 @@ final sidebarMenuProvider = Provider<List<MenuSection>>((ref) {
     if (section.allowedRoles == null || section.allowedRoles!.isEmpty) {
       return true; // No restrictions
     }
-    
+
     // Check if the user has any of the allowed roles
-    return userRoles.any((r) => section.allowedRoles!.map((a) => a.toLowerCase()).contains(r));
+    return userRoles.any(
+      (r) => section.allowedRoles!.map((a) => a.toLowerCase()).contains(r),
+    );
   }).toList();
 });

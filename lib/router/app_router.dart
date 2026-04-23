@@ -66,6 +66,7 @@ import '../features/fleet_ops/view/geofencing_view.dart';
 import '../features/fleet_ops/view/telematics_view.dart';
 import '../features/fleet_ops/view/alerts_alarms_view.dart';
 import '../features/user_master/view/users_master_list_view.dart';
+import '../features/user_master/view/dev_user_create_view.dart';
 import '../features/user_master/view/user_master_form_view.dart';
 import '../features/user_master/view/roles_permissions_master_view.dart';
 import '../features/user_master/view/admin_groups_master_view.dart';
@@ -142,6 +143,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: UsersMasterListView()),
             routes: [
+              GoRoute(
+                path: 'create',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DevUserCreateView()),
+              ),
               GoRoute(
                 path: 'edit',
                 pageBuilder: (context, state) =>
@@ -554,6 +560,7 @@ String _getTitle(String location) {
 
   // User Master
   if (location == '/user-master') return 'All Users';
+  if (location == '/user-master/create') return 'Create User';
   if (location == '/user-master/edit') return 'Add / Edit User';
   if (location == '/user-master/roles') return 'Roles & Permissions';
   if (location == '/user-master/groups') return 'Admin Groups';

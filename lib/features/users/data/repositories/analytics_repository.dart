@@ -136,9 +136,14 @@ class AnalyticsRepository {
           user['email']?.toString() ??
           'User #$userId';
 
-      final response = await _api.get(
-        '/api/v1/admin/users/$userId/suspension-history',
-      );
+      dynamic response;
+      try {
+        response = await _api.get(
+          '/api/v1/admin/users/$userId/suspension-history',
+        );
+      } on Exception {
+        continue;
+      }
       final entries = response.data is List
           ? response.data as List
           : const <dynamic>[];
@@ -175,7 +180,12 @@ class AnalyticsRepository {
   }
 
   Future<List<InviteLink>> getInviteLinks() async {
-    final response = await _api.get('/api/v1/admin/users/invites');
+    dynamic response;
+    try {
+      response = await _api.get('/api/v1/admin/users/invites');
+    } on Exception {
+      return const <InviteLink>[];
+    }
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
