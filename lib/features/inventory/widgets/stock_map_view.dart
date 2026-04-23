@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../view/stock_levels_view.dart';
@@ -12,6 +13,11 @@ class StockMapView extends ConsumerStatefulWidget {
 }
 
 class _StockMapViewState extends ConsumerState<StockMapView> {
+  static const bool _mapsEnabled = bool.fromEnvironment(
+    'ENABLE_GOOGLE_MAPS',
+    defaultValue: false,
+  );
+
   @override
   Widget build(BuildContext context) {
     final stationsAsync = ref.watch(stockStationsProvider);
@@ -70,12 +76,24 @@ class _StockMapViewState extends ConsumerState<StockMapView> {
             stations.first.longitude,
           );
 
+          if (kIsWeb && !_mapsEnabled) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Text(
+                  'Map is disabled in this build.\nSet ENABLE_GOOGLE_MAPS=true and provide a valid Maps key to enable it.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white54),
+                ),
+              ),
+            );
+          }
+
           return GoogleMap(
             initialCameraPosition: CameraPosition(target: center, zoom: 11),
             markers: markers,
             myLocationEnabled: false,
             mapType: MapType.normal,
-            // Custom map style can be added here
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

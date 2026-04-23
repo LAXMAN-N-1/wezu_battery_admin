@@ -63,10 +63,13 @@ class DealerStats {
   });
 
   factory DealerStats.fromJson(Map<String, dynamic> json) {
+    final active = json['total_active_dealers'] ?? json['totalActiveDealers'];
+    final pending = json['pending_onboardings'] ?? json['pendingOnboardings'];
+    final commissions = json['total_commissions_paid'] ?? json['totalCommissionsPaid'];
     return DealerStats(
-      totalActiveDealers: json['total_active_dealers'] ?? 0,
-      pendingOnboardings: json['pending_onboardings'] ?? 0,
-      totalCommissionsPaid: (json['total_commissions_paid'] as num?)?.toDouble() ?? 0.0,
+      totalActiveDealers: (active as num?)?.toInt() ?? 0,
+      pendingOnboardings: (pending as num?)?.toInt() ?? 0,
+      totalCommissionsPaid: (commissions as num?)?.toDouble() ?? 0.0,
     );
   }
 }

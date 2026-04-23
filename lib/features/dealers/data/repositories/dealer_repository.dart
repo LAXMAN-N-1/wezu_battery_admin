@@ -38,7 +38,13 @@ class DealerRepository {
     final params = stage != null ? {'stage': stage} : null;
     try {
       final response = await _api.get('/api/v1/admin/dealers/applications', queryParameters: params);
-      return (response.data as List).map((a) => DealerApplication.fromJson(a)).toList();
+      final data = response.data;
+      final List<dynamic> applications =
+          data is List ? data : (data is Map<String, dynamic> ? (data['applications'] as List? ?? const []) : const []);
+      return applications
+          .whereType<Map>()
+          .map((a) => DealerApplication.fromJson(Map<String, dynamic>.from(a)))
+          .toList();
     } catch (e) {
       return [];
     }
