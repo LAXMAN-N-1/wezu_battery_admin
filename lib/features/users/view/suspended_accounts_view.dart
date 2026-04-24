@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/parallel_load.dart';
 import '../data/repositories/user_repository.dart';
 import '../data/repositories/analytics_repository.dart';
 import '../data/models/user.dart';
@@ -33,11 +34,13 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
       _error = null;
     });
     try {
-      final response = await _userRepo.getUsers(status: 'suspended');
-      final users = response.users;
-      final history = await _analyticsRepo.getSuspensionHistory();
+      final (response, history) = await ParallelLoad.pair(
+        _userRepo.getUsers(status: 'suspended'),
+        _analyticsRepo.getSuspensionHistory(),
+      );
+      if (!mounted) return;
       setState(() {
-        _suspendedUsers = users;
+        _suspendedUsers = response.users;
         _history = history;
         _isLoading = false;
       });
@@ -355,10 +358,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                         ),
                         Text(
                           '${record.reasonLabel} — by ${record.suspendedBy}',
-                          style: TextStyle(
-                            color: Colors.white54,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.white54, fontSize: 12),
                         ),
                         if (record.notes != null)
                           Text(
@@ -373,10 +373,7 @@ class _SuspendedAccountsViewState extends State<SuspendedAccountsView> {
                   ),
                   Text(
                     DateFormat('MMM d, y').format(record.suspendedAt),
-                    style: TextStyle(
-                      color: Colors.white38,
-                      fontSize: 11,
-                    ),
+                    style: TextStyle(color: Colors.white38, fontSize: 11),
                   ),
                 ],
               ),

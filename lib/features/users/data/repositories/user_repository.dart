@@ -249,10 +249,11 @@ class UserRepository {
     required String reason,
     int? durationDays,
   }) async {
-    await _api.put(
-      '/api/v1/admin/users/$userId/suspend',
-      data: {'reason': reason, 'duration_days': durationDays},
-    );
+    final payload = <String, dynamic>{'reason': reason};
+    if (durationDays != null) {
+      payload['duration_days'] = durationDays;
+    }
+    await _api.put('/api/v1/admin/users/$userId/suspend', data: payload);
 
     final result = await getUserById(userId);
     if (result == null) {

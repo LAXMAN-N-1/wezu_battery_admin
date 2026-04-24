@@ -153,7 +153,7 @@ class RBACRepository {
 
   Future<bool> assignRoleToUser(int userId, int roleId) async {
     await _api.post(
-      '$_base/assignments/users/$userId/roles',
+      '$_base/users/$userId/roles',
       data: {'role_id': roleId, 'notes': 'Assigned from RBAC panel'},
     );
     return true;

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_client.dart';
@@ -31,48 +30,24 @@ void _watchHeavyRefresh(Ref ref) {
   ref.watch(dashboardHeavyRefreshTriggerProvider);
 }
 
-void _watchAnyRefresh(Ref ref) {
-  ref.watch(dashboardRefreshTriggerProvider);
-  ref.watch(dashboardLightRefreshTriggerProvider);
-  ref.watch(dashboardHeavyRefreshTriggerProvider);
-}
-
-final dashboardBootstrapPeriodProvider = Provider<String>((ref) {
-  return ref.watch(analyticsPeriodProvider);
-});
-
-final dashboardBootstrapProvider = FutureProvider.autoDispose<DashboardBootstrapData>((
-  ref,
-) async {
-  _watchAnyRefresh(ref);
-  final repo = ref.read(analyticsRepositoryProvider);
-  final period = ref.watch(dashboardBootstrapPeriodProvider);
-  return repo.getDashboardBootstrap(period: period);
-});
-
 // ─────────────────────────────────────────────
 // Data providers — manually refreshed via dashboardRefreshTriggerProvider
 // ─────────────────────────────────────────────
 
-final dashboardOverviewProvider = FutureProvider.autoDispose<DashboardOverview>((
-  ref,
-) async {
-  _watchLightRefresh(ref);
-  final repo = ref.read(analyticsRepositoryProvider);
-  DashboardOverview data;
-  try {
-    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-    data = bootstrap.overview;
-  } catch (_) {
-    data = await repo.getOverview();
-  }
-  Future.microtask(() {
-    if (ref.exists(lastRefreshTimeProvider)) {
-      ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
-    }
-  });
-  return data;
-});
+final dashboardOverviewProvider = FutureProvider.autoDispose<DashboardOverview>(
+  (ref) async {
+    _watchLightRefresh(ref);
+    final repo = ref.read(analyticsRepositoryProvider);
+    final period = ref.watch(analyticsPeriodProvider);
+    final data = await repo.getOverview(period: period);
+    Future.microtask(() {
+      if (ref.exists(lastRefreshTimeProvider)) {
+        ref.read(lastRefreshTimeProvider.notifier).state = DateTime.now();
+      }
+    });
+    return data;
+  },
+);
 
 final trendPeriodProvider = StateProvider<String>((ref) => '30d');
 
@@ -80,46 +55,29 @@ final trendDataProvider = FutureProvider.autoDispose<TrendData>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(trendPeriodProvider);
-  final bootstrapPeriod = ref.watch(dashboardBootstrapPeriodProvider);
-  if (period == bootstrapPeriod) {
-    try {
-      final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-      return bootstrap.trends;
-    } catch (_) {}
-  }
   return repo.getTrends(period: period);
 });
 
-final conversionFunnelProvider = FutureProvider.autoDispose<ConversionFunnel>((ref) async {
-  _watchHeavyRefresh(ref);
-  final repo = ref.read(analyticsRepositoryProvider);
-  try {
-    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-    return bootstrap.conversionFunnel;
-  } catch (_) {
-    return repo.getConversionFunnel();
-  }
-});
-
-final batteryHealthProvider = FutureProvider.autoDispose<BatteryHealthDistribution>((
+final conversionFunnelProvider = FutureProvider.autoDispose<ConversionFunnel>((
   ref,
 ) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  try {
-    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-    return bootstrap.batteryHealthDistribution;
-  } catch (_) {
-    return repo.getBatteryHealthDistribution();
-  }
+  return repo.getConversionFunnel();
 });
 
-final revenueByRegionProvider = FutureProvider.autoDispose<RevenueByRegion>((ref) async {
+final batteryHealthProvider =
+    FutureProvider.autoDispose<BatteryHealthDistribution>((ref) async {
+      _watchHeavyRefresh(ref);
+      final repo = ref.read(analyticsRepositoryProvider);
+      return repo.getBatteryHealthDistribution();
+    });
+
+final revenueByRegionProvider = FutureProvider.autoDispose<RevenueByRegion>((
+  ref,
+) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  // Wait for bootstrap to finish before firing extra requests
-  // to avoid overwhelming the backend with parallel calls.
-  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getRevenueByRegion();
 });
 
@@ -129,38 +87,30 @@ final userGrowthProvider = FutureProvider.autoDispose<UserGrowth>((ref) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final period = ref.watch(userGrowthPeriodProvider);
-  // Wait for bootstrap to finish before firing extra requests.
-  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getUserGrowth(period: period);
 });
 
-final inventoryStatusProvider = FutureProvider.autoDispose<InventoryStatus>((ref) async {
+final inventoryStatusProvider = FutureProvider.autoDispose<InventoryStatus>((
+  ref,
+) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  try {
-    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-    return bootstrap.inventoryStatus;
-  } catch (_) {
-    return repo.getInventoryStatus();
-  }
+  return repo.getInventoryStatus();
 });
 
-final demandForecastProvider = FutureProvider.autoDispose<DemandForecast>((ref) async {
+final demandForecastProvider = FutureProvider.autoDispose<DemandForecast>((
+  ref,
+) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  try {
-    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-    return bootstrap.demandForecast;
-  } catch (_) {
-    return repo.getDemandForecast();
-  }
+  return repo.getDemandForecast();
 });
 
-final userBehaviorProvider = FutureProvider.autoDispose<UserBehavior>((ref) async {
+final userBehaviorProvider = FutureProvider.autoDispose<UserBehavior>((
+  ref,
+) async {
   _watchHeavyRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  // Wait for bootstrap to finish before firing extra requests.
-  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
   return repo.getUserBehavior();
 });
 
@@ -168,56 +118,39 @@ final analyticsPeriodProvider = StateProvider<String>((ref) => '30d');
 
 final stationSortProvider = StateProvider<String>((ref) => 'Revenue High-Low');
 
-final revenueByStationProvider = FutureProvider.autoDispose<StationRevenueData>((
-  ref,
-) async {
-  _watchHeavyRefresh(ref);
-  final repo = ref.read(analyticsRepositoryProvider);
-  final period = ref.watch(analyticsPeriodProvider);
-  final bootstrapPeriod = ref.watch(dashboardBootstrapPeriodProvider);
-  if (period == bootstrapPeriod) {
-    try {
-      final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-      return bootstrap.revenueByStation;
-    } catch (_) {}
-  }
-  return repo.getRevenueByStation(period: period);
-});
+final revenueByStationProvider = FutureProvider.autoDispose<StationRevenueData>(
+  (ref) async {
+    _watchHeavyRefresh(ref);
+    final repo = ref.read(analyticsRepositoryProvider);
+    final period = ref.watch(analyticsPeriodProvider);
+    return repo.getRevenueByStation(period: period);
+  },
+);
 
-final revenueByBatteryTypeProvider = FutureProvider.autoDispose<BatteryTypeRevenueData>((
-  ref,
-) async {
-  _watchHeavyRefresh(ref);
-  final repo = ref.read(analyticsRepositoryProvider);
-  final period = ref.watch(analyticsPeriodProvider);
-  // Wait for bootstrap to finish before firing extra requests.
-  try { await ref.watch(dashboardBootstrapProvider.future); } catch (_) {}
-  return repo.getRevenueByBatteryType(period: period);
-});
+final revenueByBatteryTypeProvider =
+    FutureProvider.autoDispose<BatteryTypeRevenueData>((ref) async {
+      _watchHeavyRefresh(ref);
+      final repo = ref.read(analyticsRepositoryProvider);
+      final period = ref.watch(analyticsPeriodProvider);
+      return repo.getRevenueByBatteryType(period: period);
+    });
 final activityFilterProvider = StateProvider<String>((ref) => 'all');
 
-final recentActivityProvider = FutureProvider.autoDispose<RecentActivityData>((ref) async {
+final recentActivityProvider = FutureProvider.autoDispose<RecentActivityData>((
+  ref,
+) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
   final type = ref.watch(activityFilterProvider);
-  if (type == 'all') {
-    try {
-      final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-      return bootstrap.recentActivity;
-    } catch (_) {}
-  }
   return repo.getRecentActivity(type: type == 'all' ? null : type);
 });
 
-final topStationsProvider = FutureProvider.autoDispose<TopStationsData>((ref) async {
+final topStationsProvider = FutureProvider.autoDispose<TopStationsData>((
+  ref,
+) async {
   _watchLightRefresh(ref);
   final repo = ref.read(analyticsRepositoryProvider);
-  try {
-    final bootstrap = await ref.watch(dashboardBootstrapProvider.future);
-    return bootstrap.topStations;
-  } catch (_) {
-    return repo.getTopPerformingStations();
-  }
+  return repo.getTopPerformingStations();
 });
 
 class TrendMetric {

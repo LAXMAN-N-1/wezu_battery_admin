@@ -489,13 +489,16 @@ class AnalyticsRepository {
   }
 
   /// GET /api/v1/admin/analytics/overview
-  Future<DashboardOverview> getOverview() async {
+  Future<DashboardOverview> getOverview({String period = '30d'}) async {
     return _cache.getOrFetch<DashboardOverview>(
-      'overview',
+      'overview_$period',
       ttl: const Duration(seconds: 60),
       fetch: () async {
         try {
-          final response = await _apiClient.get('$_base/overview');
+          final response = await _apiClient.get(
+            '$_base/overview',
+            queryParameters: {'period': period},
+          );
           return DashboardOverview.fromJson(
             _normalizeOverviewResponse(response.data),
           );
