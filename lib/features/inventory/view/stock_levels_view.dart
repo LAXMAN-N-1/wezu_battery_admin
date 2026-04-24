@@ -45,6 +45,53 @@ final stockLocationsProvider = FutureProvider.autoDispose<List<LocationStock>>((
   return ref.watch(stockRepositoryProvider).getLocations();
 });
 
+Future<void> _openReorderFlow(
+  BuildContext context,
+  WidgetRef ref, {
+  required int stationId,
+  required String errorMessagePrefix,
+}) async {
+  final rootNavigator = Navigator.of(context, rootNavigator: true);
+  final loadingRoute = DialogRoute<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => const Center(child: CircularProgressIndicator()),
+  );
+
+  rootNavigator.push(loadingRoute);
+
+  try {
+    final repo = ref.read(stockRepositoryProvider);
+    final detail = await repo.getStationDetail(stationId);
+
+    if (!context.mounted) return;
+    if (loadingRoute.isActive) {
+      rootNavigator.removeRoute(loadingRoute);
+    }
+
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      useRootNavigator: true,
+      builder: (_) =>
+          ReorderModal(station: detail.station, forecast: detail.forecast),
+    );
+  } catch (e) {
+    if (!context.mounted) return;
+    if (loadingRoute.isActive) {
+      rootNavigator.removeRoute(loadingRoute);
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$errorMessagePrefix: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+
 class StockLevelsView extends ConsumerWidget {
   const StockLevelsView({super.key});
 
@@ -264,44 +311,12 @@ class StockLevelsView extends ConsumerWidget {
                     ),
                     TextButton.icon(
                       onPressed: () async {
-                        final capturedContext = context;
-                        showDialog(
-                          context: capturedContext,
-                          barrierDismissible: false,
-                          builder: (_) =>
-                              const Center(child: CircularProgressIndicator()),
+                        await _openReorderFlow(
+                          context,
+                          ref,
+                          stationId: alert.stationId,
+                          errorMessagePrefix: 'Error loading forecast',
                         );
-                        try {
-                          final repo = ref.read(stockRepositoryProvider);
-                          final detail = await repo.getStationDetail(
-                            alert.stationId,
-                          );
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (capturedContext.mounted) {
-                              Navigator.of(capturedContext).pop();
-                              showDialog(
-                                context: capturedContext,
-                                builder: (_) => ReorderModal(
-                                  station: detail.station,
-                                  forecast: detail.forecast,
-                                ),
-                              );
-                            }
-                          });
-                        } catch (e) {
-                          final msg = e.toString();
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (capturedContext.mounted) {
-                              Navigator.of(capturedContext).pop();
-                              ScaffoldMessenger.of(capturedContext).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error: $msg'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          });
-                        }
                       },
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
@@ -500,8 +515,9 @@ class StockLevelsView extends ConsumerWidget {
                     ),
                   ],
                   onChanged: (val) {
-                    if (val != null)
+                    if (val != null) {
                       ref.read(stockSortProvider.notifier).state = val;
+                    }
                   },
                 ),
               ),
@@ -665,258 +681,266 @@ class StockLevelsView extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: DataTable(
-        headingRowColor: WidgetStateProperty.all(
-          const Color(0xFF0F172A).withValues(alpha: 0.5),
-        ),
-        dataRowMaxHeight: 65,
-        dataRowMinHeight: 65,
-        columns: const [
-          DataColumn(
-            label: Text(
-              'Station',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: WidgetStateProperty.all(
+            const Color(0xFF0F172A).withValues(alpha: 0.5),
           ),
-          DataColumn(
-            label: Text(
-              'Available',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+          dataRowMaxHeight: 65,
+          dataRowMinHeight: 65,
+          columns: const [
+            DataColumn(
+              label: Text(
+                'Station',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
-          ),
-          DataColumn(
-            label: Text(
-              'Rented',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+            DataColumn(
+              label: Text(
+                'Available',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
-          ),
-          DataColumn(
-            label: Text(
-              'Service',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+            DataColumn(
+              label: Text(
+                'Rented',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
-          ),
-          DataColumn(
-            label: Text(
-              'Utilization',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+            DataColumn(
+              label: Text(
+                'Service',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
-          ),
-          DataColumn(
-            label: Text(
-              'Health',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+            DataColumn(
+              label: Text(
+                'Utilization',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
-          ),
-          DataColumn(
-            label: Text(
-              '',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
+            DataColumn(
+              label: Text(
+                'Health',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
             ),
-          ),
-        ],
-        rows: items.map((item) {
-          if (item is StationStock) {
-            final s = item;
-            final isCritical = s.isLowStock;
-            final color = isCritical
-                ? Colors.red
-                : (s.utilizationPercentage > 70 ? Colors.green : Colors.amber);
+            DataColumn(
+              label: Text(
+                '',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ),
+          ],
+          rows: items.map((item) {
+            if (item is StationStock) {
+              final s = item;
+              final isCritical = s.isLowStock;
+              final color = isCritical
+                  ? Colors.red
+                  : (s.utilizationPercentage > 70
+                        ? Colors.green
+                        : Colors.amber);
 
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      Icon(Icons.storefront, size: 16, color: color),
-                      const SizedBox(width: 8),
-                      Text(
-                        s.stationName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${s.availableCount}',
-                    style: TextStyle(
-                      color: isCritical ? Colors.redAccent : Colors.white,
-                      fontWeight: isCritical
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${s.rentedCount}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${s.maintenanceCount}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 60,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: LinearProgressIndicator(
-                            value: s.utilizationPercentage / 100,
-                            backgroundColor: Colors.white.withValues(
-                              alpha: 0.1,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(color),
-                            minHeight: 6,
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Row(
+                      children: [
+                        Icon(Icons.storefront, size: 16, color: color),
+                        const SizedBox(width: 8),
+                        Text(
+                          s.stationName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${s.availableCount}',
+                      style: TextStyle(
+                        color: isCritical ? Colors.redAccent : Colors.white,
+                        fontWeight: isCritical
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${s.utilizationPercentage.toInt()}%',
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${s.rentedCount}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${s.maintenanceCount}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 60,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: LinearProgressIndicator(
+                              value: s.utilizationPercentage / 100,
+                              backgroundColor: Colors.white.withValues(
+                                alpha: 0.1,
+                              ),
+                              valueColor: AlwaysStoppedAnimation<Color>(color),
+                              minHeight: 6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${s.utilizationPercentage.toInt()}%',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: color.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        isCritical ? 'LOW STOCK' : 'HEALTHY',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: color.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      isCritical ? 'LOW STOCK' : 'HEALTHY',
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                  DataCell(
+                    TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              StationStockDetailView(stationId: s.stationId),
+                        ),
                       ),
+                      child: const Text('Details'),
                     ),
                   ),
-                ),
-                DataCell(
-                  TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            StationStockDetailView(stationId: s.stationId),
-                      ),
-                    ),
-                    child: const Text('Details'),
-                  ),
-                ),
-              ],
-            );
-          } else if (item is LocationStock) {
-            final l = item;
-            final color = l.locationType == 'WAREHOUSE'
-                ? Colors.blue
-                : Colors.purple;
-            final icon = l.locationType == 'WAREHOUSE'
-                ? Icons.warehouse
-                : Icons.build_circle;
+                ],
+              );
+            } else if (item is LocationStock) {
+              final l = item;
+              final color = l.locationType == 'WAREHOUSE'
+                  ? Colors.blue
+                  : Colors.purple;
+              final icon = l.locationType == 'WAREHOUSE'
+                  ? Icons.warehouse
+                  : Icons.build_circle;
 
-            return DataRow(
-              cells: [
-                DataCell(
-                  Row(
-                    children: [
-                      Icon(icon, size: 16, color: color),
-                      const SizedBox(width: 8),
-                      Text(
-                        l.locationName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Row(
+                      children: [
+                        Icon(icon, size: 16, color: color),
+                        const SizedBox(width: 8),
+                        Text(
+                          l.locationName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${l.availableCount}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '-',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${l.maintenanceCount}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '-',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: color.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        l.locationType.replaceAll('_', ' '),
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '${l.availableCount}',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                DataCell(
-                  Text(
-                    '-',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.3),
                     ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    '${l.maintenanceCount}',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                  DataCell(
+                    TextButton(
+                      onPressed: () {},
+                      child: const Text('Inventory'),
                     ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    '-',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: color.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      l.locationType.replaceAll('_', ' '),
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  TextButton(onPressed: () {}, child: const Text('Inventory')),
-                ),
-              ],
-            );
-          }
-          return const DataRow(cells: []);
-        }).toList(),
-      )),
+                ],
+              );
+            }
+            return const DataRow(cells: []);
+          }).toList(),
+        ),
+      ),
     );
   }
 }
@@ -1248,7 +1272,11 @@ class _StationStockCard extends StatelessWidget {
             // Bottom info
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Wrap(spacing: 16, runSpacing: 16, alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center,
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Icon(
                     Icons.inventory_2_outlined,
@@ -1263,7 +1291,7 @@ class _StationStockCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
-                  
+
                   Icon(
                     Icons.access_time,
                     size: 14,
@@ -1316,45 +1344,12 @@ class _StationStockCard extends StatelessWidget {
                   child: Consumer(
                     builder: (context, ref, _) => TextButton(
                       onPressed: () async {
-                        // Fetch forecast for this station first
-                        final capturedContext = context;
-                        showDialog(
-                          context: capturedContext,
-                          barrierDismissible: false,
-                          builder: (_) =>
-                              const Center(child: CircularProgressIndicator()),
+                        await _openReorderFlow(
+                          context,
+                          ref,
+                          stationId: station.stationId,
+                          errorMessagePrefix: 'Error loading forecast',
                         );
-                        try {
-                          final repo = ref.read(stockRepositoryProvider);
-                          final detail = await repo.getStationDetail(
-                            station.stationId,
-                          );
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (capturedContext.mounted) {
-                              Navigator.of(capturedContext).pop();
-                              showDialog(
-                                context: capturedContext,
-                                builder: (_) => ReorderModal(
-                                  station: detail.station,
-                                  forecast: detail.forecast,
-                                ),
-                              );
-                            }
-                          });
-                        } catch (e) {
-                          final msg = e.toString();
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (capturedContext.mounted) {
-                              Navigator.of(capturedContext).pop();
-                              ScaffoldMessenger.of(capturedContext).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error loading forecast: $msg'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          });
-                        }
                       },
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),

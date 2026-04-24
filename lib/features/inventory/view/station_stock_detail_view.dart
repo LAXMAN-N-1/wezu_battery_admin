@@ -1621,13 +1621,18 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Reorder Point Threshold',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+          Expanded(
+            child: Text(
+              'Reorder Point Threshold',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+            ),
           ),
+          const SizedBox(width: 12),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '${widget.currentPoint} batteries',
