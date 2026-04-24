@@ -63,9 +63,8 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => Center(child: Text('Error loading modules: $err', style: const TextStyle(color: Color(0xFFEF4444)))),
           data: (modules) {
-            // Use up to 6 roles for display (to fit the screen)
-            final displayRoles = roles.length > 6 ? roles.sublist(0, 6) : roles;
-            
+            final displayRoles = roles;
+
             _initializeMatrix(displayRoles, modules);
             
             return SingleChildScrollView(
@@ -86,7 +85,7 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                 Text('System Permission Matrix', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Click on cells to toggle: None (Gray) → Read-Only (Blue) → Full Control (Green). Showing ${displayRoles.length} of ${roles.length} roles.',
+                                  'Click cells to cycle: None → Read → Full. ${roles.length} role${roles.length == 1 ? '' : 's'} total.',
                                   style: const TextStyle(color: Colors.white54, fontSize: 13),
                                 ),
                               ],
@@ -113,17 +112,17 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                     final perms = (mRecord['permissions'] as List? ?? []);
                                     
                                     if (state == 2) {
-                                      // FULL Access: Add all slugs in this module
+                                      // FULL Access: Add all permission slugs in this module
                                       for (var p in perms) {
-                                        if (p is Map && p.containsKey('id')) {
-                                          roleSlugs.add(p['id'] as String);
+                                        if (p is Map && p.containsKey('slug')) {
+                                          roleSlugs.add(p['slug'] as String);
                                         }
                                       }
                                     } else if (state == 1) {
-                                      // READ Access: Add only 'view' or 'list' slugs
+                                      // READ Access: Add only view/read/list slugs
                                       for (var p in perms) {
-                                        if (p is Map && p.containsKey('id')) {
-                                          final slug = p['id'] as String;
+                                        if (p is Map && p.containsKey('slug')) {
+                                          final slug = p['slug'] as String;
                                           final action = (p['action'] as String? ?? '').toLowerCase();
                                           if (action.contains('view') || action.contains('read') || action.contains('list')) {
                                             roleSlugs.add(slug);

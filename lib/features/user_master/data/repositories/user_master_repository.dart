@@ -107,6 +107,53 @@ class UserMasterRepository {
         : Map<String, dynamic>.from(response.data as Map);
   }
 
+  Future<List<Map<String, dynamic>>> getDealersReference() async {
+    final response = await _apiClient.get(
+      '/api/v1/admin/dealers/',
+      queryParameters: {'limit': 200},
+    );
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final rows = payload['dealers'] as List? ?? const <dynamic>[];
+    return rows
+        .whereType<Map>()
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getStationsReference({
+    int? dealerId,
+  }) async {
+    final response = await _apiClient.get(
+      '/api/v1/admin/stations/',
+      queryParameters: {
+        'limit': 300,
+        if (dealerId != null) 'dealer_id': dealerId,
+      },
+    );
+    final payload = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : Map<String, dynamic>.from(response.data as Map);
+    final rows = payload['stations'] as List? ?? const <dynamic>[];
+    return rows
+        .whereType<Map>()
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getWarehousesReference() async {
+    final response = await _apiClient.get(
+      '/api/v1/warehouses/',
+      queryParameters: {'limit': 300},
+    );
+    final rows = response.data as List? ?? const <dynamic>[];
+    return rows
+        .whereType<Map>()
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
   Future<User> updateUser(String id, Map<String, dynamic> data) async {
     final response = await _apiClient.put(
       '/api/v1/admin/users/$id',
@@ -170,7 +217,10 @@ class UserMasterRepository {
           .map(
             (entry) => {
               'module': entry.key,
-              'label': entry.key,
+              'label': entry.key
+                  .split('_')
+                  .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+                  .join(' '),
               'permissions': entry.value,
             },
           )
@@ -189,32 +239,16 @@ class UserMasterRepository {
 
   Future<List<AccessLog>> getAccessLogs({int skip = 0, int limit = 50}) async {
     final response = await _apiClient.get(
-      '/api/v1/admin/security/audit-logs',
+      '/api/v1/admin/security/login-activity',
       queryParameters: {'skip': skip, 'limit': limit},
     );
     final payload = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
     final entries = payload['items'] as List? ?? const <dynamic>[];
-
-    return entries.whereType<Map>().map((entry) {
-      final json = Map<String, dynamic>.from(entry);
-      return AccessLog(
-        id: json['id']?.toString() ?? '',
-        timestamp:
-            DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
-            DateTime.now(),
-        userId: json['user_id']?.toString() ?? '',
-        userName: json['user_id'] != null
-            ? 'User #${json['user_id']}'
-            : 'System',
-        roleName: '',
-        actionType: json['action']?.toString() ?? 'unknown',
-        moduleAffected: json['resource_type']?.toString() ?? '',
-        ipAddress: json['ip_address']?.toString() ?? '',
-        deviceBrowser: json['user_agent']?.toString(),
-        isSuccess: true,
-      );
-    }).toList();
+    return entries
+        .whereType<Map>()
+        .map((entry) => AccessLog.fromJson(Map<String, dynamic>.from(entry)))
+        .toList();
   }
 }

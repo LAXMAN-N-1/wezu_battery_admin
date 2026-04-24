@@ -69,15 +69,13 @@ class Role {
           final module = p['module'] as String? ?? 'Other';
           final action = p['action'] as String? ?? 'view';
 
-          // Simple logic: if 'manage' or 'all' or 'create' -> full, else view
-          if ([
-            'all',
-            'manage',
-            'delete',
-            'create',
-          ].contains(action.toLowerCase())) {
+          const fullActions = {
+            'all', 'manage', 'delete', 'create', 'update',
+            'assign', 'approve', 'export', 'override',
+          };
+          if (fullActions.contains(action.toLowerCase())) {
             modulesMap[module] = PermissionLevel.full;
-          } else {
+          } else if (modulesMap[module] != PermissionLevel.full) {
             modulesMap[module] = PermissionLevel.view;
           }
         }
