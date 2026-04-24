@@ -43,7 +43,12 @@ class BrandingSettingsRepository {
       );
     } on DioException catch (e) {
       debugPrint('[BrandingSettingsRepo] getBrandingInfo failed: $e');
-      rethrow;
+      // Keep UI functional even if backend settings storage is not initialized.
+      return const BrandingInfoModel(
+        primaryColor: '#2563EB',
+        secondaryColor: '#1E40AF',
+        themeMode: 'system',
+      );
     }
   }
 

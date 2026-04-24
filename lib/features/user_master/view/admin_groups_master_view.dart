@@ -105,6 +105,155 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
     );
   }
 
+  void _showEditGroupDialog(AdminGroupModel group) {
+    final titleController = TextEditingController(text: group.name);
+    final descController = TextEditingController(text: group.description ?? '');
+    bool isActive = group.isActive;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              title: const Text('Edit Admin Group', style: TextStyle(color: Colors.white)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Group Name',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Description',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                        focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.blueAccent)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text('Active', style: TextStyle(color: Colors.white)),
+                        Switch(
+                          value: isActive,
+                          onChanged: (val) {
+                            setModalState(() => isActive = val);
+                          },
+                          activeThumbColor: Colors.blueAccent,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (titleController.text.trim().isEmpty) return;
+                    try {
+                      final repo = ref.read(adminGroupRepositoryProvider);
+                      await repo.updateGroup(group.id, {
+                        'name': titleController.text.trim(),
+                        'description': descController.text.trim(),
+                        'is_active': isActive,
+                      });
+                      ref.invalidate(adminGroupsProvider);
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } catch (e) {
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF3B82F6)),
+                  child: const Text('Save', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _toggleGroupStatus(AdminGroupModel group) async {
+    try {
+      final repo = ref.read(adminGroupRepositoryProvider);
+      await repo.updateGroup(group.id, {
+        'name': group.name,
+        'description': group.description,
+        'is_active': !group.isActive,
+      });
+      ref.invalidate(adminGroupsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteGroup(AdminGroupModel group) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Delete Group?', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Delete "${group.name}"? This cannot be undone.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true) return;
+    try {
+      final repo = ref.read(adminGroupRepositoryProvider);
+      await repo.deleteGroup(group.id);
+      ref.invalidate(adminGroupsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupsAsync = ref.watch(adminGroupsProvider);
@@ -185,7 +334,32 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
                   style: TextStyle(color: group.isActive ? Colors.greenAccent : Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
-              const Icon(Icons.more_vert, color: Colors.white54, size: 20),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.white54, size: 20),
+                color: const Color(0xFF0F172A),
+                onSelected: (value) {
+                  if (value == 'edit') _showEditGroupDialog(group);
+                  if (value == 'toggle') _toggleGroupStatus(group);
+                  if (value == 'delete') _deleteGroup(group);
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text('Edit', style: TextStyle(color: Colors.white)),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'toggle',
+                    child: Text(
+                      group.isActive ? 'Deactivate' : 'Activate',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                  ),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -206,7 +380,7 @@ class _AdminGroupsMasterViewState extends ConsumerState<AdminGroupsMasterView> {
                  ],
                ),
                TextButton(
-                 onPressed: () {},
+                 onPressed: () => _showEditGroupDialog(group),
                  child: const Text('Manage', style: TextStyle(color: Colors.blueAccent)),
                ),
             ],

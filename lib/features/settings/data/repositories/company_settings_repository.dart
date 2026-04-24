@@ -46,7 +46,14 @@ class CompanySettingsRepository {
       );
     } on DioException catch (e) {
       debugPrint('[CompanySettingsRepo] getCompanyInfo failed: $e');
-      rethrow;
+      // Keep settings UI usable even if backend config table is missing.
+      return const CompanyInfoModel(
+        companyName: '',
+        companyEmail: '',
+        supportPhone: '',
+        companyAddress: '',
+        companyWebsite: '',
+      );
     }
   }
 

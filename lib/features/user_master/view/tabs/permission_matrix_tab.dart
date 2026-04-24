@@ -15,7 +15,7 @@ class PermissionMatrixTab extends ConsumerStatefulWidget {
 class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
   // Local state for interactive toggles: { module: { roleName: accessLevel (0/1/2) } }
   final Map<String, Map<String, int>> matrix = {};
-  bool _initialized = false;
+  String? _lastInitKey;
 
   /// Convert snake_case DB role name to Display Name
   String _displayRoleName(String dbName) {
@@ -26,15 +26,24 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
   }
 
   void _initializeMatrix(List<Role> roles, List<Map<String, dynamic>> modules) {
-    if (_initialized) return;
-    
+    final initKey =
+        '${roles.map((r) => r.id).join(',')}|${modules.map((m) => (m['module'] ?? m['label']).toString()).join(',')}';
+    if (_lastInitKey == initKey) return;
+    _lastInitKey = initKey;
+
+    matrix.clear();
     for (var mRecord in modules) {
       final m = mRecord['label'] as String? ?? mRecord['module'] as String? ?? 'Other';
       matrix[m] = {};
       
       for (var role in roles) {
         // Find if this role has any permissions in this module
-        final level = role.permissions.modules[mRecord['module']] ?? PermissionLevel.noAccess;
+        final moduleKey = (mRecord['module'] ?? '').toString();
+        final labelKey = (mRecord['label'] ?? '').toString();
+        final level =
+            role.permissions.modules[moduleKey] ??
+            role.permissions.modules[labelKey] ??
+            PermissionLevel.noAccess;
         
         if (level == PermissionLevel.full) {
           matrix[m]![role.name] = 2; // Full
@@ -45,7 +54,6 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
         }
       }
     }
-    _initialized = true;
   }
 
   @override
@@ -61,8 +69,7 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, _) => Center(child: Text('Error loading modules: $err', style: const TextStyle(color: Colors.red))),
           data: (modules) {
-            // Use up to 6 roles for display (to fit the screen)
-            final displayRoles = roles.length > 6 ? roles.sublist(0, 6) : roles;
+            final displayRoles = roles;
             
             _initializeMatrix(displayRoles, modules);
             
@@ -100,7 +107,11 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                               );
                               
                               try {
+                                int updatedRoles = 0;
                                 for (var role in displayRoles) {
+                                  final roleId = int.tryParse(role.id);
+                                  if (roleId == null) continue;
+
                                   final List<String> roleSlugs = [];
                                   
                                   for (var mRecord in modules) {
@@ -114,16 +125,20 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                     if (state == 2) {
                                       // FULL Access: Add all slugs in this module
                                       for (var p in perms) {
-                                        if (p is Map && p.containsKey('id')) {
-                                          roleSlugs.add(p['id'] as String);
+                                        if (p is Map) {
+                                          final slug = (p['id'] ?? p['slug'])?.toString();
+                                          if (slug != null && slug.isNotEmpty) {
+                                            roleSlugs.add(slug);
+                                          }
                                         }
                                       }
                                     } else if (state == 1) {
                                       // READ Access: Add only 'view' or 'list' slugs
                                       for (var p in perms) {
-                                        if (p is Map && p.containsKey('id')) {
-                                          final slug = p['id'] as String;
-                                          final action = (p['action'] as String? ?? '').toLowerCase();
+                                        if (p is Map) {
+                                          final slug = (p['id'] ?? p['slug'])?.toString();
+                                          if (slug == null || slug.isEmpty) continue;
+                                          final action = (p['action'] ?? p['label'] ?? '').toString().toLowerCase();
                                           if (action.contains('view') || action.contains('read') || action.contains('list')) {
                                             roleSlugs.add(slug);
                                           }
@@ -133,14 +148,26 @@ class _PermissionMatrixTabState extends ConsumerState<PermissionMatrixTab> {
                                   }
                                   
                                   // Update role via repository
-                                  await ref.read(userMasterRepositoryProvider).updateRolePermissions(int.parse(role.id), roleSlugs);
+                                  await ref
+                                      .read(userMasterRepositoryProvider)
+                                      .updateRolePermissions(roleId, roleSlugs);
+                                  updatedRoles += 1;
                                 }
                                 
                                 // Done!
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).clearSnackBars();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Permissions Matrix saved successfully!'), backgroundColor: Colors.green),
+                                    SnackBar(
+                                      content: Text(
+                                        updatedRoles > 0
+                                            ? 'Permissions Matrix saved successfully!'
+                                            : 'No editable roles were saved.',
+                                      ),
+                                      backgroundColor: updatedRoles > 0
+                                          ? Colors.green
+                                          : Colors.orange,
+                                    ),
                                   );
                                   // Refetch roles to update UI
                                   ref.invalidate(rolesProvider);

@@ -1,3 +1,15 @@
+int _asInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+double _asDouble(dynamic value, [double fallback = 0.0]) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
 class PurchaseOrder {
   final int id;
   final String userName;
@@ -15,11 +27,15 @@ class PurchaseOrder {
 
   factory PurchaseOrder.fromJson(Map<String, dynamic> json) {
     return PurchaseOrder(
-      id: json['id'] as int,
-      userName: json['user_name'] ?? 'Unknown',
-      batteryId: json['battery_id'] as int,
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
-      timestamp: DateTime.parse(json['timestamp']),
+      id: _asInt(json['id']),
+      userName: (json['user_name'] ?? json['customer_name'] ?? 'Unknown')
+          .toString(),
+      batteryId: _asInt(json['battery_id'] ?? json['battery']?['id']),
+      amount: _asDouble(json['amount'] ?? json['total_amount']),
+      timestamp: DateTime.tryParse(
+            (json['timestamp'] ?? json['created_at'])?.toString() ?? '',
+          ) ??
+          DateTime.now(),
     );
   }
 }

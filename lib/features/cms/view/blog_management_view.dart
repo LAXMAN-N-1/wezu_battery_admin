@@ -218,13 +218,16 @@ class _BlogManagementViewState extends ConsumerState<BlogManagementView> {
           Text(NumberFormat.compact().format(blog.viewsCount), style: GoogleFonts.inter(color: Colors.white54, fontSize: 12)),
           Row(
             children: [
-              IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue), onPressed: () => context.push('/cms/blogs/${blog.id}/edit')),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue),
+                onPressed: () => context.push('/cms/blogs/edit/${blog.id}'),
+              ),
               IconButton(icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red), onPressed: () => _confirmDelete(blog)),
             ],
           ),
         ];
       }).toList(),
-      onRowTap: (idx) => context.push('/cms/blogs/${blogs[idx].id}/edit'),
+      onRowTap: (idx) => context.push('/cms/blogs/edit/${blogs[idx].id}'),
     );
   }
 

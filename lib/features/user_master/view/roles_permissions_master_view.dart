@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/admin_ui_components.dart';
+import '../data/models/role.dart';
+import '../data/providers/user_master_providers.dart';
 import 'tabs/roles_list_tab.dart';
 import 'tabs/role_form_tab.dart';
 import 'tabs/permission_matrix_tab.dart';
 
-class RolesPermissionsMasterView extends StatefulWidget {
+class RolesPermissionsMasterView extends ConsumerStatefulWidget {
   const RolesPermissionsMasterView({super.key});
 
   @override
-  State<RolesPermissionsMasterView> createState() => _RolesPermissionsMasterViewState();
+  ConsumerState<RolesPermissionsMasterView> createState() => _RolesPermissionsMasterViewState();
 }
 
-class _RolesPermissionsMasterViewState extends State<RolesPermissionsMasterView> with SingleTickerProviderStateMixin {
+class _RolesPermissionsMasterViewState extends ConsumerState<RolesPermissionsMasterView> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -28,6 +31,21 @@ class _RolesPermissionsMasterViewState extends State<RolesPermissionsMasterView>
 
   void _switchToTab(int index) {
     _tabController.animateTo(index);
+  }
+
+  void _openCreateRole() {
+    ref.read(editingRoleProvider.notifier).state = null;
+    _switchToTab(1);
+  }
+
+  void _openEditRole(Role role) {
+    ref.read(editingRoleProvider.notifier).state = role;
+    _switchToTab(1);
+  }
+
+  void _closeRoleForm() {
+    ref.read(editingRoleProvider.notifier).state = null;
+    _switchToTab(0);
   }
 
   @override
@@ -79,8 +97,11 @@ class _RolesPermissionsMasterViewState extends State<RolesPermissionsMasterView>
             child: TabBarView(
               controller: _tabController,
               children: [
-                RolesListTab(onEditRole: () => _switchToTab(1)),
-                RoleFormTab(onCancel: () => _switchToTab(0)),
+                RolesListTab(
+                  onCreateRole: _openCreateRole,
+                  onEditRole: _openEditRole,
+                ),
+                RoleFormTab(onCancel: _closeRoleForm),
                 const PermissionMatrixTab(),
               ],
             ),

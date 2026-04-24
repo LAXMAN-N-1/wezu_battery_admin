@@ -1,3 +1,15 @@
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+DateTime? _toDate(dynamic value) {
+  final raw = value?.toString();
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
+}
+
 class MediaAsset {
   final int id;
   final String fileName;
@@ -31,19 +43,19 @@ class MediaAsset {
 
   factory MediaAsset.fromJson(Map<String, dynamic> json) {
     return MediaAsset(
-      id: json['id'] as int,
-      fileName: json['file_name'] as String,
-      fileType: json['file_type'] as String,
-      fileSizeBytes: (json['file_size_bytes'] as num?)?.toInt() ?? 0,
-      url: json['url'] as String,
-      altText: json['alt_text'] as String?,
-      category: json['category'] as String? ?? 'general',
-      folderPath: json['folder_path'] as String?,
-      dimensions: json['dimensions'] as String?,
-      uploadedById: json['uploaded_by_id'] as int,
-      uploadedByName: json['uploaded_by_name'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: _toInt(json['id']),
+      fileName: (json['file_name'] ?? json['name'] ?? '').toString(),
+      fileType: (json['file_type'] ?? json['mime_type'] ?? '').toString(),
+      fileSizeBytes: _toInt(json['file_size_bytes'] ?? json['size']),
+      url: (json['url'] ?? '').toString(),
+      altText: json['alt_text']?.toString(),
+      category: (json['category'] ?? 'general').toString(),
+      folderPath: json['folder_path']?.toString(),
+      dimensions: json['dimensions']?.toString(),
+      uploadedById: _toInt(json['uploaded_by_id']),
+      uploadedByName: json['uploaded_by_name']?.toString(),
+      createdAt: _toDate(json['created_at']) ?? DateTime.now(),
+      updatedAt: _toDate(json['updated_at']) ?? DateTime.now(),
     );
   }
 

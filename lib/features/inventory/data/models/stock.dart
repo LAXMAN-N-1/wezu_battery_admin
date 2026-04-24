@@ -1,5 +1,52 @@
 // lib/features/inventory/data/models/stock.dart
 
+int _asInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+double _asDouble(dynamic value, [double fallback = 0.0]) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+String _asString(dynamic value, [String fallback = '']) {
+  final str = value?.toString();
+  if (str == null || str.isEmpty) return fallback;
+  return str;
+}
+
+bool _asBool(dynamic value, [bool fallback = false]) {
+  if (value is bool) return value;
+  final normalized = value?.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return fallback;
+}
+
+Map<String, dynamic> _asMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return const <String, dynamic>{};
+}
+
+List<dynamic> _asList(dynamic value) {
+  if (value is List) return value;
+  return const <dynamic>[];
+}
+
+DateTime? _asDate(dynamic value) {
+  final raw = value?.toString();
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
+}
+
 class StockOverview {
   final int totalBatteries;
   final int totalStations;
@@ -24,16 +71,27 @@ class StockOverview {
   });
 
   factory StockOverview.fromJson(Map<String, dynamic> json) {
+    final statusBreakdown = _asMap(json['status_breakdown']);
     return StockOverview(
-      totalBatteries: json['total_batteries'] ?? 0,
-      totalStations: json['total_stations'] ?? 0,
-      avgUtilization: (json['avg_utilization'] as num?)?.toDouble() ?? 0.0,
-      lowStockAlerts: json['low_stock_alerts'] ?? 0,
-      warehouseCount: json['warehouse_count'] ?? 0,
-      serviceCount: json['service_count'] ?? 0,
-      availableCount: json['available_count'] ?? 0,
-      rentedCount: json['rented_count'] ?? 0,
-      maintenanceCount: json['maintenance_count'] ?? 0,
+      totalBatteries: _asInt(
+        json['total_batteries'] ?? json['total_count'] ?? json['total'],
+      ),
+      totalStations: _asInt(json['total_stations']),
+      avgUtilization: _asDouble(
+        json['avg_utilization'] ?? json['utilization_percentage'],
+      ),
+      lowStockAlerts: _asInt(json['low_stock_alerts'] ?? json['alerts_count']),
+      warehouseCount: _asInt(json['warehouse_count']),
+      serviceCount: _asInt(
+        json['service_count'] ?? json['service_center_count'],
+      ),
+      availableCount: _asInt(
+        json['available_count'] ?? statusBreakdown['available'],
+      ),
+      rentedCount: _asInt(json['rented_count'] ?? statusBreakdown['rented']),
+      maintenanceCount: _asInt(
+        json['maintenance_count'] ?? statusBreakdown['maintenance'],
+      ),
     );
   }
 }
@@ -58,14 +116,33 @@ class LocationStock {
   });
 
   factory LocationStock.fromJson(Map<String, dynamic> json) {
+    final availableCount = _asInt(json['available_count'] ?? json['available']);
+    final rentedCount = _asInt(json['rented_count'] ?? json['rented']);
+    final maintenanceCount = _asInt(
+      json['maintenance_count'] ?? json['maintenance'],
+    );
+    final totalAssigned = _asInt(
+      json['total_assigned'] ??
+          json['total_batteries'] ??
+          (availableCount + rentedCount + maintenanceCount),
+    );
     return LocationStock(
-      locationName: json['location_name'] ?? '',
-      locationType: json['location_type'] ?? '',
-      availableCount: json['available_count'] ?? 0,
-      rentedCount: json['rented_count'] ?? 0,
-      maintenanceCount: json['maintenance_count'] ?? 0,
-      totalAssigned: json['total_assigned'] ?? 0,
-      utilizationPercentage: (json['utilization_percentage'] as num?)?.toDouble() ?? 0.0,
+      locationName: _asString(
+        json['location_name'] ?? json['name'],
+        'Unknown Location',
+      ),
+      locationType: _asString(
+        json['location_type'] ?? json['type'],
+        'WAREHOUSE',
+      ).toUpperCase(),
+      availableCount: availableCount,
+      rentedCount: rentedCount,
+      maintenanceCount: maintenanceCount,
+      totalAssigned: totalAssigned,
+      utilizationPercentage: _asDouble(
+        json['utilization_percentage'] ??
+            (totalAssigned > 0 ? (availableCount / totalAssigned) * 100 : 0.0),
+      ),
     );
   }
 }
@@ -87,11 +164,15 @@ class StationStockConfig {
 
   factory StationStockConfig.fromJson(Map<String, dynamic> json) {
     return StationStockConfig(
-      maxCapacity: json['max_capacity'] ?? 50,
-      reorderPoint: json['reorder_point'] ?? 10,
-      reorderQuantity: json['reorder_quantity'] ?? 20,
-      managerEmail: json['manager_email'],
-      managerPhone: json['manager_phone'],
+      maxCapacity: _asInt(json['max_capacity'] ?? json['capacity'], 50),
+      reorderPoint: _asInt(json['reorder_point'] ?? json['threshold'], 10),
+      reorderQuantity: _asInt(json['reorder_quantity'] ?? json['order_qty'], 20),
+      managerEmail: _asString(json['manager_email']).isEmpty
+          ? null
+          : _asString(json['manager_email']),
+      managerPhone: _asString(json['manager_phone']).isEmpty
+          ? null
+          : _asString(json['manager_phone']),
     );
   }
 
@@ -134,19 +215,44 @@ class StationStock {
   });
 
   factory StationStock.fromJson(Map<String, dynamic> json) {
+    final availableCount = _asInt(json['available_count'] ?? json['available']);
+    final rentedCount = _asInt(json['rented_count'] ?? json['rented']);
+    final maintenanceCount = _asInt(
+      json['maintenance_count'] ?? json['maintenance'],
+    );
+    final totalAssigned = _asInt(
+      json['total_assigned'] ??
+          json['total_batteries'] ??
+          (availableCount + rentedCount + maintenanceCount),
+    );
+    final configJson = _asMap(json['config']);
+    final config = configJson.isEmpty ? null : StationStockConfig.fromJson(configJson);
+    final reorderPoint = config?.reorderPoint ?? 10;
+
     return StationStock(
-      stationId: json['station_id'] ?? 0,
-      stationName: json['station_name'] ?? 'Unknown Station',
-      address: json['address'] ?? '',
-      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
-      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
-      availableCount: json['available_count'] ?? 0,
-      rentedCount: json['rented_count'] ?? 0,
-      maintenanceCount: json['maintenance_count'] ?? 0,
-      totalAssigned: json['total_assigned'] ?? 0,
-      utilizationPercentage: (json['utilization_percentage'] as num?)?.toDouble() ?? 0.0,
-      isLowStock: json['is_low_stock'] ?? false,
-      config: json['config'] != null ? StationStockConfig.fromJson(json['config']) : null,
+      stationId: _asInt(json['station_id'] ?? json['id']),
+      stationName: _asString(
+        json['station_name'] ?? json['name'],
+        'Unknown Station',
+      ),
+      address: _asString(
+        json['address'] ?? json['full_address'] ?? json['location'],
+      ),
+      latitude: _asDouble(json['latitude'] ?? json['lat']),
+      longitude: _asDouble(json['longitude'] ?? json['lng']),
+      availableCount: availableCount,
+      rentedCount: rentedCount,
+      maintenanceCount: maintenanceCount,
+      totalAssigned: totalAssigned,
+      utilizationPercentage: _asDouble(
+        json['utilization_percentage'] ??
+            (totalAssigned > 0 ? (rentedCount / totalAssigned) * 100 : 0.0),
+      ),
+      isLowStock: _asBool(
+        json['is_low_stock'],
+        availableCount <= reorderPoint,
+      ),
+      config: config,
     );
   }
 }
@@ -168,11 +274,19 @@ class StockForecast {
 
   factory StockForecast.fromJson(Map<String, dynamic> json) {
     return StockForecast(
-      avgRentalsPerDay: (json['avg_rentals_per_day'] as num?)?.toDouble() ?? 0.0,
-      projectedDemand30d: json['projected_demand_30d'] ?? 0,
-      recommendedReorder: json['recommended_reorder'] ?? 0,
-      recommendedDate: json['recommended_date'] != null ? DateTime.tryParse(json['recommended_date']) : null,
-      predictedStockoutDays: json['predicted_stockout_days'],
+      avgRentalsPerDay: _asDouble(
+        json['avg_rentals_per_day'] ?? json['avg_rental_per_day'],
+      ),
+      projectedDemand30d: _asInt(
+        json['projected_demand_30d'] ?? json['demand_30d'],
+      ),
+      recommendedReorder: _asInt(
+        json['recommended_reorder'] ?? json['recommended_quantity'],
+      ),
+      recommendedDate: _asDate(json['recommended_date']),
+      predictedStockoutDays: json['predicted_stockout_days'] == null
+          ? null
+          : _asInt(json['predicted_stockout_days']),
     );
   }
 }
@@ -191,11 +305,26 @@ class StationStockDetail {
   });
 
   factory StationStockDetail.fromJson(Map<String, dynamic> json) {
+    final root = _asMap(json['data']).isEmpty ? json : _asMap(json['data']);
+    final stationJson = _asMap(root['station']).isEmpty
+        ? root
+        : _asMap(root['station']);
+    final forecastJson = _asMap(root['forecast']);
+    final trendRaw = _asList(
+      root['utilization_trend'] ??
+          root['trend'] ??
+          _asMap(root['forecast'])['utilization_trend'],
+    );
     return StationStockDetail(
-      station: StationStock.fromJson(json['station']),
-      forecast: StockForecast.fromJson(json['forecast']),
-      batteries: json['batteries'] ?? [],
-      utilizationTrend: (json['utilization_trend'] as List<dynamic>?)?.map((e) => (e as num).toDouble()).toList() ?? [],
+      station: StationStock.fromJson(stationJson),
+      forecast: StockForecast.fromJson(
+        forecastJson.isEmpty ? <String, dynamic>{} : forecastJson,
+      ),
+      batteries: _asList(root['batteries']),
+      utilizationTrend: trendRaw
+          .map((e) => _asDouble(e))
+          .where((e) => e >= 0)
+          .toList(),
     );
   }
 }
@@ -219,12 +348,19 @@ class StockAlert {
 
   factory StockAlert.fromJson(Map<String, dynamic> json) {
     return StockAlert(
-      stationId: json['station_id'],
-      stationName: json['station_name'],
-      currentCount: json['current_count'],
-      capacity: json['capacity'],
-      threshold: json['threshold'],
-      utilizationPercentage: (json['utilization_percentage'] as num).toDouble(),
+      stationId: _asInt(json['station_id'] ?? json['id']),
+      stationName: _asString(
+        json['station_name'] ?? json['name'],
+        'Unknown Station',
+      ),
+      currentCount: _asInt(
+        json['current_count'] ?? json['available_count'] ?? json['available'],
+      ),
+      capacity: _asInt(json['capacity'] ?? json['max_capacity']),
+      threshold: _asInt(json['threshold'] ?? json['reorder_point'], 10),
+      utilizationPercentage: _asDouble(
+        json['utilization_percentage'] ?? json['capacity_percent'],
+      ),
     );
   }
 }
@@ -246,11 +382,14 @@ class ReorderRequest {
 
   factory ReorderRequest.fromJson(Map<String, dynamic> json) {
     return ReorderRequest(
-      id: json['id'],
-      stationId: json['station_id'],
-      requestedQuantity: json['requested_quantity'],
-      status: json['status'],
-      createdAt: DateTime.parse(json['created_at']),
+      id: _asString(json['id'], '0'),
+      stationId: _asInt(json['station_id'] ?? json['station']),
+      requestedQuantity: _asInt(
+        json['requested_quantity'] ?? json['quantity'],
+      ),
+      status: _asString(json['status'], 'pending'),
+      createdAt:
+          _asDate(json['created_at'] ?? json['created']) ?? DateTime.now(),
     );
   }
 }

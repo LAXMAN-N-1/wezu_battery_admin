@@ -67,15 +67,19 @@ class _UserMasterFormViewState extends ConsumerState<UserMasterFormView> {
     
     try {
       final repo = ref.read(userMasterRepositoryProvider);
-      
-      final payload = {
+
+      final payload = <String, dynamic>{
         'full_name': _nameController.text,
         'email': _emailController.text,
         'phone_number': _phoneController.text,
         'role_name': _selectedRoleName, // Send exact DB role name
-        'password': _autoGeneratePassword ? null : _passwordController.text,
-        'status': _status.name,
+        // Backend expects uppercase enum values (ACTIVE/SUSPENDED/...)
+        'status': _status.name.toUpperCase(),
       };
+
+      if (!_autoGeneratePassword && _passwordController.text.trim().isNotEmpty) {
+        payload['password'] = _passwordController.text.trim();
+      }
 
       await repo.createUser(payload);
 

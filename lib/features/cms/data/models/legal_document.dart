@@ -1,3 +1,27 @@
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+bool _toBool(dynamic value, [bool fallback = false]) {
+  if (value is bool) return value;
+  final normalized = value?.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return fallback;
+}
+
+DateTime? _toDate(dynamic value) {
+  final raw = value?.toString();
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
+}
+
 class LegalDocument {
   final int id;
   final String title;
@@ -30,20 +54,28 @@ class LegalDocument {
   });
 
   factory LegalDocument.fromJson(Map<String, dynamic> json) {
+    final historyRaw = json['history'];
+    final history = historyRaw is List
+        ? historyRaw
+              .whereType<Map>()
+              .map((e) => LegalVersion.fromJson(Map<String, dynamic>.from(e)))
+              .toList()
+        : null;
+
     return LegalDocument(
-      id: json['id'] as int,
-      title: json['title'] as String,
-      slug: json['slug'] as String,
-      content: json['content'] as String,
-      version: json['version'] as String? ?? '1.0',
-      status: json['status'] as String? ?? 'DRAFT',
-      isActive: json['is_active'] as bool? ?? true,
-      forceUpdate: json['force_update'] as bool? ?? false,
-      effectiveDate: json['effective_date'] != null ? DateTime.parse(json['effective_date'] as String) : null,
-      lastUpdatedBy: json['last_updated_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      history: (json['history'] as List?)?.map((e) => LegalVersion.fromJson(e)).toList(),
+      id: _toInt(json['id']),
+      title: (json['title'] ?? '').toString(),
+      slug: (json['slug'] ?? '').toString(),
+      content: (json['content'] ?? '').toString(),
+      version: (json['version'] ?? '1.0').toString(),
+      status: (json['status'] ?? 'DRAFT').toString(),
+      isActive: _toBool(json['is_active'], true),
+      forceUpdate: _toBool(json['force_update']),
+      effectiveDate: _toDate(json['effective_date']),
+      lastUpdatedBy: json['last_updated_by']?.toString(),
+      createdAt: _toDate(json['created_at']) ?? DateTime.now(),
+      updatedAt: _toDate(json['updated_at']) ?? DateTime.now(),
+      history: history,
     );
   }
 
@@ -76,10 +108,10 @@ class LegalVersion {
 
   factory LegalVersion.fromJson(Map<String, dynamic> json) {
     return LegalVersion(
-      version: json['version'] as String,
-      content: json['content'] as String,
-      publishedBy: json['published_by'] as String? ?? 'Admin',
-      publishedAt: DateTime.parse(json['published_at'] as String),
+      version: (json['version'] ?? '').toString(),
+      content: (json['content'] ?? '').toString(),
+      publishedBy: (json['published_by'] ?? 'Admin').toString(),
+      publishedAt: _toDate(json['published_at']) ?? DateTime.now(),
     );
   }
 }

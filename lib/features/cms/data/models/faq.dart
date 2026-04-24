@@ -1,3 +1,21 @@
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+bool _toBool(dynamic value, [bool fallback = false]) {
+  if (value is bool) return value;
+  final normalized = value?.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return fallback;
+}
+
 class FAQ {
   final int id;
   final String question;
@@ -22,16 +40,21 @@ class FAQ {
   });
 
   factory FAQ.fromJson(Map<String, dynamic> json) {
+    final audienceRaw = json['target_audience'];
+    final audience = audienceRaw is List
+        ? audienceRaw.map((e) => e.toString()).toList()
+        : <String>['All Users'];
+
     return FAQ(
-      id: json['id'] as int,
-      question: json['question'] as String,
-      answer: json['answer'] as String,
-      category: json['category'] as String? ?? 'general',
-      isActive: json['is_active'] as bool? ?? true,
-      helpfulCount: json['helpful_count'] as int? ?? 0,
-      notHelpfulCount: json['not_helpful_count'] as int? ?? 0,
-      targetAudience: (json['target_audience'] as List?)?.map((e) => e as String).toList() ?? ['All Users'],
-      displayOrder: json['display_order'] as int? ?? 0,
+      id: _toInt(json['id']),
+      question: (json['question'] ?? '').toString(),
+      answer: (json['answer'] ?? '').toString(),
+      category: (json['category'] ?? 'general').toString(),
+      isActive: _toBool(json['is_active'], true),
+      helpfulCount: _toInt(json['helpful_count']),
+      notHelpfulCount: _toInt(json['not_helpful_count']),
+      targetAudience: audience,
+      displayOrder: _toInt(json['display_order']),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import '../../../core/services/csv/csv_service.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/audit_trail_model.dart';
 import '../data/repositories/audit_trail_repository.dart';
@@ -25,7 +26,14 @@ class _AuditTrailViewState extends State<AuditTrailView> {
   String _searchQuery = '';
   AuditTrailEntry? _selectedEntry;
 
-  final List<String> _actionTypes = ['transfer', 'status_change', 'manual_entry', 'disposal', 'restock', 'reassignment'];
+  final List<String> _actionTypes = [
+    'transfer',
+    'status_change',
+    'manual_entry',
+    'disposal',
+    'restock',
+    'reassignment',
+  ];
 
   @override
   void initState() {
@@ -54,6 +62,44 @@ class _AuditTrailViewState extends State<AuditTrailView> {
     });
   }
 
+  Future<void> _exportCsv() async {
+    final rows = <List<dynamic>>[
+      <dynamic>[
+        'id',
+        'battery_id',
+        'action_type',
+        'from_location_type',
+        'from_location_id',
+        'to_location_type',
+        'to_location_id',
+        'actor_id',
+        'actor_name',
+        'notes',
+        'timestamp',
+      ],
+      ..._entries.map(
+        (entry) => <dynamic>[
+          entry.id,
+          entry.batteryId,
+          entry.actionType,
+          entry.fromLocationType ?? '',
+          entry.fromLocationId ?? '',
+          entry.toLocationType ?? '',
+          entry.toLocationId ?? '',
+          entry.actorId ?? '',
+          entry.actorName,
+          entry.notes ?? '',
+          entry.timestamp.toIso8601String(),
+        ],
+      ),
+    ];
+
+    await CsvService.downloadCsv(
+      rows,
+      'inventory_audit_trail_${DateFormat('yyyyMMdd_HHmm').format(DateTime.now())}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -68,20 +114,29 @@ class _AuditTrailViewState extends State<AuditTrailView> {
                 // Header
                 PageHeader(
                   title: 'Inventory Audit Trail',
-                  subtitle: 'Track all inventory changes — who moved what, when, and why.',
+                  subtitle:
+                      'Track all inventory changes — who moved what, when, and why.',
                   actionButton: Row(
                     children: [
-                      IconButton(icon: const Icon(Icons.refresh, color: Colors.white70), onPressed: _loadData),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.white70),
+                        onPressed: _loadData,
+                      ),
                       const SizedBox(width: 12),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: _entries.isEmpty ? null : _exportCsv,
                         icon: const Icon(Icons.download_outlined, size: 18),
                         label: const Text('Export CSV'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1E293B),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ],
@@ -92,16 +147,39 @@ class _AuditTrailViewState extends State<AuditTrailView> {
                 // Stats Cards
                 if (_stats != null)
                   Row(
-                    children: [
-                      _buildStatCard('Total Entries', _stats!.totalEntries.toString(), Icons.history, const Color(0xFF3B82F6)),
-                      const SizedBox(width: 16),
-                      _buildStatCard('Today', _stats!.todayCount.toString(), Icons.today_outlined, const Color(0xFF22C55E)),
-                      const SizedBox(width: 16),
-                      _buildStatCard('This Week', _stats!.weekCount.toString(), Icons.date_range_outlined, const Color(0xFF8B5CF6)),
-                      const SizedBox(width: 16),
-                      _buildStatCard('Transfers', _stats!.transfers.toString(), Icons.swap_horiz, const Color(0xFFF59E0B)),
-                    ],
-                  ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideX(begin: -0.05),
+                        children: [
+                          _buildStatCard(
+                            'Total Entries',
+                            _stats!.totalEntries.toString(),
+                            Icons.history,
+                            const Color(0xFF3B82F6),
+                          ),
+                          const SizedBox(width: 16),
+                          _buildStatCard(
+                            'Today',
+                            _stats!.todayCount.toString(),
+                            Icons.today_outlined,
+                            const Color(0xFF22C55E),
+                          ),
+                          const SizedBox(width: 16),
+                          _buildStatCard(
+                            'This Week',
+                            _stats!.weekCount.toString(),
+                            Icons.date_range_outlined,
+                            const Color(0xFF8B5CF6),
+                          ),
+                          const SizedBox(width: 16),
+                          _buildStatCard(
+                            'Transfers',
+                            _stats!.transfers.toString(),
+                            Icons.swap_horiz,
+                            const Color(0xFFF59E0B),
+                          ),
+                        ],
+                      )
+                      .animate()
+                      .fadeIn(duration: 400.ms, delay: 100.ms)
+                      .slideX(begin: -0.05),
                 const SizedBox(height: 24),
 
                 // Filters Row
@@ -119,10 +197,16 @@ class _AuditTrailViewState extends State<AuditTrailView> {
                         decoration: InputDecoration(
                           hintText: 'Search notes...',
                           hintStyle: const TextStyle(color: Colors.white38),
-                          prefixIcon: const Icon(Icons.search, color: Colors.white38),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.white38,
+                          ),
                           filled: true,
                           fillColor: const Color(0xFF1E293B),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
                         ),
                       ),
                     ),
@@ -137,15 +221,29 @@ class _AuditTrailViewState extends State<AuditTrailView> {
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String?>(
                             value: _selectedActionType,
-                            hint: const Text('All Actions', style: TextStyle(color: Colors.white54)),
+                            hint: const Text(
+                              'All Actions',
+                              style: TextStyle(color: Colors.white54),
+                            ),
                             dropdownColor: const Color(0xFF1E293B),
                             isExpanded: true,
                             items: [
-                              const DropdownMenuItem<String?>(value: null, child: Text('All Actions', style: TextStyle(color: Colors.white))),
-                              ..._actionTypes.map((t) => DropdownMenuItem(
-                                value: t,
-                                child: Text(t.replaceAll('_', ' ').toUpperCase(), style: const TextStyle(color: Colors.white)),
-                              )),
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text(
+                                  'All Actions',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              ..._actionTypes.map(
+                                (t) => DropdownMenuItem(
+                                  value: t,
+                                  child: Text(
+                                    t.replaceAll('_', ' ').toUpperCase(),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
                             ],
                             onChanged: (v) {
                               setState(() => _selectedActionType = v);
@@ -162,71 +260,166 @@ class _AuditTrailViewState extends State<AuditTrailView> {
 
                 // Data Table
                 AdvancedCard(
-                  padding: EdgeInsets.zero,
-                  child: _isLoading
-                    ? const SizedBox(height: 400, child: Center(child: CircularProgressIndicator()))
-                    : _entries.isEmpty
-                        ? const SizedBox(height: 300, child: Center(child: Text('No audit entries found.', style: TextStyle(color: Colors.white54))))
-                        : Column(
-                            children: [
-                              AdvancedTable(
-                                columns: const ['ID', 'Battery', 'Action', 'From → To', 'Actor', 'Notes', 'Time'],
-                                rows: _entries.map((e) {
-                                  return [
-                                    Text('#${e.id}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                                    Text('BAT_${e.batteryId}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                                    _buildActionBadge(e.actionType),
-                                    _buildLocationFlow(e),
-                                    Text(e.actorName, style: const TextStyle(color: Colors.white70)),
-                                    Tooltip(
-                                      message: e.notes ?? '',
-                                      child: SizedBox(
-                                        width: 160,
-                                        child: Text(
-                                          e.notes ?? '—',
-                                          style: const TextStyle(color: Colors.white54, fontSize: 12),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(DateFormat('HH:mm | MMM dd').format(e.timestamp), style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                                  ];
-                                }).toList(),
-                                onRowTap: (index) {
-                                  setState(() => _selectedEntry = _entries[index]);
-                                },
-                              ),
-                              // Pagination
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Showing ${_currentPage * _pageSize + 1}–${(_currentPage * _pageSize + _entries.length)} of $_totalCount',
-                                      style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.chevron_left, color: Colors.white54),
-                                          onPressed: _currentPage > 0 ? () { setState(() => _currentPage--); _loadData(); } : null,
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                          decoration: BoxDecoration(color: const Color(0xFF3B82F6).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                                          child: Text('Page ${_currentPage + 1}', style: const TextStyle(color: Color(0xFF3B82F6), fontWeight: FontWeight.bold)),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.chevron_right, color: Colors.white54),
-                                          onPressed: (_currentPage + 1) * _pageSize < _totalCount ? () { setState(() => _currentPage++); _loadData(); } : null,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                      padding: EdgeInsets.zero,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 400,
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          : _entries.isEmpty
+                          ? const SizedBox(
+                              height: 300,
+                              child: Center(
+                                child: Text(
+                                  'No audit entries found.',
+                                  style: TextStyle(color: Colors.white54),
                                 ),
                               ),
-                            ],
-                          ),
-                ).animate().fadeIn(duration: 500.ms, delay: 200.ms).slideY(begin: 0.05),
+                            )
+                          : Column(
+                              children: [
+                                AdvancedTable(
+                                  columns: const [
+                                    'ID',
+                                    'Battery',
+                                    'Action',
+                                    'From → To',
+                                    'Actor',
+                                    'Notes',
+                                    'Time',
+                                  ],
+                                  rows: _entries.map((e) {
+                                    return [
+                                      Text(
+                                        '#${e.id}',
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Text(
+                                        'BAT_${e.batteryId}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      _buildActionBadge(e.actionType),
+                                      _buildLocationFlow(e),
+                                      Text(
+                                        e.actorName,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                      Tooltip(
+                                        message: e.notes ?? '',
+                                        child: SizedBox(
+                                          width: 160,
+                                          child: Text(
+                                            e.notes ?? '—',
+                                            style: const TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        DateFormat(
+                                          'HH:mm | MMM dd',
+                                        ).format(e.timestamp),
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ];
+                                  }).toList(),
+                                  onRowTap: (index) {
+                                    setState(
+                                      () => _selectedEntry = _entries[index],
+                                    );
+                                  },
+                                ),
+                                // Pagination
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Showing ${_currentPage * _pageSize + 1}–${(_currentPage * _pageSize + _entries.length)} of $_totalCount',
+                                        style: const TextStyle(
+                                          color: Colors.white54,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.chevron_left,
+                                              color: Colors.white54,
+                                            ),
+                                            onPressed: _currentPage > 0
+                                                ? () {
+                                                    setState(
+                                                      () => _currentPage--,
+                                                    );
+                                                    _loadData();
+                                                  }
+                                                : null,
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(
+                                                0xFF3B82F6,
+                                              ).withValues(alpha: 0.15),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              'Page ${_currentPage + 1}',
+                                              style: const TextStyle(
+                                                color: Color(0xFF3B82F6),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.white54,
+                                            ),
+                                            onPressed:
+                                                (_currentPage + 1) * _pageSize <
+                                                    _totalCount
+                                                ? () {
+                                                    setState(
+                                                      () => _currentPage++,
+                                                    );
+                                                    _loadData();
+                                                  }
+                                                : null,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 200.ms)
+                    .slideY(begin: 0.05),
               ],
             ),
           ),
@@ -255,32 +448,74 @@ class _AuditTrailViewState extends State<AuditTrailView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Audit Detail', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => setState(() => _selectedEntry = null)),
+              Text(
+                'Audit Detail',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white54),
+                onPressed: () => setState(() => _selectedEntry = null),
+              ),
             ],
           ),
           const SizedBox(height: 24),
           _buildDetailRow('Entry ID', '#${entry.id}'),
           _buildDetailRow('Battery', 'BAT_${entry.batteryId}'),
-          _buildDetailRow('Action', entry.actionType.replaceAll('_', ' ').toUpperCase()),
+          _buildDetailRow(
+            'Action',
+            entry.actionType.replaceAll('_', ' ').toUpperCase(),
+          ),
           _buildDetailRow('Actor', entry.actorName),
-          _buildDetailRow('Timestamp', DateFormat('MMM dd, yyyy HH:mm:ss').format(entry.timestamp)),
+          _buildDetailRow(
+            'Timestamp',
+            DateFormat('MMM dd, yyyy HH:mm:ss').format(entry.timestamp),
+          ),
           const Divider(color: Colors.white12, height: 32),
           if (entry.fromLocationType != null) ...[
-            Text('FROM', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+            Text(
+              'FROM',
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: Colors.white38,
+                letterSpacing: 1.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, color: Color(0xFFEF4444), size: 20),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    color: Color(0xFFEF4444),
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(entry.fromLocationType!.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text('ID: ${entry.fromLocationId}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      Text(
+                        entry.fromLocationType!.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'ID: ${entry.fromLocationId}',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -289,20 +524,46 @@ class _AuditTrailViewState extends State<AuditTrailView> {
             const SizedBox(height: 16),
           ],
           if (entry.toLocationType != null) ...[
-            Text('TO', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+            Text(
+              'TO',
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: Colors.white38,
+                letterSpacing: 1.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: const Color(0xFF22C55E).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: const Color(0xFF22C55E).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, color: Color(0xFF22C55E), size: 20),
+                  const Icon(
+                    Icons.location_on,
+                    color: Color(0xFF22C55E),
+                    size: 20,
+                  ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(entry.toLocationType!.toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text('ID: ${entry.toLocationId}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      Text(
+                        entry.toLocationType!.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'ID: ${entry.toLocationId}',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -311,13 +572,26 @@ class _AuditTrailViewState extends State<AuditTrailView> {
           ],
           if (entry.notes != null) ...[
             const SizedBox(height: 24),
-            Text('NOTES', style: GoogleFonts.inter(fontSize: 10, color: Colors.white38, letterSpacing: 1.5)),
+            Text(
+              'NOTES',
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: Colors.white38,
+                letterSpacing: 1.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: const Color(0xFF1E293B), borderRadius: BorderRadius.circular(12)),
-              child: Text(entry.notes!, style: const TextStyle(color: Colors.white70, height: 1.5)),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                entry.notes!,
+                style: const TextStyle(color: Colors.white70, height: 1.5),
+              ),
             ),
           ],
         ],
@@ -331,29 +605,57 @@ class _AuditTrailViewState extends State<AuditTrailView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Expanded(
       child: AdvancedCard(
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 14),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                Text(title, style: GoogleFonts.inter(color: Colors.white54, fontSize: 13)),
+                Text(
+                  value,
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                ),
               ],
             ),
           ],
@@ -374,8 +676,18 @@ class _AuditTrailViewState extends State<AuditTrailView> {
     final color = colors[type] ?? Colors.white54;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
-      child: Text(type.replaceAll('_', ' ').toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        type.replaceAll('_', ' ').toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -387,11 +699,20 @@ class _AuditTrailViewState extends State<AuditTrailView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (e.fromLocationType != null)
-          Text('${e.fromLocationType}#${e.fromLocationId}', style: const TextStyle(color: Color(0xFFEF4444), fontSize: 11)),
+          Text(
+            '${e.fromLocationType}#${e.fromLocationId}',
+            style: const TextStyle(color: Color(0xFFEF4444), fontSize: 11),
+          ),
         if (e.fromLocationType != null && e.toLocationType != null)
-          const Padding(padding: EdgeInsets.symmetric(horizontal: 6), child: Icon(Icons.arrow_forward, color: Colors.white24, size: 14)),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(Icons.arrow_forward, color: Colors.white24, size: 14),
+          ),
         if (e.toLocationType != null)
-          Text('${e.toLocationType}#${e.toLocationId}', style: const TextStyle(color: Color(0xFF22C55E), fontSize: 11)),
+          Text(
+            '${e.toLocationType}#${e.toLocationId}',
+            style: const TextStyle(color: Color(0xFF22C55E), fontSize: 11),
+          ),
       ],
     );
   }

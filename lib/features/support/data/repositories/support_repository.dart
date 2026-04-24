@@ -1,5 +1,47 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../core/api/api_client.dart';
+
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+double _toDouble(dynamic value, [double fallback = 0.0]) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+bool _toBool(dynamic value, [bool fallback = false]) {
+  if (value is bool) return value;
+  final normalized = value?.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return fallback;
+}
+
+DateTime? _toDate(dynamic value) {
+  final raw = value?.toString();
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
+}
+
+Map<String, dynamic> _asMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  return const <String, dynamic>{};
+}
+
+List<dynamic> _asList(dynamic value) {
+  if (value is List) return value;
+  return const <dynamic>[];
+}
 
 final supportRepositoryProvider = Provider<SupportRepository>((ref) {
   return SupportRepository(ref.watch(apiClientProvider));
@@ -42,21 +84,24 @@ class SupportTicket {
 
   factory SupportTicket.fromJson(Map<String, dynamic> json) {
     return SupportTicket(
-      id: json['id'],
-      subject: json['subject'] ?? '',
-      description: json['description'] ?? '',
-      status: json['status'] ?? 'open',
-      priority: json['priority'] ?? 'medium',
-      category: json['category'] ?? 'general',
-      userId: json['user_id'],
-      userName: json['user_name'] ?? 'Unknown',
-      userRole: json['user_role'] ?? 'customer',
-      assignedTo: json['assigned_to'],
-      assigneeName: json['assignee_name'] ?? 'Unassigned',
-      messageCount: json['message_count'] ?? 0,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
-      resolvedAt: json['resolved_at'] != null ? DateTime.parse(json['resolved_at']) : null,
+      id: _toInt(json['id']),
+      subject: (json['subject'] ?? json['title'] ?? '').toString(),
+      description: (json['description'] ?? json['message'] ?? '').toString(),
+      status: (json['status'] ?? 'open').toString(),
+      priority: (json['priority'] ?? 'medium').toString(),
+      category: (json['category'] ?? 'general').toString(),
+      userId: _toInt(json['user_id'] ?? json['customer_id']),
+      userName:
+          (json['user_name'] ?? json['customer_name'] ?? 'Unknown').toString(),
+      userRole: (json['user_role'] ?? json['source'] ?? 'customer').toString(),
+      assignedTo:
+          json['assigned_to'] == null ? null : _toInt(json['assigned_to']),
+      assigneeName: (json['assignee_name'] ?? json['agent_name'] ?? 'Unassigned')
+          .toString(),
+      messageCount: _toInt(json['message_count'] ?? json['messages_count']),
+      createdAt: _toDate(json['created_at']),
+      updatedAt: _toDate(json['updated_at']),
+      resolvedAt: _toDate(json['resolved_at']),
     );
   }
 }
@@ -80,12 +125,13 @@ class TicketMessage {
 
   factory TicketMessage.fromJson(Map<String, dynamic> json) {
     return TicketMessage(
-      id: json['id'],
-      senderId: json['sender_id'] ?? 0,
-      senderName: json['sender_name'] ?? 'Unknown',
-      message: json['message'] ?? '',
-      isInternalNote: json['is_internal_note'] ?? false,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      id: _toInt(json['id']),
+      senderId: _toInt(json['sender_id'] ?? json['user_id']),
+      senderName: (json['sender_name'] ?? json['user_name'] ?? 'Unknown')
+          .toString(),
+      message: (json['message'] ?? '').toString(),
+      isInternalNote: _toBool(json['is_internal_note']),
+      createdAt: _toDate(json['created_at']),
     );
   }
 }
@@ -113,25 +159,29 @@ class TicketDetail extends SupportTicket {
   });
 
   factory TicketDetail.fromJson(Map<String, dynamic> json) {
-    final t = SupportTicket.fromJson(json);
-    final msgs = (json['messages'] as List?)?.map((m) => TicketMessage.fromJson(m)).toList() ?? [];
+    final ticket = SupportTicket.fromJson(json);
+    final messages = _asList(json['messages'])
+        .whereType<Map>()
+        .map((m) => TicketMessage.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+
     return TicketDetail(
-      id: t.id,
-      subject: t.subject,
-      description: t.description,
-      status: t.status,
-      priority: t.priority,
-      category: t.category,
-      userId: t.userId,
-      userName: t.userName,
-      userRole: t.userRole,
-      assignedTo: t.assignedTo,
-      assigneeName: t.assigneeName,
-      messageCount: msgs.length,
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-      resolvedAt: t.resolvedAt,
-      messages: msgs,
+      id: ticket.id,
+      subject: ticket.subject,
+      description: ticket.description,
+      status: ticket.status,
+      priority: ticket.priority,
+      category: ticket.category,
+      userId: ticket.userId,
+      userName: ticket.userName,
+      userRole: ticket.userRole,
+      assignedTo: ticket.assignedTo,
+      assigneeName: ticket.assigneeName,
+      messageCount: messages.isEmpty ? ticket.messageCount : messages.length,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+      resolvedAt: ticket.resolvedAt,
+      messages: messages,
     );
   }
 }
@@ -157,13 +207,13 @@ class KnowledgeBaseArticle {
 
   factory KnowledgeBaseArticle.fromJson(Map<String, dynamic> json) {
     return KnowledgeBaseArticle(
-      id: json['id'],
-      question: json['question'] ?? '',
-      answer: json['answer'] ?? '',
-      category: json['category'] ?? 'general',
-      isActive: json['is_active'] ?? true,
-      helpfulCount: json['helpful_count'] ?? 0,
-      notHelpfulCount: json['not_helpful_count'] ?? 0,
+      id: _toInt(json['id']),
+      question: (json['question'] ?? json['title'] ?? '').toString(),
+      answer: (json['answer'] ?? json['content'] ?? '').toString(),
+      category: (json['category'] ?? 'general').toString(),
+      isActive: _toBool(json['is_active'], true),
+      helpfulCount: _toInt(json['helpful_count'] ?? json['likes']),
+      notHelpfulCount: _toInt(json['not_helpful_count'] ?? json['dislikes']),
     );
   }
 }
@@ -191,14 +241,18 @@ class AgentPerformance {
 
   factory AgentPerformance.fromJson(Map<String, dynamic> json) {
     return AgentPerformance(
-      agentId: json['agent_id'],
-      agentName: json['agent_name'] ?? 'Unknown',
-      totalAssigned: json['total_assigned'] ?? 0,
-      resolved: json['resolved'] ?? 0,
-      open: json['open'] ?? 0,
-      resolutionRate: (json['resolution_rate'] ?? 0).toDouble(),
-      avgResolutionHours: (json['avg_resolution_hours'] ?? 0).toDouble(),
-      csatScore: (json['csat_score'] ?? 0).toDouble(),
+      agentId: _toInt(json['agent_id'] ?? json['id'] ?? json['user_id']),
+      agentName:
+          (json['agent_name'] ?? json['name'] ?? json['user_name'] ?? 'Unknown')
+              .toString(),
+      totalAssigned: _toInt(json['total_assigned'] ?? json['assigned']),
+      resolved: _toInt(json['resolved']),
+      open: _toInt(json['open'] ?? json['pending']),
+      resolutionRate: _toDouble(json['resolution_rate']),
+      avgResolutionHours: _toDouble(
+        json['avg_resolution_hours'] ?? json['avg_resolution_time_hours'],
+      ),
+      csatScore: _toDouble(json['csat_score'] ?? json['rating']),
     );
   }
 }
@@ -208,13 +262,17 @@ class DailyTrend {
   final int created;
   final int resolved;
 
-  const DailyTrend({required this.date, required this.created, required this.resolved});
+  const DailyTrend({
+    required this.date,
+    required this.created,
+    required this.resolved,
+  });
 
   factory DailyTrend.fromJson(Map<String, dynamic> json) {
     return DailyTrend(
-      date: json['date'] ?? '',
-      created: json['created'] ?? 0,
-      resolved: json['resolved'] ?? 0,
+      date: (json['date'] ?? json['day'] ?? '').toString(),
+      created: _toInt(json['created'] ?? json['created_count']),
+      resolved: _toInt(json['resolved'] ?? json['resolved_count']),
     );
   }
 }
@@ -227,80 +285,142 @@ class SupportRepository {
   // TICKETS
   Future<Map<String, dynamic>> getTicketsStats() async {
     try {
-      final response = await _apiClient.get('/api/v1/admin/support/tickets/stats');
-      return response.data;
-    } catch (e) {
-      return {
-        "total_tickets": 0, "open": 0, "in_progress": 0, "resolved": 0, "closed": 0, "overdue": 0, "today_new": 0,
-        "avg_resolution_hours": 0.0, "priority_breakdown": {}, "category_breakdown": {}, "source_breakdown": {}
+      final response = await _getAny(<String>[
+        '/api/v1/admin/support/tickets/stats',
+        '/api/v1/support/tickets/stats',
+      ]);
+      return _asMap(response.data);
+    } catch (_) {
+      return <String, dynamic>{
+        'total_tickets': 0,
+        'open': 0,
+        'in_progress': 0,
+        'resolved': 0,
+        'closed': 0,
+        'overdue': 0,
+        'today_new': 0,
+        'avg_resolution_hours': 0.0,
+        'priority_breakdown': <String, dynamic>{},
+        'category_breakdown': <String, dynamic>{},
+        'source_breakdown': <String, dynamic>{},
       };
     }
   }
 
-  Future<List<SupportTicket>> getTickets({String? status, String? priority, String? source, String? search}) async {
+  Future<List<SupportTicket>> getTickets({
+    String? status,
+    String? priority,
+    String? source,
+    String? search,
+  }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'limit': 100,
-      };
-      if (status != null && status.isNotEmpty && status != 'all') queryParams['status'] = status;
-      if (priority != null && priority.isNotEmpty && priority != 'all') queryParams['priority'] = priority;
-      if (source != null && source.isNotEmpty && source != 'all') queryParams['source'] = source;
-      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      final queryParams = <String, dynamic>{'limit': 100};
+      if (status != null && status.isNotEmpty && status != 'all') {
+        queryParams['status'] = status;
+      }
+      if (priority != null && priority.isNotEmpty && priority != 'all') {
+        queryParams['priority'] = priority;
+      }
+      if (source != null && source.isNotEmpty && source != 'all') {
+        queryParams['source'] = source;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+        queryParams['q'] = search;
+      }
 
-      final response = await _apiClient.get('/api/v1/admin/support/tickets', queryParameters: queryParams);
-      return (response.data['tickets'] as List).map((json) => SupportTicket.fromJson(json)).toList();
-    } catch (e) {
-      return [];
+      final response = await _getAny(<String>[
+        '/api/v1/admin/support/tickets',
+        '/api/v1/support/tickets',
+      ], queryParameters: queryParams);
+
+      final map = _asMap(response.data);
+      final rows = _asList(
+        map.isEmpty ? response.data : (map['tickets'] ?? map['items'] ?? map['data']),
+      );
+
+      return rows
+          .whereType<Map>()
+          .map((json) => SupportTicket.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+    } catch (_) {
+      return <SupportTicket>[];
     }
   }
 
   Future<TicketDetail?> getTicketDetail(int ticketId) async {
     try {
-      final response = await _apiClient.get('/api/v1/admin/support/tickets/$ticketId');
-      return TicketDetail.fromJson(response.data);
-    } catch (e) {
+      final response = await _getAny(<String>[
+        '/api/v1/admin/support/tickets/$ticketId',
+        '/api/v1/support/tickets/$ticketId',
+      ]);
+      return TicketDetail.fromJson(_asMap(response.data));
+    } catch (_) {
       return null;
     }
   }
 
   Future<bool> updateTicketStatus(int ticketId, String newStatus) async {
     try {
-      await _apiClient.put('/api/v1/admin/support/tickets/$ticketId/status', queryParameters: {'new_status': newStatus});
+      await _putAny(<String>['/api/v1/admin/support/tickets/$ticketId/status'],
+          queryParameters: <String, dynamic>{'new_status': newStatus});
       return true;
-    } catch (e) {
-      return false;
+    } catch (_) {
+      try {
+        await _putAny(<String>['/api/v1/admin/support/tickets/$ticketId/status'],
+            data: <String, dynamic>{'new_status': newStatus, 'status': newStatus});
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
   Future<bool> updateTicketPriority(int ticketId, String priority) async {
     try {
-      await _apiClient.put('/api/v1/admin/support/tickets/$ticketId/priority', queryParameters: {'priority': priority});
+      await _putAny(<String>['/api/v1/admin/support/tickets/$ticketId/priority'],
+          queryParameters: <String, dynamic>{'priority': priority});
       return true;
-    } catch (e) {
-      return false;
+    } catch (_) {
+      try {
+        await _putAny(<String>['/api/v1/admin/support/tickets/$ticketId/priority'],
+            data: <String, dynamic>{'priority': priority});
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
   Future<bool> assignTicket(int ticketId, int agentId) async {
     try {
-      await _apiClient.put('/api/v1/admin/support/tickets/$ticketId/assign', queryParameters: {'agent_id': agentId});
+      await _putAny(<String>['/api/v1/admin/support/tickets/$ticketId/assign'],
+          queryParameters: <String, dynamic>{'agent_id': agentId});
       return true;
-    } catch (e) {
-      return false;
+    } catch (_) {
+      try {
+        await _putAny(<String>['/api/v1/admin/support/tickets/$ticketId/assign'],
+            data: <String, dynamic>{'agent_id': agentId});
+        return true;
+      } catch (_) {
+        return false;
+      }
     }
   }
 
-  Future<bool> addTicketMessage(int ticketId, String message, {bool isInternal = false}) async {
+  Future<bool> addTicketMessage(
+    int ticketId,
+    String message, {
+    bool isInternal = false,
+  }) async {
     try {
-      await _apiClient.post(
-        '/api/v1/admin/support/tickets/$ticketId/messages',
-        queryParameters: {
-          'message': message,
-          'is_internal': isInternal,
-        },
-      );
+      await _postAny(<String>['/api/v1/admin/support/tickets/$ticketId/messages'],
+          data: <String, dynamic>{
+            'message': message,
+            'is_internal': isInternal,
+          });
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -308,58 +428,99 @@ class SupportRepository {
   // KNOWLEDGE BASE
   Future<Map<String, dynamic>> getKnowledgeBaseStats() async {
     try {
-      final response = await _apiClient.get('/api/v1/admin/support/knowledge-base/stats');
-      return response.data;
-    } catch (e) {
-      return {
-        "total_articles": 0, "active_articles": 0, "total_helpful": 0, "total_not_helpful": 0, "satisfaction_rate": 0.0, "categories": {}
+      final response = await _getAny(<String>[
+        '/api/v1/admin/support/knowledge-base/stats',
+        '/api/v1/support/faq/stats',
+      ]);
+      return _asMap(response.data);
+    } catch (_) {
+      return <String, dynamic>{
+        'total_articles': 0,
+        'active_articles': 0,
+        'total_helpful': 0,
+        'total_not_helpful': 0,
+        'satisfaction_rate': 0.0,
+        'categories': <String, dynamic>{},
       };
     }
   }
 
-  Future<List<KnowledgeBaseArticle>> getArticles({String? category, String? search}) async {
+  Future<List<KnowledgeBaseArticle>> getArticles({
+    String? category,
+    String? search,
+  }) async {
     try {
       final queryParams = <String, dynamic>{};
-      if (category != null && category.isNotEmpty && category != 'all') queryParams['category'] = category;
-      if (search != null && search.isNotEmpty) queryParams['search'] = search;
+      if (category != null && category.isNotEmpty && category != 'all') {
+        queryParams['category'] = category;
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+        queryParams['q'] = search;
+      }
 
-      final response = await _apiClient.get('/api/v1/admin/support/knowledge-base', queryParameters: queryParams);
-      return (response.data['articles'] as List).map((json) => KnowledgeBaseArticle.fromJson(json)).toList();
-    } catch (e) {
-      return [];
+      final response = await _getAny(
+        <String>[
+          '/api/v1/admin/support/knowledge-base',
+          '/api/v1/support/faq/search',
+        ],
+        queryParameters: queryParams,
+      );
+
+      final map = _asMap(response.data);
+      final rows = _asList(
+        map.isEmpty
+            ? response.data
+            : (map['articles'] ?? map['items'] ?? map['data']),
+      );
+
+      return rows
+          .whereType<Map>()
+          .map(
+            (json) =>
+                KnowledgeBaseArticle.fromJson(Map<String, dynamic>.from(json)),
+          )
+          .toList();
+    } catch (_) {
+      return <KnowledgeBaseArticle>[];
     }
   }
 
-  Future<bool> createArticle(String question, String answer, String category, bool isActive) async {
+  Future<bool> createArticle(
+    String question,
+    String answer,
+    String category,
+    bool isActive,
+  ) async {
     try {
-      await _apiClient.post(
-        '/api/v1/admin/support/knowledge-base',
-        data: {
-          'question': question,
-          'answer': answer,
-          'category': category,
-          'is_active': isActive,
-        },
-      );
+      await _postAny(<String>['/api/v1/admin/support/knowledge-base'], data: <String, dynamic>{
+        'question': question,
+        'answer': answer,
+        'category': category,
+        'is_active': isActive,
+      });
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
 
-  Future<bool> updateArticle(int id, String question, String answer, String category, bool isActive) async {
+  Future<bool> updateArticle(
+    int id,
+    String question,
+    String answer,
+    String category,
+    bool isActive,
+  ) async {
     try {
-      await _apiClient.put(
-        '/api/v1/admin/support/knowledge-base/$id',
-        data: {
-          'question': question,
-          'answer': answer,
-          'category': category,
-          'is_active': isActive,
-        },
-      );
+      await _putAny(<String>['/api/v1/admin/support/knowledge-base/$id'], data: <String, dynamic>{
+        'question': question,
+        'answer': answer,
+        'category': category,
+        'is_active': isActive,
+      });
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -368,7 +529,7 @@ class SupportRepository {
     try {
       await _apiClient.delete('/api/v1/admin/support/knowledge-base/$id');
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
@@ -376,22 +537,96 @@ class SupportRepository {
   // TEAM PERFORMANCE
   Future<Map<String, dynamic>> getTeamPerformance() async {
     try {
-      final response = await _apiClient.get('/api/v1/admin/support/team/performance');
-      return response.data;
-    } catch (e) {
-      return {
-        "agents": [],
-        "sla_metrics": {"critical_breach_4h": 0, "general_breach_24h": 0, "avg_first_response_minutes": 0},
+      final response = await _getAny(<String>['/api/v1/admin/support/team/performance']);
+      final raw = _asMap(response.data);
+      final rawAgents = _asList(raw['agents']);
+      final agents = rawAgents
+          .whereType<Map>()
+          .map((a) => AgentPerformance.fromJson(Map<String, dynamic>.from(a)))
+          .toList();
+
+      return <String, dynamic>{
+        'agents': agents,
+        'sla_metrics': _asMap(raw['sla_metrics']),
+      };
+    } catch (_) {
+      return <String, dynamic>{
+        'agents': <AgentPerformance>[],
+        'sla_metrics': <String, dynamic>{
+          'critical_breach_4h': 0,
+          'general_breach_24h': 0,
+          'avg_first_response_minutes': 0,
+        },
       };
     }
   }
 
   Future<List<DailyTrend>> getTeamOverviewTrends() async {
     try {
-      final response = await _apiClient.get('/api/v1/admin/support/team/overview');
-      return (response.data['daily_trends'] as List).map((j) => DailyTrend.fromJson(j)).toList();
-    } catch (e) {
-      return [];
+      final response = await _getAny(<String>['/api/v1/admin/support/team/overview']);
+      final map = _asMap(response.data);
+      final rows = _asList(map['daily_trends'] ?? map['trends'] ?? response.data);
+      return rows
+          .whereType<Map>()
+          .map((j) => DailyTrend.fromJson(Map<String, dynamic>.from(j)))
+          .toList();
+    } catch (_) {
+      return <DailyTrend>[];
     }
+  }
+
+  Future<dynamic> _getAny(
+    List<String> paths, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    Object? lastError;
+    for (final path in paths) {
+      try {
+        return await _apiClient.get(path, queryParameters: queryParameters);
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError ?? Exception('GET failed for all support endpoints');
+  }
+
+  Future<dynamic> _postAny(
+    List<String> paths, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    Object? lastError;
+    for (final path in paths) {
+      try {
+        return await _apiClient.post(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+        );
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError ?? Exception('POST failed for all support endpoints');
+  }
+
+  Future<dynamic> _putAny(
+    List<String> paths, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    Object? lastError;
+    for (final path in paths) {
+      try {
+        return await _apiClient.put(
+          path,
+          data: data,
+          queryParameters: queryParameters,
+        );
+      } catch (e) {
+        lastError = e;
+      }
+    }
+    throw lastError ?? Exception('PUT failed for all support endpoints');
   }
 }

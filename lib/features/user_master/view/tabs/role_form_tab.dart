@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../data/models/role.dart';
 import '../../data/providers/user_master_providers.dart';
 
 class RoleFormTab extends ConsumerStatefulWidget {
@@ -17,9 +18,10 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   bool _isSaving = false;
+  int? _boundRoleId;
 
   // Module permissions: module name -> access level string
-  Map<String, String> permissions = {
+  final Map<String, String> _defaultPermissions = {
     'Dashboard': 'View Only',
     'User Management': 'No Access',
     'Fleet & Inventory': 'No Access',
@@ -31,6 +33,7 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
     'Reports & Analytics': 'No Access',
     'System Settings': 'No Access',
   };
+  late Map<String, String> permissions = Map<String, String>.from(_defaultPermissions);
 
   @override
   void dispose() {
@@ -39,7 +42,40 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
     super.dispose();
   }
 
-  Future<void> _saveRole() async {
+  void _bindEditingRole(Role? editingRole) {
+    final nextRoleId = int.tryParse(editingRole?.id ?? '');
+    if (_boundRoleId == nextRoleId) return;
+    _boundRoleId = nextRoleId;
+
+    if (editingRole == null) {
+      _nameController.clear();
+      _descController.clear();
+      permissions = Map<String, String>.from(_defaultPermissions);
+      return;
+    }
+
+    _nameController.text = editingRole.name.replaceAll('_', ' ');
+    _descController.text = editingRole.description;
+    permissions = Map<String, String>.from(_defaultPermissions);
+
+    editingRole.permissions.modules.forEach((module, level) {
+      final normalized = module.trim().toLowerCase();
+      final key = permissions.keys.firstWhere(
+        (k) => k.toLowerCase() == normalized,
+        orElse: () => '',
+      );
+      if (key.isEmpty) return;
+      permissions[key] = switch (level) {
+        PermissionLevel.full => 'Full Access',
+        PermissionLevel.view => 'View Only',
+        PermissionLevel.limited => 'Limited',
+        PermissionLevel.selfOnly => 'Limited',
+        PermissionLevel.noAccess => 'No Access',
+      };
+    });
+  }
+
+  Future<void> _saveRole(Role? editingRole) async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -56,28 +92,45 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
       // Convert display name to snake_case for DB
       final dbName = name.toLowerCase().replaceAll(' ', '_');
 
-      await repo.createRole({
+      final payload = {
         'name': dbName,
         'description': _descController.text.trim(),
         'category': 'system',
         'level': 0,
-        'is_system_role': false,
         'is_active': true,
         'permissions': [], // Will be assigned separately via permission matrix
-      });
+      };
+
+      final editingRoleId = int.tryParse(editingRole?.id ?? '');
+      final bool isEditing = editingRoleId != null;
+
+      if (isEditing) {
+        await repo.updateRole(editingRoleId, payload);
+      } else {
+        await repo.createRole(payload);
+      }
 
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Role "$name" created successfully!'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(
+              isEditing
+                  ? 'Role "$name" updated successfully!'
+                  : 'Role "$name" created successfully!',
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
         // Refresh roles list
         ref.invalidate(rolesProvider);
+        ref.read(editingRoleProvider.notifier).state = null;
         // Clear form
         _nameController.clear();
         _descController.clear();
         setState(() {
-          permissions.updateAll((key, value) => 'No Access');
+          permissions = Map<String, String>.from(_defaultPermissions);
+          _boundRoleId = null;
         });
         // Switch back to roles list
         widget.onCancel();
@@ -85,8 +138,19 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
+        final message = e.toString();
+        final isDisabledByBackend = message.contains(
+          'Global custom role creation is disabled',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create role: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              isDisabledByBackend
+                  ? 'Backend policy blocks global role creation. Create dealer child roles or enable global custom roles in backend.'
+                  : 'Failed to save role: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -94,6 +158,10 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
 
   @override
   Widget build(BuildContext context) {
+    final editingRole = ref.watch(editingRoleProvider);
+    _bindEditingRole(editingRole);
+    final isEditing = editingRole != null && int.tryParse(editingRole.id) != null;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Container(
@@ -109,17 +177,35 @@ class _RoleFormTabState extends ConsumerState<RoleFormTab> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Create Custom Role', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                Text(
+                  isEditing ? 'Edit Role' : 'Create Custom Role',
+                  style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
                 Row(
                   children: [
-                    TextButton(onPressed: widget.onCancel, child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
+                    TextButton(
+                      onPressed: () {
+                        ref.read(editingRoleProvider.notifier).state = null;
+                        setState(() {
+                          _boundRoleId = null;
+                          permissions = Map<String, String>.from(_defaultPermissions);
+                        });
+                        widget.onCancel();
+                      },
+                      child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+                    ),
                     const SizedBox(width: 12),
                     ElevatedButton.icon(
-                      onPressed: _isSaving ? null : _saveRole,
+                      onPressed: _isSaving ? null : () => _saveRole(editingRole),
                       icon: _isSaving
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.save_rounded, size: 18, color: Colors.white),
-                      label: Text(_isSaving ? 'Saving...' : 'Save Role', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      label: Text(
+                        _isSaving
+                            ? 'Saving...'
+                            : (isEditing ? 'Update Role' : 'Save Role'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                     ),
                   ],

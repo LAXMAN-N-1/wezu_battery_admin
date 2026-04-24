@@ -24,4 +24,21 @@ class AdminGroupRepository {
       throw Exception('Failed to create admin group: $e');
     }
   }
+
+  Future<AdminGroupModel> updateGroup(int id, Map<String, dynamic> data) async {
+    try {
+      final response = await _apiClient.put('/api/v1/admin/groups/$id', data: data);
+      return AdminGroupModel.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to update admin group: $e');
+    }
+  }
+
+  Future<void> deleteGroup(int id) async {
+    try {
+      await _apiClient.delete('/api/v1/admin/groups/$id');
+    } catch (e) {
+      throw Exception('Failed to delete admin group: $e');
+    }
+  }
 }

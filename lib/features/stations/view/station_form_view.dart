@@ -70,6 +70,40 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
   String _status = 'active';
   _CountryCode _selectedCountry = _countryCodes.first; // Default: India +91
 
+  String _normalizeStatusForForm(String? raw) {
+    final value = (raw ?? '').trim().toLowerCase();
+    switch (value) {
+      case 'operational':
+      case 'online':
+      case 'active':
+        return 'active';
+      case 'maintenance':
+        return 'maintenance';
+      case 'inactive':
+        return 'inactive';
+      case 'offline':
+      case 'closed':
+      case 'error':
+        return 'offline';
+      default:
+        return 'active';
+    }
+  }
+
+  String _statusToApiValue(String formStatus) {
+    switch (formStatus) {
+      case 'maintenance':
+        return 'MAINTENANCE';
+      case 'inactive':
+        return 'INACTIVE';
+      case 'offline':
+        return 'OFFLINE';
+      case 'active':
+      default:
+        return 'OPERATIONAL';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -86,7 +120,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
       text:
           station?.capacity?.toString() ?? station?.totalSlots.toString() ?? '',
     );
-    _status = station?.status ?? 'active';
+    _status = _normalizeStatusForForm(station?.status);
 
     // Parse existing phone to extract country code and number
     final existingPhone = station?.contactPhone ?? '';
@@ -140,7 +174,7 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
         address: address,
         latitude: lat,
         longitude: lng,
-        status: _status,
+        status: _statusToApiValue(_status),
         totalSlots: capacity,
         availableBatteries: widget.station?.availableBatteries ?? 0,
         availableSlots: capacity - (widget.station?.availableBatteries ?? 0),
@@ -306,6 +340,10 @@ class _StationFormDialogState extends ConsumerState<StationFormDialog> {
                               DropdownMenuItem(
                                 value: 'maintenance',
                                 child: Text('Maintenance'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'offline',
+                                child: Text('Offline'),
                               ),
                               DropdownMenuItem(
                                 value: 'inactive',

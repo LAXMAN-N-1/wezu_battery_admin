@@ -7,9 +7,14 @@ import '../../data/models/role.dart';
 import '../../data/providers/user_master_providers.dart';
 
 class RolesListTab extends ConsumerWidget {
-  final VoidCallback onEditRole;
+  final VoidCallback onCreateRole;
+  final ValueChanged<Role> onEditRole;
 
-  const RolesListTab({super.key, required this.onEditRole});
+  const RolesListTab({
+    super.key,
+    required this.onCreateRole,
+    required this.onEditRole,
+  });
 
   /// Convert snake_case DB role name to Display Name
   String _displayRoleName(String dbName) {
@@ -208,7 +213,7 @@ class RolesListTab extends ConsumerWidget {
                     icon: const Icon(Icons.more_vert, color: Colors.white54, size: 20),
                     color: const Color(0xFF0F172A),
                     onSelected: (val) {
-                      if (val == 'edit') onEditRole();
+                      if (val == 'edit') onEditRole(role);
                     },
                     itemBuilder: (context) => [
                       const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit, size: 16, color: Colors.blue), SizedBox(width: 8), Text('Edit Role', style: TextStyle(color: Colors.white))])),
@@ -255,7 +260,7 @@ class RolesListTab extends ConsumerWidget {
 
   Widget _buildCreateRoleCard() {
     return GestureDetector(
-      onTap: onEditRole,
+      onTap: onCreateRole,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

@@ -44,6 +44,73 @@ class UserMasterRepository {
     }
   }
 
+  String _normalizeRoleToken(String? raw) {
+    if (raw == null) return '';
+    return raw
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  bool _matchesRole(Map<String, dynamic> userJson, String selectedRole) {
+    final target = _normalizeRoleToken(selectedRole);
+    if (target.isEmpty) return true;
+
+    final candidates = <String>{
+      _normalizeRoleToken(userJson['role']?.toString()),
+      _normalizeRoleToken(userJson['role_name']?.toString()),
+      _normalizeRoleToken(userJson['user_type']?.toString()),
+    };
+
+    final isSuperuser =
+        userJson['is_superuser'] == true ||
+        userJson['is_superuser']?.toString().toLowerCase() == 'true';
+    if (isSuperuser) {
+      candidates.add('super_admin');
+    }
+
+    final roleList = userJson['roles'];
+    if (roleList is List) {
+      for (final role in roleList) {
+        candidates.add(_normalizeRoleToken(role?.toString()));
+      }
+    }
+
+    if (target == 'super_admin') {
+      return candidates.contains('super_admin') ||
+          candidates.contains('operations_admin') ||
+          candidates.contains('security_admin') ||
+          candidates.contains('finance_admin');
+    }
+
+    if (target == 'manager') {
+      return candidates.contains('manager') ||
+          candidates.contains('operations_admin') ||
+          candidates.contains('support_manager') ||
+          candidates.contains('dealer_manager') ||
+          candidates.contains('logistics_manager') ||
+          candidates.contains('fleet_manager') ||
+          candidates.contains('warehouse_manager') ||
+          candidates.contains('finance_manager');
+    }
+
+    if (target == 'read_only') {
+      return candidates.contains('read_only') ||
+          candidates.contains('readonly') ||
+          candidates.contains('viewer') ||
+          candidates.contains('auditor');
+    }
+
+    if (target == 'support_agent') {
+      return candidates.contains('support_agent') ||
+          candidates.contains('support_manager');
+    }
+
+    return candidates.contains(target);
+  }
+
   // --- Users ---
   Future<Map<String, dynamic>> getUsers({
     String? search,
@@ -69,9 +136,19 @@ class UserMasterRepository {
           ? response.data as Map<String, dynamic>
           : Map<String, dynamic>.from(response.data as Map);
 
+      final originalItems =
+          ((raw['items'] ?? raw['users']) as List? ?? const <dynamic>[])
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .toList();
+
+      final filteredItems = (role != null && role.trim().isNotEmpty)
+          ? originalItems.where((item) => _matchesRole(item, role)).toList()
+          : originalItems;
+
       return {
-        'items': raw['items'] ?? raw['users'] ?? const <dynamic>[],
-        'total_count': raw['total_count'] ?? 0,
+        'items': filteredItems,
+        'total_count': filteredItems.length,
         'page': raw['page'] ?? (skip ~/ limit) + 1,
         'page_size': raw['page_size'] ?? raw['limit'] ?? limit,
       };
@@ -85,14 +162,44 @@ class UserMasterRepository {
       final response = await _apiClient.get('/api/v1/admin/users/summary');
       return response.data;
     } catch (e) {
-      // Return mock summary if endpoint fails
-      return {
-        'total_users': 150,
-        'active_count': 120,
-        'inactive_count': 15,
-        'suspended_count': 5,
-        'pending_count': 10,
-      };
+      try {
+        final data = await getUsers(skip: 0, limit: 5000);
+        final rows = (data['items'] as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry))
+            .toList();
+
+        int active = 0;
+        int suspended = 0;
+        int pending = 0;
+        int inactive = 0;
+
+        for (final row in rows) {
+          final status = row['status']?.toString().toLowerCase() ?? '';
+          if (status == 'active') active++;
+          if (status == 'suspended') suspended++;
+          if (status == 'pending' || status == 'pending_verification') {
+            pending++;
+          }
+          if (status == 'inactive') inactive++;
+        }
+
+        return <String, dynamic>{
+          'total_users': rows.length,
+          'active_count': active,
+          'inactive_count': inactive,
+          'suspended_count': suspended,
+          'pending_count': pending,
+        };
+      } catch (_) {
+        return <String, dynamic>{
+          'total_users': 0,
+          'active_count': 0,
+          'inactive_count': 0,
+          'suspended_count': 0,
+          'pending_count': 0,
+        };
+      }
     }
   }
 
@@ -104,7 +211,15 @@ class UserMasterRepository {
       );
       return User.fromJson(response.data);
     } catch (e) {
-      throw Exception('Failed to create user: $e');
+      try {
+        final response = await _apiClient.post(
+          '/api/v1/admin/users/create',
+          data: data,
+        );
+        return User.fromJson(response.data);
+      } catch (_) {
+        throw Exception('Failed to create user: $e');
+      }
     }
   }
 
@@ -128,7 +243,16 @@ class UserMasterRepository {
           .map((json) => Role.fromJson(json))
           .toList();
     } catch (e) {
-      throw Exception('Failed to load roles: $e');
+      try {
+        final response = await _apiClient.get('/api/v1/admin/roles/');
+        final list = (response.data as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((json) => Role.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+        return list;
+      } catch (_) {
+        throw Exception('Failed to load roles: $e');
+      }
     }
   }
 
@@ -140,7 +264,38 @@ class UserMasterRepository {
       );
       return response.data;
     } catch (e) {
-      throw Exception('Failed to create role: $e');
+      try {
+        final response = await _apiClient.post(
+          '/api/v1/admin/roles/',
+          data: data,
+        );
+        return response.data;
+      } catch (_) {
+        throw Exception('Failed to create role: $e');
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>> updateRole(
+    int roleId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _apiClient.put(
+        '/api/v1/admin/rbac/roles/$roleId',
+        data: data,
+      );
+      return response.data;
+    } catch (e) {
+      try {
+        final response = await _apiClient.put(
+          '/api/v1/admin/roles/$roleId',
+          data: data,
+        );
+        return response.data;
+      } catch (_) {
+        throw Exception('Failed to update role: $e');
+      }
     }
   }
 
@@ -163,12 +318,65 @@ class UserMasterRepository {
   Future<List<Map<String, dynamic>>> getPermissionModules() async {
     try {
       final response = await _apiClient.get('/api/v1/admin/rbac/permissions');
-      final data = response.data as Map<String, dynamic>;
-      return (data['modules'] as List)
-          .map((m) => m as Map<String, dynamic>)
-          .toList();
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final modules = data['modules'] as List? ?? const <dynamic>[];
+        return modules
+            .whereType<Map>()
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList();
+      }
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map((m) => Map<String, dynamic>.from(m))
+            .toList();
+      }
+      return const <Map<String, dynamic>>[];
     } catch (e) {
-      throw Exception('Failed to load permissions: $e');
+      try {
+        final response = await _apiClient.get(
+          '/api/v1/admin/roles/permissions',
+        );
+        final rows = (response.data as List? ?? const <dynamic>[])
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry));
+
+        final grouped = <String, List<Map<String, dynamic>>>{};
+        for (final perm in rows) {
+          final module = perm['module']?.toString() ?? 'general';
+          grouped
+              .putIfAbsent(module, () => <Map<String, dynamic>>[])
+              .add(<String, dynamic>{
+                'id': perm['slug']?.toString() ?? '',
+                'slug': perm['slug']?.toString() ?? '',
+                'label':
+                    perm['description']?.toString() ??
+                    perm['slug']?.toString() ??
+                    '',
+                'action': perm['action']?.toString() ?? '',
+              });
+        }
+
+        return grouped.entries
+            .map(
+              (entry) => <String, dynamic>{
+                'module': entry.key,
+                'label': entry.key
+                    .split('_')
+                    .map(
+                      (word) => word.isNotEmpty
+                          ? '${word[0].toUpperCase()}${word.substring(1)}'
+                          : '',
+                    )
+                    .join(' '),
+                'permissions': entry.value,
+              },
+            )
+            .toList();
+      } catch (_) {
+        throw Exception('Failed to load permissions: $e');
+      }
     }
   }
 

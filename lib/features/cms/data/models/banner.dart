@@ -1,3 +1,27 @@
+int _toInt(dynamic value, [int fallback = 0]) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+bool _toBool(dynamic value, [bool fallback = false]) {
+  if (value is bool) return value;
+  final normalized = value?.toString().trim().toLowerCase();
+  if (normalized == 'true' || normalized == '1' || normalized == 'yes') {
+    return true;
+  }
+  if (normalized == 'false' || normalized == '0' || normalized == 'no') {
+    return false;
+  }
+  return fallback;
+}
+
+DateTime? _toDate(dynamic value) {
+  final raw = value?.toString();
+  if (raw == null || raw.isEmpty) return null;
+  return DateTime.tryParse(raw);
+}
+
 class Banner {
   final int id;
   final String title;
@@ -35,21 +59,21 @@ class Banner {
 
   factory Banner.fromJson(Map<String, dynamic> json) {
     return Banner(
-      id: json['id'] as int,
-      title: json['title'] as String,
-      imageUrl: json['image_url'] as String,
-      type: json['type'] as String? ?? 'Home Carousel',
-      targetAudience: json['target_audience'] as String? ?? 'All Users',
-      ctaText: json['cta_text'] as String?,
-      deepLink: json['deep_link'] as String?,
-      externalUrl: json['external_url'] as String?,
-      priority: json['priority'] as int? ?? 0,
-      isActive: json['is_active'] as bool? ?? true,
-      startDate: json['start_date'] != null ? DateTime.parse(json['start_date'] as String) : null,
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
-      clickCount: json['click_count'] as int? ?? 0,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      id: _toInt(json['id']),
+      title: (json['title'] ?? '').toString(),
+      imageUrl: (json['image_url'] ?? json['image'] ?? '').toString(),
+      type: (json['type'] ?? 'Home Carousel').toString(),
+      targetAudience: (json['target_audience'] ?? 'All Users').toString(),
+      ctaText: json['cta_text']?.toString(),
+      deepLink: json['deep_link']?.toString(),
+      externalUrl: json['external_url']?.toString(),
+      priority: _toInt(json['priority']),
+      isActive: _toBool(json['is_active'], true),
+      startDate: _toDate(json['start_date']),
+      endDate: _toDate(json['end_date']),
+      clickCount: _toInt(json['click_count']),
+      createdAt: _toDate(json['created_at']) ?? DateTime.now(),
+      updatedAt: _toDate(json['updated_at']) ?? DateTime.now(),
     );
   }
 

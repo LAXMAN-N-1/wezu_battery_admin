@@ -498,19 +498,92 @@ class AdminLayout extends ConsumerWidget {
           const SizedBox(width: 16),
           Container(height: 28, width: 1, color: colors.border.withValues(alpha: 0.1)),
           const SizedBox(width: 16),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.blue.shade600,
-            child: const Text("L", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Laxman", style: GoogleFonts.inter(color: colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
-              Text("Super Admin", style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 11)),
+          PopupMenuButton<String>(
+            tooltip: 'Account',
+            color: const Color(0xFF1E293B),
+            onSelected: (value) {
+              if (value == 'logout') {
+                ref.read(authProvider.notifier).logout();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                enabled: false,
+                value: 'profile',
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.blue.shade600,
+                      child: const Text(
+                        "L",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Laxman",
+                          style: GoogleFonts.inter(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          "Super Admin",
+                          style: GoogleFonts.inter(
+                            color: colors.textTertiary,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_outlined, color: Colors.red.shade300, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Logout',
+                      style: GoogleFonts.inter(color: Colors.red.shade300),
+                    ),
+                  ],
+                ),
+              ),
             ],
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.blue.shade600,
+                  child: const Text("L", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Laxman", style: GoogleFonts.inter(color: colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+                    Text("Super Admin", style: GoogleFonts.inter(color: colors.textTertiary, fontSize: 11)),
+                  ],
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.keyboard_arrow_down, color: colors.textTertiary, size: 18),
+              ],
+            ),
           ),
         ],
       ),

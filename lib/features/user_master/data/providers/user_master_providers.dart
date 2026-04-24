@@ -45,6 +45,10 @@ final rolesProvider = FutureProvider<List<Role>>((ref) async {
   return repo.getRoles();
 });
 
+/// Shared state for "edit role" flow in the Roles & Permissions screen.
+/// `null` means create mode.
+final editingRoleProvider = StateProvider<Role?>((ref) => null);
+
 // --- Permission Providers ---
 final permissionModulesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   final repo = ref.watch(userMasterRepositoryProvider);
