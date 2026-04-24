@@ -1323,7 +1323,7 @@ class _StationStockCard extends StatelessWidget {
                             station.stationId,
                           );
                           if (context.mounted) {
-                            Navigator.pop(context); // Close loading
+                            try { Navigator.pop(context); } catch (_) {}
                             showDialog(
                               context: context,
                               builder: (_) => ReorderModal(
@@ -1334,7 +1334,7 @@ class _StationStockCard extends StatelessWidget {
                           }
                         } catch (e) {
                           if (context.mounted) {
-                            Navigator.pop(context); // Close loading
+                            try { Navigator.pop(context); } catch (_) {}
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text('Error loading forecast: $e'),
