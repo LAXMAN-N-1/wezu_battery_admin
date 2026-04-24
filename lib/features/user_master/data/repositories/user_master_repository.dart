@@ -17,9 +17,12 @@ class UserMasterRepository {
     switch (status.trim().toLowerCase()) {
       case 'active':
         return 'active';
+      case 'inactive':
+        return 'inactive';
       case 'suspended':
         return 'suspended';
       case 'pending':
+      case 'pending verification':
       case 'pending_verification':
         return 'pending_verification';
       default:
@@ -27,21 +30,40 @@ class UserMasterRepository {
     }
   }
 
-  String? _mapRoleToUserType(String? role) {
-    if (role == null || role.trim().isEmpty) return null;
-    switch (role.trim().toLowerCase()) {
-      case 'dealer':
-        return 'dealer';
-      case 'customer':
-        return 'customer';
-      case 'driver':
-        return 'driver';
-      case 'super admin':
+  String? _normalizeUserType(String? userType) {
+    if (userType == null || userType.trim().isEmpty) return null;
+    switch (userType.trim().toLowerCase()) {
       case 'admin':
+      case 'super admin':
+      case 'operations admin':
+      case 'security admin':
+      case 'finance admin':
       case 'manager':
-      case 'support agent':
+      case 'support manager':
       case 'read-only':
         return 'admin';
+      case 'dealer':
+      case 'dealer owner':
+        return 'dealer';
+      case 'dealer staff':
+      case 'dealer_staff':
+      case 'dealer manager':
+      case 'dealer inventory staff':
+      case 'dealer finance staff':
+      case 'dealer support staff':
+        return 'dealer_staff';
+      case 'support agent':
+      case 'support_agent':
+        return 'support_agent';
+      case 'logistics':
+      case 'driver':
+      case 'dispatcher':
+      case 'fleet manager':
+      case 'warehouse manager':
+      case 'logistics manager':
+        return 'logistics';
+      case 'customer':
+        return 'customer';
       default:
         return null;
     }
@@ -55,7 +77,7 @@ class UserMasterRepository {
     int limit = 20,
   }) async {
     final normalizedStatus = _normalizeStatus(status);
-    final userType = _mapRoleToUserType(role);
+    final userType = _normalizeUserType(role);
     final response = await _apiClient.get(
       '/api/v1/admin/users',
       queryParameters: {
@@ -83,6 +105,15 @@ class UserMasterRepository {
     return response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : Map<String, dynamic>.from(response.data as Map);
+  }
+
+  Future<User> getUserById(String id) async {
+    final response = await _apiClient.get('/api/v1/admin/users/$id');
+    return User.fromJson(
+      response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : Map<String, dynamic>.from(response.data as Map),
+    );
   }
 
   Future<User> createUser(Map<String, dynamic> data) async {
@@ -162,6 +193,21 @@ class UserMasterRepository {
     return User.fromJson(response.data);
   }
 
+  Future<void> suspendUser(String id, {required String reason}) async {
+    await _apiClient.put(
+      '/api/v1/admin/users/$id/suspend',
+      data: {'reason': reason},
+    );
+  }
+
+  Future<void> reactivateUser(String id) async {
+    await _apiClient.put('/api/v1/admin/users/$id/reactivate');
+  }
+
+  Future<void> deleteUser(String id) async {
+    await _apiClient.delete('/api/v1/admin/users/$id');
+  }
+
   Future<List<Role>> getRoles() async {
     final response = await _apiClient.get('$_rbacBase/roles');
     return (response.data as List).map((json) => Role.fromJson(json)).toList();
@@ -219,7 +265,11 @@ class UserMasterRepository {
               'module': entry.key,
               'label': entry.key
                   .split('_')
-                  .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+                  .map(
+                    (w) => w.isNotEmpty
+                        ? '${w[0].toUpperCase()}${w.substring(1)}'
+                        : '',
+                  )
                   .join(' '),
               'permissions': entry.value,
             },

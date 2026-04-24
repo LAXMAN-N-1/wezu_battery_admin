@@ -561,7 +561,7 @@ String _getTitle(String location) {
   // User Master
   if (location == '/user-master') return 'All Users';
   if (location == '/user-master/create') return 'Create User';
-  if (location == '/user-master/edit') return 'Add / Edit User';
+  if (location == '/user-master/edit') return 'Edit User';
   if (location == '/user-master/roles') return 'Roles & Permissions';
   if (location == '/user-master/groups') return 'Admin Groups';
   if (location == '/user-master/logs') return 'Access Logs';

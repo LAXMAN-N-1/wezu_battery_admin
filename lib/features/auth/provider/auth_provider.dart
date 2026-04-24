@@ -257,7 +257,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _apiClient.clearSession(notifyListeners: false);
+    try {
+      await _apiClient.post('/api/v1/auth/logout');
+    } on DioException catch (e) {
+      debugPrint('[Auth] backend logout failed: $e');
+    } catch (e) {
+      debugPrint('[Auth] unexpected logout failure: $e');
+    } finally {
+      await _apiClient.clearSession(notifyListeners: false);
+    }
+
     state = state.copyWith(
       isLoading: false,
       isAuthenticated: false,

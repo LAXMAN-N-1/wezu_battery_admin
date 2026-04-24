@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/utils/parallel_load.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
 
@@ -13,7 +14,7 @@ class KnowledgeBaseView extends StatefulWidget {
 class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
   final SupportRepository _repository = SupportRepository();
   bool _isLoading = true;
-  
+
   Map<String, dynamic> _stats = {};
   List<KnowledgeBaseArticle> _articles = [];
   String _categoryFilter = 'all';
@@ -27,9 +28,12 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final stats = await _repository.getKnowledgeBaseStats();
-      final articles = await _repository.getArticles(category: _categoryFilter);
-      
+      final (stats, articles) = await ParallelLoad.pair(
+        _repository.getKnowledgeBaseStats(),
+        _repository.getArticles(category: _categoryFilter),
+      );
+      if (!mounted) return;
+
       setState(() {
         _stats = stats;
         _articles = articles;
@@ -57,9 +61,7 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
           const SizedBox(height: 24),
           _buildFilters(),
           const SizedBox(height: 24),
-          Expanded(
-            child: _buildArticlesList(),
-          ),
+          Expanded(child: _buildArticlesList()),
         ],
       ),
     );
@@ -72,11 +74,16 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
       actionButton: ElevatedButton.icon(
         onPressed: () => _openArticleDialog(),
         icon: const Icon(Icons.add, size: 20, color: Colors.white),
-        label: const Text('Add Article', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        label: const Text(
+          'Add Article',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3B82F6),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1);
@@ -85,37 +92,68 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
   Widget _buildStatsCards() {
     return Row(
       children: [
-        Expanded(child: StatCard(label: 'Total Articles', value: '${_stats['total_articles'] ?? 0}', icon: Icons.library_books)),
+        Expanded(
+          child: StatCard(
+            label: 'Total Articles',
+            value: '${_stats['total_articles'] ?? 0}',
+            icon: Icons.library_books,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: StatCard(label: 'Active Articles', value: '${_stats['active_articles'] ?? 0}', icon: Icons.check_circle_outline)),
+        Expanded(
+          child: StatCard(
+            label: 'Active Articles',
+            value: '${_stats['active_articles'] ?? 0}',
+            icon: Icons.check_circle_outline,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: StatCard(label: 'Helpful Votes', value: '${_stats['total_helpful'] ?? 0}', icon: Icons.thumb_up_alt_outlined)),
+        Expanded(
+          child: StatCard(
+            label: 'Helpful Votes',
+            value: '${_stats['total_helpful'] ?? 0}',
+            icon: Icons.thumb_up_alt_outlined,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: StatCard(label: 'Satisfaction Rate', value: '${_stats['satisfaction_rate'] ?? 0}%', icon: Icons.star_border)),
+        Expanded(
+          child: StatCard(
+            label: 'Satisfaction Rate',
+            value: '${_stats['satisfaction_rate'] ?? 0}%',
+            icon: Icons.star_border,
+          ),
+        ),
       ],
     ).animate().fadeIn(duration: 400.ms, delay: 100.ms).slideY(begin: 0.1);
   }
 
   Widget _buildFilters() {
     final Map<String, dynamic> categories = _stats['categories'] ?? {};
-    
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          const Text('Category:', style: TextStyle(color: Colors.white54, fontSize: 13, fontWeight: FontWeight.bold)),
+          const Text(
+            'Category:',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(width: 12),
           _buildFilterChip('All', 'all'),
-          ...categories.keys.map((cat) => _buildFilterChip(
-                _capitalize(cat),
-                cat,
-              )),
+          ...categories.keys.map(
+            (cat) => _buildFilterChip(_capitalize(cat), cat),
+          ),
         ],
       ),
     ).animate().fadeIn(duration: 400.ms, delay: 200.ms);
   }
 
-  String _capitalize(String s) => s.isEmpty ? '' : s[0].toUpperCase() + s.substring(1).replaceAll('_', ' ');
+  String _capitalize(String s) =>
+      s.isEmpty ? '' : s[0].toUpperCase() + s.substring(1).replaceAll('_', ' ');
 
   Widget _buildFilterChip(String label, String value) {
     final isSelected = value == _categoryFilter;
@@ -137,7 +175,9 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
           fontSize: 13,
         ),
         side: BorderSide(
-          color: isSelected ? const Color(0xFF3B82F6).withValues(alpha: 0.5) : Colors.transparent,
+          color: isSelected
+              ? const Color(0xFF3B82F6).withValues(alpha: 0.5)
+              : Colors.transparent,
         ),
       ),
     );
@@ -145,7 +185,12 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
 
   Widget _buildArticlesList() {
     if (_articles.isEmpty) {
-      return const Center(child: Text('No articles found.', style: TextStyle(color: Colors.white54)));
+      return const Center(
+        child: Text(
+          'No articles found.',
+          style: TextStyle(color: Colors.white54),
+        ),
+      );
     }
 
     return ListView.separated(
@@ -154,105 +199,193 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
       itemBuilder: (context, index) {
         final article = _articles[index];
         final totalVotes = article.helpfulCount + article.notHelpfulCount;
-        final helpfulPct = totalVotes > 0 ? (article.helpfulCount / totalVotes * 100).toInt() : 0;
+        final helpfulPct = totalVotes > 0
+            ? (article.helpfulCount / totalVotes * 100).toInt()
+            : 0;
 
         return AdvancedCard(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+              padding: const EdgeInsets.all(20),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: Icon(
-                      article.category == 'technical' ? Icons.build_circle :
-                      article.category == 'billing' ? Icons.receipt_long :
-                      article.category == 'account' ? Icons.person_outline :
-                      article.category == 'dealer' ? Icons.storefront : 
-                      Icons.help_outline,
-                      color: Colors.blueAccent,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Icon(
+                          article.category == 'technical'
+                              ? Icons.build_circle
+                              : article.category == 'billing'
+                              ? Icons.receipt_long
+                              : article.category == 'account'
+                              ? Icons.person_outline
+                              : article.category == 'dealer'
+                              ? Icons.storefront
+                              : Icons.help_outline,
+                          color: Colors.blueAccent,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: Text(article.question, style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))),
-                            if (!article.isActive)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                                child: const Text('INACTIVE', style: TextStyle(color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold)),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    article.question,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                if (!article.isActive)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Text(
+                                      'INACTIVE',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    size: 18,
+                                    color: Colors.white54,
+                                  ),
+                                  onPressed: () => _openArticleDialog(article),
+                                  tooltip: 'Edit Article',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              article.answer,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                height: 1.5,
                               ),
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 18, color: Colors.white54),
-                              onPressed: () => _openArticleDialog(article),
-                              tooltip: 'Edit Article',
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          article.answer,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(color: Colors.white12),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
                         ),
-                      ],
-                    ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          article.category.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.thumb_up_alt_outlined,
+                        size: 14,
+                        color: Colors.green,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${article.helpfulCount}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Icon(
+                        Icons.thumb_down_alt_outlined,
+                        size: 14,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${article.notHelpfulCount}',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        width: 120,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.white12,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: helpfulPct,
+                              child: Container(color: Colors.green),
+                            ),
+                            Expanded(
+                              flex: 100 - helpfulPct,
+                              child: Container(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '$helpfulPct%',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white12),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                    child: Text(article.category.toUpperCase(), style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                  const Spacer(),
-                  const Icon(Icons.thumb_up_alt_outlined, size: 14, color: Colors.green),
-                  const SizedBox(width: 6),
-                  Text('${article.helpfulCount}', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.thumb_down_alt_outlined, size: 14, color: Colors.red),
-                  const SizedBox(width: 6),
-                  Text('${article.notHelpfulCount}', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                  const SizedBox(width: 24),
-                  Container(
-                    width: 120,
-                    height: 6,
-                    decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(3)),
-                    clipBehavior: Clip.antiAlias,
-                    child: Row(
-                      children: [
-                        Expanded(flex: helpfulPct, child: Container(color: Colors.green)),
-                        Expanded(flex: 100 - helpfulPct, child: Container(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('$helpfulPct%', style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ],
-          ),
-        ).animate().fadeIn(duration: 400.ms, delay: (300 + index * 50).ms).slideY(begin: 0.05);
+            )
+            .animate()
+            .fadeIn(duration: 400.ms, delay: (300 + index * 50).ms)
+            .slideY(begin: 0.05);
       },
     );
   }
@@ -260,7 +393,8 @@ class _KnowledgeBaseViewState extends State<KnowledgeBaseView> {
   void _openArticleDialog([KnowledgeBaseArticle? article]) {
     showDialog(
       context: context,
-      builder: (context) => _ArticleFormDialog(article: article, repository: _repository),
+      builder: (context) =>
+          _ArticleFormDialog(article: article, repository: _repository),
     ).then((changed) {
       if (changed == true) _loadData();
     });
@@ -297,16 +431,27 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
-    
+
     setState(() => _isSaving = true);
-    
+
     bool success;
     if (widget.article == null) {
-      success = await widget.repository.createArticle(_question, _answer, _category, _isActive);
+      success = await widget.repository.createArticle(
+        _question,
+        _answer,
+        _category,
+        _isActive,
+      );
     } else {
-      success = await widget.repository.updateArticle(widget.article!.id, _question, _answer, _category, _isActive);
+      success = await widget.repository.updateArticle(
+        widget.article!.id,
+        _question,
+        _answer,
+        _category,
+        _isActive,
+      );
     }
-    
+
     if (mounted) {
       setState(() => _isSaving = false);
       if (success) Navigator.of(context).pop(true);
@@ -321,7 +466,10 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
       child: Container(
         width: 600,
         padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(border: Border.all(color: Colors.white12), borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white12),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -330,7 +478,11 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
             children: [
               Text(
                 widget.article == null ? 'New Article' : 'Edit Article',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 24),
               TextFormField(
@@ -341,7 +493,10 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
                   labelStyle: const TextStyle(color: Colors.white54),
                   filled: true,
                   fillColor: Colors.black26,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
                 onSaved: (v) => _question = v!,
@@ -356,12 +511,21 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
                   labelStyle: const TextStyle(color: Colors.white54),
                   filled: true,
                   fillColor: Colors.black26,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 items: const [
-                  DropdownMenuItem(value: 'getting_started', child: Text('Getting Started')),
+                  DropdownMenuItem(
+                    value: 'getting_started',
+                    child: Text('Getting Started'),
+                  ),
                   DropdownMenuItem(value: 'payment', child: Text('Payment')),
-                  DropdownMenuItem(value: 'technical', child: Text('Technical')),
+                  DropdownMenuItem(
+                    value: 'technical',
+                    child: Text('Technical'),
+                  ),
                   DropdownMenuItem(value: 'billing', child: Text('Billing')),
                   DropdownMenuItem(value: 'account', child: Text('Account')),
                   DropdownMenuItem(value: 'dealer', child: Text('Dealer')),
@@ -380,14 +544,20 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
                   labelStyle: const TextStyle(color: Colors.white54),
                   filled: true,
                   fillColor: Colors.black26,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
                 onSaved: (v) => _answer = v!,
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Published (Active)', style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  'Published (Active)',
+                  style: TextStyle(color: Colors.white),
+                ),
                 activeThumbColor: const Color(0xFF3B82F6),
                 value: _isActive,
                 onChanged: (v) => setState(() => _isActive = v),
@@ -399,18 +569,37 @@ class _ArticleFormDialogState extends State<_ArticleFormDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.white70),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: _isSaving ? null : _save,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
                     ),
                     child: _isSaving
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Save Article', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Save Article',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ],
               ),

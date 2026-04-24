@@ -53,7 +53,7 @@ const List<MenuSection> _allMenuSections = [
     children: [
       MenuItem(label: 'All Users', route: '/user-master'),
       MenuItem(label: 'Create User', route: '/user-master/create'),
-      MenuItem(label: 'Add / Edit User', route: '/user-master/edit'),
+      MenuItem(label: 'Edit User', route: '/user-master/edit'),
       MenuItem(label: 'Roles & Permissions', route: '/user-master/roles'),
       MenuItem(label: 'Admin Groups', route: '/user-master/groups'),
       MenuItem(label: 'Access Logs', route: '/user-master/logs'),

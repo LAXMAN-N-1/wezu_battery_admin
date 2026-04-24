@@ -3,9 +3,9 @@ class AccessLog {
   final DateTime timestamp;
   final String userId;
   final String userName;
+  final String email;
   final String roleName;
-  final String actionType;
-  final String moduleAffected;
+  final String status;
   final String ipAddress;
   final String? deviceBrowser;
   final bool isSuccess;
@@ -15,9 +15,9 @@ class AccessLog {
     required this.timestamp,
     required this.userId,
     required this.userName,
+    required this.email,
     required this.roleName,
-    required this.actionType,
-    required this.moduleAffected,
+    required this.status,
     required this.ipAddress,
     this.deviceBrowser,
     required this.isSuccess,
@@ -25,15 +25,17 @@ class AccessLog {
 
   factory AccessLog.fromJson(Map<String, dynamic> json) {
     return AccessLog(
-      id: json['id'] as String,
-      timestamp: DateTime.parse(json['timestamp'] as String),
-      userId: json['user_id'] as String,
-      userName: json['user_name'] as String,
-      roleName: json['role_name'] as String,
-      actionType: json['action_type'] as String,
-      moduleAffected: json['module_affected'] as String,
-      ipAddress: json['ip_address'] as String,
-      deviceBrowser: json['device_browser'] as String?,
+      id: json['id']?.toString() ?? '',
+      timestamp:
+          DateTime.tryParse(json['timestamp']?.toString() ?? '') ??
+          DateTime.now(),
+      userId: json['user_id']?.toString() ?? '',
+      userName: json['user_name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      roleName: json['role_name']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'unknown',
+      ipAddress: json['ip_address']?.toString() ?? '',
+      deviceBrowser: json['device_browser']?.toString(),
       isSuccess: json['is_success'] as bool? ?? true,
     );
   }

@@ -28,7 +28,9 @@ class CommissionConfig {
       percentage: (json['percentage'] as num?)?.toDouble() ?? 0.0,
       flatFee: (json['flat_fee'] as num?)?.toDouble() ?? 0.0,
       isActive: json['is_active'] ?? true,
-      effectiveFrom: json['effective_from'] != null ? DateTime.tryParse(json['effective_from']) : null,
+      effectiveFrom: json['effective_from'] != null
+          ? DateTime.tryParse(json['effective_from'])
+          : null,
     );
   }
 }
@@ -49,12 +51,17 @@ class CommissionLog {
   });
 
   factory CommissionLog.fromJson(Map<String, dynamic> json) {
+    final dealerId = json['dealer_id'];
     return CommissionLog(
       id: json['id'] as int,
-      dealerName: json['dealer_name'] ?? 'Unknown',
+      dealerName:
+          json['dealer_name'] ??
+          (dealerId != null ? 'Dealer User #$dealerId' : 'Unknown'),
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? 'pending',
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
     );
   }
 }

@@ -31,7 +31,7 @@ COPY analysis_options.yaml ./
 
 # Backend base URL injected at build time for Flutter web.
 # Keep default aligned with production API domain used by dealer/customer apps.
-ARG API_BASE_URL=https://api1.wezutech.com
+ARG API_BASE_URL=https://api3.powerfrill.com
 
 # 4) Build web — cache .dart_tool between builds for incremental compilation
 #    API_BASE_URL is injected for explicit backend targeting.

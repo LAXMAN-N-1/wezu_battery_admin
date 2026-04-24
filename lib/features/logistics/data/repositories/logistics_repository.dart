@@ -1,4 +1,7 @@
+import 'package:dio/dio.dart';
+
 import '../../../../core/api/api_client.dart';
+import '../../../../core/api/retry_interceptor.dart';
 
 class LogisticsRepository {
   final ApiClient _api;
@@ -32,36 +35,56 @@ class LogisticsRepository {
 
   // ─── DELIVERY ORDERS ──────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>> getOrders({int skip = 0, int limit = 50, String? status, String? orderType}) async {
+  Future<Map<String, dynamic>> getOrders({
+    int skip = 0,
+    int limit = 50,
+    String? status,
+    String? orderType,
+  }) async {
     try {
       final params = <String, dynamic>{'skip': skip, 'limit': limit};
       if (status != null) params['status'] = status;
       if (orderType != null) params['order_type'] = orderType;
-      final r = await _api.get('/api/v1/admin/logistics/orders', queryParameters: params);
+      final r = await _api.get(
+        '/api/v1/admin/logistics/orders',
+        queryParameters: params,
+      );
       final body = _asMap(r.data);
       if (body.containsKey('orders')) {
         return body;
       }
       final rows = _asList(r.data);
-      return {
-        'orders': rows,
-        'total_count': rows.length,
-      };
-    } catch (e) { rethrow; }
+      return {'orders': rows, 'total_count': rows.length};
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> getOrderStats() async {
     try {
-      final r = await _api.get('/api/v1/admin/logistics/orders/stats');
+      final r = await _api.get(
+        '/api/v1/admin/logistics/orders/stats',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 20),
+          extra: const {RetryInterceptor.disableRetryKey: true},
+        ),
+      );
       return _asMap(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  Future<bool> updateOrderStatus(int orderId, String newStatus) async {
+  Future<bool> updateOrderStatus(Object orderId, String newStatus) async {
     try {
-      await _api.put('/api/v1/admin/logistics/orders/$orderId/status', queryParameters: {'new_status': newStatus});
+      await _api.put(
+        '/api/v1/admin/logistics/orders/$orderId/status',
+        queryParameters: {'new_status': newStatus},
+      );
       return true;
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // ─── DRIVERS ──────────────────────────────────────────────────────────
@@ -70,14 +93,18 @@ class LogisticsRepository {
     try {
       final r = await _api.get('/api/v1/admin/logistics/drivers');
       return _asList(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> getDriverStats() async {
     try {
       final r = await _api.get('/api/v1/admin/logistics/drivers/stats');
       return _asMap(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // ─── ROUTES ───────────────────────────────────────────────────────────
@@ -86,9 +113,14 @@ class LogisticsRepository {
     try {
       final params = <String, dynamic>{};
       if (status != null) params['status'] = status;
-      final r = await _api.get('/api/v1/admin/logistics/routes', queryParameters: params);
+      final r = await _api.get(
+        '/api/v1/admin/logistics/routes',
+        queryParameters: params,
+      );
       return _asList(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // ─── RETURNS ──────────────────────────────────────────────────────────
@@ -97,25 +129,41 @@ class LogisticsRepository {
     try {
       final params = <String, dynamic>{};
       if (status != null) params['status'] = status;
-      final r = await _api.get('/api/v1/admin/logistics/returns', queryParameters: params);
+      final r = await _api.get(
+        '/api/v1/admin/logistics/returns',
+        queryParameters: params,
+      );
       return _asList(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> getReturnStats() async {
     try {
       final r = await _api.get('/api/v1/admin/logistics/returns/stats');
       return _asMap(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  Future<bool> updateReturnStatus(int returnId, String newStatus, {String? notes}) async {
+  Future<bool> updateReturnStatus(
+    int returnId,
+    String newStatus, {
+    String? notes,
+  }) async {
     try {
       final params = <String, dynamic>{'new_status': newStatus};
       if (notes != null) params['notes'] = notes;
-      await _api.put('/api/v1/admin/logistics/returns/$returnId/status', queryParameters: params);
+      await _api.put(
+        '/api/v1/admin/logistics/returns/$returnId/status',
+        queryParameters: params,
+      );
       return true;
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // ─── TRACKING ─────────────────────────────────────────────────────────
@@ -124,6 +172,8 @@ class LogisticsRepository {
     try {
       final r = await _api.get('/api/v1/admin/logistics/tracking');
       return _asList(r.data);
-    } catch (e) { rethrow; }
+    } catch (e) {
+      rethrow;
+    }
   }
 }

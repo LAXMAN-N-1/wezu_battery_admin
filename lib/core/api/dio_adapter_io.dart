@@ -6,7 +6,7 @@ HttpClientAdapter createAdapter() {
   return IOHttpClientAdapter(
     createHttpClient: () {
       final client = HttpClient()
-        ..idleTimeout = const Duration(seconds: 15)
+        ..idleTimeout = const Duration(seconds: 60)
         ..maxConnectionsPerHost = 6
         ..autoUncompress = true;
       return client;
@@ -18,10 +18,11 @@ void configureCertBypass(HttpClientAdapter adapter) {
   if (adapter is IOHttpClientAdapter) {
     adapter.createHttpClient = () {
       final client = HttpClient()
-        ..idleTimeout = const Duration(seconds: 15)
+        ..idleTimeout = const Duration(seconds: 60)
         ..maxConnectionsPerHost = 6
         ..autoUncompress = true;
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
       return client;
     };
   }

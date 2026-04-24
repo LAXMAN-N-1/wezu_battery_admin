@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../core/utils/parallel_load.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/repositories/support_repository.dart';
 
@@ -27,8 +28,11 @@ class _TeamPerformanceViewState extends State<TeamPerformanceView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final perfData = await _repository.getTeamPerformance();
-      final trends = await _repository.getTeamOverviewTrends();
+      final (perfData, trends) = await ParallelLoad.pair(
+        _repository.getTeamPerformance(),
+        _repository.getTeamOverviewTrends(),
+      );
+      if (!mounted) return;
 
       setState(() {
         _perfData = perfData;

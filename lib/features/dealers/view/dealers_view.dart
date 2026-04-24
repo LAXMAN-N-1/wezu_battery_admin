@@ -527,6 +527,7 @@ class _DealersViewState extends State<DealersView> {
       text: dealer?.contactPerson ?? '',
     );
     final emailCtrl = TextEditingController(text: dealer?.contactEmail ?? '');
+    final passwordCtrl = TextEditingController();
     final phoneCtrl = TextEditingController(text: dealer?.contactPhone ?? '');
     final cityCtrl = TextEditingController(text: dealer?.city ?? '');
     final stateCtrl = TextEditingController(text: dealer?.state ?? '');
@@ -577,9 +578,21 @@ class _DealersViewState extends State<DealersView> {
                 Row(
                   children: [
                     Expanded(child: _formField('Email *', emailCtrl)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _formField('Phone *', phoneCtrl)),
+                    if (!isEdit) ...[
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _formField(
+                          'Temporary Password *',
+                          passwordCtrl,
+                          obscureText: true,
+                        ),
+                      ),
+                    ],
                   ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [Expanded(child: _formField('Phone *', phoneCtrl))],
                 ),
                 const SizedBox(height: 16),
                 _formField('Address', addrCtrl),
@@ -634,7 +647,12 @@ class _DealersViewState extends State<DealersView> {
                             data,
                           );
                         } else {
-                          success = await _repository.createDealer(data);
+                          success = await _repository.createDealer({
+                            ...data,
+                            'email': emailCtrl.text,
+                            'full_name': contactCtrl.text,
+                            'password': passwordCtrl.text,
+                          });
                         }
                         if (!ctx.mounted || !mounted) {
                           return;
@@ -675,7 +693,11 @@ class _DealersViewState extends State<DealersView> {
     );
   }
 
-  Widget _formField(String label, TextEditingController ctrl) {
+  Widget _formField(
+    String label,
+    TextEditingController ctrl, {
+    bool obscureText = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -686,6 +708,7 @@ class _DealersViewState extends State<DealersView> {
         const SizedBox(height: 6),
         TextField(
           controller: ctrl,
+          obscureText: obscureText,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             filled: true,
@@ -737,10 +760,7 @@ class _DealersViewState extends State<DealersView> {
                   ),
                   Text(
                     title,
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white54, fontSize: 14),
                   ),
                 ],
               ),

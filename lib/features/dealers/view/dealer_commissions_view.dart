@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../core/widgets/admin_ui_components.dart';
+import '../data/models/dealer.dart';
 import '../data/repositories/dealer_repository.dart';
 import '../data/models/commission.dart';
 
@@ -18,6 +19,7 @@ class _DealerCommissionsViewState extends State<DealerCommissionsView>
   final DealerRepository _repository = DealerRepository();
   List<CommissionConfig> _configs = [];
   List<CommissionLog> _logs = [];
+  List<DealerProfile> _dealers = [];
   Map<String, dynamic> _stats = {};
   bool _isLoading = true;
   late TabController _tabController;
@@ -41,11 +43,15 @@ class _DealerCommissionsViewState extends State<DealerCommissionsView>
       _repository.getCommissionConfigs(),
       _repository.getCommissionLogs(),
       _repository.getCommissionStats(),
+      _repository.getDealers(limit: 200),
     ]);
     setState(() {
       _configs = results[0] as List<CommissionConfig>;
       _logs = results[1] as List<CommissionLog>;
       _stats = results[2] as Map<String, dynamic>;
+      _dealers =
+          (results[3] as Map<String, dynamic>)['dealers']
+              as List<DealerProfile>;
       _isLoading = false;
     });
   }
@@ -396,10 +402,7 @@ class _DealerCommissionsViewState extends State<DealerCommissionsView>
                   ),
                   Text(
                     title,
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                 ],
               ),
@@ -411,83 +414,135 @@ class _DealerCommissionsViewState extends State<DealerCommissionsView>
   }
 
   void _showCreateConfigDialog() {
+    if (_dealers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No dealers available for commission configuration.'),
+        ),
+      );
+      return;
+    }
+
     final txTypeCtrl = TextEditingController(text: 'rental');
     final pctCtrl = TextEditingController(text: '10');
     final feeCtrl = TextEditingController(text: '0');
+    int selectedDealerUserId = _dealers.first.userId;
 
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: const Color(0xFF0F172A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: 440,
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'New Commission Config',
-                style: GoogleFonts.outfit(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            width: 440,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'New Commission Config',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              _dialogDropdown('Transaction Type', txTypeCtrl, [
-                'rental',
-                'swap',
-                'purchase',
-              ]),
-              const SizedBox(height: 16),
-              _dialogField(
-                'Percentage (%)',
-                pctCtrl,
-                type: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              _dialogField('Flat Fee (₹)', feeCtrl, type: TextInputType.number),
-              const SizedBox(height: 28),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.white54),
+                const SizedBox(height: 24),
+                DropdownButtonFormField<int>(
+                  initialValue: selectedDealerUserId,
+                  dropdownColor: const Color(0xFF1E293B),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Dealer *',
+                    labelStyle: const TextStyle(color: Colors.white54),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final success = await _repository.createCommissionConfig({
-                        'transaction_type': txTypeCtrl.text,
-                        'percentage': double.tryParse(pctCtrl.text) ?? 0,
-                        'flat_fee': double.tryParse(feeCtrl.text) ?? 0,
-                      });
-                      if (!ctx.mounted || !mounted) {
-                        return;
-                      }
-                      if (success) {
-                        Navigator.pop(ctx);
-                        _loadData();
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  items: _dealers
+                      .map(
+                        (dealer) => DropdownMenuItem<int>(
+                          value: dealer.userId,
+                          child: Text(
+                            dealer.businessName,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setDialogState(() => selectedDealerUserId = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                _dialogDropdown('Transaction Type', txTypeCtrl, [
+                  'rental',
+                  'swap',
+                  'purchase',
+                ]),
+                const SizedBox(height: 16),
+                _dialogField(
+                  'Percentage (%)',
+                  pctCtrl,
+                  type: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                _dialogField(
+                  'Flat Fee (₹)',
+                  feeCtrl,
+                  type: TextInputType.number,
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.white54),
                       ),
                     ),
-                    child: const Text('Create'),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final success = await _repository
+                            .createCommissionConfig({
+                              'dealer_id': selectedDealerUserId,
+                              'transaction_type': txTypeCtrl.text,
+                              'percentage': double.tryParse(pctCtrl.text) ?? 0,
+                              'flat_fee': double.tryParse(feeCtrl.text) ?? 0,
+                            });
+                        if (!ctx.mounted || !mounted) {
+                          return;
+                        }
+                        if (success) {
+                          Navigator.pop(ctx);
+                          _loadData();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Create'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

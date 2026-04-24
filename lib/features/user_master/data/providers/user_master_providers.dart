@@ -56,6 +56,24 @@ final userCreationRolesProvider = FutureProvider.autoDispose<List<Role>>((
   return repo.getUserCreationRoles();
 });
 
+final userCreationDealersProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      return repo.getDealersReference();
+    });
+
+final userCreationStationsProvider = FutureProvider.autoDispose
+    .family<List<Map<String, dynamic>>, int?>((ref, dealerId) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      return repo.getStationsReference(dealerId: dealerId);
+    });
+
+final userCreationWarehousesProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      return repo.getWarehousesReference();
+    });
+
 // --- Permission Providers ---
 final permissionModulesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -70,5 +88,16 @@ final accessLogsProvider = FutureProvider.autoDispose
       return repo.getAccessLogs(
         skip: params['skip'] as int? ?? 0,
         limit: params['limit'] as int? ?? 50,
+      );
+    });
+
+final accessLogsProviderByKey = FutureProvider.autoDispose
+    .family<List<AccessLog>, String>((ref, queryKey) async {
+      final repo = ref.watch(userMasterRepositoryProvider);
+      final uri = Uri(query: queryKey);
+      final params = uri.queryParameters;
+      return repo.getAccessLogs(
+        skip: int.tryParse(params['skip'] ?? '0') ?? 0,
+        limit: int.tryParse(params['limit'] ?? '50') ?? 50,
       );
     });

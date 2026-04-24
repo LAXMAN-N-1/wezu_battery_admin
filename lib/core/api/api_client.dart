@@ -19,6 +19,21 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
 class ApiClient {
   static const _fallbackApiBaseUrl = 'https://api3.powerfrill.com';
+  static const _connectTimeout = Duration(
+    seconds: int.fromEnvironment(
+      'API_CONNECT_TIMEOUT_SECONDS',
+      defaultValue: 30,
+    ),
+  );
+  static const _receiveTimeout = Duration(
+    seconds: int.fromEnvironment(
+      'API_RECEIVE_TIMEOUT_SECONDS',
+      defaultValue: 90,
+    ),
+  );
+  static const _sendTimeout = Duration(
+    seconds: int.fromEnvironment('API_SEND_TIMEOUT_SECONDS', defaultValue: 90),
+  );
   static const _skipAuthInterceptorKey = 'skipAuthInterceptor';
   static const _tokenFailureKeywords = {
     'token expired',
@@ -61,9 +76,9 @@ class ApiClient {
   ApiClient._internal() {
     final baseOptions = BaseOptions(
       baseUrl: _resolvedApiBaseUrl(),
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      connectTimeout: _connectTimeout,
+      receiveTimeout: _receiveTimeout,
+      sendTimeout: _sendTimeout,
       headers: {
         'Accept': 'application/json',
         if (!kIsWeb) 'Accept-Encoding': 'gzip, deflate',
@@ -73,6 +88,15 @@ class ApiClient {
 
     dio = Dio(baseOptions);
     _configureHttpAdapters();
+
+    if (kDebugMode) {
+      debugPrint(
+        '[ApiClient] baseUrl=${baseOptions.baseUrl} '
+        'connectTimeout=${baseOptions.connectTimeout?.inSeconds}s '
+        'receiveTimeout=${baseOptions.receiveTimeout?.inSeconds}s '
+        'sendTimeout=${baseOptions.sendTimeout?.inSeconds}s',
+      );
+    }
 
     dio.interceptors.add(AuthInterceptor(this));
     dio.interceptors.add(RetryInterceptor(dio: dio));
@@ -286,20 +310,73 @@ class ApiClient {
     }
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async =>
-      await dio.get(path, queryParameters: queryParameters, options: options, cancelToken: cancelToken ?? _globalCancelToken);
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async => await dio.get(
+    path,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken ?? _globalCancelToken,
+  );
 
-  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async =>
-      await dio.post(path, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken ?? _globalCancelToken);
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async => await dio.post(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken ?? _globalCancelToken,
+  );
 
-  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async =>
-      await dio.put(path, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken ?? _globalCancelToken);
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async => await dio.put(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken ?? _globalCancelToken,
+  );
 
-  Future<Response> patch(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async =>
-      await dio.patch(path, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken ?? _globalCancelToken);
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async => await dio.patch(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken ?? _globalCancelToken,
+  );
 
-  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async =>
-      await dio.delete(path, data: data, queryParameters: queryParameters, options: options, cancelToken: cancelToken ?? _globalCancelToken);
+  Future<Response> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async => await dio.delete(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+    cancelToken: cancelToken ?? _globalCancelToken,
+  );
 }
 
 class AuthInterceptor extends Interceptor {

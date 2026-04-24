@@ -46,7 +46,9 @@ class DealerProfile {
       state: json['state'],
       pincode: json['pincode'],
       isActive: json['is_active'] ?? false,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : DateTime.now(),
     );
   }
 }
@@ -64,9 +66,14 @@ class DealerStats {
 
   factory DealerStats.fromJson(Map<String, dynamic> json) {
     return DealerStats(
-      totalActiveDealers: json['total_active_dealers'] ?? 0,
-      pendingOnboardings: json['pending_onboardings'] ?? 0,
-      totalCommissionsPaid: (json['total_commissions_paid'] as num?)?.toDouble() ?? 0.0,
+      totalActiveDealers:
+          json['total_active_dealers'] ?? json['totalActiveDealers'] ?? 0,
+      pendingOnboardings:
+          json['pending_onboardings'] ?? json['pendingOnboardings'] ?? 0,
+      totalCommissionsPaid:
+          (json['total_commissions_paid'] as num?)?.toDouble() ??
+          (json['totalCommissionsPaid'] as num?)?.toDouble() ??
+          0.0,
     );
   }
 }
@@ -98,7 +105,9 @@ class DealerKycDocument {
       documentType: json['document_type'] ?? '',
       fileUrl: json['file_url'] ?? '',
       isVerified: json['is_verified'] ?? false,
-      uploadedAt: json['uploaded_at'] != null ? DateTime.tryParse(json['uploaded_at']) : null,
+      uploadedAt: json['uploaded_at'] != null
+          ? DateTime.tryParse(json['uploaded_at'])
+          : null,
     );
   }
 }
