@@ -126,6 +126,7 @@ const List<MenuSection> _allMenuSections = [
     label: 'Logistics',
     children: [
       MenuItem(label: 'Delivery Orders', route: '/logistics/orders'),
+      MenuItem(label: 'Order Approvals', route: '/logistics/approvals'),
       MenuItem(label: 'Live Tracking', route: '/logistics/tracking'),
       MenuItem(label: 'Drivers', route: '/logistics/drivers'),
       MenuItem(label: 'Route Planner', route: '/logistics/routes'),

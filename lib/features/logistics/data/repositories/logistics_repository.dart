@@ -60,6 +60,42 @@ class LogisticsRepository {
     }
   }
 
+  Future<Map<String, dynamic>> getPendingApprovals() async {
+    try {
+      final r = await _api.get(
+        '/api/v1/deliveries/',
+        queryParameters: {'status': 'pending_admin_approval'},
+      );
+      final rows = _asList(r.data);
+      return {'orders': rows, 'total_count': rows.length};
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> approveOrder(String orderId, {String? notes}) async {
+    try {
+      final body = <String, dynamic>{};
+      if (notes != null && notes.isNotEmpty) {
+        body['notes'] = notes;
+      }
+      await _api.post('/api/v1/deliveries/$orderId/actions/approve', data: body);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> rejectOrder(String orderId, String reason) async {
+    try {
+      final body = <String, dynamic>{'reason': reason};
+      await _api.post('/api/v1/deliveries/$orderId/actions/reject', data: body);
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> getOrderStats() async {
     try {
       final r = await _api.get(

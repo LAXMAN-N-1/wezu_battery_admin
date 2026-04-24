@@ -38,6 +38,7 @@ import '../features/finance/view/settlements_view.dart';
 import '../features/finance/view/invoices_view.dart';
 import '../features/finance/view/profit_analysis_view.dart';
 import '../features/logistics/view/delivery_orders_view.dart';
+import '../features/logistics/view/order_approvals_view.dart';
 import '../features/logistics/view/live_tracking_view.dart';
 import '../features/logistics/view/drivers_view.dart';
 import '../features/logistics/view/route_planner_view.dart';
@@ -337,6 +338,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const NoTransitionPage(child: DeliveryOrdersView()),
           ),
           GoRoute(
+            path: '/logistics/approvals',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: OrderApprovalsView()),
+          ),
+          GoRoute(
             path: '/logistics/tracking',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: LiveTrackingView()),
@@ -603,6 +609,7 @@ String _getTitle(String location) {
 
   // Logistics
   if (location == '/logistics/orders') return 'Delivery Orders';
+  if (location == '/logistics/approvals') return 'Order Approvals';
   if (location == '/logistics/tracking') return 'Live Tracking';
   if (location == '/logistics/drivers') return 'Drivers';
   if (location == '/logistics/routes') return 'Route Planner';
