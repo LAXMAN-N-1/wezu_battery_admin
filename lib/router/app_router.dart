@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/view/login_view.dart';
@@ -85,9 +86,12 @@ class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
   RouterNotifier(this._ref) {
     _ref.listen(authProvider, (previous, next) {
-      if (previous?.isAuthenticated != next.isAuthenticated || 
+      if (previous?.isAuthenticated != next.isAuthenticated ||
           previous?.isLoading != next.isLoading) {
-        notifyListeners();
+        // Defer notification to after the current frame to avoid
+        // triggering GoRouter navigation while the Navigator is locked
+        // during Flutter's finalizeTree phase.
+        SchedulerBinding.instance.addPostFrameCallback((_) => notifyListeners());
       }
     });
   }

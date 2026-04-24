@@ -264,8 +264,9 @@ class StockLevelsView extends ConsumerWidget {
                     ),
                     TextButton.icon(
                       onPressed: () async {
+                        final capturedContext = context;
                         showDialog(
-                          context: context,
+                          context: capturedContext,
                           barrierDismissible: false,
                           builder: (_) =>
                               const Center(child: CircularProgressIndicator()),
@@ -275,26 +276,31 @@ class StockLevelsView extends ConsumerWidget {
                           final detail = await repo.getStationDetail(
                             alert.stationId,
                           );
-                          if (context.mounted) {
-                            Navigator.pop(context); // Close loading
-                            showDialog(
-                              context: context,
-                              builder: (_) => ReorderModal(
-                                station: detail.station,
-                                forecast: detail.forecast,
-                              ),
-                            );
-                          }
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (capturedContext.mounted) {
+                              Navigator.of(capturedContext).pop();
+                              showDialog(
+                                context: capturedContext,
+                                builder: (_) => ReorderModal(
+                                  station: detail.station,
+                                  forecast: detail.forecast,
+                                ),
+                              );
+                            }
+                          });
                         } catch (e) {
-                          if (context.mounted) {
-                            Navigator.pop(context); // Close loading
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                          final msg = e.toString();
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (capturedContext.mounted) {
+                              Navigator.of(capturedContext).pop();
+                              ScaffoldMessenger.of(capturedContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $msg'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          });
                         }
                       },
                       style: TextButton.styleFrom(
@@ -1311,8 +1317,9 @@ class _StationStockCard extends StatelessWidget {
                     builder: (context, ref, _) => TextButton(
                       onPressed: () async {
                         // Fetch forecast for this station first
+                        final capturedContext = context;
                         showDialog(
-                          context: context,
+                          context: capturedContext,
                           barrierDismissible: false,
                           builder: (_) =>
                               const Center(child: CircularProgressIndicator()),
@@ -1322,26 +1329,31 @@ class _StationStockCard extends StatelessWidget {
                           final detail = await repo.getStationDetail(
                             station.stationId,
                           );
-                          if (context.mounted) {
-                            try { Navigator.pop(context); } catch (_) {}
-                            showDialog(
-                              context: context,
-                              builder: (_) => ReorderModal(
-                                station: detail.station,
-                                forecast: detail.forecast,
-                              ),
-                            );
-                          }
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (capturedContext.mounted) {
+                              Navigator.of(capturedContext).pop();
+                              showDialog(
+                                context: capturedContext,
+                                builder: (_) => ReorderModal(
+                                  station: detail.station,
+                                  forecast: detail.forecast,
+                                ),
+                              );
+                            }
+                          });
                         } catch (e) {
-                          if (context.mounted) {
-                            try { Navigator.pop(context); } catch (_) {}
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error loading forecast: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                          final msg = e.toString();
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (capturedContext.mounted) {
+                              Navigator.of(capturedContext).pop();
+                              ScaffoldMessenger.of(capturedContext).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error loading forecast: $msg'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          });
                         }
                       },
                       style: TextButton.styleFrom(
