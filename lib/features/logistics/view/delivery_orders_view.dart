@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/admin_ui_components.dart';
+import '../data/models/delivery_order_model.dart';
 import '../data/repositories/logistics_repository.dart';
 
 class DeliveryOrdersView extends StatefulWidget {
@@ -18,7 +19,7 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
   String? _ordersError;
   String? _statsError;
   Map<String, dynamic> _stats = {};
-  List<dynamic> _orders = [];
+  List<DeliveryOrderModel> _orders = [];
   String? _statusFilter;
 
   @override
@@ -64,7 +65,10 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
       final ordersResponse = await _repo.getOrders(status: _statusFilter);
       if (!mounted) return;
       setState(() {
-        _orders = ordersResponse['orders'] as List? ?? const [];
+        final rawList = ordersResponse['orders'] as List? ?? const [];
+        _orders = rawList
+            .map((json) => DeliveryOrderModel.fromJson(json as Map<String, dynamic>))
+            .toList();
         _ordersError = null;
       });
     } catch (error) {
@@ -77,6 +81,163 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
         setState(() => _isOrdersLoading = false);
       }
     }
+  }
+
+  void _showOrderDetails(DeliveryOrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: AdvancedCard(
+              padding: const EdgeInsets.all(32),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Order #${order.id}',
+                          style: GoogleFonts.outfit(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white54),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildDetailSection('Customer Information', [
+                      _buildDetailRow('Name', order.customerName),
+                      _buildDetailRow('Phone', order.customerPhone ?? 'Not provided'),
+                    ]),
+                    _buildDetailSection('Order Details', [
+                      _buildDetailRow('Priority', order.priority.toUpperCase()),
+                      _buildDetailRow('Units', '${order.units}'),
+                      _buildDetailRow('Total Value', '\$${order.totalValue.toStringAsFixed(2)}'),
+                      _buildDetailRow('Type', order.orderType.toUpperCase()),
+                    ]),
+                    _buildDetailSection('Logistics', [
+                      _buildDetailRow('Status', order.status.toUpperCase()),
+                      _buildDetailRow('Origin', order.originAddress),
+                      _buildDetailRow('Destination', order.destinationAddress ?? 'Not provided'),
+                      _buildDetailRow('Driver', order.driverName),
+                      if (order.trackingNumber != null)
+                        _buildDetailRow('Tracking', order.trackingNumber!),
+                      if (order.assignedBatteryIds.isNotEmpty)
+                        _buildDetailRow('Batteries', order.assignedBatteryIds.join(', ')),
+                    ]),
+                    if (order.proofOfDeliveryUrl != null || order.proofOfDeliveryNotes != null)
+                      _buildDetailSection('Proof of Delivery', [
+                        if (order.proofOfDeliveryNotes != null)
+                          _buildDetailRow('Notes', order.proofOfDeliveryNotes!),
+                        if (order.proofOfDeliveryUrl != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: 120,
+                                  child: Text(
+                                    'Image',
+                                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {}, // Can add full screen image view here
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        order.proofOfDeliveryUrl!,
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Container(
+                                          height: 100,
+                                          width: 100,
+                                          color: Colors.white10,
+                                          child: const Icon(Icons.broken_image, color: Colors.white54),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF3B82F6),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -231,40 +392,41 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
                         'Created',
                         'Actions',
                       ],
+                      onRowTap: (index) {
+                        _showOrderDetails(_orders[index]);
+                      },
                       rows: _orders.map((o) {
-                        final date =
-                            DateTime.tryParse(o['created_at'] ?? '') ??
-                            DateTime.now();
+                        final date = o.createdAt ?? DateTime.now();
                         return [
                           Text(
-                            '#${o['id']}',
+                            '#${o.id}',
                             style: const TextStyle(
                               color: Colors.white54,
                               fontSize: 12,
                             ),
                           ),
-                          _typeBadge(o['order_type'] ?? ''),
+                          _typeBadge(o.orderType),
                           Text(
-                            o['driver_name'] ?? 'Unassigned',
+                            o.driverName,
                             style: TextStyle(
-                              color: o['driver_name'] == 'Unassigned'
+                              color: o.driverName == 'Unassigned'
                                   ? Colors.white38
                                   : Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           _addressChip(
-                            o['origin_address'] ?? '',
+                            o.originAddress,
                             Icons.trip_origin,
                           ),
                           _addressChip(
-                            o['destination_address'] ?? '',
+                            o.destinationAddress ?? 'Not specified',
                             Icons.flag,
                           ),
                           StatusBadge(
-                            status: (o['status'] ?? '').toUpperCase(),
+                            status: o.status.toUpperCase(),
                           ),
-                          o['otp_verified'] == true
+                          o.otpVerified
                               ? const Icon(
                                   Icons.verified,
                                   color: Color(0xFF22C55E),
@@ -289,7 +451,7 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
                               size: 18,
                             ),
                             color: const Color(0xFF1E293B),
-                            onSelected: (v) => _updateStatus(o['id'], v),
+                            onSelected: (v) => _updateStatus(o.id, v),
                             itemBuilder: (_) =>
                                 [
                                       'pending',
@@ -298,24 +460,21 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
                                       'delivered',
                                       'failed',
                                       'cancelled',
-                                    ]
-                                    .map(
-                                      (s) => PopupMenuItem(
-                                        value: s,
-                                        child: Text(
-                                          s.toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                          ),
-                                        ),
+                                    ].map((s) {
+                                  return PopupMenuItem<String>(
+                                    value: s,
+                                    child: Text(
+                                      s.toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
                                       ),
-                                    )
-                                    .toList(),
+                                    ),
+                                  );
+                                }).toList(),
                           ),
                         ];
                       }).toList(),
-                      onRowTap: (i) => _showDetail(_orders[i]),
                     ),
                   ),
           ).animate().fadeIn(delay: 300.ms),
@@ -451,101 +610,4 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
       ),
     );
   }
-
-  void _showDetail(Map<String, dynamic> o) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.local_shipping, color: Color(0xFF3B82F6)),
-            const SizedBox(width: 8),
-            Text(
-              'Order #${o['id']}',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _row(
-                'Type',
-                (o['order_type'] ?? '')
-                    .toString()
-                    .replaceAll('_', ' ')
-                    .toUpperCase(),
-              ),
-              _row('Status', (o['status'] ?? '').toString().toUpperCase()),
-              _row('Driver', o['driver_name'] ?? 'Unassigned'),
-              const Divider(color: Colors.white12),
-              _row('Origin', o['origin_address'] ?? ''),
-              _row('Destination', o['destination_address'] ?? ''),
-              if (o['scheduled_at'] != null)
-                _row(
-                  'Scheduled',
-                  DateFormat('MMM d, h:mm a').format(
-                    DateTime.tryParse(o['scheduled_at'] ?? '') ??
-                        DateTime.now(),
-                  ),
-                ),
-              if (o['started_at'] != null)
-                _row(
-                  'Started',
-                  DateFormat('MMM d, h:mm a').format(
-                    DateTime.tryParse(o['started_at'] ?? '') ?? DateTime.now(),
-                  ),
-                ),
-              if (o['completed_at'] != null)
-                _row(
-                  'Completed',
-                  DateFormat('MMM d, h:mm a').format(
-                    DateTime.tryParse(o['completed_at'] ?? '') ??
-                        DateTime.now(),
-                  ),
-                ),
-              _row('OTP Verified', o['otp_verified'] == true ? 'Yes ✓' : 'No'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Colors.white54)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _row(String l, String v) => Padding(
-    padding: const EdgeInsets.only(bottom: 10),
-    child: Row(
-      children: [
-        SizedBox(
-          width: 110,
-          child: Text(
-            l,
-            style: const TextStyle(color: Colors.white38, fontSize: 12),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            v,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }
