@@ -23,6 +23,8 @@ class DeliveryOrderModel {
   final String? proofOfDeliveryNotes;
   final String? notes;
   final List<String> assignedBatteryIds;
+  final int? assignedAdminId;
+  final String? assignedAdminName;
 
   const DeliveryOrderModel({
     required this.id,
@@ -47,6 +49,8 @@ class DeliveryOrderModel {
     this.proofOfDeliveryNotes,
     this.notes,
     this.assignedBatteryIds = const [],
+    this.assignedAdminId,
+    this.assignedAdminName,
   });
 
   factory DeliveryOrderModel.fromJson(Map<String, dynamic> json) {
@@ -75,6 +79,8 @@ class DeliveryOrderModel {
       proofOfDeliveryNotes: json['proof_of_delivery_notes']?.toString(),
       notes: json['notes']?.toString(),
       assignedBatteryIds: _parseStringList(json['assigned_battery_ids']),
+      assignedAdminId: _parseInt(json['assigned_admin_id']),
+      assignedAdminName: json['assigned_admin_name']?.toString(),
     );
   }
 

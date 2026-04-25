@@ -132,6 +132,13 @@ class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
                       _buildDetailRow('Origin', order.originAddress),
                       _buildDetailRow('Destination', order.destinationAddress ?? 'Not provided'),
                       _buildDetailRow('Driver', order.driverName),
+                      _buildDetailRow(
+                        'Assigned Admin',
+                        order.assignedAdminName ??
+                            (order.assignedAdminId != null
+                                ? 'Admin #${order.assignedAdminId}'
+                                : 'Unassigned'),
+                      ),
                       if (order.trackingNumber != null)
                         _buildDetailRow('Tracking', order.trackingNumber!),
                       if (order.assignedBatteryIds.isNotEmpty)
