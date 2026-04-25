@@ -19,7 +19,7 @@ const _kBorder = Color(0x10FFFFFF);
 const _kBorderFaint = Color(0x08FFFFFF);
 
 const _kBatteryTypes = ['48V/30Ah', '60V/40Ah', '72V/50Ah', '96V/60Ah'];
-const _kHealthStatuses = ['good', 'excellent', 'fair', 'poor', 'critical', 'damaged'];
+const _kHealthStatuses = ['GOOD', 'EXCELLENT', 'FAIR', 'POOR', 'CRITICAL', 'DAMAGED'];
 const _kWarrantyMonthOptions = [12, 24, 36, 48];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -211,7 +211,7 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
   String _batteryType = '48V/30Ah';
 
   // New batteries always land in central inventory as 'available'
-  String _healthStatus = 'good';
+  String _healthStatus = 'GOOD';
 
   // Health & state
   double _healthPct = 100.0;
@@ -833,7 +833,7 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
 
   // Shared defaults
   String _batteryType = '48V/30Ah';
-  String _healthStatus = 'good';
+  String _healthStatus = 'GOOD';
   double _healthPct = 100.0;
   late final TextEditingController _manufacturerCtrl;
   late final TextEditingController _purchaseCostCtrl;
