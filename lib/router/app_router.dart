@@ -43,7 +43,9 @@ import '../features/logistics/view/live_tracking_view.dart';
 import '../features/logistics/view/drivers_view.dart';
 import '../features/logistics/view/route_planner_view.dart';
 import '../features/logistics/view/returns_view.dart';
+import '../features/logistics/view/assign_warehouse_view.dart';
 import '../features/inventory/view/batteries_view.dart';
+import '../features/inventory/view/add_batteries_view.dart';
 import '../features/support/view/support_view.dart';
 import '../features/support/view/knowledge_base_view.dart';
 import '../features/support/view/team_performance_view.dart';
@@ -191,6 +193,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/fleet/batteries',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: BatteriesView()),
+          ),
+          GoRoute(
+            path: '/fleet/batteries/add',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AddBatteriesView()),
           ),
           GoRoute(
             path: '/fleet/stock',
@@ -367,6 +374,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/logistics/returns',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ReturnsView()),
+          ),
+          GoRoute(
+            path: '/logistics/warehouse-assign',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AssignWarehouseView()),
           ),
 
           // ==========================================
@@ -581,6 +593,7 @@ String _getTitle(String location) {
 
   // Fleet
   if (location == '/fleet/batteries') return 'All Batteries';
+  if (location == '/fleet/batteries/add') return 'Add Batteries to Inventory';
   if (location == '/fleet/stock') return 'Stock Levels';
   if (location == '/fleet/health') return 'Battery Health';
   if (location == '/fleet/audit') return 'Inventory Audit Trail';
@@ -621,6 +634,7 @@ String _getTitle(String location) {
   if (location == '/logistics/drivers') return 'Drivers';
   if (location == '/logistics/routes') return 'Route Planner';
   if (location == '/logistics/returns') return 'Returns';
+  if (location == '/logistics/warehouse-assign') return 'Assign Batteries to Warehouse';
 
   // Fleet Ops
   if (location == '/fleet-ops/iot') return 'IoT Dashboard';

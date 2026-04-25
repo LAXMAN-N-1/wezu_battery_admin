@@ -212,4 +212,48 @@ class LogisticsRepository {
       rethrow;
     }
   }
+
+  // ─── CENTRAL INVENTORY → WAREHOUSE ASSIGNMENT ─────────────────────────
+
+  /// Batteries in central inventory (location_type=warehouse, location_id=null).
+  Future<Map<String, dynamic>> getCentralInventoryBatteries({
+    String? search,
+    String? batteryType,
+    int offset = 0,
+    int limit = 100,
+  }) async {
+    final params = <String, dynamic>{'offset': offset, 'limit': limit};
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (batteryType != null && batteryType != 'All') params['battery_type'] = batteryType;
+    final r = await _api.get(
+      '/api/v1/admin/batteries/central-inventory',
+      queryParameters: params,
+    );
+    final data = _asMap(r.data);
+    return {
+      'items': _asList(data['items'] ?? r.data),
+      'total_count': data['total_count'] ?? 0,
+    };
+  }
+
+  /// All active warehouses for the dropdown selector.
+  Future<List<Map<String, dynamic>>> getWarehouses() async {
+    final r = await _api.get('/api/v1/warehouses/', queryParameters: {'limit': 200});
+    return _asList(r.data).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  /// Assign selected batteries from central inventory to a warehouse.
+  Future<Map<String, dynamic>> assignBatteriesToWarehouse({
+    required List<int> batteryIds,
+    required int warehouseId,
+    String? notes,
+  }) async {
+    final body = <String, dynamic>{
+      'battery_ids': batteryIds,
+      'warehouse_id': warehouseId,
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+    };
+    final r = await _api.post('/api/v1/admin/batteries/assign-warehouse', data: body);
+    return _asMap(r.data);
+  }
 }

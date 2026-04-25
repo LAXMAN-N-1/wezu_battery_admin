@@ -81,6 +81,13 @@ class InventoryRepository {
     return Battery.fromJson(response.data);
   }
 
+  /// Bulk-create batteries via POST /bulk (all-or-nothing transaction).
+  Future<List<Battery>> createBatteryBulk(List<Map<String, dynamic>> items) async {
+    final response = await _api.post('$_baseUrl/bulk', data: {'items': items});
+    final List<dynamic> list = response.data;
+    return list.map((json) => Battery.fromJson(json as Map<String, dynamic>)).toList();
+  }
+
   Future<Battery> updateBattery(String id, Map<String, dynamic> data) async {
     final response = await _api.patch('$_baseUrl/$id', data: data);
     return Battery.fromJson(response.data);

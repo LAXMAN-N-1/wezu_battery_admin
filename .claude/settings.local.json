@@ -7,7 +7,19 @@
       "Bash(git push:*)",
       "Bash(curl -sS -o /tmp/dash.json -w \"HTTP %{http_code}\\\\n\" \"https://api1.wezutech.com/api/v1/admin/analytics/dashboard?period=30d\")",
       "Read(//tmp/**)",
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build *)",
+      "Bash(python -c \"from app.services.dealer_portal_inventory_service import DealerPortalInventoryService; print\\('OK'\\)\")",
+      "Bash(python3 -c \"from app.services.dealer_portal_inventory_service import DealerPortalInventoryService; print\\('OK'\\)\")",
+      "Bash(python3 -m py_compile app/services/dealer_portal_inventory_service.py)",
+      "Bash(python3 -m py_compile app/api/v1/admin_dealers.py)",
+      "Bash(python3 -m py_compile app/models/battery.py)",
+      "Bash(python3 -m py_compile alembic/versions/fe4f5a6b7c8d_sync_battery_location_fields.py)",
+      "Bash(.venv-seed/bin/python -m alembic heads)",
+      "Bash(python3 -m alembic heads)",
+      "Bash(awk -F'\"' '{print $2}')",
+      "Bash(/Users/mohithavala/Documents/wezu-backend-unified/tmpenv/bin/python3 -c \"from app.services.dealer_portal_inventory_service import DealerPortalInventoryService; print\\('OK'\\)\")",
+      "Bash(.venv-seed/bin/python3 -c \"from app.services.dealer_portal_inventory_service import DealerPortalInventoryService; print\\('OK'\\)\")"
     ]
   }
 }
