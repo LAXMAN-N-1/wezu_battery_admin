@@ -99,7 +99,7 @@ class InventoryRepository {
   ) async {
     final response = await _api.post(
       '$_baseUrl/bulk-update',
-      data: {'battery_ids': batteryIds, 'status': status},
+      data: {'battery_ids': batteryIds.map(int.parse).toList(), 'status': status},
     );
     return response.data;
   }

@@ -56,6 +56,7 @@ import '../features/dealers/view/dealer_onboarding_view.dart';
 import '../features/dealers/view/dealer_kyc_view.dart';
 import '../features/dealers/view/dealer_commissions_view.dart';
 import '../features/dealers/view/dealer_documents_view.dart';
+import '../features/dealers/view/dealer_inventory_view.dart';
 import '../features/locations/view/location_view.dart';
 import '../features/rentals/view/active_rentals_view.dart';
 import '../features/rentals/view/rental_history_view.dart';
@@ -265,6 +266,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'documents',
                 pageBuilder: (context, state) =>
                     const NoTransitionPage(child: DealerDocumentsView()),
+              ),
+              GoRoute(
+                path: 'inventory',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage(child: DealerInventoryView()),
               ),
             ],
           ),
@@ -592,6 +598,7 @@ String _getTitle(String location) {
   if (location == '/dealers/kyc') return 'Dealer KYC & Verification';
   if (location == '/dealers/commissions') return 'Commissions';
   if (location == '/dealers/documents') return 'Dealer Documents';
+  if (location == '/dealers/inventory') return 'Dealer Inventory';
 
   // Rentals
   if (location == '/rentals/active') return 'Active Rentals';

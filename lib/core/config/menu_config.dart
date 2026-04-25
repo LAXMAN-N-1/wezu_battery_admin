@@ -93,6 +93,7 @@ const List<MenuSection> _allMenuSections = [
       MenuItem(label: 'KYC & Verification', route: '/dealers/kyc'),
       MenuItem(label: 'Commissions', route: '/dealers/commissions'),
       MenuItem(label: 'Documents', route: '/dealers/documents'),
+      MenuItem(label: 'Inventory', route: '/dealers/inventory'),
     ],
   ),
   MenuSection(

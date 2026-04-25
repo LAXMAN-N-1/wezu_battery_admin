@@ -216,4 +216,43 @@ class DealerRepository {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getDealerInventory(
+    int dealerId, {
+    int page = 1,
+    int limit = 50,
+    String? status,
+    String? search,
+    String? sortBy,
+    String? sortOrder,
+  }) async {
+    final params = <String, dynamic>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (status != null) params['status'] = status;
+    if (search != null) params['search'] = search;
+    if (sortBy != null) params['sort_by'] = sortBy;
+    if (sortOrder != null) params['sort_order'] = sortOrder;
+    try {
+      final response = await _api.get(
+        '/api/v1/admin/dealers/$dealerId/inventory',
+        queryParameters: params,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getDealerInventoryMetrics(int dealerId) async {
+    try {
+      final response = await _api.get(
+        '/api/v1/admin/dealers/$dealerId/inventory/metrics',
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
