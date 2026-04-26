@@ -669,54 +669,61 @@ class AdvancedTable extends StatelessWidget {
           ),
         );
 
-        final rowsList = Column(
-          children: rows.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final rowWidgets = entry.value;
-            final rowContent = Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                border: idx < rows.length - 1
-                    ? Border(
-                        bottom: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.04),
-                        ),
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: rowWidgets.map((w) {
-                  return SizedBox(
-                    width: colWidth - (32 / columns.length),
-                    child: w,
-                  );
-                }).toList(),
-              ),
-            );
+        Widget buildRow(int idx) {
+          final rowWidgets = rows[idx];
+          final rowContent = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              border: idx < rows.length - 1
+                  ? Border(
+                      bottom: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.04),
+                      ),
+                    )
+                  : null,
+            ),
+            child: Row(
+              children: rowWidgets.map((w) {
+                return SizedBox(
+                  width: colWidth - (32 / columns.length),
+                  child: w,
+                );
+              }).toList(),
+            ),
+          );
+          return onRowTap != null
+              ? InkWell(
+                  onTap: () => onRowTap!(idx),
+                  hoverColor: Colors.white.withValues(alpha: 0.03),
+                  child: rowContent,
+                )
+              : rowContent;
+        }
 
-            final widget = onRowTap != null
-                ? InkWell(
-                    onTap: () => onRowTap!(idx),
-                    hoverColor: Colors.white.withValues(alpha: 0.03),
-                    child: rowContent,
-                  )
-                : rowContent;
+        // Bounded height: ListView.builder virtualizes visible rows only.
+        // Unbounded (e.g. inside SingleChildScrollView): shrinkWrap so it
+        // measures correctly, but still avoids per-row animations.
+        final bool bounded = constraints.maxHeight != double.infinity;
 
-            return widget
-                .animate()
-                .fadeIn(duration: 300.ms, delay: (idx * 50).ms)
-                .slideX(begin: 0.05);
-          }).toList(),
-        );
+        final rowsWidget = bounded
+            ? Expanded(
+                child: ListView.builder(
+                  itemCount: rows.length,
+                  itemBuilder: (_, idx) => buildRow(idx),
+                ),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: rows.length,
+                itemBuilder: (_, idx) => buildRow(idx),
+              );
 
         final tableContent = Column(
           children: [
             header,
             const SizedBox(height: 8),
-            if (constraints.maxHeight == double.infinity)
-              rowsList
-            else
-              Expanded(child: SingleChildScrollView(child: rowsList)),
+            rowsWidget,
           ],
         );
 

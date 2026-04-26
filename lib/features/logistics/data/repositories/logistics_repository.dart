@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 
+import '../../../../core/api/api_cache.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/retry_interceptor.dart';
 
 class LogisticsRepository {
   final ApiClient _api;
+  final ApiCache _cache = ApiCache();
   LogisticsRepository([ApiClient? api]) : _api = api ?? ApiClient();
 
   dynamic _unwrapData(dynamic payload) {
@@ -40,8 +42,9 @@ class LogisticsRepository {
     int limit = 50,
     String? status,
     String? orderType,
-  }) async {
-    try {
+  }) {
+    final key = 'logistics_orders_${status ?? ''}_${orderType ?? ''}_${skip}_$limit';
+    return _cache.getOrFetch(key, ttl: const Duration(seconds: 30), fetch: () async {
       final params = <String, dynamic>{'skip': skip, 'limit': limit};
       if (status != null) params['status'] = status;
       if (orderType != null) params['order_type'] = orderType;
@@ -50,36 +53,30 @@ class LogisticsRepository {
         queryParameters: params,
       );
       final body = _asMap(r.data);
-      if (body.containsKey('orders')) {
-        return body;
-      }
+      if (body.containsKey('orders')) return body;
       final rows = _asList(r.data);
       return {'orders': rows, 'total_count': rows.length};
-    } catch (e) {
-      rethrow;
-    }
+    });
   }
 
-  Future<Map<String, dynamic>> getPendingApprovals() async {
-    try {
+  Future<Map<String, dynamic>> getPendingApprovals() {
+    return _cache.getOrFetch('logistics_pending_approvals',
+        ttl: const Duration(seconds: 30), fetch: () async {
       final r = await _api.get(
         '/api/v1/deliveries/',
         queryParameters: {'status': 'pending_admin_approval'},
       );
       final rows = _asList(r.data);
       return {'orders': rows, 'total_count': rows.length};
-    } catch (e) {
-      rethrow;
-    }
+    });
   }
 
   Future<bool> approveOrder(String orderId, {String? notes}) async {
     try {
       final body = <String, dynamic>{};
-      if (notes != null && notes.isNotEmpty) {
-        body['notes'] = notes;
-      }
+      if (notes != null && notes.isNotEmpty) body['notes'] = notes;
       await _api.post('/api/v1/deliveries/$orderId/actions/approve', data: body);
+      _invalidateOrderCaches();
       return true;
     } catch (e) {
       rethrow;
@@ -90,14 +87,16 @@ class LogisticsRepository {
     try {
       final body = <String, dynamic>{'reason': reason};
       await _api.post('/api/v1/deliveries/$orderId/actions/reject', data: body);
+      _invalidateOrderCaches();
       return true;
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<Map<String, dynamic>> getOrderStats() async {
-    try {
+  Future<Map<String, dynamic>> getOrderStats() {
+    return _cache.getOrFetch('logistics_order_stats',
+        ttl: const Duration(seconds: 30), fetch: () async {
       final r = await _api.get(
         '/api/v1/admin/logistics/orders/stats',
         options: Options(
@@ -106,9 +105,7 @@ class LogisticsRepository {
         ),
       );
       return _asMap(r.data);
-    } catch (e) {
-      rethrow;
-    }
+    });
   }
 
   Future<bool> updateOrderStatus(Object orderId, String newStatus) async {
@@ -117,10 +114,17 @@ class LogisticsRepository {
         '/api/v1/admin/logistics/orders/$orderId/status',
         queryParameters: {'new_status': newStatus},
       );
+      _invalidateOrderCaches();
       return true;
     } catch (e) {
       rethrow;
     }
+  }
+
+  void _invalidateOrderCaches() {
+    _cache.invalidatePrefix('logistics_orders_');
+    _cache.invalidate('logistics_order_stats');
+    _cache.invalidate('logistics_pending_approvals');
   }
 
   // ─── DRIVERS ──────────────────────────────────────────────────────────

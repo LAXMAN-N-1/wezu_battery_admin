@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/providers/repository_providers.dart';
 import '../../../core/widgets/admin_ui_components.dart';
 import '../data/models/delivery_order_model.dart';
 import '../data/repositories/logistics_repository.dart';
 
-class DeliveryOrdersView extends StatefulWidget {
+class DeliveryOrdersView extends ConsumerStatefulWidget {
   const DeliveryOrdersView({super.key});
   @override
-  State<DeliveryOrdersView> createState() => _DeliveryOrdersViewState();
+  ConsumerState<DeliveryOrdersView> createState() => _DeliveryOrdersViewState();
 }
 
-class _DeliveryOrdersViewState extends State<DeliveryOrdersView> {
-  final LogisticsRepository _repo = LogisticsRepository();
+class _DeliveryOrdersViewState extends ConsumerState<DeliveryOrdersView> {
+  LogisticsRepository get _repo => ref.read(logisticsRepositoryProvider);
   bool _isOrdersLoading = true;
   bool _isStatsLoading = true;
   String? _ordersError;
