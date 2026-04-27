@@ -67,6 +67,7 @@ const List<MenuSection> _allMenuSections = [
     children: [
       MenuItem(label: 'All Batteries', route: '/fleet/batteries'),
       MenuItem(label: 'Add Batteries', route: '/fleet/batteries/add'),
+      MenuItem(label: 'Battery Catalog', route: '/fleet/catalog'),
       MenuItem(label: 'Stock Levels', route: '/fleet/stock'),
       MenuItem(label: 'Battery Health', route: '/fleet/health'),
       MenuItem(label: 'Audit Trail', route: '/fleet/audit'),
@@ -133,7 +134,10 @@ const List<MenuSection> _allMenuSections = [
       MenuItem(label: 'Drivers', route: '/logistics/drivers'),
       MenuItem(label: 'Route Planner', route: '/logistics/routes'),
       MenuItem(label: 'Returns', route: '/logistics/returns'),
-      MenuItem(label: 'Assign to Warehouse', route: '/logistics/warehouse-assign'),
+      MenuItem(
+        label: 'Assign to Warehouse',
+        route: '/logistics/warehouse-assign',
+      ),
     ],
   ),
   MenuSection(

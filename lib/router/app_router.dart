@@ -29,6 +29,7 @@ import '../features/settings/view/system_health_view.dart';
 import '../features/inventory/view/stock_levels_view.dart';
 import '../features/inventory/view/bulk_import_export_view.dart';
 import '../features/inventory/view/audit_trail_view.dart';
+import '../features/inventory/view/battery_catalog_view.dart';
 import '../features/battery_health/view/battery_health_view.dart';
 import '../features/stations/view/stations_view.dart';
 import '../features/users/view/fraud_risk_view.dart';
@@ -198,6 +199,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/fleet/batteries/add',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: AddBatteriesView()),
+          ),
+          GoRoute(
+            path: '/fleet/catalog',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: BatteryCatalogView()),
           ),
           GoRoute(
             path: '/fleet/stock',
@@ -594,6 +600,7 @@ String _getTitle(String location) {
   // Fleet
   if (location == '/fleet/batteries') return 'All Batteries';
   if (location == '/fleet/batteries/add') return 'Add Batteries to Inventory';
+  if (location == '/fleet/catalog') return 'Battery Catalog & Pricing';
   if (location == '/fleet/stock') return 'Stock Levels';
   if (location == '/fleet/health') return 'Battery Health';
   if (location == '/fleet/audit') return 'Inventory Audit Trail';
@@ -634,7 +641,9 @@ String _getTitle(String location) {
   if (location == '/logistics/drivers') return 'Drivers';
   if (location == '/logistics/routes') return 'Route Planner';
   if (location == '/logistics/returns') return 'Returns';
-  if (location == '/logistics/warehouse-assign') return 'Assign Batteries to Warehouse';
+  if (location == '/logistics/warehouse-assign') {
+    return 'Assign Batteries to Warehouse';
+  }
 
   // Fleet Ops
   if (location == '/fleet-ops/iot') return 'IoT Dashboard';
