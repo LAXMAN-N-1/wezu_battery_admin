@@ -45,6 +45,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
   bool _isSubmittingBatch = false;
   int? _editingSpecId;
   int? _settingDefaultSpecId;
+  bool _isBackfillingDefaults = false;
   String _search = '';
 
   int? _selectedSpecId;
@@ -127,7 +128,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
 
   Future<void> _openCreateSpecDialog({required bool canManage}) async {
     if (!canManage) {
-      _showSnack('Only superusers can create battery models.', isError: true);
+      _showSnack('Only admin users can create battery models.', isError: true);
       return;
     }
 
@@ -146,7 +147,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
     required bool canManage,
   }) async {
     if (!canManage) {
-      _showSnack('Only superusers can update model pricing.', isError: true);
+      _showSnack('Only admin users can update model pricing.', isError: true);
       return;
     }
 
@@ -181,7 +182,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
   Future<void> _submitBatch({required bool canManage}) async {
     if (!canManage) {
       _showSnack(
-        'Only superusers can register procurement batches.',
+        'Only admin users can register procurement batches.',
         isError: true,
       );
       return;
@@ -229,9 +230,46 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
     }
   }
 
+  Future<void> _backfillDefaults({required bool canManage}) async {
+    if (!canManage) {
+      _showSnack(
+        'Only admin users can repair default model mappings.',
+        isError: true,
+      );
+      return;
+    }
+    if (_isBackfillingDefaults) return;
+
+    setState(() => _isBackfillingDefaults = true);
+    try {
+      final result = await _repository.backfillDefault();
+      if (!mounted) return;
+      await _loadSpecs(showLoader: false);
+
+      final defaultSpecId = result['default_spec_id'];
+      final skuUpdated = result['updated_batteries_sku'] ?? 0;
+      final specUpdated = result['updated_batteries_spec'] ?? 0;
+      final costUpdated = result['updated_batteries_purchase_cost'] ?? 0;
+      _showSnack(
+        'Repaired catalog defaults (model #$defaultSpecId). '
+        'sku:$skuUpdated spec:$specUpdated cost:$costUpdated',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showSnack(
+        _readableError(e, fallback: 'Failed to backfill legacy batteries.'),
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isBackfillingDefaults = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final canManage = _isSuperuser(ref.watch(authProvider).user);
+    final canManage = _isAdminOrSuperuser(ref.watch(authProvider).user);
 
     return Container(
       color: _kBg,
@@ -263,6 +301,28 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
                       disabledBackgroundColor: Colors.white12,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _isBackfillingDefaults
+                        ? null
+                        : () => _backfillDefaults(canManage: canManage),
+                    icon: _isBackfillingDefaults
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.build_circle_outlined, size: 18),
+                    label: Text(
+                      _isBackfillingDefaults
+                          ? 'Repairing...'
+                          : 'Repair Defaults',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Colors.white24),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -277,7 +337,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
                   border: Border.all(color: _kAmber.withValues(alpha: 0.4)),
                 ),
                 child: const Text(
-                  'View access is available, but create/update actions are restricted to superusers.',
+                  'View access is available, but create/update/backfill actions are restricted to admin users.',
                   style: TextStyle(color: Color(0xFFFDE68A), fontSize: 13),
                 ),
               ),
@@ -909,7 +969,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
     );
   }
 
-  bool _isSuperuser(Map<String, dynamic>? user) {
+  bool _isAdminOrSuperuser(Map<String, dynamic>? user) {
     if (user == null) return false;
     if (user['is_superuser'] == true || user['isSuperuser'] == true) {
       return true;
@@ -945,7 +1005,35 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
       addRole(nested['user_type']);
     }
 
-    return roles.contains('super_admin') || roles.contains('superadmin');
+    final adminRoles = {
+      'super_admin',
+      'superadmin',
+      'admin',
+      'operations_admin',
+      'ops_admin',
+      'finance_admin',
+      'support_admin',
+      'logistics_admin',
+    };
+
+    if (roles.any(
+      (role) => adminRoles.contains(role) || role.endsWith('_admin'),
+    )) {
+      return true;
+    }
+
+    final userType = (user['user_type'] ?? user['userType'])
+        ?.toString()
+        .toLowerCase();
+    if (userType == 'admin') return true;
+    if (nested is Map) {
+      final nestedType = (nested['user_type'] ?? nested['userType'])
+          ?.toString()
+          .toLowerCase();
+      if (nestedType == 'admin') return true;
+    }
+
+    return false;
   }
 
   String _readableError(Object e, {required String fallback}) {

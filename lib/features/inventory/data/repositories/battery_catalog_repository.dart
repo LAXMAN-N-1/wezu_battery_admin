@@ -50,6 +50,21 @@ class BatteryCatalogRepository {
     return BatterySpecModel.fromJson(Map<String, dynamic>.from(response.data));
   }
 
+  Future<Map<String, dynamic>> backfillDefault({int? specId}) async {
+    final payload = <String, dynamic>{};
+    if (specId != null) {
+      payload['spec_id'] = specId;
+    }
+    final response = await _api.post(
+      '$_specBase/backfill-default',
+      data: payload,
+    );
+    final data = response.data;
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return const {};
+  }
+
   Future<BatteryBatchModel> createBatch(Map<String, dynamic> data) async {
     final response = await _api.post(_batchBase, data: data);
     return BatteryBatchModel.fromJson(Map<String, dynamic>.from(response.data));
