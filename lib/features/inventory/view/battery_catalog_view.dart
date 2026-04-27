@@ -44,6 +44,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
   bool _isLoadingSpecs = true;
   bool _isSubmittingBatch = false;
   int? _editingSpecId;
+  int? _settingDefaultSpecId;
   String _search = '';
 
   int? _selectedSpecId;
@@ -73,7 +74,10 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
       final specs = await _repository.listSpecs();
       if (!mounted) return;
 
-      specs.sort((a, b) => b.id.compareTo(a.id));
+      specs.sort((a, b) {
+        if (a.isDefault != b.isDefault) return a.isDefault ? -1 : 1;
+        return b.id.compareTo(a.id);
+      });
       setState(() {
         _specs = specs;
         _selectedSpecId ??= specs.isNotEmpty ? specs.first.id : null;
@@ -86,6 +90,38 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
         _readableError(e, fallback: 'Failed to load battery models.'),
         isError: true,
       );
+    }
+  }
+
+  Future<void> _setDefaultSpec(
+    BatterySpecModel row, {
+    required bool canManage,
+  }) async {
+    if (!canManage) {
+      _showSnack(
+        'Only superusers can set default battery model.',
+        isError: true,
+      );
+      return;
+    }
+    if (row.isDefault) return;
+
+    setState(() => _settingDefaultSpecId = row.id);
+    try {
+      await _repository.setDefaultSpec(row.id);
+      if (!mounted) return;
+      await _loadSpecs(showLoader: false);
+      _showSnack('Set #${row.id} as default model.');
+    } catch (e) {
+      if (!mounted) return;
+      _showSnack(
+        _readableError(e, fallback: 'Failed to update default model.'),
+        isError: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _settingDefaultSpecId = null);
+      }
     }
   }
 
@@ -206,7 +242,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
             PageHeader(
               title: 'Battery Catalog & Pricing',
               subtitle:
-                  'Manage battery models, rental/day pricing, and procurement batches.',
+                  'Manage battery models, default model fallback, pricing, and procurement batches.',
               actionButton: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -287,6 +323,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
 
   Widget _buildSpecsTab({required bool canManage}) {
     final filtered = _filteredSpecs();
+    final defaultSpec = _specs.where((e) => e.isDefault).firstOrNull;
 
     final avgPurchase = _specs.isEmpty
         ? 0.0
@@ -328,6 +365,12 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
               'Avg price',
               _inrWhole.format(avgPurchase),
               Icons.currency_rupee,
+            ),
+            const SizedBox(width: 8),
+            _statPill(
+              'Default',
+              defaultSpec == null ? 'Not set' : '#${defaultSpec.id}',
+              Icons.star_rounded,
             ),
           ],
         ),
@@ -519,7 +562,7 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
                   border: Border.all(color: _kBlue.withValues(alpha: 0.35)),
                 ),
                 child: const Text(
-                  'These prices propagate to rental daily calculations and dealer inventory valuation.',
+                  'These prices propagate to rental daily calculations and dealer inventory valuation. Batteries created without sku_id use the default model.',
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ),
@@ -624,6 +667,9 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
             label: Text('DAY PRICE', style: TextStyle(color: Colors.white70)),
           ),
           DataColumn(
+            label: Text('DEFAULT', style: TextStyle(color: Colors.white70)),
+          ),
+          DataColumn(
             label: Text('STATUS', style: TextStyle(color: Colors.white70)),
           ),
           DataColumn(
@@ -683,11 +729,34 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
+              DataCell(_defaultChip(spec.isDefault)),
               DataCell(_statusChip(spec.isActive)),
               DataCell(
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    IconButton(
+                      onPressed: canManage
+                          ? () => _setDefaultSpec(spec, canManage: canManage)
+                          : null,
+                      tooltip: spec.isDefault
+                          ? 'Current default model'
+                          : (canManage
+                                ? 'Set as default model'
+                                : 'Superuser access required'),
+                      icon: _settingDefaultSpecId == spec.id
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              spec.isDefault
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                            ),
+                      color: _kAmber,
+                    ),
                     IconButton(
                       onPressed: canManage
                           ? () =>
@@ -728,6 +797,29 @@ class _BatteryCatalogViewState extends ConsumerState<BatteryCatalogView> {
         isActive ? 'ACTIVE' : 'INACTIVE',
         style: TextStyle(
           color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _defaultChip(bool isDefault) {
+    if (!isDefault) {
+      return const Text('—', style: TextStyle(color: Colors.white30));
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _kAmber.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _kAmber.withValues(alpha: 0.4)),
+      ),
+      child: const Text(
+        'DEFAULT',
+        style: TextStyle(
+          color: _kAmber,
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),

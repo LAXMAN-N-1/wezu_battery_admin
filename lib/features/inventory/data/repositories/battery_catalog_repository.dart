@@ -45,6 +45,11 @@ class BatteryCatalogRepository {
     return BatterySpecModel.fromJson(Map<String, dynamic>.from(response.data));
   }
 
+  Future<BatterySpecModel> setDefaultSpec(int specId) async {
+    final response = await _api.patch('$_specBase/$specId/set-default');
+    return BatterySpecModel.fromJson(Map<String, dynamic>.from(response.data));
+  }
+
   Future<BatteryBatchModel> createBatch(Map<String, dynamic> data) async {
     final response = await _api.post(_batchBase, data: data);
     return BatteryBatchModel.fromJson(Map<String, dynamic>.from(response.data));

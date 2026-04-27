@@ -16,6 +16,7 @@ class BatterySpecModel {
   final double priceFullPurchase;
   final double pricePerDay;
   final bool isActive;
+  final bool isDefault;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -27,6 +28,7 @@ class BatterySpecModel {
     required this.priceFullPurchase,
     required this.pricePerDay,
     required this.isActive,
+    required this.isDefault,
     this.model,
     this.capacityMah,
     this.capacityAh,
@@ -60,6 +62,7 @@ class BatterySpecModel {
       priceFullPurchase: (json['price_full_purchase'] as num?)?.toDouble() ?? 0,
       pricePerDay: (json['price_per_day'] as num?)?.toDouble() ?? 0,
       isActive: json['is_active'] == true,
+      isDefault: json['is_default'] == true,
       createdAt: _parseDate(json['created_at']),
       updatedAt: _parseDate(json['updated_at']),
     );

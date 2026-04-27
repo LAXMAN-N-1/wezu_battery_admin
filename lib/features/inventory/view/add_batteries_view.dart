@@ -1,10 +1,12 @@
 import 'dart:math';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/widgets/api_error_handler.dart';
 import '../data/repositories/inventory_repository.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,7 +21,14 @@ const _kBorder = Color(0x10FFFFFF);
 const _kBorderFaint = Color(0x08FFFFFF);
 
 const _kBatteryTypes = ['48V/30Ah', '60V/40Ah', '72V/50Ah', '96V/60Ah'];
-const _kHealthStatuses = ['GOOD', 'EXCELLENT', 'FAIR', 'POOR', 'CRITICAL', 'DAMAGED'];
+const _kHealthStatuses = [
+  'GOOD',
+  'EXCELLENT',
+  'FAIR',
+  'POOR',
+  'CRITICAL',
+  'DAMAGED',
+];
 const _kWarrantyMonthOptions = [12, 24, 36, 48];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -97,7 +106,10 @@ class _AddBatteriesViewState extends State<AddBatteriesView>
           dividerColor: Colors.transparent,
           labelColor: _kBlue,
           unselectedLabelColor: Colors.white38,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
           tabs: const [
             Tab(
               child: Row(
@@ -156,9 +168,15 @@ class _InventoryBanner extends StatelessWidget {
                   ),
                   TextSpan(
                     text: 'Central Inventory',
-                    style: TextStyle(color: _kBlue, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: _kBlue,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  TextSpan(text: '.  From there, assign them to specific warehouses.  Warehouses then fulfill orders to dealer stations.'),
+                  TextSpan(
+                    text:
+                        '.  From there, assign them to specific warehouses.  Warehouses then fulfill orders to dealer stations.',
+                  ),
                 ],
               ),
             ),
@@ -175,7 +193,14 @@ class _InventoryBanner extends StatelessWidget {
               children: [
                 Icon(Icons.inventory_2_outlined, size: 12, color: _kBlue),
                 SizedBox(width: 4),
-                Text('Central Inventory', style: TextStyle(color: _kBlue, fontSize: 11, fontWeight: FontWeight.w600)),
+                Text(
+                  'Central Inventory',
+                  style: TextStyle(
+                    color: _kBlue,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -207,7 +232,6 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
   late final TextEditingController _manufacturerCtrl;
   late final TextEditingController _iotDeviceCtrl;
   late final TextEditingController _skuIdCtrl;
-  late final TextEditingController _specIdCtrl;
   String _batteryType = '48V/30Ah';
 
   // New batteries always land in central inventory as 'available'
@@ -245,7 +269,6 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
     _manufacturerCtrl = TextEditingController();
     _iotDeviceCtrl = TextEditingController();
     _skuIdCtrl = TextEditingController();
-    _specIdCtrl = TextEditingController();
     _tempCtrl = TextEditingController(text: '25.0');
     _purchaseCostCtrl = TextEditingController(text: '0');
     _cycleCountCtrl = TextEditingController(text: '0');
@@ -258,9 +281,17 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
   @override
   void dispose() {
     for (final c in [
-      _serialCtrl, _manufacturerCtrl, _iotDeviceCtrl, _skuIdCtrl, _specIdCtrl,
-      _tempCtrl, _purchaseCostCtrl, _cycleCountCtrl, _totalCyclesCtrl,
-      _chargeCyclesCtrl, _lastMaintenanceCyclesCtrl, _notesCtrl,
+      _serialCtrl,
+      _manufacturerCtrl,
+      _iotDeviceCtrl,
+      _skuIdCtrl,
+      _tempCtrl,
+      _purchaseCostCtrl,
+      _cycleCountCtrl,
+      _totalCyclesCtrl,
+      _chargeCyclesCtrl,
+      _lastMaintenanceCyclesCtrl,
+      _notesCtrl,
     ]) {
       c.dispose();
     }
@@ -287,6 +318,17 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final skuText = _skuIdCtrl.text.trim();
+    final skuId = skuText.isEmpty ? null : int.tryParse(skuText);
+    if (skuText.isNotEmpty && skuId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('SKU ID must be a valid number'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
     setState(() => _isSaving = true);
 
     try {
@@ -306,17 +348,25 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
         'cycle_count': int.tryParse(_cycleCountCtrl.text) ?? 0,
         'total_cycles': int.tryParse(_totalCyclesCtrl.text) ?? 0,
         'charge_cycles': int.tryParse(_chargeCyclesCtrl.text) ?? 0,
-        'last_maintenance_cycles': int.tryParse(_lastMaintenanceCyclesCtrl.text) ?? 0,
-        if (_manufacturerCtrl.text.trim().isNotEmpty) 'manufacturer': _manufacturerCtrl.text.trim(),
-        if (_iotDeviceCtrl.text.trim().isNotEmpty) 'iot_device_id': _iotDeviceCtrl.text.trim(),
-        if (_skuIdCtrl.text.trim().isNotEmpty) 'sku_id': int.tryParse(_skuIdCtrl.text.trim()),
-        if (_specIdCtrl.text.trim().isNotEmpty) 'spec_id': int.tryParse(_specIdCtrl.text.trim()),
-        if (_manufactureDate != null) 'manufacture_date': _manufactureDate!.toIso8601String(),
-        if (_purchaseDate != null) 'purchase_date': _purchaseDate!.toIso8601String(),
-        if (_warrantyExpiry != null) 'warranty_expiry': _warrantyExpiry!.toIso8601String(),
-        if (_lastChargedAt != null) 'last_charged_at': _lastChargedAt!.toIso8601String(),
-        if (_lastInspectedAt != null) 'last_inspected_at': _lastInspectedAt!.toIso8601String(),
-        if (_lastMaintenanceDate != null) 'last_maintenance_date': _lastMaintenanceDate!.toIso8601String(),
+        'last_maintenance_cycles':
+            int.tryParse(_lastMaintenanceCyclesCtrl.text) ?? 0,
+        if (_manufacturerCtrl.text.trim().isNotEmpty)
+          'manufacturer': _manufacturerCtrl.text.trim(),
+        if (_iotDeviceCtrl.text.trim().isNotEmpty)
+          'iot_device_id': _iotDeviceCtrl.text.trim(),
+        if (skuId != null) 'sku_id': skuId,
+        if (_manufactureDate != null)
+          'manufacture_date': _manufactureDate!.toIso8601String(),
+        if (_purchaseDate != null)
+          'purchase_date': _purchaseDate!.toIso8601String(),
+        if (_warrantyExpiry != null)
+          'warranty_expiry': _warrantyExpiry!.toIso8601String(),
+        if (_lastChargedAt != null)
+          'last_charged_at': _lastChargedAt!.toIso8601String(),
+        if (_lastInspectedAt != null)
+          'last_inspected_at': _lastInspectedAt!.toIso8601String(),
+        if (_lastMaintenanceDate != null)
+          'last_maintenance_date': _lastMaintenanceDate!.toIso8601String(),
         if (_notesCtrl.text.trim().isNotEmpty) 'notes': _notesCtrl.text.trim(),
       };
       data.removeWhere((_, v) => v == null);
@@ -336,10 +386,19 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text(_readableError(e)),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
+  }
+
+  String _readableError(Object e) {
+    if (e is DioException) return ApiErrorHandler.getReadableMessage(e);
+    final msg = e.toString().trim();
+    return msg.isEmpty ? 'Unable to register battery.' : msg;
   }
 
   @override
@@ -365,7 +424,11 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
                     );
                   }
                   return Column(
-                    children: [_buildLeftColumn(), const SizedBox(height: 24), _buildRightColumn()],
+                    children: [
+                      _buildLeftColumn(),
+                      const SizedBox(height: 24),
+                      _buildRightColumn(),
+                    ],
                   );
                 },
               ),
@@ -407,27 +470,45 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
 
   Widget _buildIdentitySection() {
     return _section('Identity', Icons.badge_outlined, [
-      Row(children: [
-        Expanded(
-          child: _textField(
-            _serialCtrl, 'Serial Number',
-            icon: Icons.qr_code,
-            monospace: true,
-            required: true,
-            hint: 'BAT-2025-0001',
+      Row(
+        children: [
+          Expanded(
+            child: _textField(
+              _serialCtrl,
+              'Serial Number',
+              icon: Icons.qr_code,
+              monospace: true,
+              required: true,
+              hint: 'BAT-2025-0001',
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        _iconBtn(Icons.refresh_outlined, 'Regenerate', () {
-          setState(() => _serialCtrl.text = _generateSerial());
-        }),
-      ]),
+          const SizedBox(width: 8),
+          _iconBtn(Icons.refresh_outlined, 'Regenerate', () {
+            setState(() => _serialCtrl.text = _generateSerial());
+          }),
+        ],
+      ),
       const SizedBox(height: 14),
-      _textField(_manufacturerCtrl, 'Manufacturer', icon: Icons.factory_outlined, hint: 'e.g. BYD, LG, CATL'),
+      _textField(
+        _manufacturerCtrl,
+        'Manufacturer',
+        icon: Icons.factory_outlined,
+        hint: 'e.g. BYD, LG, CATL',
+      ),
       const SizedBox(height: 14),
-      _dropdown('Battery Type', _batteryType, _kBatteryTypes, (v) => setState(() => _batteryType = v!)),
+      _dropdown(
+        'Battery Type',
+        _batteryType,
+        _kBatteryTypes,
+        (v) => setState(() => _batteryType = v!),
+      ),
       const SizedBox(height: 14),
-      _textField(_iotDeviceCtrl, 'IoT Device ID', icon: Icons.sensors_outlined, hint: 'Optional hardware ID'),
+      _textField(
+        _iotDeviceCtrl,
+        'IoT Device ID',
+        icon: Icons.sensors_outlined,
+        hint: 'Optional hardware ID',
+      ),
     ]);
   }
 
@@ -435,18 +516,25 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
 
   Widget _buildCatalogSection() {
     return _section('Catalog Links', Icons.library_books_outlined, [
-      _textField(
-        _skuIdCtrl, 'SKU ID (optional)',
-        icon: Icons.tag_outlined,
-        hint: 'Battery catalog SKU ID',
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        keyboardType: TextInputType.number,
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: _kBlue.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+        ),
+        child: const Text(
+          'Leave SKU ID empty to auto-assign the default model configured in Battery Catalog.',
+          style: TextStyle(color: Colors.white60, fontSize: 12),
+        ),
       ),
       const SizedBox(height: 14),
       _textField(
-        _specIdCtrl, 'Spec ID (optional)',
-        icon: Icons.description_outlined,
-        hint: 'Battery spec catalog ID',
+        _skuIdCtrl,
+        'SKU ID (optional)',
+        icon: Icons.tag_outlined,
+        hint: 'Optional override model ID',
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         keyboardType: TextInputType.number,
       ),
@@ -457,20 +545,38 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
 
   Widget _buildHealthSection() {
     return _section('Health & Initial State', Icons.favorite_outline, [
-      _sliderField('Initial Health %', _healthPct, (v) => setState(() {
-        _healthPct = v;
-        _stateOfHealth = v;
-      })),
+      _sliderField(
+        'Initial Health %',
+        _healthPct,
+        (v) => setState(() {
+          _healthPct = v;
+          _stateOfHealth = v;
+        }),
+      ),
       const SizedBox(height: 14),
-      _sliderField('State of Health (SoH) %', _stateOfHealth, (v) => setState(() => _stateOfHealth = v)),
+      _sliderField(
+        'State of Health (SoH) %',
+        _stateOfHealth,
+        (v) => setState(() => _stateOfHealth = v),
+      ),
       const SizedBox(height: 14),
-      _sliderField('Current Charge %', _currentCharge, (v) => setState(() => _currentCharge = v),
-        color: const Color(0xFF3B82F6)),
+      _sliderField(
+        'Current Charge %',
+        _currentCharge,
+        (v) => setState(() => _currentCharge = v),
+        color: const Color(0xFF3B82F6),
+      ),
       const SizedBox(height: 14),
-      _dropdown('Health Status', _healthStatus, _kHealthStatuses, (v) => setState(() => _healthStatus = v!)),
+      _dropdown(
+        'Health Status',
+        _healthStatus,
+        _kHealthStatuses,
+        (v) => setState(() => _healthStatus = v!),
+      ),
       const SizedBox(height: 14),
       _textField(
-        _tempCtrl, 'Temperature (°C)',
+        _tempCtrl,
+        'Temperature (°C)',
         icon: Icons.thermostat_outlined,
         hint: '25.0',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -484,44 +590,61 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
   Widget _buildCostsSection() {
     return _section('Costs & Cycle Tracking', Icons.analytics_outlined, [
       _textField(
-        _purchaseCostCtrl, 'Purchase Cost (₹)',
+        _purchaseCostCtrl,
+        'Purchase Cost (₹)',
         icon: Icons.currency_rupee_outlined,
         hint: '0',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
       ),
       const SizedBox(height: 14),
-      Row(children: [
-        Expanded(child: _textField(
-          _cycleCountCtrl, 'Cycle Count',
-          hint: '0',
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        )),
-        const SizedBox(width: 12),
-        Expanded(child: _textField(
-          _totalCyclesCtrl, 'Total Design Cycles',
-          hint: '0',
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        )),
-      ]),
+      Row(
+        children: [
+          Expanded(
+            child: _textField(
+              _cycleCountCtrl,
+              'Cycle Count',
+              hint: '0',
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _textField(
+              _totalCyclesCtrl,
+              'Total Design Cycles',
+              hint: '0',
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+          ),
+        ],
+      ),
       const SizedBox(height: 14),
-      Row(children: [
-        Expanded(child: _textField(
-          _chargeCyclesCtrl, 'Charge Cycles',
-          hint: '0',
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        )),
-        const SizedBox(width: 12),
-        Expanded(child: _textField(
-          _lastMaintenanceCyclesCtrl, 'Cycles @ Last Maintenance',
-          hint: '0',
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        )),
-      ]),
+      Row(
+        children: [
+          Expanded(
+            child: _textField(
+              _chargeCyclesCtrl,
+              'Charge Cycles',
+              hint: '0',
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _textField(
+              _lastMaintenanceCyclesCtrl,
+              'Cycles @ Last Maintenance',
+              hint: '0',
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+          ),
+        ],
+      ),
     ]);
   }
 
@@ -529,7 +652,11 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
 
   Widget _buildDatesSection() {
     return _section('Lifecycle Dates', Icons.calendar_month_outlined, [
-      _datePicker('Manufacture Date', _manufactureDate, (d) => setState(() => _manufactureDate = d)),
+      _datePicker(
+        'Manufacture Date',
+        _manufactureDate,
+        (d) => setState(() => _manufactureDate = d),
+      ),
       const SizedBox(height: 14),
       _datePicker('Purchase Date', _purchaseDate, (d) {
         setState(() => _purchaseDate = d);
@@ -538,42 +665,72 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
       const SizedBox(height: 14),
 
       // Warranty period selector
-      const Text('Warranty Period', style: TextStyle(color: Colors.white54, fontSize: 12)),
+      const Text(
+        'Warranty Period',
+        style: TextStyle(color: Colors.white54, fontSize: 12),
+      ),
       const SizedBox(height: 8),
-      Row(children: _kWarrantyMonthOptions.map((m) {
-        final active = _warrantyMonths == m;
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: GestureDetector(
-            onTap: () { setState(() => _warrantyMonths = m); _updateWarrantyFromMonths(); },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              decoration: BoxDecoration(
-                color: active ? _kBlue.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: active ? _kBlue : _kBorder),
+      Row(
+        children: _kWarrantyMonthOptions.map((m) {
+          final active = _warrantyMonths == m;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                setState(() => _warrantyMonths = m);
+                _updateWarrantyFromMonths();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: active
+                      ? _kBlue.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: active ? _kBlue : _kBorder),
+                ),
+                child: Text(
+                  '${m}m',
+                  style: TextStyle(
+                    color: active ? _kBlue : Colors.white38,
+                    fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                ),
               ),
-              child: Text('${m}m', style: TextStyle(
-                color: active ? _kBlue : Colors.white38,
-                fontWeight: active ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 13,
-              )),
             ),
-          ),
-        );
-      }).toList()),
+          );
+        }).toList(),
+      ),
       if (_warrantyExpiry != null) ...[
         const SizedBox(height: 6),
-        Text('Warranty expires: ${DateFormat('dd MMM yyyy').format(_warrantyExpiry!)}',
-          style: const TextStyle(color: Colors.white30, fontSize: 11)),
+        Text(
+          'Warranty expires: ${DateFormat('dd MMM yyyy').format(_warrantyExpiry!)}',
+          style: const TextStyle(color: Colors.white30, fontSize: 11),
+        ),
       ],
       const SizedBox(height: 14),
-      _datePicker('Last Charged At (optional)', _lastChargedAt, (d) => setState(() => _lastChargedAt = d)),
+      _datePicker(
+        'Last Charged At (optional)',
+        _lastChargedAt,
+        (d) => setState(() => _lastChargedAt = d),
+      ),
       const SizedBox(height: 14),
-      _datePicker('Last Inspected At (optional)', _lastInspectedAt, (d) => setState(() => _lastInspectedAt = d)),
+      _datePicker(
+        'Last Inspected At (optional)',
+        _lastInspectedAt,
+        (d) => setState(() => _lastInspectedAt = d),
+      ),
       const SizedBox(height: 14),
-      _datePicker('Last Maintenance Date (optional)', _lastMaintenanceDate, (d) => setState(() => _lastMaintenanceDate = d)),
+      _datePicker(
+        'Last Maintenance Date (optional)',
+        _lastMaintenanceDate,
+        (d) => setState(() => _lastMaintenanceDate = d),
+      ),
     ]);
   }
 
@@ -585,7 +742,10 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
         controller: _notesCtrl,
         style: const TextStyle(color: Colors.white, fontSize: 14),
         maxLines: 4,
-        decoration: _inputDeco('Internal notes, batch info, observations...', null),
+        decoration: _inputDeco(
+          'Internal notes, batch info, observations...',
+          null,
+        ),
       ),
     ]);
   }
@@ -597,40 +757,75 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
       decoration: BoxDecoration(
         color: _kBg,
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
-      ),
-      child: Row(children: [
-        OutlinedButton(
-          onPressed: () => context.go('/fleet/batteries'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
-        const Spacer(),
-        Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF2563EB)]),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: Colors.blue.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
-          ),
-          child: ElevatedButton.icon(
-            onPressed: _isSaving ? null : _save,
-            icon: _isSaving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                : const Icon(Icons.check, size: 18, color: Colors.white),
-            label: Text(_isSaving ? 'Registering...' : 'Register Battery',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Row(
+        children: [
+          OutlinedButton(
+            onPressed: () => context.go('/fleet/batteries'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
             ),
           ),
-        ),
-      ]),
+          const Spacer(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _isSaving ? null : _save,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.check, size: 18, color: Colors.white),
+              label: Text(
+                _isSaving ? 'Registering...' : 'Register Battery',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -644,22 +839,35 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kBorderFaint),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: _kBlue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 15, color: _kBlue),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: _kBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 15, color: _kBlue),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Text(title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 0.2)),
-        ]),
-        const SizedBox(height: 16),
-        ...children,
-      ]),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
     );
   }
 
@@ -680,7 +888,9 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
           : const TextStyle(color: Colors.white, fontSize: 14),
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      validator: required ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null : null,
+      validator: required
+          ? (v) => (v == null || v.trim().isEmpty) ? '$label is required' : null
+          : null,
       decoration: _inputDeco(hint ?? label, icon),
     );
   }
@@ -690,18 +900,37 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
       labelText: label,
       labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
       hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
-      prefixIcon: icon != null ? Icon(icon, size: 17, color: Colors.white.withValues(alpha: 0.2)) : null,
+      prefixIcon: icon != null
+          ? Icon(icon, size: 17, color: Colors.white.withValues(alpha: 0.2))
+          : null,
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.04),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kBorder)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kBorder)),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.redAccent, width: 1.5)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _kBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: _kBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _kBlue, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
   }
 
-  Widget _dropdown(String label, String value, List<String> options, ValueChanged<String?> onChanged) {
+  Widget _dropdown(
+    String label,
+    String value,
+    List<String> options,
+    ValueChanged<String?> onChanged,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
@@ -718,46 +947,88 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
         ),
         dropdownColor: _kSurface,
         style: const TextStyle(color: Colors.white, fontSize: 14),
-        items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        items: options
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
         onChanged: onChanged,
-        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white30, size: 20),
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.white30,
+          size: 20,
+        ),
       ),
     );
   }
 
-  Widget _sliderField(String label, double value, ValueChanged<double> onChanged, {Color? color}) {
+  Widget _sliderField(
+    String label,
+    double value,
+    ValueChanged<double> onChanged, {
+    Color? color,
+  }) {
     final pct = value.clamp(0.0, 100.0);
-    final trackColor = color ?? (pct > 80 ? _kGreen : (pct > 50 ? const Color(0xFFF59E0B) : Colors.redAccent));
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-      const SizedBox(height: 8),
-      Row(children: [
-        Expanded(
-          child: SliderTheme(
-            data: SliderThemeData(
-              activeTrackColor: trackColor,
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.06),
-              thumbColor: trackColor,
-              overlayColor: trackColor.withValues(alpha: 0.1),
-              trackHeight: 6,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+    final trackColor =
+        color ??
+        (pct > 80
+            ? _kGreen
+            : (pct > 50 ? const Color(0xFFF59E0B) : Colors.redAccent));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: SliderTheme(
+                data: SliderThemeData(
+                  activeTrackColor: trackColor,
+                  inactiveTrackColor: Colors.white.withValues(alpha: 0.06),
+                  thumbColor: trackColor,
+                  overlayColor: trackColor.withValues(alpha: 0.1),
+                  trackHeight: 6,
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 9,
+                  ),
+                ),
+                child: Slider(
+                  value: pct,
+                  min: 0,
+                  max: 100,
+                  divisions: 100,
+                  onChanged: onChanged,
+                ),
+              ),
             ),
-            child: Slider(value: pct, min: 0, max: 100, divisions: 100, onChanged: onChanged),
-          ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: trackColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${pct.toInt()}%',
+                style: TextStyle(
+                  color: trackColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: trackColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text('${pct.toInt()}%', style: TextStyle(color: trackColor, fontWeight: FontWeight.bold, fontSize: 13)),
-        ),
-      ]),
-    ]);
+      ],
+    );
   }
 
-  Widget _datePicker(String label, DateTime? value, ValueChanged<DateTime> onSelected) {
+  Widget _datePicker(
+    String label,
+    DateTime? value,
+    ValueChanged<DateTime> onSelected,
+  ) {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
@@ -767,7 +1038,10 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
           lastDate: DateTime(2040),
           builder: (ctx, child) => Theme(
             data: ThemeData.dark().copyWith(
-              colorScheme: const ColorScheme.dark(primary: _kBlue, surface: _kSurface),
+              colorScheme: const ColorScheme.dark(
+                primary: _kBlue,
+                surface: _kSurface,
+              ),
             ),
             child: child!,
           ),
@@ -781,20 +1055,36 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _kBorder),
         ),
-        child: Row(children: [
-          Icon(Icons.calendar_today_outlined, size: 15, color: Colors.white.withValues(alpha: 0.2)),
-          const SizedBox(width: 10),
-          Expanded(child: Text(
-            value != null ? DateFormat('dd MMM yyyy').format(value) : label,
-            style: TextStyle(color: value != null ? Colors.white : Colors.white38, fontSize: 14),
-          )),
-          if (value != null) GestureDetector(
-            onTap: () {
-              // This won't fire from the outer tap — handled via separate tap target
-            },
-            child: Icon(Icons.close, size: 15, color: Colors.white.withValues(alpha: 0.2)),
-          ),
-        ]),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 15,
+              color: Colors.white.withValues(alpha: 0.2),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                value != null ? DateFormat('dd MMM yyyy').format(value) : label,
+                style: TextStyle(
+                  color: value != null ? Colors.white : Colors.white38,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            if (value != null)
+              GestureDetector(
+                onTap: () {
+                  // This won't fire from the outer tap — handled via separate tap target
+                },
+                child: Icon(
+                  Icons.close,
+                  size: 15,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -805,7 +1095,9 @@ class _SingleBatteryTabState extends State<_SingleBatteryTab> {
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(icon, color: _kBlue, size: 20),
-        style: IconButton.styleFrom(backgroundColor: _kBlue.withValues(alpha: 0.1)),
+        style: IconButton.styleFrom(
+          backgroundColor: _kBlue.withValues(alpha: 0.1),
+        ),
       ),
     );
   }
@@ -835,6 +1127,7 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
   String _batteryType = '48V/30Ah';
   String _healthStatus = 'GOOD';
   double _healthPct = 100.0;
+  late final TextEditingController _skuIdCtrl;
   late final TextEditingController _manufacturerCtrl;
   late final TextEditingController _purchaseCostCtrl;
   DateTime? _purchaseDate;
@@ -848,6 +1141,7 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
   @override
   void initState() {
     super.initState();
+    _skuIdCtrl = TextEditingController();
     _manufacturerCtrl = TextEditingController();
     _purchaseCostCtrl = TextEditingController(text: '0');
     _notesCtrl = TextEditingController();
@@ -859,7 +1153,10 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
 
   @override
   void dispose() {
-    for (final c in _serialCtrls) { c.dispose(); }
+    for (final c in _serialCtrls) {
+      c.dispose();
+    }
+    _skuIdCtrl.dispose();
     _manufacturerCtrl.dispose();
     _purchaseCostCtrl.dispose();
     _notesCtrl.dispose();
@@ -870,7 +1167,9 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
   void _addRow() {
     final year = DateTime.now().year;
     final rand = Random().nextInt(9999).toString().padLeft(4, '0');
-    setState(() => _serialCtrls.add(TextEditingController(text: 'BAT-$year-$rand')));
+    setState(
+      () => _serialCtrls.add(TextEditingController(text: 'BAT-$year-$rand')),
+    );
   }
 
   void _removeRow(int index) {
@@ -894,23 +1193,45 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
 
   Future<void> _save() async {
     // Validate: all serials non-empty, no duplicates within batch
-    final serials = _serialCtrls.map((c) => c.text.trim().toUpperCase()).toList();
+    final serials = _serialCtrls
+        .map((c) => c.text.trim().toUpperCase())
+        .toList();
     final emptyIdx = serials.indexWhere((s) => s.isEmpty);
     if (emptyIdx != -1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Row ${emptyIdx + 1}: serial number is required'), backgroundColor: Colors.redAccent),
+        SnackBar(
+          content: Text('Row ${emptyIdx + 1}: serial number is required'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
     final uniqueSerials = serials.toSet();
     if (uniqueSerials.length != serials.length) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Duplicate serial numbers in batch'), backgroundColor: Colors.redAccent),
+        const SnackBar(
+          content: Text('Duplicate serial numbers in batch'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+    final skuText = _skuIdCtrl.text.trim();
+    final skuId = skuText.isEmpty ? null : int.tryParse(skuText);
+    if (skuText.isNotEmpty && skuId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('SKU ID must be a valid number'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
 
-    setState(() { _isSaving = true; _results = null; });
+    setState(() {
+      _isSaving = true;
+      _results = null;
+    });
 
     try {
       final sharedDefaults = <String, dynamic>{
@@ -922,24 +1243,34 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
         'current_charge': 100.0,
         'state_of_health': _healthPct,
         'purchase_cost': double.tryParse(_purchaseCostCtrl.text) ?? 0.0,
-        if (_manufacturerCtrl.text.trim().isNotEmpty) 'manufacturer': _manufacturerCtrl.text.trim(),
-        if (_purchaseDate != null) 'purchase_date': _purchaseDate!.toIso8601String(),
-        if (_warrantyExpiry != null) 'warranty_expiry': _warrantyExpiry!.toIso8601String(),
+        if (skuId != null) 'sku_id': skuId,
+        if (_manufacturerCtrl.text.trim().isNotEmpty)
+          'manufacturer': _manufacturerCtrl.text.trim(),
+        if (_purchaseDate != null)
+          'purchase_date': _purchaseDate!.toIso8601String(),
+        if (_warrantyExpiry != null)
+          'warranty_expiry': _warrantyExpiry!.toIso8601String(),
         if (_notesCtrl.text.trim().isNotEmpty) 'notes': _notesCtrl.text.trim(),
       };
 
-      final items = serials.map((s) => <String, dynamic>{...sharedDefaults, 'serial_number': s}).toList();
+      final items = serials
+          .map((s) => <String, dynamic>{...sharedDefaults, 'serial_number': s})
+          .toList();
 
       final created = await _repo.createBatteryBulk(items);
 
       if (mounted) {
         setState(() {
           _isSaving = false;
-          _results = created.map((b) => {'serial': b.serialNumber, 'id': b.id, 'ok': true}).toList();
+          _results = created
+              .map((b) => {'serial': b.serialNumber, 'id': b.id, 'ok': true})
+              .toList();
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${created.length} batteries registered in central inventory'),
+            content: Text(
+              '${created.length} batteries registered in central inventory',
+            ),
             backgroundColor: _kGreen,
           ),
         );
@@ -948,10 +1279,19 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
       if (mounted) {
         setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text(_readableError(e)),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
+  }
+
+  String _readableError(Object e) {
+    if (e is DioException) return ApiErrorHandler.getReadableMessage(e);
+    final msg = e.toString().trim();
+    return msg.isEmpty ? 'Unable to register batteries.' : msg;
   }
 
   @override
@@ -975,7 +1315,13 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
                     ],
                   );
                 }
-                return Column(children: [_buildSerialsList(), const SizedBox(height: 24), _buildSharedDefaults()]);
+                return Column(
+                  children: [
+                    _buildSerialsList(),
+                    const SizedBox(height: 24),
+                    _buildSharedDefaults(),
+                  ],
+                );
               },
             ),
           ),
@@ -990,69 +1336,102 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header
-        Row(children: [
-          Expanded(
-            child: _sectionHeader('Serial Numbers', Icons.list_outlined,
-              '${_serialCtrls.length} batteries to register'),
-          ),
-          _addRowButton(),
-        ]),
+        Row(
+          children: [
+            Expanded(
+              child: _sectionHeader(
+                'Serial Numbers',
+                Icons.list_outlined,
+                '${_serialCtrls.length} batteries to register',
+              ),
+            ),
+            _addRowButton(),
+          ],
+        ),
         const SizedBox(height: 16),
 
         // Serial rows
-        ..._serialCtrls.asMap().entries.map((entry) => Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _serialRow(entry.key, entry.value),
-        )),
+        ..._serialCtrls.asMap().entries.map(
+          (entry) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _serialRow(entry.key, entry.value),
+          ),
+        ),
 
         const SizedBox(height: 8),
         _addMoreButton(),
 
         // Results
-        if (_results != null) ...[
-          const SizedBox(height: 20),
-          _buildResults(),
-        ],
+        if (_results != null) ...[const SizedBox(height: 20), _buildResults()],
       ],
     );
   }
 
   Widget _serialRow(int index, TextEditingController ctrl) {
-    return Row(children: [
-      Container(
-        width: 32, height: 32,
-        decoration: BoxDecoration(
-          color: _kBlue.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(child: Text('${index + 1}', style: const TextStyle(color: _kBlue, fontSize: 12, fontWeight: FontWeight.bold))),
-      ),
-      const SizedBox(width: 10),
-      Expanded(
-        child: TextFormField(
-          controller: ctrl,
-          style: GoogleFonts.firaCode(color: Colors.white, fontSize: 13),
-          decoration: InputDecoration(
-            hintText: 'BAT-2025-XXXX',
-            hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.04),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _kBorder)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: _kBorder)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: _kBlue.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: _kBlue,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
-      ),
-      const SizedBox(width: 8),
-      IconButton(
-        onPressed: _serialCtrls.length > 1 ? () => _removeRow(index) : null,
-        icon: Icon(Icons.remove_circle_outline, size: 18,
-          color: _serialCtrls.length > 1 ? Colors.redAccent.withValues(alpha: 0.7) : Colors.white12),
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-      ),
-    ]);
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextFormField(
+            controller: ctrl,
+            style: GoogleFonts.firaCode(color: Colors.white, fontSize: 13),
+            decoration: InputDecoration(
+              hintText: 'BAT-2025-XXXX',
+              hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.04),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: _kBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: _kBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: _kBlue, width: 1.5),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: _serialCtrls.length > 1 ? () => _removeRow(index) : null,
+          icon: Icon(
+            Icons.remove_circle_outline,
+            size: 18,
+            color: _serialCtrls.length > 1
+                ? Colors.redAccent.withValues(alpha: 0.7)
+                : Colors.white12,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        ),
+      ],
+    );
   }
 
   Widget _addMoreButton() {
@@ -1063,13 +1442,22 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06), style: BorderStyle.solid),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.06),
+            style: BorderStyle.solid,
+          ),
         ),
-        child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.add, size: 16, color: Colors.white38),
-          SizedBox(width: 6),
-          Text('Add Another', style: TextStyle(color: Colors.white38, fontSize: 13)),
-        ]),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add, size: 16, color: Colors.white38),
+            SizedBox(width: 6),
+            Text(
+              'Add Another',
+              style: TextStyle(color: Colors.white38, fontSize: 13),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1078,7 +1466,10 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
     return TextButton.icon(
       onPressed: _addRow,
       icon: const Icon(Icons.add, size: 16, color: _kBlue),
-      label: const Text('Add Row', style: TextStyle(color: _kBlue, fontSize: 13)),
+      label: const Text(
+        'Add Row',
+        style: TextStyle(color: _kBlue, fontSize: 13),
+      ),
     );
   }
 
@@ -1091,29 +1482,61 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _kGreen.withValues(alpha: 0.2)),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          const Icon(Icons.check_circle_outline, size: 16, color: _kGreen),
-          const SizedBox(width: 8),
-          Text('${results.length} batteries registered', style: const TextStyle(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-        ]),
-        const SizedBox(height: 12),
-        ...results.map((r) => Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Row(children: [
-            const Icon(Icons.check, size: 13, color: _kGreen),
-            const SizedBox(width: 8),
-            Text(r['serial'] as String, style: GoogleFonts.firaCode(color: Colors.white70, fontSize: 12)),
-            const Spacer(),
-            Text('ID: ${r['id']}', style: const TextStyle(color: Colors.white30, fontSize: 11)),
-          ]),
-        )),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: widget.onSuccess,
-          child: const Text('View all batteries →', style: TextStyle(color: _kBlue, fontSize: 13, fontWeight: FontWeight.w600)),
-        ),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.check_circle_outline, size: 16, color: _kGreen),
+              const SizedBox(width: 8),
+              Text(
+                '${results.length} batteries registered',
+                style: const TextStyle(
+                  color: _kGreen,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...results.map(
+            (r) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.check, size: 13, color: _kGreen),
+                  const SizedBox(width: 8),
+                  Text(
+                    r['serial'] as String,
+                    style: GoogleFonts.firaCode(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'ID: ${r['id']}',
+                    style: const TextStyle(color: Colors.white30, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: widget.onSuccess,
+            child: const Text(
+              'View all batteries →',
+              style: TextStyle(
+                color: _kBlue,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1125,87 +1548,183 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _kBorderFaint),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _sectionHeader('Shared Defaults', Icons.tune_outlined, 'Applied to all batteries in this batch'),
-        const SizedBox(height: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionHeader(
+            'Shared Defaults',
+            Icons.tune_outlined,
+            'Applied to all batteries in this batch',
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _kBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
+            ),
+            child: const Text(
+              'Leave SKU ID empty to auto-assign the catalog default model for this batch.',
+              style: TextStyle(color: Colors.white60, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 14),
+          _textField(
+            _skuIdCtrl,
+            'SKU ID (optional)',
+            hint: 'Optional override model ID',
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 14),
 
-        _dropdown('Battery Type', _batteryType, _kBatteryTypes, (v) => setState(() => _batteryType = v!)),
-        const SizedBox(height: 14),
-        _dropdown('Health Status', _healthStatus, _kHealthStatuses, (v) => setState(() => _healthStatus = v!)),
-        const SizedBox(height: 14),
-        _textField(_manufacturerCtrl, 'Manufacturer', hint: 'Optional'),
-        const SizedBox(height: 14),
-        _textField(
-          _purchaseCostCtrl, 'Purchase Cost (₹)',
-          hint: '0',
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
-        ),
-        const SizedBox(height: 14),
+          _dropdown(
+            'Battery Type',
+            _batteryType,
+            _kBatteryTypes,
+            (v) => setState(() => _batteryType = v!),
+          ),
+          const SizedBox(height: 14),
+          _dropdown(
+            'Health Status',
+            _healthStatus,
+            _kHealthStatuses,
+            (v) => setState(() => _healthStatus = v!),
+          ),
+          const SizedBox(height: 14),
+          _textField(_manufacturerCtrl, 'Manufacturer', hint: 'Optional'),
+          const SizedBox(height: 14),
+          _textField(
+            _purchaseCostCtrl,
+            'Purchase Cost (₹)',
+            hint: '0',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+            ],
+          ),
+          const SizedBox(height: 14),
 
-        // Health slider
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Initial Health %', style: TextStyle(color: Colors.white54, fontSize: 12)),
+          // Health slider
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Initial Health %',
+                style: TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderThemeData(
+                        activeTrackColor: _kGreen,
+                        inactiveTrackColor: Colors.white.withValues(
+                          alpha: 0.06,
+                        ),
+                        thumbColor: _kGreen,
+                        overlayColor: _kGreen.withValues(alpha: 0.1),
+                        trackHeight: 5,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 8,
+                        ),
+                      ),
+                      child: Slider(
+                        value: _healthPct,
+                        min: 0,
+                        max: 100,
+                        divisions: 100,
+                        onChanged: (v) => setState(() => _healthPct = v),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _kGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Text(
+                      '${_healthPct.toInt()}%',
+                      style: const TextStyle(
+                        color: _kGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          _datePicker('Purchase Date', _purchaseDate, (d) {
+            setState(() => _purchaseDate = d);
+            _updateWarrantyFromMonths();
+          }),
+          const SizedBox(height: 14),
+
+          const Text(
+            'Warranty Period',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
           const SizedBox(height: 8),
-          Row(children: [
-            Expanded(
-              child: SliderTheme(
-                data: SliderThemeData(
-                  activeTrackColor: _kGreen,
-                  inactiveTrackColor: Colors.white.withValues(alpha: 0.06),
-                  thumbColor: _kGreen,
-                  overlayColor: _kGreen.withValues(alpha: 0.1),
-                  trackHeight: 5,
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+          Wrap(
+            spacing: 8,
+            children: _kWarrantyMonthOptions.map((m) {
+              final active = _warrantyMonths == m;
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _warrantyMonths = m);
+                  _updateWarrantyFromMonths();
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? _kBlue.withValues(alpha: 0.15)
+                        : Colors.white.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(9),
+                    border: Border.all(color: active ? _kBlue : _kBorder),
+                  ),
+                  child: Text(
+                    '${m}m',
+                    style: TextStyle(
+                      color: active ? _kBlue : Colors.white38,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-                child: Slider(value: _healthPct, min: 0, max: 100, divisions: 100,
-                  onChanged: (v) => setState(() => _healthPct = v)),
-              ),
+              );
+            }).toList(),
+          ),
+          if (_warrantyExpiry != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Expires: ${DateFormat('dd MMM yyyy').format(_warrantyExpiry!)}',
+              style: const TextStyle(color: Colors.white30, fontSize: 11),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(color: _kGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(7)),
-              child: Text('${_healthPct.toInt()}%', style: const TextStyle(color: _kGreen, fontWeight: FontWeight.bold, fontSize: 13)),
-            ),
-          ]),
-        ]),
-        const SizedBox(height: 14),
-
-        _datePicker('Purchase Date', _purchaseDate, (d) {
-          setState(() => _purchaseDate = d);
-          _updateWarrantyFromMonths();
-        }),
-        const SizedBox(height: 14),
-
-        const Text('Warranty Period', style: TextStyle(color: Colors.white54, fontSize: 12)),
-        const SizedBox(height: 8),
-        Wrap(spacing: 8, children: _kWarrantyMonthOptions.map((m) {
-          final active = _warrantyMonths == m;
-          return GestureDetector(
-            onTap: () { setState(() => _warrantyMonths = m); _updateWarrantyFromMonths(); },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: active ? _kBlue.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(color: active ? _kBlue : _kBorder),
-              ),
-              child: Text('${m}m', style: TextStyle(
-                color: active ? _kBlue : Colors.white38,
-                fontWeight: active ? FontWeight.w600 : FontWeight.normal, fontSize: 12,
-              )),
-            ),
-          );
-        }).toList()),
-        if (_warrantyExpiry != null) ...[
-          const SizedBox(height: 6),
-          Text('Expires: ${DateFormat('dd MMM yyyy').format(_warrantyExpiry!)}',
-            style: const TextStyle(color: Colors.white30, fontSize: 11)),
+          ],
+          const SizedBox(height: 14),
+          _textField(
+            _notesCtrl,
+            'Batch Notes',
+            hint: 'Optional notes for this batch',
+          ),
         ],
-        const SizedBox(height: 14),
-        _textField(_notesCtrl, 'Batch Notes', hint: 'Optional notes for this batch'),
-      ]),
+      ),
     );
   }
 
@@ -1214,60 +1733,120 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 20),
       decoration: BoxDecoration(
         color: _kBg,
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
-      ),
-      child: Row(children: [
-        OutlinedButton(
-          onPressed: () => context.go('/fleet/batteries'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
-        const SizedBox(width: 12),
-        Text('${_serialCtrls.length} batteries', style: const TextStyle(color: Colors.white38, fontSize: 13)),
-        const Spacer(),
-        Container(
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF2563EB)]),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [BoxShadow(color: Colors.blue.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
-          ),
-          child: ElevatedButton.icon(
-            onPressed: _isSaving ? null : _save,
-            icon: _isSaving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                : const Icon(Icons.upload_outlined, size: 18, color: Colors.white),
-            label: Text(_isSaving ? 'Registering...' : 'Register All Batteries',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Row(
+        children: [
+          OutlinedButton(
+            onPressed: () => context.go('/fleet/batteries'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
             ),
           ),
-        ),
-      ]),
+          const SizedBox(width: 12),
+          Text(
+            '${_serialCtrls.length} batteries',
+            style: const TextStyle(color: Colors.white38, fontSize: 13),
+          ),
+          const Spacer(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blue.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _isSaving ? null : _save,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.upload_outlined,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+              label: Text(
+                _isSaving ? 'Registering...' : 'Register All Batteries',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   // ── Bulk widget helpers ────────────────────────────────────────────────────
 
   Widget _sectionHeader(String title, IconData icon, String subtitle) {
-    return Row(children: [
-      Container(
-        padding: const EdgeInsets.all(7),
-        decoration: BoxDecoration(color: _kBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-        child: Icon(icon, size: 14, color: _kBlue),
-      ),
-      const SizedBox(width: 10),
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 13)),
-        Text(subtitle, style: const TextStyle(color: Colors.white30, fontSize: 11)),
-      ]),
-    ]);
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: _kBlue.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 14, color: _kBlue),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white30, fontSize: 11),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _textField(
@@ -1289,15 +1868,32 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
         hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kBorder)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: _kBorder)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _kBlue, width: 1.5)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _kBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: _kBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _kBlue, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 14,
+        ),
       ),
     );
   }
 
-  Widget _dropdown(String label, String value, List<String> options, ValueChanged<String?> onChanged) {
+  Widget _dropdown(
+    String label,
+    String value,
+    List<String> options,
+    ValueChanged<String?> onChanged,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
@@ -1307,17 +1903,31 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
       ),
       child: DropdownButtonFormField<String>(
         initialValue: options.contains(value) ? value : options.first,
-        decoration: InputDecoration(labelText: label, labelStyle: const TextStyle(color: Colors.white38, fontSize: 13), border: InputBorder.none),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+          border: InputBorder.none,
+        ),
         dropdownColor: _kSurface,
         style: const TextStyle(color: Colors.white, fontSize: 14),
-        items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        items: options
+            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .toList(),
         onChanged: onChanged,
-        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white30, size: 20),
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: Colors.white30,
+          size: 20,
+        ),
       ),
     );
   }
 
-  Widget _datePicker(String label, DateTime? value, ValueChanged<DateTime> onSelected) {
+  Widget _datePicker(
+    String label,
+    DateTime? value,
+    ValueChanged<DateTime> onSelected,
+  ) {
     return GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
@@ -1327,7 +1937,10 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
           lastDate: DateTime(2040),
           builder: (ctx, child) => Theme(
             data: ThemeData.dark().copyWith(
-              colorScheme: const ColorScheme.dark(primary: _kBlue, surface: _kSurface),
+              colorScheme: const ColorScheme.dark(
+                primary: _kBlue,
+                surface: _kSurface,
+              ),
             ),
             child: child!,
           ),
@@ -1341,14 +1954,25 @@ class _BulkBatteriesTabState extends State<_BulkBatteriesTab> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: _kBorder),
         ),
-        child: Row(children: [
-          Icon(Icons.calendar_today_outlined, size: 15, color: Colors.white.withValues(alpha: 0.2)),
-          const SizedBox(width: 10),
-          Expanded(child: Text(
-            value != null ? DateFormat('dd MMM yyyy').format(value) : label,
-            style: TextStyle(color: value != null ? Colors.white : Colors.white38, fontSize: 14),
-          )),
-        ]),
+        child: Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 15,
+              color: Colors.white.withValues(alpha: 0.2),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                value != null ? DateFormat('dd MMM yyyy').format(value) : label,
+                style: TextStyle(
+                  color: value != null ? Colors.white : Colors.white38,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
